@@ -4,3 +4,4 @@ gen
 lib
 *.bak
 target
+.*
