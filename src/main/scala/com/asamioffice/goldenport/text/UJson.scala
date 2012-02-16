@@ -3,7 +3,7 @@ package com.asamioffice.goldenport.text
 /**
  * @since   Jan.  2, 2011
  *  version Jan. 16, 2011
- * @version Feb. 14, 2012
+ * @version Feb. 16, 2012
  * @author  ASAMI, Tomoharu
  */
 object UJson {
@@ -46,9 +46,15 @@ object UJson {
     (convert orElse defaultConvert)(value)
   }
 
-  def seq2Json(seq: Seq[(Symbol, Any)]): String = {
+  def seq2JsonSymbol(seq: Seq[(Symbol, Any)]): String = {
     seq.map {
       case (key, value) => "\"" + key.name + "\": " + jsonString(value)
+    }.mkString("{", ", ", "}")
+  }
+
+  def seq2Json(seq: Seq[(String, Any)]): String = {
+    seq.map {
+      case (key, value) => "\"" + key + "\": " + jsonString(value)
     }.mkString("{", ", ", "}")
   }
 }
