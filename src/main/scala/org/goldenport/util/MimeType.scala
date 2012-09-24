@@ -1,0 +1,49 @@
+package org.goldenport.util
+
+/**
+ * @since   Sep. 24, 2012
+ * @version Sep. 25, 2012
+ * @author  ASAMI, Tomoharu
+ */
+case class MimeType(val name: String)
+
+object MimeType {
+  import org.goldenport.Strings.mimetype
+
+  val application_atom_xml = MimeType(mimetype.application_atom_xml)
+  val application_ecmascript = MimeType(mimetype.application_ecmascript)
+  val application_json = MimeType(mimetype.application_json)
+  val application_javascript = MimeType(mimetype.application_javascript)
+  val application_octet_stream = MimeType(mimetype.application_octet_stream)
+  val application_pdf = MimeType(mimetype.application_pdf)
+  val application_postscript = MimeType(mimetype.application_postscript)
+  val application_rss_xml = MimeType(mimetype.application_rss_xml)
+  val application_soap_xml = MimeType(mimetype.application_soap_xml)
+  val application_xhtml_xml = MimeType(mimetype.application_xhtml_xml)
+  val application_xml_dtd = MimeType(mimetype.application_xml_dtd)
+  val application_zip = MimeType(mimetype.application_zip)
+  val application_x_gzip = MimeType(mimetype.application_x_gzip)
+  val image_gif = MimeType(mimetype.image_gif)
+  val image_jpeg = MimeType(mimetype.image_jpeg)
+  val image_pjpeg = MimeType(mimetype.image_pjpeg)
+  val image_png = MimeType(mimetype.image_png)
+  val image_svg_xml = MimeType(mimetype.image_svg_xml)
+  val image_tiff = MimeType(mimetype.image_tiff)
+  val image_vnd_microsoft_icon = MimeType(mimetype.image_vnd_microsoft_icon)
+  val message_http = MimeType(mimetype.message_http)
+  val message_imdn_xml = MimeType(mimetype.message_imdn_xml)
+  val message_partianl = MimeType(mimetype.message_partianl)
+  val message_rfc822 = MimeType(mimetype.message_rfc822)
+  val multipart_mixed = MimeType(mimetype.multipart_mixed)
+  val multipart_alternative = MimeType(mimetype.multipart_alternative)
+  val multipart_related = MimeType(mimetype.multipart_related)
+  val multipart_form_data = MimeType(mimetype.multipart_form_data)
+  val multipart_signed = MimeType(mimetype.multipart_signed)
+  val multipart_encrypted = MimeType(mimetype.multipart_encrypted)
+  val text_css = MimeType(mimetype.text_css)
+  val text_csv = MimeType(mimetype.text_csv)
+  val text_html = MimeType(mimetype.text_html)
+  val text_plain = MimeType(mimetype.text_plain)
+  val text_xml = MimeType(mimetype.text_xml)
+  val text_event_stream = MimeType(mimetype.text_event_stream)
+}
