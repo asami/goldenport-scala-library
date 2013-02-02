@@ -1,11 +1,15 @@
 package org.goldenport
 
+import com.asamioffice.goldenport.text.UString
+
 /**
  * derived from com.asamioffice.text.Strings(Nov. 28, 2010)
  * 
  * @since   Dec.  5, 2011
  *  version Dec.  5, 2011
- * @version Sep. 24, 2012 (move from org.goldenport)
+ *  version Sep. 24, 2012 (move from org.goldenport)
+ *  version Dec. 27, 2012
+ * @version Feb.  2, 2013
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -46,5 +50,15 @@ object Strings {
     val text_plain = "text/plain"
     val text_xml = "text/xml"
     val text_event_stream = "text/event-stream"
+  }
+
+  def toToken(s: String): Option[String] = {
+    if (UString.isBlank(s)) None
+    else Some(s.trim)
+  }
+
+  def toTokens(s: String): List[String] = {
+    if (UString.isBlank(s)) Nil
+    else UString.getTokens(s, " ,;\t\n\r").toList
   }
 }
