@@ -9,7 +9,7 @@ import com.asamioffice.goldenport.text.UString
  *  version Dec.  5, 2011
  *  version Sep. 24, 2012 (move from org.goldenport)
  *  version Dec. 27, 2012
- * @version Feb.  2, 2013
+ * @version Feb.  4, 2013
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -52,13 +52,87 @@ object Strings {
     val text_event_stream = "text/event-stream"
   }
 
-  def toToken(s: String): Option[String] = {
+  object httpstatus {
+    // 200
+    val OK = "OK"
+    val Created = "Created"
+    val Accepted = "Accepted"
+    val NonAuthoritativeInformation = "Non-Authoritative Information"
+    val NoContent = "No Content"
+    val ResetContent = "Reset Content"
+    val PartialContent = "Partial Content"
+    val MultiStatus = "Multi-Status"
+    val AlreadyReported = "Already Reported"
+    val IMUsed = "IM Used"
+    val AuthenticationSuccessful = "Authentication Successful"
+    // 400
+    val BadRequest = "Bad Request"
+    val Unauthorized = "Unauthorized"
+    val PaymentRequired = "Payment Required"
+    val Forbidden = "Forbidden"
+    val NotFound = "Not Found"
+    val MethodNotAllowed = "Method Not Allowed"
+    val NotAcceptable = "Not Acceptable"
+    val ProxyAuthenticationRequired = "Proxy Authentication Required"
+    val RequestTimeout = "Request Timeout"
+    val Conflict = "Conflict"
+    val Gone = "Gone"
+    // 500
+    val InternalServerError = "Internal Server Error"
+    val NotImplemented = "Not Implemented"
+    val BadGateway = "Bad Gateway"
+    val ServiceUnavailable = "Service Unavailable"
+    val GatewayTimeout = "Gateway Timeout"
+
+    val message = Map(
+      200 -> OK,
+      201 -> Created,
+      202 -> Accepted,
+      203 -> NonAuthoritativeInformation,
+      204 -> NoContent,
+      205 -> ResetContent,
+      206 -> PartialContent,
+      207 -> MultiStatus,
+      208 -> AlreadyReported,
+      226 -> IMUsed,
+      230 -> AuthenticationSuccessful,
+      400 -> BadRequest,
+      401 -> Unauthorized,
+      402 -> PaymentRequired,
+      403 -> Forbidden,
+      404 -> NotFound,
+      405 -> MethodNotAllowed,
+      406 -> NotAcceptable,
+      407 -> ProxyAuthenticationRequired,
+      408 -> RequestTimeout,
+      409 -> Conflict,
+      410 -> Gone,
+      500 -> InternalServerError,
+      501 -> NotImplemented,
+      502 -> BadRequest,
+      503 -> ServiceUnavailable,
+      504 -> GatewayTimeout)
+
+    def code(key: String): Int = {
+      message.find(_._2 == key).map(_._1).get
+    }
+  }
+
+  def totoken(s: String): Option[String] = {
     if (UString.isBlank(s)) None
     else Some(s.trim)
   }
 
-  def toTokens(s: String): List[String] = {
+  def totokens(s: String): List[String] = {
     if (UString.isBlank(s)) Nil
     else UString.getTokens(s, " ,;\t\n\r").toList
+  }
+
+  def blankp(s: String): Boolean = {
+    UString.isBlank(s)
+  }
+
+  def notblankp(s: String): Boolean = {
+    UString.isNotBlank(s)
   }
 }
