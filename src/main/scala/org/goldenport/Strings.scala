@@ -135,4 +135,11 @@ object Strings {
   def notblankp(s: String): Boolean = {
     UString.isNotBlank(s)
   }
+
+  def cutstring(msg: String): String = {
+    if (msg.length <= 1000) msg
+    else {
+      msg.substring(0, (1000 - 3)) + "..."
+    }
+  }
 }
