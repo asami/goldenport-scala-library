@@ -11,7 +11,8 @@ import org.xml.sax.InputSource
 
 /**
  * @since   Jul. 27, 2010
- * @version Oct.  8, 2010
+ *  version Oct.  8, 2010
+ * @version Feb. 17, 2013
  * @author  ASAMI, Tomoharu
  */
 object GXml {
@@ -33,7 +34,7 @@ object GXml {
   }
 
   def normalizeNsPrefix(map: Map[String, String])(source: Elem): Elem = {
-    error("XXX")
+    sys.error("XXX")
   }
 
   def attribute(node: Node, key: String): Option[String] = {

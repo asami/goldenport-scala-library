@@ -3,12 +3,13 @@ package com.asamioffice.goldenport.text
 /**
  * @since   Jan.  2, 2011
  *  version Jan. 16, 2011
- * @version Feb. 16, 2012
+ *  version Feb. 16, 2012
+ * @version Feb. 17, 2013
  * @author  ASAMI, Tomoharu
  */
 object UJson {
   val defaultConvert: PartialFunction[Any, String] = {
-    case v: Function0[String] => v()
+    case v: Function0[_] => v().asInstanceOf[String]
     case v: Seq[_] => v.mkString("[", ", ", "]") // XXX seq2Json
     case v: Map[_, _] => map2Json(v.asInstanceOf[Map[String, Any]])
     case v: Number => v.toString

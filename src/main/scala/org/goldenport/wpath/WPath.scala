@@ -6,7 +6,8 @@ import org.goldenport.util.ArrayMap
 
 /**
  * @since   Jul.  2, 2010
- * @version Jan.  5, 2011
+ *  version Jan.  5, 2011
+ * @version Feb. 17, 2013
  * @author  ASAMI, Tomoharu
  */
 class WPath(val exprs: List[WExpr], val isRoot: Boolean, val isContainer: Boolean) {
@@ -120,6 +121,7 @@ class WPathCursor(val exprs: List[WExpr]) {
 
   def isEmpty = next_index >= exprs.length
 
+  // mutable
   def next = {
     val index = next_index
     next_index += 1
@@ -131,6 +133,12 @@ class WPathCursor(val exprs: List[WExpr]) {
     cursor.next_index = next_index
     cursor
   }
+
+  def remainders = exprs.drop(next_index)
+
+  override def toString() = {
+    "WPathCursor(" + exprs + "/" + next_index + "/" + isEmpty + ")"
+  }
 }
 
 object WPath {
@@ -140,7 +148,7 @@ object WPath {
 
   def lookups(path: String, provider: WPathProvider): List[AnyRef] = {
     val wpath = WPath(path)
-    find_nodes(provider.root, wpath.createCursor).map(_.content)
+    find_nodes(provider.root, wpath.createCursor).flatMap(_.content)
   }
 
   def lookupNodes(path: String, provider: WPathProvider): List[WPathNode] = {
