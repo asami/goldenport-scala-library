@@ -64,10 +64,18 @@ trait WPathNode {
   protected def is_Match(query: WQuery): Boolean = false
 
   def +=(name: String): NODE = {
-    val node = create_Node(name)
+    +=(create_Node(name))
+  }
+
+  def +=(node: NODE): NODE = {
     _children += node
     node._parent = Some(this.asInstanceOf[node.NODE])
     node
+  }
+
+  def refresh() {
+    _children.clear
+    _dirty = true
   }
 
   protected def create_Node(name: String): NODE
