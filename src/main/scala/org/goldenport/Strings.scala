@@ -9,7 +9,8 @@ import com.asamioffice.goldenport.text.UString
  *  version Dec.  5, 2011
  *  version Sep. 24, 2012 (move from org.goldenport)
  *  version Dec. 27, 2012
- * @version Feb.  4, 2013
+ *  version Feb.  4, 2013
+ * @version Aug. 27, 2013
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -128,18 +129,36 @@ object Strings {
     else UString.getTokens(s, " ,;\t\n\r").toList
   }
 
+  def totokens(s: String, ds: String): List[String] = {
+    if (UString.isBlank(s)) Nil
+    else UString.getTokens(s, ds).toList
+  }
+
   def blankp(s: String): Boolean = {
     UString.isBlank(s)
+  }
+
+  def blankp(s: Option[String]): Boolean = {
+    s.map(UString.isBlank) getOrElse true
   }
 
   def notblankp(s: String): Boolean = {
     UString.isNotBlank(s)
   }
 
-  def cutstring(msg: String): String = {
-    if (msg.length <= 1000) msg
+  def notblankp(s: Option[String]): Boolean = {
+    s.map(UString.isNotBlank) getOrElse false
+  }
+
+  def blankopt(s: Option[String]): Option[String] = {
+    import org.goldenport.Strings.blankp
+    s.flatMap(x => if (blankp(x)) None else Some(x))
+  }
+
+  def cutstring(msg: String, length: Int = 1000): String = {
+    if (msg.length <= length) msg
     else {
-      msg.substring(0, (1000 - 3)) + "..."
+      msg.substring(0, (length - 3)) + "..."
     }
   }
 }
