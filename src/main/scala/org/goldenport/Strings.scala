@@ -10,7 +10,8 @@ import com.asamioffice.goldenport.text.UString
  *  version Sep. 24, 2012 (move from org.goldenport)
  *  version Dec. 27, 2012
  *  version Feb.  4, 2013
- * @version Aug. 27, 2013
+ *  version Aug. 27, 2013
+ * @version Oct. 23, 2013
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -151,7 +152,6 @@ object Strings {
   }
 
   def blankopt(s: Option[String]): Option[String] = {
-    import org.goldenport.Strings.blankp
     s.flatMap(x => if (blankp(x)) None else Some(x))
   }
 
