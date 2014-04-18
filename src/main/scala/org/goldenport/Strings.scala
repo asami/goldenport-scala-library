@@ -11,7 +11,8 @@ import com.asamioffice.goldenport.text.UString
  *  version Dec. 27, 2012
  *  version Feb.  4, 2013
  *  version Aug. 27, 2013
- * @version Oct. 23, 2013
+ *  version Oct. 23, 2013
+ * @version Apr. 18, 2014
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -125,14 +126,18 @@ object Strings {
     else Some(s.trim)
   }
 
-  def totokens(s: String): List[String] = {
-    if (UString.isBlank(s)) Nil
-    else UString.getTokens(s, " ,;\t\n\r").toList
+  def totokens(s: String): Vector[String] = {
+    if (UString.isBlank(s)) Vector.empty
+    else UString.getTokens(s, " ,;\t\n\r").toVector
   }
 
-  def totokens(s: String, ds: String): List[String] = {
-    if (UString.isBlank(s)) Nil
-    else UString.getTokens(s, ds).toList
+  def totokens(s: String, ds: String): Vector[String] = {
+    if (UString.isBlank(s)) Vector.empty
+    else UString.getTokens(s, ds).toVector
+  }
+
+  def tolines(s: String): Vector[String] = {
+    UString.getLineList(s).toVector
   }
 
   def blankp(s: String): Boolean = {
