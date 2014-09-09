@@ -13,7 +13,8 @@ import com.asamioffice.goldenport.text.UString
  *  version Aug. 27, 2013
  *  version Oct. 23, 2013
  *  version Apr. 18, 2014
- * @version Jun.  6, 2014
+ *  version Jun.  6, 2014
+ * @version Jul. 10, 2014
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -31,8 +32,9 @@ object Strings {
     val application_xml_dtd = "application/xml-dtd"
     val application_zip = "application/zip"
     val application_x_gzip = "application/x-gzip"
+    val application_excel = "application/vnd.ms-excel"
     val image_gif = "image/gif"
-    val image_jpeg = "image/jpeb"
+    val image_jpeg = "image/jpeg"
     val image_pjpeg = "image/pjpeg"
     val image_png = "image/png"
     val image_svg_xml = "image/svg+xml"
