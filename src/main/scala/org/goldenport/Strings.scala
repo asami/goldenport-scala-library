@@ -14,7 +14,8 @@ import com.asamioffice.goldenport.text.UString
  *  version Oct. 23, 2013
  *  version Apr. 18, 2014
  *  version Jun.  6, 2014
- * @version Jul. 10, 2014
+ *  version Jul. 10, 2014
+ * @version Dec. 21, 2014
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -141,6 +142,12 @@ object Strings {
 
   def tolines(s: String): Vector[String] = {
     UString.getLineList(s).toVector
+  }
+
+  def tokeyvalue(s: String, ds: String = ":"): (String, String) = {
+    val i = s.indexOf(ds)
+    if (i == -1) (s, "")
+    else (s.substring(0, i).trim, s.substring(i + 1))
   }
 
   def blankp(s: String): Boolean = {
