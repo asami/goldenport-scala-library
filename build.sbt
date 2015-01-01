@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "1.0.2"
+version := "1.0.3-SNAPSHOT"
 
 scalaVersion := "2.10.3"
 // crossScalaVersions := Seq("2.9.2", "2.9.1")
@@ -27,15 +27,15 @@ libraryDependencies += "org.goldenport" %% "goldenport-kestrel" % "1.0.0"
 
 libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.0.6"
 
-libraryDependencies += "org.scalaz.stream" %% "scalaz-stream" % "0.4.1" exclude("org.scala-lang", "scala-library_2.10.4")
+libraryDependencies += "org.scalaz.stream" %% "scalaz-stream" % "0.6" exclude("org.scala-lang", "scala-library_2.10.4")
 
-libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.2"
+libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.3"
 
-libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.2"
+libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.3"
 
-libraryDependencies += "com.jsuereth" %% "scala-arm" % "1.2" exclude("org.scala-stm", "scala-stm_2.10.0")
+libraryDependencies += "com.jsuereth" %% "scala-arm" % "1.3" exclude("org.scala-stm", "scala-stm_2.10.0")
 
-libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "0.8.0"
+libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "1.6.0"
 
 libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.9.4"
 
