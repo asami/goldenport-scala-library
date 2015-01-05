@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "1.0.3-SNAPSHOT"
+version := "1.1.0"
 
 scalaVersion := "2.10.3"
 // crossScalaVersions := Seq("2.9.2", "2.9.1")
@@ -25,9 +25,9 @@ libraryDependencies += "org.goldenport" %% "goldenport-kestrel" % "1.0.0"
 
 // Defines important library dependencies
 
-libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.0.6"
+libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.1.0"
 
-libraryDependencies += "org.scalaz.stream" %% "scalaz-stream" % "0.6" exclude("org.scala-lang", "scala-library_2.10.4")
+libraryDependencies += "org.scalaz.stream" %% "scalaz-stream" % "0.6a" exclude("org.scala-lang", "scala-library_2.10.4")
 
 libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.3"
 
