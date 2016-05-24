@@ -15,7 +15,10 @@ import com.asamioffice.goldenport.text.UString
  *  version Apr. 18, 2014
  *  version Jun.  6, 2014
  *  version Jul. 10, 2014
- * @version Dec. 21, 2014
+ *  version Dec. 21, 2014
+ *  version Jan. 14, 2015
+ *  version Oct. 25, 2015
+ * @version Mar. 10, 2016
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -125,18 +128,28 @@ object Strings {
     }
   }
 
+  val delimiter = " ,;\t\n\r"
+
+  def delimiterp(c: Character): Boolean = {
+    delimiterp(c, delimiter)
+  }
+
+  def delimiterp(c: Character, ds: String): Boolean = {
+    ds.exists(_ == c)
+  }
+
   def totoken(s: String): Option[String] = {
-    if (UString.isBlank(s)) None
+    if (blankp(s)) None
     else Some(s.trim)
   }
 
   def totokens(s: String): List[String] = {
-    if (UString.isBlank(s)) Nil
-    else UString.getTokens(s, " ,;\t\n\r").toList
+    if (blankp(s)) Nil
+    else UString.getTokens(s, delimiter).toList
   }
 
   def totokens(s: String, ds: String): List[String] = {
-    if (UString.isBlank(s)) Nil
+    if (blankp(s)) Nil
     else UString.getTokens(s, ds).toList
   }
 
@@ -150,21 +163,40 @@ object Strings {
     else (s.substring(0, i).trim, s.substring(i + 1))
   }
 
-  def blankp(s: String): Boolean = {
-    UString.isBlank(s)
+  def emptyp(s: String): Boolean = s == null || s.length == 0
+
+  def emptyp(s: Option[String]): Boolean = {
+    s.map(emptyp) getOrElse true
   }
+
+  def notemptyp(s: String): Boolean = !emptyp(s)
+
+  def notemptyp(s: Option[String]): Boolean = {
+    s.map(notemptyp) getOrElse false
+  }
+
+  def emptyopt(s: String): Option[String] =
+    if (emptyp(s)) None else Some(s)
+
+  def emptyopt(s: Option[String]): Option[String] = {
+    s.flatMap(x => if (emptyp(x)) None else Some(x))
+  }
+
+  def blankp(s: String): Boolean =
+    s == null || s.length == 0 || s.forall(_ == ' ')
 
   def blankp(s: Option[String]): Boolean = {
-    s.map(UString.isBlank) getOrElse true
+    s.map(blankp) getOrElse true
   }
 
-  def notblankp(s: String): Boolean = {
-    UString.isNotBlank(s)
-  }
+  def notblankp(s: String): Boolean = !blankp(s)
 
   def notblankp(s: Option[String]): Boolean = {
-    s.map(UString.isNotBlank) getOrElse false
+    s.map(notblankp) getOrElse false
   }
+
+  def blankopt(s: String): Option[String] =
+    if (blankp(s)) None else Some(s)
 
   def blankopt(s: Option[String]): Option[String] = {
     s.flatMap(x => if (blankp(x)) None else Some(x))
