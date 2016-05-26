@@ -2,8 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.0.0A"
-// "1.1.1"
+version := "2.0.1"
 
 scalaVersion := "2.11.6"
 
@@ -44,9 +43,9 @@ libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.1.2"
 
 libraryDependencies += "org.scalaz.stream" %% "scalaz-stream" % "0.6a" exclude("org.scala-lang", "scala-library_2.10.5")
 
-libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.3"
+libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.3-1"
 
-libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.3"
+libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.3-1"
 
 libraryDependencies += "com.jsuereth" %% "scala-arm" % "1.4" exclude("org.scala-stm", "scala-stm_2.10.0")
 
