@@ -18,7 +18,8 @@ import com.asamioffice.goldenport.text.UString
  *  version Dec. 21, 2014
  *  version Jan. 14, 2015
  *  version Oct. 25, 2015
- * @version Mar. 10, 2016
+ *  version Mar. 10, 2016
+ * @version Mar. 21, 2017
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -119,7 +120,7 @@ object Strings {
       410 -> Gone,
       500 -> InternalServerError,
       501 -> NotImplemented,
-      502 -> BadRequest,
+      502 -> BadGateway,
       503 -> ServiceUnavailable,
       504 -> GatewayTimeout)
 

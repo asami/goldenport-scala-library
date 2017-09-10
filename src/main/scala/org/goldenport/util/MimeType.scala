@@ -1,8 +1,9 @@
 package org.goldenport.util
 
-/**
+/*
  * @since   Sep. 24, 2012
- * @version Sep. 25, 2012
+ *  version Sep. 25, 2012
+ * @version Sep.  2, 2017
  * @author  ASAMI, Tomoharu
  */
 case class MimeType(val name: String)
@@ -46,4 +47,45 @@ object MimeType {
   val text_plain = MimeType(mimetype.text_plain)
   val text_xml = MimeType(mimetype.text_xml)
   val text_event_stream = MimeType(mimetype.text_event_stream)
+
+  val mimetypes = Vector(
+    application_atom_xml,
+    application_ecmascript,
+    application_json,
+    application_javascript,
+    application_octet_stream,
+    application_pdf,
+    application_postscript,
+    application_rss_xml,
+    application_soap_xml,
+    application_xhtml_xml,
+    application_xml_dtd,
+    application_zip,
+    application_x_gzip,
+    image_gif,
+    image_jpeg,
+    image_pjpeg,
+    image_png,
+    image_svg_xml,
+    image_tiff,
+    image_vnd_microsoft_icon,
+    message_http,
+    message_imdn_xml,
+    message_partianl,
+    message_rfc822,
+    multipart_mixed,
+    multipart_alternative,
+    multipart_related,
+    multipart_form_data,
+    multipart_signed,
+    multipart_encrypted,
+    text_css,
+    text_csv,
+    text_html,
+    text_plain,
+    text_xml,
+    text_event_stream
+  ).map(x => x.name -> x).toMap
+
+  def as(name: String): MimeType = mimetypes.get(name) getOrElse MimeType(name)
 }
