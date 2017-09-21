@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "1.1.1"
+version := "1.2.0"
 
 scalaVersion := "2.10.3"
 // crossScalaVersions := Seq("2.9.2", "2.9.1")
@@ -37,7 +37,13 @@ libraryDependencies += "com.jsuereth" %% "scala-arm" % "1.3" exclude("org.scala-
 
 libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "1.6.0"
 
-libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.9.4"
+libraryDependencies += "com.typesafe" % "config" % "1.3.1"
+
+// libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.9.4" 
+
+libraryDependencies += "com.typesafe.play" %% "play-json" % "2.2.2" % "provided" exclude("org.scala-stm", "scala-stm_2.10.0")
+
+libraryDependencies += "net.sourceforge.nekohtml" % "nekohtml" % "1.9.18" % "compile"
 
 libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
 
