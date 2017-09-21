@@ -3,9 +3,7 @@ package org.goldenport.util
 import scalaz.NonEmptyList
 import scala.util.control.NonFatal
 import java.net.URLEncoder
-// import play.api.libs.json.{Json, JsArray}
 import org.goldenport.Strings
-// import org.goldenport.record.v2.Record
 import com.asamioffice.goldenport.text.{UString, UPathString}
 
 /*
@@ -21,7 +19,8 @@ import com.asamioffice.goldenport.text.{UString, UPathString}
  *  version Jul. 15, 2016
  *  version Feb. 24, 2017
  *  version Jul. 29, 2017
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Sep. 21, 2017
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -111,6 +110,18 @@ object StringUtils {
 
   def pathContainer(path: String): String = {
     UPathString.getContainerPathname(path)
+  }
+
+  def classNameToHypenName(suffix: String, o: Object): String = {
+    val a1 = o.getClass.getSimpleName
+    val a = if (a1.endsWith("$"))
+      a1.substring(0, a1.length - 1)
+    else
+      a1
+    if (a.endsWith(suffix))
+      camelToHyphen(a.substring(0, a.length - suffix.length))
+    else
+      camelToHyphen(a)
   }
 
   def camelToHyphen(s: String): String = {
