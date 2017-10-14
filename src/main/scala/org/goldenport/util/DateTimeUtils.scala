@@ -1,6 +1,6 @@
 package org.goldenport.util
 
-import java.util.TimeZone
+import java.util.{Date, TimeZone, Locale}
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import org.joda.time._
@@ -15,10 +15,13 @@ import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
  *  version Feb.  3, 2016
  *  version Sep.  4, 2016
  *  version Jan. 20, 2017
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Oct.  3, 2017
  * @author  ASAMI, Tomoharu
  */
 object DateTimeUtils {
+  val gmt = TimeZone.getTimeZone("GMT")
+  val jst = TimeZone.getTimeZone("JST")
   val jodagmt = DateTimeZone.forID("GMT")
   val jodajst = DateTimeZone.forID("Asia/Tokyo")
   val isoFormatter = ISODateTimeFormat.dateTimeNoMillis()
@@ -29,6 +32,12 @@ object DateTimeUtils {
   val basicFormattterJst = basicFormattter.withZone(jodajst)
   val simpleFormatter = DateTimeFormat.forPattern("yyyyMMdd HHmmss").withZoneUTC
   val simpleFormatterJst = simpleFormatter.withZone(jodajst)
+  val httpDateTimeFormat = {
+    // http://candrews.integralblue.com/2009/02/http-caching-header-aware-servlet-filter/
+    val sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US)
+    sdf.setTimeZone(gmt)
+    sdf
+  }
 
   def toIsoDateTimeString(dt: DateTime, tz: DateTimeZone): String = {
     toIsoDateTimeString(dt.getMillis, tz)
@@ -235,4 +244,20 @@ object DateTimeUtils {
    */
   def asPreviousMonth(dt: DateTime): Int = dt.minusMonths(1).getMonthOfYear
   def asPreviousDay(dt: DateTime): Int = dt.minusDays(1).getDayOfMonth
+
+  /*
+   * HTTP
+   */
+  def httpDateTimeString(ts: Long): String = {
+    httpDateTimeString(new Date(ts))
+  }
+
+  def httpDateTimeString(date: Date): String = {
+    httpDateTimeFormat.format(date)
+  }
+
+  def httpDateTimeString(dt: DateTime): String = {
+    httpDateTimeFormat.format(dt.getMillis)
+  }
 }
+

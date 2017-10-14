@@ -1,5 +1,6 @@
 package org.goldenport.json
 
+import scala.concurrent.duration._
 import java.net.{URL, URI}
 import java.sql.Timestamp
 import org.joda.time.DateTime
@@ -17,7 +18,8 @@ import org.goldenport.util._
  *  version Jan. 27, 2016
  *  version Apr.  4, 2017
  *  version Aug. 29, 2017
- * @version Sep.  2, 2017
+ *  version Sep.  2, 2017
+ * @version Oct. 10, 2017
  * @author  ASAMI, Tomoharu
  */
 object JsonUtils {
@@ -73,6 +75,20 @@ object JsonUtils {
     Map.empty ++ a
   }
 
+  def toMapS(j: JsValue): Map[String, Any] = {
+    j match {
+      case o: JsObject => toMapS(o)
+      case _ => throw new IllegalArgumentException(s"No JsObject = $j")
+    }
+  }
+
+  def toMapS(j: JsObject): Map[String, Any] = {
+    val a = j.value flatMap {
+      case (k, v) => getValueS(v).map(x => k -> x)
+    }
+    Map.empty ++ a
+  }
+
   def toSeq(j: JsValue): Seq[JsValue] = {
     j match {
       case _: JsUndefined => Nil
@@ -99,6 +115,16 @@ object JsonUtils {
     case JsString(x) => Some(x)
     case x: JsObject => Some(toMap(x))
     case JsArray(xs) => Some(xs.flatMap(getValue))
+  }
+
+  def getValueS(j: JsValue): Option[Any] = j match {
+    case _: JsUndefined => None
+    case JsNull => None
+    case JsBoolean(x) => Some(x)
+    case JsNumber(x) => Some(x)
+    case JsString(x) => Some(x)
+    case x: JsObject => Some(toMapS(x))
+    case JsArray(xs) => Some(xs.flatMap(getValueS))
   }
 
   def seq2json(seq: Seq[(String, Any)]): String = {
@@ -256,6 +282,41 @@ object JsonUtils {
     }
   }
 
+  def parseDuration(s: String): FiniteDuration = AnyUtils.toFiniteDuration(s)
+
+  def anyToJsValue(p: Any): JsValue = p match {
+    case null => JsNull
+    case None => JsNull
+    case Some(x) => anyToJsValue(x)
+    case x: String => JsString(x)
+    case x: Boolean => JsBoolean(x)
+    case x: Byte => JsNumber(x)
+    case x: Short => JsNumber(x)
+    case x: Int => JsNumber(x)
+    case x: Long => JsNumber(x)
+    case x: Float => JsNumber(x)
+    case x: Double => JsNumber(x)
+    case x: BigInt => JsNumber(BigDecimal(x))
+    case x: BigDecimal => JsNumber(x)
+    case x: java.sql.Timestamp => JsString(DateTimeUtils.toIsoDateTimeStringJst(x))
+    case x: java.sql.Date => JsString(DateUtils.toIsoDateString(x))
+    case x: java.util.Date => JsString(DateUtils.toIsoDateString(x))
+    case x: DateTime => JsString(DateTimeUtils.toIsoDateTimeStringJst(x))
+    case x: java.math.BigInteger => JsNumber(BigDecimal(x.toString))
+//    case x: Record => toJsValue(x) // TODO IJsonStringable
+//    case x: RecordSet => toJsValue(x)
+    case xs: Seq[_] => JsArray(xs.map(anyToJsValue))
+    case x: JsValue => x
+    case x => JsString(x.toString)
+  }
+
+  def messageI18N(p: JsError): I18NString = {
+    val a = p.errors.map {
+      case (k, v) => s"""$k:${v.map(_.message).mkString("|")}"""
+    }.mkString(";")
+    I18NString(a)
+  }
+
   class ValueFormat[T](fromf: String => T, tof: T => String) extends Format[T] {
     def reads(json: JsValue): JsResult[T] = {
       json match {
@@ -271,8 +332,33 @@ object JsonUtils {
   }
 
   object Implicits {
+    implicit object MapSymbolAnyFormat extends Format[Map[Symbol, Any]] {
+      def reads(json: JsValue): JsResult[Map[Symbol, Any]] = json match {
+        case m: JsObject => JsSuccess(toMap(m))
+        case _ => JsError(s"Invalid StringMap($json)")
+      }
+      def writes(o: Map[Symbol, Any]): JsValue = JsObject(
+        o.map {
+          case (k, v) => k.name -> anyToJsValue(v)
+        }.toList
+      )
+    }
+    implicit object MapStringAnyFormat extends Format[Map[String, Any]] {
+      def reads(json: JsValue): JsResult[Map[String, Any]] = json match {
+        case m: JsObject => JsSuccess(toMapS(m))
+        case _ => JsError(s"Invalid StringMap($json)")
+      }
+      def writes(o: Map[String, Any]): JsValue = JsObject(
+        o.map {
+          case (k, v) => k -> anyToJsValue(v)
+        }.toList
+      )
+    }
     implicit val UrlFormat = new ValueFormat[URL](new URL(_), _.toString)
     implicit val UriFormat = new ValueFormat[URI](new URI(_), _.toString)
+    implicit val FinitDurationFormat = new ValueFormat[FiniteDuration](
+      parseDuration, _.toString
+    )
     implicit val I18NStringFormat = new ValueFormat[I18NString](
       I18NString.parse, _.toJsonString
     )

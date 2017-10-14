@@ -1,10 +1,10 @@
-package org.goldenport.util
+package org.goldenport.io
 
 import java.net.URI
 
 /**
  * @since   Sep. 24, 2012
- * @version Sep. 24, 2012
+ * @version Oct.  6, 2017
  * @author  ASAMI, Tomoharu
  */
 case class UriAux(

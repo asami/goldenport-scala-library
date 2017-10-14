@@ -1,9 +1,11 @@
 package org.goldenport.util
 
+import scala.concurrent.duration._
 import java.util.Date
 import java.sql.Timestamp
 import java.io.File
 import java.net.{URL, URI}
+import java.util.concurrent.TimeUnit
 import com.asamioffice.goldenport.io.UURL
 
 /*
@@ -14,7 +16,8 @@ import com.asamioffice.goldenport.io.UURL
  *  version Apr. 29, 2016
  *  version Apr. 27, 2017
  *  version Aug. 29, 2017
- * @version Sep.  4, 2017
+ *  version Sep.  4, 2017
+ * @version Oct.  9, 2017
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -117,6 +120,11 @@ object AnyUtils {
       case v: Long => new Date(v)
       case s: String => DateUtils.parse(s)
     }
+  }
+  def toFiniteDuration(x: Any): FiniteDuration = x match {
+    case m: FiniteDuration => m
+    case m: Long => FiniteDuration(m, TimeUnit.MILLISECONDS)
+    case m: String => toFiniteDuration(m.toLong) // TODO
   }
   def toUrl(x: Any): URL = {
     x match {

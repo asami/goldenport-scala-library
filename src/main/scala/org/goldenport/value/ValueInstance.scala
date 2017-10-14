@@ -1,10 +1,13 @@
 package org.goldenport.value
 
+import org.goldenport.util.StringUtils
+
 /*
  * @since   Jan. 22, 2017
  *  version Feb. 10, 2017
  *  version Jul. 12, 2017
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Oct. 14, 2017
  * @author  ASAMI, Tomoharu
  */
 trait ValueInstance {
@@ -15,6 +18,11 @@ trait ValueInstance {
 trait NamedValueInstance extends ValueInstance {
   def name: String
   def value_string = name
+}
+
+trait ClassNamedValueInstance extends NamedValueInstance {
+  def name: String = StringUtils.classNameToHypenName(name_Suffix, this)
+  protected def name_Suffix: String
 }
 
 trait ValueClass[T <: ValueInstance] {

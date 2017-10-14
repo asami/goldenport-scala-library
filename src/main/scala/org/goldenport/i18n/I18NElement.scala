@@ -3,11 +3,12 @@ package org.goldenport.i18n
 import scalaz.{Node =>_, _} , Scalaz._
 import java.util.{Locale, ResourceBundle}
 import scala.xml._
-import org.goldenport.util.XmlUtils
+import org.goldenport.xml.XmlUtils
 
 /*
  * @since   Aug. 13, 2017
- * @version Sep. 11, 2017
+ *  version Sep. 11, 2017
+ * @version Oct. 12, 2017
  * @author  ASAMI, Tomoharu
  */
 case class I18NElement(v: I18NString) {

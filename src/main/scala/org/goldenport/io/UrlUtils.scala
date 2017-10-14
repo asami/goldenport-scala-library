@@ -1,12 +1,14 @@
-package org.goldenport.util
+package org.goldenport.io
 
 import scala.util.control.NonFatal
 import java.net.URL
 import com.asamioffice.goldenport.io.UURL
+import org.goldenport.util.StringUtils
 
 /*
  * @since   Jul. 24, 2017
- * @version Aug. 30, 2017
+ *  version Aug. 30, 2017
+ * @version Oct.  6, 2017
  * @author  ASAMI, Tomoharu
  */
 object UrlUtils {

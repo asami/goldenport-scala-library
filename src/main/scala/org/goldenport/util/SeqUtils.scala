@@ -8,7 +8,8 @@ import scala.collection.mutable.Builder
 /*
  * @since   Feb. 17, 2016
  *  version Mar. 24, 2017
- * @version Sep. 15, 2017
+ *  version Sep. 15, 2017
+ * @version Oct. 13, 2017
  * @author  ASAMI, Tomoharu
  */
 object SeqUtils {
@@ -118,4 +119,23 @@ object SeqUtils {
     val (ls, cs, rs) = split3V(p)(ps)
     (ls.toList, cs.toList, rs.toList)
   }
+
+  def mkStringOption(ps: Seq[String], delimiter: String): Option[String] =
+    if (ps.isEmpty)
+      None
+    else
+      Some(ps.mkString(delimiter))
+
+  def mkStringOption(ps: Option[Seq[String]], delimiter: String): Option[String] =
+    ps.flatMap(mkStringOption(_, delimiter))
+
+  def buildTupleVector[T](fixed: Seq[(String, T)], options: Seq[(String, Option[T])]): Vector[(String, T)] = {
+    fixed.toVector ++ buildTupleVector(options)
+  }
+
+  def buildTupleVector[T](options: Seq[(String, Option[T])]): Vector[(String, T)] =
+    options.toVector.flatMap {
+      case (k, Some(v)) => Some(k -> v)
+      case (_, None) => None
+    }
 }

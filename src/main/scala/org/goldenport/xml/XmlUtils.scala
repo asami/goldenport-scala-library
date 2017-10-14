@@ -5,11 +5,13 @@ import scala.util.control.NonFatal
 import scala.annotation.tailrec
 import scala.xml._
 import org.goldenport.Strings
+import org.goldenport.util.AnyUtils
 
 /*
  * @since   May. 25, 2014
  *  version Jun. 25, 2014
- * @version Aug. 30, 2017
+ *  version Aug. 30, 2017
+ * @version Oct. 13, 2017
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
@@ -36,6 +38,8 @@ object XmlUtils {
   } catch {
     case NonFatal(e) => p
   }
+
+  def toString(nodes: Seq[Node]): String = nodes.map(_.text).mkString
 
   def asString(node: Node): String = {
     node match {
@@ -122,6 +126,13 @@ object XmlUtils {
     case xs => false
   }
 
+  def getAttribute(elem: Elem, key: String, default: String): String = getAttribute(elem.attributes, key).getOrElse(default)
+
+  def getAttribute(elem: Elem, key: String): Option[String] = getAttribute(elem.attributes, key)
+
+  def getAttribute(attrs: MetaData, key: String): Option[String] =
+    Option(attrs(key)).map(_.map(_.text).mkString)
+
   def setAttribute(elem: Elem, key: String, value: Option[String]): Elem =
     setOrRemoveAttribute(elem, key, value)
 
@@ -170,39 +181,62 @@ object XmlUtils {
   def removeAttribute(attrs: MetaData, key: String): MetaData =
     attrs.remove(key)
 
-    def toSummary(s: String): String =
-    if (Strings.blankp(s)) "" else {
-      import org.cyberneko.html.parsers.DOMParser
-      import org.xml.sax.InputSource
-      import java.io.StringReader
-      val parser = new DOMParser()
-      val is = new InputSource(new StringReader(s))
-      parser.parse(is)
-      val dom = parser.getDocument()
-      val text = _distill_text_dom(dom.getDocumentElement)
-      Strings.cutstring(text, 200)
-    }
+  def nodeSeqToNodeList(ps: NodeSeq): List[Node] = ps match {
+    case Group(ms) => ms.toList
+    case m: Node => List(m)
+    case m => m.toList
+  }
 
-  private def _distill_text_dom(elem: org.w3c.dom.Element): String = {
-    val builder = new StringBuilder
-    val a = elem.getElementsByTagName("body")
-    if (a.getLength() == 0) {
-      _distill_text(a.item(0), builder)
+  def seqOfNodeSeqToSeqOfNode(p: Seq[NodeSeq]): Seq[Node] = p.flatMap {
+    case Group(ms) => seqOfNodeSeqToSeqOfNode(ms)
+    case m: Node => List(m)
+    case m => seqOfNodeSeqToSeqOfNode(m.toList)
+  }
+
+  def concat(lhs: NodeSeq, rhs: NodeSeq): NodeSeq = {
+    val a = nodeSeqToNodeList(lhs) ::: nodeSeqToNodeList(rhs)
+    a match {
+      case Nil => Group(Nil)
+      case x :: Nil => x
+      case xs => Group(xs)
+    }
+  }
+
+  def nodesToNode(ps: Seq[Node]): Node = nodesToNodeOption(ps).getOrElse(Group(Nil))
+
+  def nodesToNodeOption(ps: Seq[Node]): Option[Node] = {
+    def flatten(xs: List[Node]): List[Node] = xs.flatMap {
+      case Group(gs) => gs.flatMap(nodesToNodeOption)
+      case m => Some(m)
+    }
+    val a = flatten(ps.toList)
+    a match {
+      case Nil => None
+      case x :: Nil => Some(x)
+      case xs => Some(Group(xs))
+    }
+  }
+
+  def attributes(attrs: Seq[(String, Any)]): MetaData = attrs.toList match {
+    case Nil => Null
+    case x :: xs => attributes(x, attributes(xs))
+  }
+
+  def attributes(p: (String, Any), next: MetaData): MetaData = {
+    val (name, value) = p
+    val v = AnyUtils.toString(value) // TODO
+    val i = name.indexOf(':')
+    if (i == -1) {
+      new UnprefixedAttribute(name, v, next)
     } else {
-      _distill_text(elem, builder)
+      val prefix = name.substring(0, i)
+      val label = name.substring(i + 1)
+      new PrefixedAttribute(prefix, label, v, next)
     }
-    builder.toString
   }
 
-  private def _distill_text(n: org.w3c.dom.Node, builder: StringBuilder) {
-    n match {
-      case t: org.w3c.dom.Text => builder.append(t.getWholeText)
-      case _ => {
-        val xs = n.getChildNodes()
-        for (i <- 0 until xs.getLength) {
-          _distill_text(xs.item(i), builder)
-        }
-      }
-    }
-  }
+  def element(name: String, attrs: Seq[(String, Any)], children: Seq[Node]): Elem =
+    Elem(null, name, attributes(attrs), TopScope, false, children: _*)
+
+  def toSummary(s: String): String = dom.DomUtils.toSummary(s)
 }

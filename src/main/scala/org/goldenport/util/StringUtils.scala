@@ -20,7 +20,7 @@ import com.asamioffice.goldenport.text.{UString, UPathString}
  *  version Feb. 24, 2017
  *  version Jul. 29, 2017
  *  version Aug. 29, 2017
- * @version Sep. 21, 2017
+ * @version Sep. 28, 2017
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -75,6 +75,8 @@ object StringUtils {
   def toSuffix(s: String): String = UPathString.getSuffix(s)
 
   def getSuffix(s: String): Option[String] = Option(UPathString.getSuffix(s))
+
+  def toPathnameBody(s: String): String = UPathString.getPathnameBody(s)
 
   def dimString(s: String, length: Int = 1000): String = {
     val postfix = "..."
