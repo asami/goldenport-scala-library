@@ -3,13 +3,19 @@ package org.goldenport.xml
 import scala.xml._
 import java.net.URI
 import com.asamioffice.goldenport.text.UString
+import dom.DomUtils
 
 /*
  * @since   Aug. 13, 2017
- * @version Aug. 30, 2017
+ *  version Aug. 30, 2017
+ * @version Oct. 25, 2017
  * @author  ASAMI, Tomoharu
  */
 object XhtmlUtils {
+  def parseNode(p: String): Node = DomUtils.toXml(DomUtils.parseHtml(p))
+
+  def parseFragmentNode(p: String): Node = DomUtils.toXml(DomUtils.parseHtmlFragment(p))
+
   def anchorOrImgOrTextOrNodeOrEmpty(node: Option[NodeSeq], image: Option[URI], url: Option[URI]): NodeSeq =
     node.map(anchorOrImgOrTextOrNode(_, image, url)).getOrElse(Group(anchorOrImgOrEmpty(image, url)))
 

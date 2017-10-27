@@ -11,7 +11,7 @@ import org.goldenport.util.AnyUtils
  * @since   May. 25, 2014
  *  version Jun. 25, 2014
  *  version Aug. 30, 2017
- * @version Oct. 13, 2017
+ * @version Oct. 17, 2017
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
@@ -234,6 +234,9 @@ object XmlUtils {
       new PrefixedAttribute(prefix, label, v, next)
     }
   }
+
+  def element(name: String, attrs: Seq[(String, Any)]): Elem =
+    element(name, attrs, Nil)
 
   def element(name: String, attrs: Seq[(String, Any)], children: Seq[Node]): Elem =
     Elem(null, name, attributes(attrs), TopScope, false, children: _*)

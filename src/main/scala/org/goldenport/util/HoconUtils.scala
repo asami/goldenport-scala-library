@@ -16,7 +16,8 @@ import org.goldenport.i18n.{I18NString, I18NElement}
  *
  * @since   Nov. 17, 2016
  *  version Jun. 23, 2017
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Oct. 27, 2017
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -76,9 +77,15 @@ object HoconUtils {
 
   def getStringList(config: Config, key: String): Option[List[String]] =
     if (config.hasPath(key))
-      Some(config.getStringList(key).asScala.toList.flatMap(Strings.totokens))
+      Some(_get_string_list(config, key))
     else
       None
+
+  private def _get_string_list(config: Config, key: String): List[String] = try {
+    config.getStringList(key).asScala.toList
+  } catch {
+    case NonFatal(e) => Strings.totokens(config.getString(key))
+  }
 
   def getEagerStringList(config: Config, key: String): Option[List[String]] =
     if (config.hasPath(key))
@@ -114,6 +121,9 @@ object HoconUtils {
     else
       None
 
+  def getUriList(config: Config, key: String): Option[List[URI]] =
+    getStringList(config, key).map(_.map(new URI(_)))
+
   def getI18NString(config: Config, key: String): Option[I18NString] =
     if (config.hasPath(key))
       Some(takeI18NString(config, key))
@@ -144,6 +154,7 @@ object HoconUtils {
     def getNonEmptyListStringOption(key: String) = HoconUtils.getNonEmptyListString(config, key)
     def getEagerNonEmptyListStringOption(key: String) = HoconUtils.getEagerNonEmptyListString(config, key)
     def getUriOption(key: String) = HoconUtils.getUri(config, key)
+    def getUriListOption(key: String) = HoconUtils.getUriList(config, key)
     def getI18NStringOption(key: String) = HoconUtils.getI18NString(config, key)
     def getI18NElementOption(key: String) = HoconUtils.getI18NElement(config, key)
   }
