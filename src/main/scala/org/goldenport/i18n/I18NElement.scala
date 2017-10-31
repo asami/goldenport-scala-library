@@ -8,7 +8,7 @@ import org.goldenport.xml.XmlUtils
 /*
  * @since   Aug. 13, 2017
  *  version Sep. 11, 2017
- * @version Oct. 17, 2017
+ * @version Oct. 30, 2017
  * @author  ASAMI, Tomoharu
  */
 case class I18NElement(v: I18NString) {
@@ -35,6 +35,8 @@ object I18NElement {
   def apply(en: String): I18NElement = I18NElement(I18NString(en))
 
   def apply(en: String, ja: String): I18NElement = I18NElement(I18NString(en, ja))
+
+  def apply(p: NodeSeq): I18NElement = I18NElement(p.toString)
 
   private def parseNodeSeq(p: String): NodeSeq = XmlUtils.parseNodeSeq(p)
   private def makeString(p: String): String = XmlUtils.makeString(p)

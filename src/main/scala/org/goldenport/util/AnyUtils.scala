@@ -1,6 +1,7 @@
 package org.goldenport.util
 
 import scala.concurrent.duration._
+import scala.xml.NodeSeq
 import java.util.Date
 import java.sql.Timestamp
 import java.io.File
@@ -17,7 +18,7 @@ import com.asamioffice.goldenport.io.UURL
  *  version Apr. 27, 2017
  *  version Aug. 29, 2017
  *  version Sep.  4, 2017
- * @version Oct.  9, 2017
+ * @version Oct. 31, 2017
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -25,6 +26,7 @@ object AnyUtils {
     x match {
       case v: Timestamp => DateTimeUtils.toIsoDateTimeStringJst(v)
       case v: Symbol => v.name
+      case m: NodeSeq => m.toString
       case m: Seq[_] => m.map(toString(_)).mkString(",")
       case m: Array[_] => m.map(toString(_)).mkString(",")
       case _ => x.toString

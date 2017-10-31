@@ -1,5 +1,6 @@
 package org.goldenport.json
 
+import scala.xml._
 import scala.concurrent.duration._
 import java.net.{URL, URI}
 import java.sql.Timestamp
@@ -19,7 +20,7 @@ import org.goldenport.util._
  *  version Apr.  4, 2017
  *  version Aug. 29, 2017
  *  version Sep.  2, 2017
- * @version Oct. 10, 2017
+ * @version Oct. 29, 2017
  * @author  ASAMI, Tomoharu
  */
 object JsonUtils {
@@ -359,6 +360,13 @@ object JsonUtils {
     implicit val FinitDurationFormat = new ValueFormat[FiniteDuration](
       parseDuration, _.toString
     )
+    implicit object NodeSeqFormat extends Format[NodeSeq] {
+      def reads(json: JsValue): JsResult[NodeSeq] = json match {
+        case JsString(x) => JsSuccess(XML.load(x))
+        case _ => JsError(s"Invalid Xml($json)")
+      }
+      def writes(o: NodeSeq): JsValue = JsString(o.toString)
+    }
     implicit val I18NStringFormat = new ValueFormat[I18NString](
       I18NString.parse, _.toJsonString
     )

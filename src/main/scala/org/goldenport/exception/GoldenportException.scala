@@ -2,7 +2,8 @@ package org.goldenport.exception
 
 /*
  * @snice   Aug. 30, 2017
- * @version Aug. 30, 2017
+ *  version Aug. 30, 2017
+ * @version Oct. 29, 2017
  * @author  ASAMI, Tomoharu
  */
 abstract class GoldenportException(
@@ -25,3 +26,7 @@ class NotImplementedYetDefectException(
 class MissingPropertyFaultException(
   name: String
 ) extends GoldenportException(name)
+
+class SyntaxErrorFaultException(
+  message: String
+) extends GoldenportException(message)
