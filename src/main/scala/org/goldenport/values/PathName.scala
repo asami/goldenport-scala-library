@@ -1,6 +1,7 @@
 package org.goldenport.values
 
 import org.goldenport.Strings
+import org.goldenport.util.StringUtils
 
 /*
  * See org.goldenport.wpath.WPath
@@ -11,7 +12,8 @@ import org.goldenport.Strings
  *  version Apr. 16, 2017
  *  version May. 18, 2017
  *  version Jul. 25, 2017
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Nov.  6, 2017
  * @author  ASAMI, Tomoharu
  */
 case class PathName(v: String) {
@@ -20,11 +22,17 @@ case class PathName(v: String) {
   lazy val components: List[String] = Strings.totokens(v, "/")
   lazy val firstComponent: String = components.headOption.getOrElse("")
   lazy val lastConcreteComponent: String = {
-    components.reverse.filterNot(_.contains("{")) match {
+    components.reverse.filterNot(_.contains("{")) match { // XXX "{"
       case Nil => ""
       case x :: _ => x
     }
   }
+  lazy val getParent: Option[PathName] =
+    if (isBase)
+      None
+    else
+      Some(PathName(components.init))
+  def isBase: Boolean = v == "" || v == "/"
   def isAbsolute: Boolean = v.startsWith("/")
 
   def isAccept(p: List[String]): Boolean = {
@@ -40,7 +48,7 @@ case class PathName(v: String) {
   def isResource(p: String): Boolean = firstComponent == p
   def isOperation(p: String): Boolean = firstComponent == p
 
-  def +(p: String): PathName = PathName(v = s"v/$p")
+  def +(p: String): PathName = PathName(StringUtils.concatPath(v, p))
 
   def replaceFirst(p: String): PathName = {
     val a = components match {
@@ -52,4 +60,14 @@ case class PathName(v: String) {
     else
       PathName(a.mkString("/"))
   }
+
+  def body = StringUtils.toPathnameBody(v)
+  def getSuffix: Option[String] = StringUtils.getSuffix(v)
+}
+
+object PathName {
+  val home = PathName("")
+
+  def apply(ps: List[String]): PathName = PathName(StringUtils.concatPath(ps))
+  def apply(p: String, pp: String, ps: String*): PathName = apply(p :: pp :: ps.toList)
 }

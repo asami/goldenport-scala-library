@@ -9,7 +9,8 @@ import scala.collection.mutable.Builder
  * @since   Feb. 17, 2016
  *  version Mar. 24, 2017
  *  version Sep. 15, 2017
- * @version Oct. 13, 2017
+ *  version Oct. 13, 2017
+ * @version Nov.  1, 2017
  * @author  ASAMI, Tomoharu
  */
 object SeqUtils {
@@ -132,6 +133,9 @@ object SeqUtils {
   def buildTupleVector[T](fixed: Seq[(String, T)], options: Seq[(String, Option[T])]): Vector[(String, T)] = {
     fixed.toVector ++ buildTupleVector(options)
   }
+
+  def buildTupleVector[T](p: (String, Option[T]), ps: (String, Option[T])*): Vector[(String, T)] =
+    buildTupleVector(p +: ps)
 
   def buildTupleVector[T](options: Seq[(String, Option[T])]): Vector[(String, T)] =
     options.toVector.flatMap {
