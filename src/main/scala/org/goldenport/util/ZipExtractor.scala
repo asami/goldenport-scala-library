@@ -6,13 +6,16 @@ import java.net.URL
 import java.util.zip.{ZipInputStream, ZipEntry}
 
 /*
- * @since   Jul. 29, 2017
- *  version Aug. 29, 2017
+ * @since   Nov.  6, 2017
  * @version Nov.  6, 2017
  * @author  ASAMI, Tomoharu
  */
-object ZipUtils {
-  def extract(dest: File, url: URL) {
+case class ZipExtractor(
+  isFileMaxSizeCheck: Boolean = true,
+  fileMaxSize: Int = 1024 * 1024 * 16, // 16M
+  bufferSize: Int = 8192
+) {
+  def apply(dest: File, url: URL) {
     for (in <- resource.managed(url.openStream())) {
       val zis = new ZipInputStream(new BufferedInputStream(in))
       var entry = zis.getNextEntry()
@@ -31,16 +34,14 @@ object ZipUtils {
   }
 
   private def _output_file(homedir: File, zis: ZipInputStream, entry: ZipEntry) {
-    val buffersize = 8192
-    val filemaxsize = 1024 * 1024 * 16; // 16M
-    val maxchunk = filemaxsize / buffersize
-    val buf = new Array[Byte](buffersize)
+    val maxchunk = fileMaxSize / bufferSize
+    val buf = new Array[Byte](bufferSize)
     val entryname = entry.getName
     val file = new File(homedir, entryname)
     for (out <- resource.managed(new FileOutputStream(file))) {
-      val iter = Iterator.continually(zis.read(buf, 0, buffersize)).takeWhile(_ != -1)
+      val iter = Iterator.continually(zis.read(buf, 0, bufferSize)).takeWhile(_ != -1)
       for ((c, i) <- iter.zipWithIndex) {
-        if (i > maxchunk)
+        if (isFileMaxSizeCheck && i > maxchunk)
           throw new IllegalStateException(s"File in zip is too large: $entryname")
         out.write(buf, 0, c)
       }
@@ -52,4 +53,8 @@ object ZipUtils {
     val dir = new File(homedir, entryname)
     dir.mkdirs
   }
+}
+
+object ZipExtractor {
+  lazy val noFileMaxSizeCheck = ZipExtractor(false)
 }

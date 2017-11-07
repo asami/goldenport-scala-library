@@ -3,11 +3,12 @@ package org.goldenport.bag
 import java.io.File
 import java.net.URL
 import org.goldenport.values.Version
-import org.goldenport.util.{StringUtils, ZipUtils}
+import org.goldenport.util.{StringUtils, ZipExtractor}
 
 /*
  * @since   Jul. 29, 2017
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Nov.  6, 2017
  * @author  ASAMI, Tomoharu
  */
 class ProjectVersionDirectoryBag(
@@ -21,15 +22,19 @@ class ProjectVersionDirectoryBag(
 object ProjectVersionDirectoryBag {
   def createFromZip(baseDirectory: File, url: URL): ProjectVersionDirectoryBag = {
     val (appname, version) = takeApplicationVersion(url)
-    val isvolatile = version.fold(false)(_.isVolatile)
-    val dirname = if (isvolatile)
-      s"$appname-$version-${System.currentTimeMillis}"
-    else
-      s"$appname-$version"
+    val dirname = version.fold {
+      s"$appname"
+    } { v =>
+      val isvolatile = version.fold(false)(_.isVolatile)
+      if (isvolatile)
+        s"$appname-$v-${System.currentTimeMillis}"
+      else
+        s"$appname-$v"
+    }
     val home = new File(baseDirectory, dirname)
     if (!home.exists) {
       home.mkdirs
-      ZipUtils.extract(home, url)
+      ZipExtractor.noFileMaxSizeCheck(home, url)
     }
     new ProjectVersionDirectoryBag(baseDirectory, home, appname, version)
   }
