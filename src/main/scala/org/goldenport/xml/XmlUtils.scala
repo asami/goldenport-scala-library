@@ -11,7 +11,8 @@ import org.goldenport.util.AnyUtils
  * @since   May. 25, 2014
  *  version Jun. 25, 2014
  *  version Aug. 30, 2017
- * @version Oct. 17, 2017
+ *  version Oct. 17, 2017
+ * @version Nov.  8, 2017
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
@@ -242,4 +243,59 @@ object XmlUtils {
     Elem(null, name, attributes(attrs), TopScope, false, children: _*)
 
   def toSummary(s: String): String = dom.DomUtils.toSummary(s)
+
+  def adjustEmptyDiv(p: Elem): Elem = 
+    if (isEmptyAttributeDiv(p)) {
+      p.child.toList match {
+        case Nil => p
+        case x :: Nil => x match {
+          case m: Elem => adjustEmptyDiv(m)
+          case _ => p
+        }
+        case _ =>
+          val a = p.child.toList.flatMap(_adjust_empty_div_node)
+          p.copy(child = a)
+      }
+    } else {
+      p.copy(child = p.child.toList.flatMap(_adjust_empty_div_node))
+    }
+
+  def adjustEmptyDivNode(p: Node): Node = p match {
+    case Group(ms) => Group(ms.map(adjustEmptyDivNode))
+    case m: Elem => adjustEmptyDiv(m)
+    case m => m
+  }
+
+  private def _adjust_empty_div(p: Elem): Option[Node] =
+    if (isEmptyAttributeDiv(p)) {
+      p.child.toList match {
+        case Nil => None
+        case x :: Nil => x match {
+          case m: Elem => _adjust_empty_div(m)
+          case _ => Some(p)
+        }
+        case _ => p.child.flatMap(_adjust_empty_div_node).toList match {
+          case Nil => None
+          case xs => Some(Group(xs))
+        }
+      }
+    } else {
+      Some(p.copy(child = p.child.toList.flatMap(_adjust_empty_div_node)))
+    }
+
+  private def _adjust_empty_div_node(p: Node): Option[Node] = p match {
+    case Group(ms) => ms.flatMap(_adjust_empty_div_node).toList match {
+      case Nil => None
+      case xs => Some(Group(xs))
+    }
+    case m: Elem => _adjust_empty_div(m)
+    case m => Some(m)
+  }
+
+  def isEmptyAttributeDiv(p: Elem): Boolean = {
+    val a = p.label == "div"
+    def b = p.attributes.filterNot(x =>
+      (x.key == "class" || x.key == "style") && XmlUtils.isEmptyValue(x.value)).isEmpty
+    a && b
+  }
 }

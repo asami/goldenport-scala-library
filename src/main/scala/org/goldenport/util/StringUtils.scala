@@ -20,7 +20,8 @@ import com.asamioffice.goldenport.text.{UString, UPathString}
  *  version Feb. 24, 2017
  *  version Jul. 29, 2017
  *  version Aug. 29, 2017
- * @version Sep. 28, 2017
+ *  version Sep. 28, 2017
+ * @version Nov.  8, 2017
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -349,4 +350,43 @@ object StringUtils {
   //     Vector(s)
   //   }
   // }
+
+  // Stack
+  def makeStack(e: Throwable): String = {
+    val StackSize = 4096
+//    val StackSize = 2048
+
+    // hilight a stack part (not exception message)
+    try {
+      val s = new java.io.StringWriter
+      val p = new java.io.PrintWriter(s)
+      e.printStackTrace(p)
+      Strings.cutstring(s.toString, StackSize).replace('\t', ' ') // cut for logging
+    } catch {
+      case NonFatal(e) => "Crash in getting exception information = " + e.getMessage
+    }
+  }
+
+  def makeStackFull(e: Throwable): String = {
+    try {
+      val s = new java.io.StringWriter
+      val p = new java.io.PrintWriter(s)
+      e.printStackTrace(p)
+      s.toString.replace('\t', ' ')
+    } catch {
+      case NonFatal(e) => "Crash in getting exception information = " + e.getMessage
+    }
+  }
+
+  private var _stack_advice_count = 0
+  def makeStackAdvice(e: Throwable): String = {
+    if (_stack_advice_count > 100)
+      "Stack advice count exceeds threshold: " + _stack_advice_count
+    else {
+      val a = makeStack(e)
+      val index = a.indexOf("at ")
+      if (index == -1) a
+      else a.substring(index)
+    }
+  }
 }
