@@ -12,7 +12,7 @@ import org.goldenport.util.AnyUtils
  *  version Jun. 25, 2014
  *  version Aug. 30, 2017
  *  version Oct. 17, 2017
- * @version Nov.  8, 2017
+ * @version Nov. 13, 2017
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
@@ -218,6 +218,14 @@ object XmlUtils {
     }
   }
 
+  def attributes(a: (String, Any), as: Seq[(String, Any)], next: MetaData): MetaData =
+    attributes(a +: as, next)
+
+  def attributes(attrs: Seq[(String, Any)], next: MetaData): MetaData = attrs.toList match {
+    case Nil => next
+    case x :: xs => attributes(x, attributes(xs, next))
+  }
+
   def attributes(attrs: Seq[(String, Any)]): MetaData = attrs.toList match {
     case Nil => Null
     case x :: xs => attributes(x, attributes(xs))
@@ -241,6 +249,9 @@ object XmlUtils {
 
   def element(name: String, attrs: Seq[(String, Any)], children: Seq[Node]): Elem =
     Elem(null, name, attributes(attrs), TopScope, false, children: _*)
+
+  def appendAttributes(elem: Elem, a: (String, Option[String]), as: (String, Option[String])*): Elem =
+    elem.copy(attributes = attributes(a, as, elem.attributes))
 
   def toSummary(s: String): String = dom.DomUtils.toSummary(s)
 

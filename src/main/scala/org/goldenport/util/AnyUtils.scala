@@ -7,6 +7,7 @@ import java.sql.Timestamp
 import java.io.File
 import java.net.{URL, URI}
 import java.util.concurrent.TimeUnit
+import org.joda.time.LocalTime
 import com.asamioffice.goldenport.io.UURL
 
 /*
@@ -18,7 +19,8 @@ import com.asamioffice.goldenport.io.UURL
  *  version Apr. 27, 2017
  *  version Aug. 29, 2017
  *  version Sep.  4, 2017
- * @version Oct. 31, 2017
+ *  version Oct. 31, 2017
+ * @version Nov. 13, 2017
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -121,6 +123,12 @@ object AnyUtils {
       case v: Date => v
       case v: Long => new Date(v)
       case s: String => DateUtils.parse(s)
+    }
+  }
+  def toLocalTime(x: Any): LocalTime = {
+    x match {
+      case v: LocalTime => v
+      case s: String => LocalTime.parse(s)
     }
   }
   def toFiniteDuration(x: Any): FiniteDuration = x match {

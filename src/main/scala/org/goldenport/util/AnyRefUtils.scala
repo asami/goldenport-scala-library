@@ -2,12 +2,14 @@ package org.goldenport.util
 
 import java.util.Date
 import java.sql.Timestamp
+import org.joda.time.LocalTime
 
 /*
  * @since   Jun. 11, 2014
  *  version Apr. 29, 2016
  *  version Feb. 27, 2017
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Nov. 13, 2017
  * @author  ASAMI, Tomoharu
  */
 object AnyRefUtils {
@@ -23,6 +25,7 @@ object AnyRefUtils {
   def toBigDecimal(x: Any): BigDecimal = AnyUtils.toBigDecimal(x)
   def toTimestamp(x: Any): Timestamp = AnyUtils.toTimestamp(x)
   def toDate(x: Any): Date = AnyUtils.toDate(x)
+  def toLocalTime(x: Any): LocalTime = AnyUtils.toLocalTime(x)
   def toAnyRef(x: Any): AnyRef = x match {
     case x: Boolean => x: java.lang.Boolean
     case x: Byte => x: java.lang.Byte
