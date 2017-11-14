@@ -6,7 +6,8 @@ import scala.collection.generic.CanBuildFrom
 
 /*
  * @since   Jun. 25, 2017
- * @version Aug. 30, 2017
+ *  version Aug. 30, 2017
+ * @version Nov. 14, 2017
  * @author  ASAMI, Tomoharu
  */
 object MapUtils {
@@ -62,4 +63,17 @@ object MapUtils {
 
   def complementsT[K, V, M[_, _] <: Map[K, V]](master: M[K, V], auxs: Seq[Map[K, V]])(implicit bf: CanBuildFrom[Map[K, V], (K, V), M[K, V]]): M[K, V] =
     auxs./:(master)(complementT)
+
+  def show[K, V](p: Map[K, V]): String = p.map {
+    case (k, v) => s"$k=$v"
+  }.mkString(",")
+
+  def showString[K, V](pf: PartialFunction[V, String])(p: Map[K, V]): String = {
+    val f = pf.lift
+    p.map {
+      case (k, v) =>
+        val a = f(v) getOrElse v.toString
+        s"$k=$a"
+    }.mkString(",")
+  }
 }

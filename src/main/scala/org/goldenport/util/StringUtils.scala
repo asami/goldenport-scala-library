@@ -2,9 +2,11 @@ package org.goldenport.util
 
 import scalaz.NonEmptyList
 import scala.util.control.NonFatal
+import java.net.{URL, URI}
 import java.net.URLEncoder
-import org.goldenport.Strings
 import com.asamioffice.goldenport.text.{UString, UPathString}
+import org.goldenport.Strings
+import org.goldenport.values.{PathName, Urn}
 
 /*
  * @since   May. 24, 2014
@@ -21,7 +23,7 @@ import com.asamioffice.goldenport.text.{UString, UPathString}
  *  version Jul. 29, 2017
  *  version Aug. 29, 2017
  *  version Sep. 28, 2017
- * @version Nov.  8, 2017
+ * @version Nov. 14, 2017
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -265,6 +267,27 @@ object StringUtils {
   //   addUrlParams(path, params.toVector.map {
   //     case (k, v) => k -> AnyUtils.toString(v)
   //   })
+
+  def shortPathName(p: String): String = shortPathName(PathName(p))
+  def shortPathName(p: PathName): String = p.components match {
+    case Nil => ""
+    case x :: Nil => x
+    case xs => xs.init.map(_.headOption.getOrElse("")).mkString + "/" + xs.last
+  }
+  def shortUri(p: String): String = shortUri(new URI(p))
+  def shortUri(p: URI): String = {
+    val host = Option(p.getHost)
+    val path = Option(p.getPath)
+    val shortpath = path.map(shortPathName)
+    (host, shortpath) match {
+      case (None, None) => ""
+      case (Some(h), None) => h
+      case (None, Some(sp)) => sp
+      case (Some(h), Some(sp)) => s"$h:$sp"
+    }
+  }
+  def shortUrl(p: URL): String = shortUri(p.toURI)
+  def shortUrn(p: Urn): String = p.text
 
   /*
    * Int
