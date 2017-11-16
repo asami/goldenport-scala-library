@@ -5,14 +5,14 @@ import scala.util.control.NonFatal
 import scala.annotation.tailrec
 import scala.xml._
 import org.goldenport.Strings
-import org.goldenport.util.AnyUtils
+import org.goldenport.util.{AnyUtils, SeqUtils}
 
 /*
  * @since   May. 25, 2014
  *  version Jun. 25, 2014
  *  version Aug. 30, 2017
  *  version Oct. 17, 2017
- * @version Nov. 13, 2017
+ * @version Nov. 15, 2017
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
@@ -218,20 +218,23 @@ object XmlUtils {
     }
   }
 
-  def attributes(a: (String, Any), as: Seq[(String, Any)], next: MetaData): MetaData =
+  def attributesOption(a: (String, Option[String]), as: Seq[(String, Option[String])], next: MetaData): MetaData =
+    attributes(SeqUtils.buildTupleVector(a +: as), next)
+
+  def attributes(a: (String, String), as: Seq[(String, String)], next: MetaData): MetaData =
     attributes(a +: as, next)
 
-  def attributes(attrs: Seq[(String, Any)], next: MetaData): MetaData = attrs.toList match {
+  def attributes(attrs: Seq[(String, String)], next: MetaData): MetaData = attrs.toList match {
     case Nil => next
     case x :: xs => attributes(x, attributes(xs, next))
   }
 
-  def attributes(attrs: Seq[(String, Any)]): MetaData = attrs.toList match {
+  def attributes(attrs: Seq[(String, String)]): MetaData = attrs.toList match {
     case Nil => Null
     case x :: xs => attributes(x, attributes(xs))
   }
 
-  def attributes(p: (String, Any), next: MetaData): MetaData = {
+  def attributes(p: (String, String), next: MetaData): MetaData = {
     val (name, value) = p
     val v = AnyUtils.toString(value) // TODO
     val i = name.indexOf(':')
@@ -244,14 +247,14 @@ object XmlUtils {
     }
   }
 
-  def element(name: String, attrs: Seq[(String, Any)]): Elem =
+  def element(name: String, attrs: Seq[(String, String)]): Elem =
     element(name, attrs, Nil)
 
-  def element(name: String, attrs: Seq[(String, Any)], children: Seq[Node]): Elem =
+  def element(name: String, attrs: Seq[(String, String)], children: Seq[Node]): Elem =
     Elem(null, name, attributes(attrs), TopScope, false, children: _*)
 
   def appendAttributes(elem: Elem, a: (String, Option[String]), as: (String, Option[String])*): Elem =
-    elem.copy(attributes = attributes(a, as, elem.attributes))
+    elem.copy(attributes = attributesOption(a, as, elem.attributes))
 
   def toSummary(s: String): String = dom.DomUtils.toSummary(s)
 
