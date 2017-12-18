@@ -23,7 +23,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Jul. 29, 2017
  *  version Aug. 29, 2017
  *  version Sep. 28, 2017
- * @version Nov. 14, 2017
+ *  version Nov. 14, 2017
+ * @version Dec. 17, 2017
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -117,12 +118,16 @@ object StringUtils {
     UPathString.getContainerPathname(path)
   }
 
-  def classNameToHypenName(suffix: String, o: Object): String = {
+  def className(o: Object): String =  {
     val a1 = o.getClass.getSimpleName
-    val a = if (a1.endsWith("$"))
+    if (a1.endsWith("$"))
       a1.substring(0, a1.length - 1)
     else
       a1
+  }
+
+  def classNameToHypenName(suffix: String, o: Object): String = {
+    val a = className(o)
     if (a.endsWith(suffix))
       camelToHyphen(a.substring(0, a.length - suffix.length))
     else
@@ -130,28 +135,6 @@ object StringUtils {
   }
 
   def camelToHyphen(s: String): String = {
-    // case class Z(
-    //   z: Vector[String] = Vector.empty,
-    //   x: Vector[Char] = Vector.empty
-    // ) {
-    //   def apply(rhs: Char) = {
-    //     def apply(rhs: Char) = {
-    //       if (rhs.isUpper && !x.isEmpty)
-    //         InWord(z :+ x.toString, new StringBuilder().append(rhs))
-    //       else
-    //         InWord(z, x.append(rhs))
-    //     }
-    //   }
-
-    //   def result = if (x.isEmpty)
-    //     _build(z)
-    //   else
-    //     _build(z :+ x.mkString)
-
-    //   private def _build(xs: Vector[String]) =
-    //     xs.map(_.toLowerCase).mkString("-")
-    // }
-    // s.foldLeft(Z())(_.apply(_)).result
     s.foldLeft(InitState)(_.apply(_)).result
   }
 

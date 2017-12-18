@@ -17,7 +17,8 @@ import org.goldenport.i18n.{I18NString, I18NElement}
  * @since   Nov. 17, 2016
  *  version Jun. 23, 2017
  *  version Aug. 29, 2017
- * @version Oct. 27, 2017
+ *  version Oct. 27, 2017
+ * @version Dec. 14, 2017
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -38,6 +39,12 @@ object HoconUtils {
 
   def asEagerStringVector(config: Config, key: String): Vector[String] =
     asStringList(config, key).toVector
+
+  def asUrlList(config: Config, key: String): List[URL] =
+    asStringList(config, key).map(new URL(_))
+
+  def asDuration(config: Config, key: String, fallback: FiniteDuration): Duration =
+    getDuration(config, key) getOrElse fallback
 
   def takeUrl(config: Config, key: String): URL =
     new URL(config.getString(key))
@@ -142,6 +149,8 @@ object HoconUtils {
     def asEagerStringList(key: String) = HoconUtils.asEagerStringList(config, key)
     def asStringVector(key: String) = HoconUtils.asStringVector(config, key)
     def asEagerStringVector(key: String) = HoconUtils.asEagerStringVector(config, key)
+    def asUrlList(key: String) = HoconUtils.asUrlList(config, key)
+    def asDuration(key: String, fallback: FiniteDuration) = HoconUtils.asDuration(config, key, fallback)
     def takeI18NString(key: String) = HoconUtils.takeI18NString(config, key)
     def takeI18NElement(key: String) = HoconUtils.takeI18NElement(config, key)
     def getStringOption(key: String) = HoconUtils.getString(config, key)
