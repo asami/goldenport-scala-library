@@ -4,6 +4,7 @@ import scalaz.{Node =>_, _} , Scalaz._
 import scala.util.control.NonFatal
 import scala.annotation.tailrec
 import scala.xml._
+import com.asamioffice.goldenport.xml.UXML
 import org.goldenport.Strings
 import org.goldenport.util.{AnyUtils, SeqUtils}
 
@@ -12,7 +13,8 @@ import org.goldenport.util.{AnyUtils, SeqUtils}
  *  version Jun. 25, 2014
  *  version Aug. 30, 2017
  *  version Oct. 17, 2017
- * @version Nov. 15, 2017
+ *  version Nov. 15, 2017
+ * @version Jan.  5, 2018
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
@@ -312,4 +314,14 @@ object XmlUtils {
       (x.key == "class" || x.key == "style") && XmlUtils.isEmptyValue(x.value)).isEmpty
     a && b
   }
+
+  def escape(s: String) = UXML.escape(s)
+  def escapeEntityQuot(s: String) = UXML.escapeEntityQuot(s)
+  def escapeEntityApos(s: String) = UXML.escapeEntityApos(s)
+  def escapeAttrQuot(s: String) = UXML.escapeAttrQuot(s)
+  def escapeAttrApos(s: String) = UXML.escapeAttrApos(s)
+  def escapeSystemQuot(s: String) = UXML.escapeSystemQuot(s)
+  def escapeSystemApos(s: String) = UXML.escapeSystemApos(s)
+  def escapeCharData(s: String) = UXML.escapeCharData(s)
+  def escapeCharDataCr(s: String) = UXML.escapeCharDataCr(s)
 }

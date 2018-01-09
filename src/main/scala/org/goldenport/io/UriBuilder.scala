@@ -7,7 +7,9 @@ import org.goldenport.util.StringUtils
 
 /*
  * @since   Oct.  6, 2017
- * @version Oct.  6, 2017
+ *  version Oct.  6, 2017
+ *  version Dec. 20, 2017
+ * @version Jan.  4, 2018
  * @author  ASAMI, Tomoharu
  */
 case class UriBuilder(
@@ -29,6 +31,22 @@ case class UriBuilder(
   )
 
   def addPath(p: String): UriBuilder = copy(path = StringUtils.concatPath(path, p))
+
+  def addQuery(q: Seq[(String, String)]): UriBuilder = {
+    val a: String = query.map(b =>
+      if (q.isEmpty)
+        b
+      else
+        s"${b}&${_make_url_query_params(q)}"
+    ).getOrElse(
+      _make_url_query_params(q)
+    )
+    copy(query = Some(a))
+  }
+
+  private def _make_url_query_params(q: Seq[(String, String)]) = q.map {
+    case (k, v) => s"${k}=${v}"
+  }.mkString("&")
 }
 
 object UriBuilder {

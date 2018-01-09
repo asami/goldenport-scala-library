@@ -1,14 +1,15 @@
 package org.goldenport.xml
 
 import scala.util.control.NonFatal
-import scala.annotation.tailrec
 import scala.xml._
 import org.goldenport.Strings
+import org.goldenport.xml.XmlUtils.escape
 import org.goldenport.util.AnyUtils
 
 /*
  * @since   Nov.  2, 2017
- * @version Nov. 15, 2017
+ *  version Nov. 15, 2017
+ * @version Jan.  5, 2018
  * @author  ASAMI, Tomoharu
  */
 class XmlPrinter(
@@ -26,7 +27,7 @@ class XmlPrinter(
   private def p(s: String): Unit = _buffer.append(s)
   private def ps: Unit = _buffer.append(' ')
   private def pl(s: String): Unit = {
-    _buffer.append(s)
+    p(s)
     _buffer.append(_newline)
   }
 
@@ -46,7 +47,7 @@ class XmlPrinter(
   private def _doctype_html: Unit = doctype.foreach(pl)
 
   private def _node_seq(n: NodeSeq): Unit = n match {
-    case Text(s) => p(s)
+    case Text(s) => p(escape(s))
     case m: Elem => _element(m)
     case Group(xs) => xs.foreach(_node_seq(_))
     case m: SpecialNode => p(m.toString)
@@ -78,13 +79,13 @@ class XmlPrinter(
     }
   }
 
-  @tailrec
+  @annotation.tailrec
   private def _attributes(attrs: MetaData): Unit = {
     if (attrs != Null) {
       ps
       p(attrs.key)
       p("=\"")
-      p(attrs.value.map(_.text).mkString)
+      p(escape(attrs.value.map(_.text).mkString))
       p('"')
       _attributes(attrs.next)
     }
