@@ -3,7 +3,8 @@ package org.goldenport.exception
 /*
  * @snice   Aug. 30, 2017
  *  version Aug. 30, 2017
- * @version Oct. 29, 2017
+ *  version Oct. 29, 2017
+ * @version Jan. 12, 2018
  * @author  ASAMI, Tomoharu
  */
 abstract class GoldenportException(
@@ -21,7 +22,11 @@ class NoReachDefectException(
 
 class NotImplementedYetDefectException(
   m: String = null
-) extends GoldenportException(GoldenportException.message(m, "Not Implemented yet"))
+) extends GoldenportException(GoldenportException.message(m, "Not implemented yet"))
+
+class IllegalConfigurationDefectException(
+  m: String = null
+) extends GoldenportException(GoldenportException.message(m, "Illegal configuration"))
 
 class MissingPropertyFaultException(
   name: String

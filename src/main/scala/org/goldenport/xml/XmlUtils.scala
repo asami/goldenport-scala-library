@@ -14,7 +14,7 @@ import org.goldenport.util.{AnyUtils, SeqUtils}
  *  version Aug. 30, 2017
  *  version Oct. 17, 2017
  *  version Nov. 15, 2017
- * @version Jan.  5, 2018
+ * @version Jan. 12, 2018
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
@@ -109,9 +109,12 @@ object XmlUtils {
     (XML.loadString(s) \\ label).headOption.asInstanceOf[Option[Elem]]
   }
 
+  def tagName(p: Elem): String =
+    Option(p.prefix).fold(p.label)(x => s"$x:${p.label}")
+
   @annotation.tailrec
   def isAttribute(attrs: MetaData, key: String): Boolean =
-    if (attrs == null)
+    if (attrs == Null)
       false
     else
       attrs.key == key || isAttribute(attrs.next, key)
@@ -184,6 +187,21 @@ object XmlUtils {
   def removeAttribute(attrs: MetaData, key: String): MetaData =
     attrs.remove(key)
 
+  def attributeList(elem: Elem): List[(String, String)] = attributeVector(elem).toList
+  def attributeList(p: MetaData): List[(String, String)] = attributeVector(p).toList
+
+  def attributeVector(elem: Elem): Vector[(String, String)] = attributeVector(elem.attributes)
+  def attributeVector(p: MetaData): Vector[(String, String)] = {
+    @annotation.tailrec
+    def go(x: MetaData, r: Vector[(String, String)]): Vector[(String, String)] = {
+      if (x == Null || x == null)
+        r
+      else
+        go(p.next, r :+ (x.key -> text(x)))
+    }
+    go(p, Vector.empty)
+  }
+
   def nodeSeqToNodeList(ps: NodeSeq): List[Node] = ps match {
     case Group(ms) => ms.toList
     case m: Node => List(m)
@@ -248,6 +266,9 @@ object XmlUtils {
       new PrefixedAttribute(prefix, label, v, next)
     }
   }
+
+  def text(p: MetaData): String = text(p.value)
+  def text(ps: Seq[Node]): String = ps.map(_.text).mkString
 
   def element(name: String, attrs: Seq[(String, String)]): Elem =
     element(name, attrs, Nil)
@@ -324,4 +345,11 @@ object XmlUtils {
   def escapeSystemApos(s: String) = UXML.escapeSystemApos(s)
   def escapeCharData(s: String) = UXML.escapeCharData(s)
   def escapeCharDataCr(s: String) = UXML.escapeCharDataCr(s)
+
+  def show(p: Elem): String = {
+    val attrs = attributeVector(p).map {
+      case (k, v) => s"${k}=${v}"
+    }.mkString(",")
+    s"""${tagName(p)}(${attrs})"""
+  }
 }

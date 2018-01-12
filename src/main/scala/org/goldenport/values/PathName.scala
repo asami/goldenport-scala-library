@@ -13,7 +13,8 @@ import org.goldenport.util.StringUtils
  *  version May. 18, 2017
  *  version Jul. 25, 2017
  *  version Aug. 29, 2017
- * @version Nov.  6, 2017
+ *  version Nov.  6, 2017
+ * @version Jan. 12, 2018
  * @author  ASAMI, Tomoharu
  */
 case class PathName(v: String) {
@@ -49,6 +50,7 @@ case class PathName(v: String) {
   def isOperation(p: String): Boolean = firstComponent == p
 
   def +(p: String): PathName = PathName(StringUtils.concatPath(v, p))
+  def +:(p: String): PathName = PathName(StringUtils.concatPath(p, v))
 
   def replaceFirst(p: String): PathName = {
     val a = components match {
