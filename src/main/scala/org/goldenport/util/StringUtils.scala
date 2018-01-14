@@ -24,7 +24,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Aug. 29, 2017
  *  version Sep. 28, 2017
  *  version Nov. 14, 2017
- * @version Dec. 17, 2017
+ *  version Dec. 17, 2017
+ * @version Jan. 14, 2018
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -245,6 +246,15 @@ object StringUtils {
     }
     buf.toString
   }
+
+  def urlQuery(key: String, value: String): String = {
+    s"""${URLEncoder.encode(key, "UTF-8")}=${URLEncoder.encode(value, "UTF-8")}"""
+  }
+
+  def urlQueryString(p: Seq[(String, String)]): String =
+    p.map {
+      case (k, v) => urlQuery(k, v)
+    }.mkString("&")
 
   // def addUrlParams(path: String, params: Record): String =
   //   addUrlParams(path, params.toVector.map {

@@ -9,7 +9,7 @@ import org.goldenport.util.StringUtils
  * @since   Oct.  6, 2017
  *  version Oct.  6, 2017
  *  version Dec. 20, 2017
- * @version Jan.  4, 2018
+ * @version Jan. 14, 2018
  * @author  ASAMI, Tomoharu
  */
 case class UriBuilder(
@@ -44,9 +44,8 @@ case class UriBuilder(
     copy(query = Some(a))
   }
 
-  private def _make_url_query_params(q: Seq[(String, String)]) = q.map {
-    case (k, v) => s"${k}=${v}"
-  }.mkString("&")
+  private def _make_url_query_params(q: Seq[(String, String)]) =
+    StringUtils.urlQueryString(q)
 }
 
 object UriBuilder {
@@ -58,4 +57,24 @@ object UriBuilder {
     val fragment = Option(uri.getFragment)
     UriBuilder(scheme, authority, path, query, fragment)
   }
+
+  def byPath(path: String): UriBuilder = UriBuilder(
+    None,
+    None,
+    path,
+    None,
+    None
+  )
+
+  def byPathQuery(path: String, query: Seq[(String, String)]): UriBuilder =
+    UriBuilder(
+      None,
+      None,
+      path,
+      None,
+      None
+    )
+
+  def buildByPathQuery(path: String, query: Seq[(String, String)]): URI =
+    byPathQuery(path, query).build
 }
