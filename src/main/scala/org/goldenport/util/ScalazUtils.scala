@@ -8,7 +8,8 @@ import scalaz._, Scalaz._
  *  version Sep. 22, 2016
  *  version Oct. 19, 2016
  *  version Jul. 25, 2017
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Jan. 20, 2018
  * @author  ASAMI, Tomoharu
  */
 object ScalazUtils {
@@ -71,4 +72,13 @@ object ScalazUtils {
     Tree.node(tree.rootLabel, tree.subForest.flatMap(x =>
       if (f(x.rootLabel)) None else Some(excludeChildren(f)(x))
     ))
+
+  def leafIterator[T](p: Tree[T]): Iterator[T] = {
+    if (isLeaf(p))
+      Iterator(p.rootLabel)
+    else
+      p.subForest.flatMap(leafIterator).toIterator
+  }
+
+  def isLeaf[T](p: Tree[T]): Boolean = p.subForest.isEmpty
 }
