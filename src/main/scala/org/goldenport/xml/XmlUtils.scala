@@ -14,7 +14,8 @@ import org.goldenport.util.{AnyUtils, SeqUtils}
  *  version Aug. 30, 2017
  *  version Oct. 17, 2017
  *  version Nov. 15, 2017
- * @version Jan. 12, 2018
+ *  version Jan. 12, 2018
+ * @version Feb. 18, 2018
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
@@ -241,6 +242,15 @@ object XmlUtils {
   def attributesOption(a: (String, Option[String]), as: Seq[(String, Option[String])], next: MetaData): MetaData =
     attributes(SeqUtils.buildTupleVector(a +: as), next)
 
+  def attributesOption(ps: Seq[(String, Option[String])], next: MetaData): MetaData =
+    attributes(SeqUtils.buildTupleList(ps), next)
+
+  def attributesOption(ps: Seq[(String, Option[String])]): MetaData =
+    attributes(SeqUtils.buildTupleList(ps))
+
+  def attributesOption(fixes: Seq[(String, String)], options: Seq[(String, Option[String])]): MetaData =
+    attributes(fixes, attributesOption(options))
+
   def attributes(a: (String, String), as: Seq[(String, String)], next: MetaData): MetaData =
     attributes(a +: as, next)
 
@@ -275,6 +285,34 @@ object XmlUtils {
 
   def element(name: String, attrs: Seq[(String, String)], children: Seq[Node]): Elem =
     Elem(null, name, attributes(attrs), TopScope, false, children: _*)
+
+  def elementWithAttributesOption(
+    name: String,
+    attrs: Seq[(String, Option[String])]
+  ): Elem =
+    elementWithAttributesOption(name, attrs, Nil)
+
+  def elementWithAttributesOption(
+    name: String,
+    attrs: Seq[(String, Option[String])],
+    children: Seq[Node]
+  ): Elem =
+    Elem(null, name, attributesOption(attrs), TopScope, false, children: _*)
+
+  def elementWithAttributesFixOption(
+    name: String,
+    fixes: Seq[(String, String)],
+    options: Seq[(String, Option[String])]
+  ): Elem =
+    elementWithAttributesFixOption(name, fixes, options, Nil)
+
+  def elementWithAttributesFixOption(
+    name: String,
+    fixes: Seq[(String, String)],
+    options: Seq[(String, Option[String])],
+    children: Seq[Node]
+  ): Elem =
+    Elem(null, name, attributesOption(fixes, options), TopScope, false, children: _*)
 
   def appendAttributes(elem: Elem, a: (String, Option[String]), as: (String, Option[String])*): Elem =
     elem.copy(attributes = attributesOption(a, as, elem.attributes))

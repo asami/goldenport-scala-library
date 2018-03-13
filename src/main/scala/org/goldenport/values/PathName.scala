@@ -14,7 +14,8 @@ import org.goldenport.util.StringUtils
  *  version Jul. 25, 2017
  *  version Aug. 29, 2017
  *  version Nov.  6, 2017
- * @version Jan. 12, 2018
+ *  version Jan. 12, 2018
+ * @version Mar. 13, 2018
  * @author  ASAMI, Tomoharu
  */
 case class PathName(v: String) {
@@ -63,6 +64,7 @@ case class PathName(v: String) {
       PathName(a.mkString("/"))
   }
 
+  def length = components.length
   def body = StringUtils.toPathnameBody(v)
   def getSuffix: Option[String] = StringUtils.getSuffix(v)
 }

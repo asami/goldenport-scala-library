@@ -9,7 +9,8 @@ import org.goldenport.util.AnyUtils
 /*
  * @since   Nov.  2, 2017
  *  version Nov. 15, 2017
- * @version Jan.  5, 2018
+ *  version Jan.  5, 2018
+ * @version Mar.  6, 2018
  * @author  ASAMI, Tomoharu
  */
 class XmlPrinter(
@@ -96,7 +97,7 @@ object XmlPrinter {
   def html = new XmlPrinter(
     true,
     true,
-    Set("script", "title", "i", "span"),
+    Set("script", "title", "i", "b", "span", "div"),
     Set("meta", "link"),
     Some("<!DOCTYPE html>")
   )
