@@ -1,54 +1,114 @@
 package org.goldenport.values
 
 import scalaz._, Scalaz._
+import java.math.MathContext
+import spire.math.Rational
 
 /*
  * @since   Apr. 12, 2018
- * @version Apr. 13, 2018
+ * @version Apr. 22, 2018
  * @author  ASAMI, Tomoharu
  */
 sealed trait Price {
-  def isPriceExcluded: Boolean
-  def priceIncludedTax: BigDecimal
-  def priceExcludedTax: BigDecimal
-  def tax: BigDecimal
+  def displayPrice: BigDecimal
+  def isTaxExclusive: Boolean
+  def priceIncludingTax: BigDecimal
+  def priceExcludingTax: BigDecimal
+  def taxRational: Rational
+  def mathContext: MathContext
+  lazy val tax = taxRational.toBigDecimal(mathContext)
+
+  // def toMap: Map[String, BigDecimal] = Map.empty // TODO
+    // protected def to_record(p: Price): Record = {
+    //   displayprice = p match {
+    //     case m: PriceExcludingTax => m.priceExcludingTax
+    //     case m: PriceIncludingTax => m.priceIncludingTax
+    //   }
+    //   Record.dataApp(
+    //     "displayPrice" -> displayPrice,
+    //     "isTaxExclusive" -> p.isPriceExcluding,
+    //     "tax" -> p.tax,
+    //     "priceExcludingTax" -> p.priceExcludingTax,
+    //     "priceIncludingTax" -> p.priceIncludingTax
+    //   )
+    // }
 }
 object Price {
-  object Implicits {
-    implicit object PriceExcludedTaxMonoid extends Monoid[PriceExcludedTax] {
-      def zero = PriceExcludedTax.zero
-      def append(l: PriceExcludedTax, r: => PriceExcludedTax): PriceExcludedTax = l + r
-    }
+  implicit object PriceExcludingTaxMonoid extends Monoid[PriceExcludingTax] {
+    def zero = PriceExcludingTax.ZERO
+    def append(l: PriceExcludingTax, r: => PriceExcludingTax): PriceExcludingTax = l + r
+  }
 
-    implicit object PriceIncludedTaxMonoid extends Monoid[PriceIncludedTax] {
-      def zero = PriceIncludedTax.zero
-      def append(l: PriceIncludedTax, r: => PriceIncludedTax): PriceIncludedTax = l + r
-    }
+  implicit object PriceIncludingTaxMonoid extends Monoid[PriceIncludingTax] {
+    def zero = PriceIncludingTax.ZERO
+    def append(l: PriceIncludingTax, r: => PriceIncludingTax): PriceIncludingTax = l + r
+  }
+
+  implicit object PriceNoTaxMonoid extends Monoid[PriceNoTax] {
+    def zero = PriceNoTax.ZERO
+    def append(l: PriceNoTax, r: => PriceNoTax): PriceNoTax = l + r
   }
 }
 
-case class PriceExcludedTax(price: BigDecimal, tax: BigDecimal) extends Price {
-  def isPriceExcluded = true
-  def priceIncludedTax = price + tax
-  def priceExcludedTax = price
-  def toIncludedTax: PriceIncludedTax = PriceIncludedTax(price + tax, tax)
+case class PriceExcludingTax(
+  price: BigDecimal,
+  taxRational: Rational,
+  mathContext: MathContext = MathContext.DECIMAL32
+) extends Price {
+  def displayPrice = price
+  def isTaxExclusive = true
+  def priceIncludingTax = price + tax
+  def priceExcludingTax = price
+  def toIncludingTax: PriceIncludingTax = PriceIncludingTax(price + tax, tax)
 
-  def +(rhs: PriceExcludedTax): PriceExcludedTax =
-    PriceExcludedTax(price + rhs.price, tax + rhs.tax)
+  def +(rhs: PriceExcludingTax): PriceExcludingTax =
+    PriceExcludingTax(price + rhs.price, tax + rhs.tax)
 }
-object PriceExcludedTax {
-  val zero = PriceExcludedTax(BigDecimal(0), BigDecimal(0))
+object PriceExcludingTax {
+  val ZERO = PriceExcludingTax(BigDecimal(0), 0)
+
+  def createByPercent(p: BigDecimal, percent: Int): PriceExcludingTax =
+    createByRate(p, percent * Rational(1, 100))
+
+  def createByRate(p: BigDecimal, rate: Rational): PriceExcludingTax = 
+    PriceExcludingTax(p, p * rate)
 }
 
-case class PriceIncludedTax(price: BigDecimal, tax: BigDecimal) extends Price {
-  def isPriceExcluded = false
-  def priceIncludedTax = price
-  def priceExcludedTax = price - tax
-  def toExcludedTax: PriceExcludedTax = PriceExcludedTax(price - tax, tax)
+case class PriceIncludingTax(
+  price: BigDecimal,
+  taxRational: Rational,
+  mathContext: MathContext = MathContext.DECIMAL32
+) extends Price {
+  def displayPrice = price
+  def isTaxExclusive = false
+  def priceIncludingTax = price
+  def priceExcludingTax = price - tax
+  def toExcludingTax: PriceExcludingTax = PriceExcludingTax(price - tax, tax)
 
-  def +(rhs: PriceIncludedTax): PriceIncludedTax =
-    PriceIncludedTax(price + rhs.price, tax + rhs.tax)
+  def +(rhs: PriceIncludingTax): PriceIncludingTax =
+    PriceIncludingTax(price + rhs.price, tax + rhs.tax)
 }
-object PriceIncludedTax {
-  val zero = PriceIncludedTax(BigDecimal(0), BigDecimal(0))
+object PriceIncludingTax {
+  val ZERO = PriceIncludingTax(BigDecimal(0), 0)
+
+  def createByPercent(p: BigDecimal, percent: Int): PriceIncludingTax =
+    createByRate(p, percent * Rational(1, 100))
+
+  def createByRate(p: BigDecimal, rate: Rational): PriceIncludingTax = 
+    PriceIncludingTax(p, p * rate)
+}
+
+case class PriceNoTax(price: BigDecimal) extends Price {
+  val mathContext: MathContext = MathContext.DECIMAL32
+  def displayPrice = price
+  def isTaxExclusive = false
+  def priceIncludingTax = price
+  def priceExcludingTax = price
+  def taxRational = 0
+
+  def +(rhs: PriceNoTax): PriceNoTax =
+    PriceNoTax(price + rhs.price)
+}
+object PriceNoTax {
+  val ZERO = PriceNoTax(BigDecimal(0))
 }
