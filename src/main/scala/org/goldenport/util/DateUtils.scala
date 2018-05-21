@@ -5,7 +5,7 @@ import scala.util.control.NonFatal
 import java.util.{Date, Locale, TimeZone}
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
-import org.joda.time.{DateTime, LocalDate, DateTimeZone}
+import org.joda.time.{DateTime, LocalDate, LocalTime, DateTimeZone}
 import org.joda.time.format.ISODateTimeFormat
 
 /*
@@ -21,7 +21,8 @@ import org.joda.time.format.ISODateTimeFormat
  *  version Mar. 19, 2016
  *  version Sep. 23, 2016
  *  version Nov.  7, 2016
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version May. 21, 2018
  * @author  ASAMI, Tomoharu
  */
 object DateUtils {
@@ -132,6 +133,11 @@ object DateUtils {
   def toLocalDate(date: java.util.Date): LocalDate = {
     val (y, m, d) = toYearMonthDay(date)
     new LocalDate(y, m, d)
+  }
+
+  // GMT
+  def toLocalTime(date: java.util.Date): LocalTime = {
+    new LocalTime(date.getTime)
   }
 
   /*
