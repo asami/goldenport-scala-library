@@ -11,7 +11,8 @@ import scala.collection.mutable.Builder
  *  version Sep. 15, 2017
  *  version Oct. 13, 2017
  *  version Nov.  1, 2017
- * @version Feb. 18, 2018
+ *  version Feb. 18, 2018
+ * @version May. 23, 2018
  * @author  ASAMI, Tomoharu
  */
 object SeqUtils {
@@ -155,4 +156,16 @@ object SeqUtils {
       case (k, Some(v)) => Some(k -> v)
       case (_, None) => None
     }
+
+  def toOption[T](ps: Seq[T]): Option[Seq[T]] = ps match {
+    case Nil => None
+    case xs => Some(xs)
+  }
+
+  def toOptionOneOrSeq[T](ps: Seq[T]): AnyRef = ps.headOption.map(x =>
+    if (ps.length > 1)
+      Some(ps)
+    else
+      x
+  )
 }

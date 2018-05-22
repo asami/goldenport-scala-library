@@ -8,7 +8,8 @@ import com.github.nscala_time.time.Imports._
  *  version Sep. 25, 2015
  *  version Jan. 27, 2016
  *  version Mar. 19, 2016
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version May. 23, 2018
  * @author  ASAMI, Tomoharu
  */
 object LocalDateUtils {
@@ -22,12 +23,13 @@ object LocalDateUtils {
   def parseYYYYMMDD(s: Int): LocalDate = parseYYYYMMDD(s.toString)
   def parseYYYYMMDD(s: Long): LocalDate = parseYYYYMMDD(s.toString)
 
-  def parse2(s: String): LocalDate = {
-    if (s.contains("-"))
-      parse(s)
-    else
-      parseYYYYMMDD(s)
-  }
+  def parse2(s: String): LocalDate =
+    try {
+      val x = s.replace('/', '-') // for excel YYYY/MM/DD
+      parse(x)
+    } catch {
+      case NonFatal(e) => parseYYYYMMDD(s)
+    }
 
   def dayCountInclusive(s: DateTime, e: DateTime): Int = {
     dayCountInclusive(s.toLocalDate, e.toLocalDate)
