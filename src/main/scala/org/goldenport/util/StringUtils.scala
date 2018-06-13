@@ -25,7 +25,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Sep. 28, 2017
  *  version Nov. 14, 2017
  *  version Dec. 17, 2017
- * @version Jan. 14, 2018
+ *  version Jan. 14, 2018
+ * @version May. 30, 2018
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -41,6 +42,14 @@ object StringUtils {
   def isAsciiNumberChar(c: Char) = '0' <= c && c <= '9'
   def isAsciiAlphabetNumberChar(c: Char) =
     isAsciiAlphabetChar(c) || isAsciiNumberChar(c)
+
+  def dropWhileRight(s: String, p: Char => Boolean): String =
+    s.lastOption.map(l =>
+      if (p(l))
+        s.dropRight(s.reverse.takeWhile(p).length)
+      else
+        s
+    ).getOrElse(s)
 
   // Ignore head '/' in rhs
   def concatPath(lhs: String, rhs: String): String = {
@@ -281,6 +290,14 @@ object StringUtils {
   }
   def shortUrl(p: URL): String = shortUri(p.toURI)
   def shortUrn(p: Urn): String = p.text
+
+  /*
+   * List
+   */
+  def eagerCommaForm(p: String): List[String] =
+    Strings.totokens(p, ",").map(_.trim).filter(Strings.notblankp)
+
+  def eagerCommaForm(ps: List[String]): List[String] = ps.flatMap(eagerCommaForm)
 
   /*
    * Int
