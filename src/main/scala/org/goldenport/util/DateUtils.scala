@@ -6,7 +6,7 @@ import java.util.{Date, Locale, TimeZone}
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import org.joda.time.{DateTime, LocalDate, LocalTime, DateTimeZone}
-import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
 
 /*
  * TODO unify org.goldenport.record.util.DateUtils
@@ -22,7 +22,9 @@ import org.joda.time.format.ISODateTimeFormat
  *  version Sep. 23, 2016
  *  version Nov.  7, 2016
  *  version Aug. 29, 2017
- * @version May. 21, 2018
+ *  version May. 21, 2018
+ *  version Jul. 20, 2018
+ * @version Aug.  5, 2018
  * @author  ASAMI, Tomoharu
  */
 object DateUtils {
@@ -35,6 +37,8 @@ object DateUtils {
   private val _df_yyyymmdd = new SimpleDateFormat("yyyyMMdd")
   _df_yyyymmdd.setTimeZone(_gmt) // java.util.Date holds date information as GMT in DB
   val isoFormatter = ISODateTimeFormat.date().withZoneUTC
+  lazy val yyyymmddFormatter = DateTimeFormat.forPattern("yyyyMMdd").withZone(_jodagmt)
+  lazy val yyyymmddFormatterJst = yyyymmddFormatter.withZone(_jodajst)
 
   // Date contains GMT timezone value.
   def parse(s: String): Date = {

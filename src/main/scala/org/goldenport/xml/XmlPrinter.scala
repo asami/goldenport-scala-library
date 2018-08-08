@@ -3,14 +3,15 @@ package org.goldenport.xml
 import scala.util.control.NonFatal
 import scala.xml._
 import org.goldenport.Strings
-import org.goldenport.xml.XmlUtils.escape
+import org.goldenport.xml.XmlUtils.{escape, escapeAttrQuot}
 import org.goldenport.util.AnyUtils
 
 /*
  * @since   Nov.  2, 2017
  *  version Nov. 15, 2017
  *  version Jan.  5, 2018
- * @version Mar.  6, 2018
+ *  version Mar.  6, 2018
+ * @version Aug.  5, 2018
  * @author  ASAMI, Tomoharu
  */
 class XmlPrinter(
@@ -86,7 +87,7 @@ class XmlPrinter(
       ps
       p(attrs.key)
       p("=\"")
-      p(escape(attrs.value.map(_.text).mkString))
+      p(escapeAttrQuot(attrs.value.map(_.text).mkString))
       p('"')
       _attributes(attrs.next)
     }

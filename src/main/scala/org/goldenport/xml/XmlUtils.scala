@@ -15,7 +15,8 @@ import org.goldenport.util.{AnyUtils, SeqUtils}
  *  version Oct. 17, 2017
  *  version Nov. 15, 2017
  *  version Jan. 12, 2018
- * @version Feb. 18, 2018
+ *  version Feb. 18, 2018
+ * @version Aug.  5, 2018
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
@@ -198,7 +199,7 @@ object XmlUtils {
       if (x == Null || x == null)
         r
       else
-        go(p.next, r :+ (x.key -> text(x)))
+        go(x.next, r :+ (x.key -> text(x)))
     }
     go(p, Vector.empty)
   }
