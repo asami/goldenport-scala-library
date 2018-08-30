@@ -7,7 +7,8 @@ import org.goldenport.util.StringUtils
  *  version Feb. 10, 2017
  *  version Jul. 12, 2017
  *  version Aug. 29, 2017
- * @version Oct. 14, 2017
+ *  version Oct. 14, 2017
+ * @version Aug. 17, 2018
  * @author  ASAMI, Tomoharu
  */
 trait ValueInstance {
@@ -30,7 +31,7 @@ trait ValueClass[T <: ValueInstance] {
   protected final def normalize_key(s: String) = s.toLowerCase
   def get(s: String): Option[T]
   def apply(s: String): T = get(normalize_key(s)) getOrElse {
-    throw new IllegalArgumentException("Invalid value")
+    throw new IllegalArgumentException(s"Invalid value: $s")
   }
 }
 

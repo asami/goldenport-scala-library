@@ -26,7 +26,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Nov. 14, 2017
  *  version Dec. 17, 2017
  *  version Jan. 14, 2018
- * @version May. 30, 2018
+ *  version May. 30, 2018
+ * @version Aug. 30, 2018
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -422,4 +423,11 @@ object StringUtils {
       else a.substring(index)
     }
   }
+
+  // Option
+  def unmarshallOption[T](p: Option[String], f: String => T): Option[T] =
+    p.flatMap(unmarshallOption(_, f))
+
+  def unmarshallOption[T](p: String, f: String => T): Option[T] =
+    Strings.blankopt(p).map(f)
 }

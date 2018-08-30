@@ -20,7 +20,8 @@ import org.goldenport.util._
  *  version Apr.  4, 2017
  *  version Aug. 29, 2017
  *  version Sep.  2, 2017
- * @version Oct. 29, 2017
+ *  version Oct. 29, 2017
+ * @version Aug. 30, 2018
  * @author  ASAMI, Tomoharu
  */
 object JsonUtils {
@@ -46,6 +47,27 @@ object JsonUtils {
   private def _throw_mismatch(key: String, j: JsValue): Nothing =
     throw new IllegalStateException(s"Mismatch $key value = $j")
 
+  private def _throw_undefined(j: JsValue): Nothing =
+    throw new IllegalStateException(s"JsUndefined: $j")
+
+  private def _throw_null(j: JsValue): Nothing =
+    throw new IllegalStateException(s"JsNull: $j")
+
+  private def _throw_jsboolean(j: JsValue): Nothing =
+    throw new IllegalStateException(s"JsBoolean: $j")
+
+  private def _throw_jsnumber(j: JsValue): Nothing =
+    throw new IllegalStateException(s"JsNumber: $j")
+
+  private def _throw_jsstring(j: JsValue): Nothing =
+    throw new IllegalStateException(s"JsString: $j")
+
+  private def _throw_jsobject(j: JsValue): Nothing =
+    throw new IllegalStateException(s"JsObject: $j")
+
+  private def _throw_jsarray(j: JsValue): Nothing =
+    throw new IllegalStateException(s"JsArray: $j")
+
   def toString(key: String, j: JsValue): String =
     getString(key, j) getOrElse _throw_missing(key)
 
@@ -54,13 +76,33 @@ object JsonUtils {
       element match {
         case _: JsUndefined => _throw_missing(key)
         case JsNull => _throw_missing(key)
-        case JsBoolean(x) => _throw_mismatch(key, element)
+        case JsBoolean(x) => x.toString
         case JsNumber(x) => x.toString
         case JsString(x) => x
         case x: JsObject => _throw_mismatch(key, element)
         case JsArray(xs) => _throw_mismatch(key, element)
       }
     )
+
+  def toString(j: JsValue): String = j match {
+    case _: JsUndefined => _throw_undefined(j)
+    case JsNull => _throw_null(j)
+    case JsBoolean(x) => x.toString
+    case JsNumber(x) => x.toString
+    case JsString(x) => x
+    case x: JsObject => _throw_jsobject(j)
+    case JsArray(xs) => _throw_jsarray(j)
+  }
+
+  def toBoolean(j: JsValue): Boolean = j match {
+    case _: JsUndefined => _throw_undefined(j)
+    case JsNull => _throw_null(j)
+    case JsBoolean(x) => x
+    case JsNumber(x) => _throw_jsnumber(j)
+    case JsString(x) => _throw_jsstring(j)
+    case x: JsObject => _throw_jsobject(j)
+    case JsArray(xs) => _throw_jsarray(j)
+  }
 
   def toMap(j: JsValue): Map[Symbol, Any] = {
     j match {
@@ -88,6 +130,20 @@ object JsonUtils {
       case (k, v) => getValueS(v).map(x => k -> x)
     }
     Map.empty ++ a
+  }
+
+  def toMap[T](j: JsValue, f: JsValue => T): Map[String, T] = j match {
+    case o: JsObject => o.value.map {
+      case (k, v) => k -> f(v)
+    }.toMap
+    case _ => throw new IllegalArgumentException(s"No JsObject = $j")
+  }
+
+  def toMap[K, V](j: JsValue, fk: String => K, fv: JsValue => V): Map[K, V] = j match {
+    case o: JsObject => o.value.map {
+      case (k, v) => fk(k) -> fv(v)
+    }.toMap
+    case _ => throw new IllegalArgumentException(s"No JsObject = $j")
   }
 
   def toSeq(j: JsValue): Seq[JsValue] = {
@@ -128,6 +184,28 @@ object JsonUtils {
     case JsArray(xs) => Some(xs.flatMap(getValueS))
   }
 
+  def get(j: JsObject, key: String): Option[JsValue] = j.value.get(key)
+
+  def getString(j: JsObject, key: String): Option[String] = getString(key, j)
+
+  def getStringMap(j: JsObject, key: String): Option[Map[String, String]] =
+    j.value.get(key).map(element =>
+      element match {
+        case _: JsUndefined => _throw_missing(key)
+        case JsNull => _throw_missing(key)
+        case JsBoolean(x) => _throw_mismatch(key, element)
+        case JsNumber(x) => _throw_mismatch(key, element)
+        case JsString(x) => _throw_mismatch(key, element)
+        case m: JsObject => m.value.map {
+          case (k, v) => k -> toString(v)
+        }.toMap
+        case JsArray(xs) => _throw_mismatch(key, element)
+      }
+    )
+
+  /*
+   * Json String
+   */
   def seq2json(seq: Seq[(String, Any)]): String = {
     val buf = new StringBuilder
     seq2jsonObject(buf, seq)
