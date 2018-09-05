@@ -5,7 +5,7 @@ import org.goldenport.util.VectorUtils
   
 /*
  * @since   Aug. 21, 2018
- * @version Aug. 29, 2018
+ * @version Sep.  2, 2018
  * @author  ASAMI, Tomoharu
  */
 trait ParseEvent
@@ -34,18 +34,18 @@ object CharEvent {
         val next2c = rhs.lift(2)
         if (aftercr) {
           if (c == '\n')
-            _same_line(c, nextc, next2c)
+            _next_line(c, nextc, next2c)
           else if (c == '\r')
             _next_line(c, nextc, next2c)
           else
-            _next_line(c, nextc, next2c)
+            _add_after_cr(c, nextc, next2c)
         } else {
           if (c == '\n')
             _next_line(c, nextc, next2c)
           else if (c == '\r')
-            _next_line(c, nextc, next2c)
+            _same_line(c, nextc, next2c)
           else
-            _next_line(c, nextc, next2c)
+            _same_line(c, nextc, next2c)
         }
       }
 
@@ -58,6 +58,13 @@ object CharEvent {
       private def _add(c: Char, nextc: Option[Char], next2c: Option[Char], l: Int, o: Int) = {
         val evt = CharEvent(c, nextc, next2c, ParseLocation(line, offset))
         Z(r = r :+ evt, l, o, c == '\r')
+      }
+
+      private def _add_after_cr(c: Char, nextc: Option[Char], next2c: Option[Char]) = {
+        val l = line + 1
+        val o = 1
+        val evt = CharEvent(c, nextc, next2c, ParseLocation(line + 1, o))
+        Z(r = r :+ evt, l, o + 1, c == '\r')
       }
     }
     VectorUtils.sliding3(ps)./:(Z())(_+_).r

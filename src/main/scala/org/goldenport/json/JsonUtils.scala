@@ -21,87 +21,88 @@ import org.goldenport.util._
  *  version Aug. 29, 2017
  *  version Sep.  2, 2017
  *  version Oct. 29, 2017
- * @version Aug. 30, 2018
+ *  version Aug. 30, 2018
+ * @version Sep.  4, 2018
  * @author  ASAMI, Tomoharu
  */
 object JsonUtils {
   def toInt(key: String, j: JsValue): Int =
-    getInt(key, j) getOrElse _throw_missing(key)
+    getInt(key, j) getOrElse raiseMissing(key)
 
   def getInt(key: String, j: JsValue): Option[Int] =
     (j \\ key).headOption.map(element =>
       element match {
-        case _: JsUndefined => _throw_missing(key)
-        case JsNull => _throw_missing(key)
-        case JsBoolean(x) => _throw_mismatch(key, element)
+        case _: JsUndefined => raiseMissing(key)
+        case JsNull => raiseMissing(key)
+        case JsBoolean(x) => raiseMismatch(key, element)
         case JsNumber(x) => x.toInt
         case JsString(x) => x.toInt
-        case x: JsObject => _throw_mismatch(key, element)
-        case JsArray(xs) => _throw_mismatch(key, element)
+        case x: JsObject => raiseMismatch(key, element)
+        case JsArray(xs) => raiseMismatch(key, element)
       }
     )
 
-  private def _throw_missing(key: String): Nothing =
+  def raiseMissing(key: String): Nothing =
     throw new IllegalArgumentException(s"Missing $key")
 
-  private def _throw_mismatch(key: String, j: JsValue): Nothing =
+  def raiseMismatch(key: String, j: JsValue): Nothing =
     throw new IllegalStateException(s"Mismatch $key value = $j")
 
-  private def _throw_undefined(j: JsValue): Nothing =
+  def raiseUndefined(j: JsValue): Nothing =
     throw new IllegalStateException(s"JsUndefined: $j")
 
-  private def _throw_null(j: JsValue): Nothing =
+  def raiseNull(j: JsValue): Nothing =
     throw new IllegalStateException(s"JsNull: $j")
 
-  private def _throw_jsboolean(j: JsValue): Nothing =
+  def raiseJsboolean(j: JsValue): Nothing =
     throw new IllegalStateException(s"JsBoolean: $j")
 
-  private def _throw_jsnumber(j: JsValue): Nothing =
+  def raiseJsnumber(j: JsValue): Nothing =
     throw new IllegalStateException(s"JsNumber: $j")
 
-  private def _throw_jsstring(j: JsValue): Nothing =
+  def raiseJsstring(j: JsValue): Nothing =
     throw new IllegalStateException(s"JsString: $j")
 
-  private def _throw_jsobject(j: JsValue): Nothing =
+  def raiseJsobject(j: JsValue): Nothing =
     throw new IllegalStateException(s"JsObject: $j")
 
-  private def _throw_jsarray(j: JsValue): Nothing =
+  def raiseJsarray(j: JsValue): Nothing =
     throw new IllegalStateException(s"JsArray: $j")
 
   def toString(key: String, j: JsValue): String =
-    getString(key, j) getOrElse _throw_missing(key)
+    getString(key, j) getOrElse raiseMissing(key)
 
   def getString(key: String, j: JsValue): Option[String] =
     (j \\ key).headOption.map(element =>
       element match {
-        case _: JsUndefined => _throw_missing(key)
-        case JsNull => _throw_missing(key)
+        case _: JsUndefined => raiseMissing(key)
+        case JsNull => raiseMissing(key)
         case JsBoolean(x) => x.toString
         case JsNumber(x) => x.toString
         case JsString(x) => x
-        case x: JsObject => _throw_mismatch(key, element)
-        case JsArray(xs) => _throw_mismatch(key, element)
+        case x: JsObject => raiseMismatch(key, element)
+        case JsArray(xs) => raiseMismatch(key, element)
       }
     )
 
   def toString(j: JsValue): String = j match {
-    case _: JsUndefined => _throw_undefined(j)
-    case JsNull => _throw_null(j)
+    case _: JsUndefined => raiseUndefined(j)
+    case JsNull => raiseNull(j)
     case JsBoolean(x) => x.toString
     case JsNumber(x) => x.toString
     case JsString(x) => x
-    case x: JsObject => _throw_jsobject(j)
-    case JsArray(xs) => _throw_jsarray(j)
+    case x: JsObject => raiseJsobject(j)
+    case JsArray(xs) => raiseJsarray(j)
   }
 
   def toBoolean(j: JsValue): Boolean = j match {
-    case _: JsUndefined => _throw_undefined(j)
-    case JsNull => _throw_null(j)
+    case _: JsUndefined => raiseUndefined(j)
+    case JsNull => raiseNull(j)
     case JsBoolean(x) => x
-    case JsNumber(x) => _throw_jsnumber(j)
-    case JsString(x) => _throw_jsstring(j)
-    case x: JsObject => _throw_jsobject(j)
-    case JsArray(xs) => _throw_jsarray(j)
+    case JsNumber(x) => raiseJsnumber(j)
+    case JsString(x) => raiseJsstring(j)
+    case x: JsObject => raiseJsobject(j)
+    case JsArray(xs) => raiseJsarray(j)
   }
 
   def toMap(j: JsValue): Map[Symbol, Any] = {
@@ -191,15 +192,15 @@ object JsonUtils {
   def getStringMap(j: JsObject, key: String): Option[Map[String, String]] =
     j.value.get(key).map(element =>
       element match {
-        case _: JsUndefined => _throw_missing(key)
-        case JsNull => _throw_missing(key)
-        case JsBoolean(x) => _throw_mismatch(key, element)
-        case JsNumber(x) => _throw_mismatch(key, element)
-        case JsString(x) => _throw_mismatch(key, element)
+        case _: JsUndefined => raiseMissing(key)
+        case JsNull => raiseMissing(key)
+        case JsBoolean(x) => raiseMismatch(key, element)
+        case JsNumber(x) => raiseMismatch(key, element)
+        case JsString(x) => raiseMismatch(key, element)
         case m: JsObject => m.value.map {
           case (k, v) => k -> toString(v)
         }.toMap
-        case JsArray(xs) => _throw_mismatch(key, element)
+        case JsArray(xs) => raiseMismatch(key, element)
       }
     )
 

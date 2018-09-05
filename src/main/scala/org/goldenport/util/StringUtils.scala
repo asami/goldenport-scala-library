@@ -27,7 +27,7 @@ import org.goldenport.values.{PathName, Urn}
  *  version Dec. 17, 2017
  *  version Jan. 14, 2018
  *  version May. 30, 2018
- * @version Aug. 30, 2018
+ * @version Aug. 31, 2018
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -430,4 +430,10 @@ object StringUtils {
 
   def unmarshallOption[T](p: String, f: String => T): Option[T] =
     Strings.blankopt(p).map(f)
+
+  def prefixRemainder(p: String, prefix: String): Option[String] =
+    if (p.startsWith(prefix))
+      Some(p.substring(prefix.length))
+    else
+      None
 }
