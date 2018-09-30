@@ -8,7 +8,8 @@ import org.goldenport.util.StringUtils
  *  version Jul. 12, 2017
  *  version Aug. 29, 2017
  *  version Oct. 14, 2017
- * @version Aug. 17, 2018
+ *  version Aug. 17, 2018
+ * @version Sep. 24, 2018
  * @author  ASAMI, Tomoharu
  */
 trait ValueInstance {
@@ -29,7 +30,7 @@ trait ClassNamedValueInstance extends NamedValueInstance {
 trait ValueClass[T <: ValueInstance] {
   def isCaseSensible = true
   protected final def normalize_key(s: String) = s.toLowerCase
-  def get(s: String): Option[T]
+  def get(s: String): Option[T] // TODO
   def apply(s: String): T = get(normalize_key(s)) getOrElse {
     throw new IllegalArgumentException(s"Invalid value: $s")
   }

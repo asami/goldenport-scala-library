@@ -16,7 +16,8 @@ import com.asamioffice.goldenport.io.UURL
  *  version Nov. 12, 2014
  *  version Sep. 29, 2015
  *  version Sep. 22, 2016
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Sep. 17, 2018
  * @author  ASAMI, Tomoharu
  */
 class BufferFileBag(
@@ -155,6 +156,12 @@ object BufferFileBag {
     val bag = new BufferFileBag()
     for (in <- resource.managed(url.openStream))
       bag.write(in)
+    bag
+  }
+
+  def fromInputStream(in: InputStream): BufferFileBag = {
+    val bag = new BufferFileBag()
+    bag.write(in)
     bag
   }
 

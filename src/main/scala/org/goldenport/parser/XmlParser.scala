@@ -2,15 +2,16 @@ package org.goldenport.parser
 
 import scala.xml._
 import org.goldenport.exception.RAISE
+import org.goldenport.xml.dom.DomParser
 import LogicalTokens._
 
 /*
  * @since   Aug. 19, 2018
- * @version Sep.  2, 2018
+ * @version Sep. 20, 2018
  * @author  ASAMI, Tomoharu
  */
 case class XmlParser() extends Parser with LogicalTokens.ComplexTokenizer {
-  def accept(parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState] = evt.c match {
+  def accept(config: Config, parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState] = evt.c match {
     case '<' => Some(XmlParser.XmlState.init(parent, evt))
     case _ => None
   }
@@ -22,12 +23,17 @@ object XmlParser {
   }
 
   case class XmlToken(
-    xml: Node,
+    text: String,
     location: Option[ParseLocation]
-  ) extends ExternalLogicalToken
+  ) extends ExternalLogicalToken {
+    val xml = XML.loadString(text) // Scala XML
+    val dom = DomParser.parse(text)
+  }
   object XmlToken {
-    def apply(xml: Node, location: ParseLocation): XmlToken =
-      XmlToken(xml, Some(location))
+    // def apply(xml: Node, location: ParseLocation): XmlToken =
+    //   XmlToken(xml, Some(location))
+    def apply(p: String, location: ParseLocation): XmlToken =
+      XmlToken(p, Some(location))
   }
 
   case class XmlState(
@@ -37,7 +43,7 @@ object XmlParser {
     override def addChildState(config: Config, ps: Vector[Char]): LogicalTokensParseState = {
       val text = ps.mkString
       // println(s"XML: $text")
-      parent.addChildState(config, XmlToken(XML.loadString(text), location))
+      parent.addChildState(config, XmlToken(text, location))
     }
   }
   object XmlState {

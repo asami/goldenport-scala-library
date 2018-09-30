@@ -5,25 +5,25 @@ import org.goldenport.exception.RAISE
 
 /*
  * @since   Aug. 20, 2018
- * @version Aug. 29, 2018
+ * @version Sep. 29, 2018
  * @author  ASAMI, Tomoharu
  */
-case class LogicalLine(
-  text: String,
-  location: Option[ParseLocation] = None
-)
-
 case class LogicalLines(
   lines: Vector[LogicalLine]
 ) {
+  def isEmpty: Boolean = lines.isEmpty
+
   def +(rhs: LogicalLines) = LogicalLines(lines ++ rhs.lines)
-  def add(p: String) = LogicalLines(lines :+ LogicalLine(p))
+  def :+(p: String) = LogicalLines(lines :+ LogicalLine(p))
+  def +:(p: String) = LogicalLines(LogicalLine(p) +: lines)
 }
 
 object LogicalLines {
   type Transition = (ParseMessageSequence, ParseResult[LogicalLines], LogicalLinesParseState)
 
   val empty = LogicalLines(Vector.empty)
+
+  def apply(ps: Seq[LogicalLine]): LogicalLines = LogicalLines(ps.toVector)
 
   def apply(p: String, ps: String*): LogicalLines = LogicalLines(LogicalLine(p) +: ps.toVector.map(LogicalLine(_)))
 
@@ -45,7 +45,7 @@ object LogicalLines {
     useAngleBracket: Boolean = true, // XML
     useBrace: Boolean = true, // JSON
     useParenthesis: Boolean = true, // S-Expression
-    useBracket: Boolean = true
+    useBracket: Boolean = true // script
   ) extends ParseConfig {
   }
 
@@ -57,8 +57,8 @@ object LogicalLines {
       r
     }
 
-    def addChild(config: Config, ps: Vector[Char]): LogicalLinesParseState = RAISE.noReachDefect
-    def addChildEndTransition(config: Config, ps: Vector[Char]): Transition = RAISE.noReachDefect
+    def addChild(config: Config, ps: Vector[Char]): LogicalLinesParseState = RAISE.noReachDefect(s"addChild(${getClass.getSimpleName})")
+    def addChildEndTransition(config: Config, ps: Vector[Char]): Transition = RAISE.noReachDefect(s"addChildEndTransition(${getClass.getSimpleName})")
 
     protected final def handle_event(config: Config, evt: ParseEvent): Transition =
       evt match {
@@ -239,16 +239,18 @@ object LogicalLines {
     override protected def line_End_State(config: Config, evt: LineEndEvent): LogicalLinesParseState =
       NormalState("")
     override protected def character_State(c: Char) = NormalState(c)
-    override protected def double_Quote_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
-    override protected def single_Quote_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
+    override protected def double_Quote_State(config: Config, evt: CharEvent) =
+      DoubleQuoteState(NormalState.empty)
+    override protected def single_Quote_State(config: Config, evt: CharEvent) =
+      SingleQuoteState(NormalState.empty)
     override protected def open_Angle_Bracket_State(config: Config, evt: CharEvent) = XmlOpenState(NormalState.empty)
-    override protected def close_Angle_Bracket_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
+    // override protected def close_Angle_Bracket_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
     override protected def open_Brace_State(config: Config, evt: CharEvent) = JsonState(NormalState.empty)
-    override protected def close_Brace_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
+    // override protected def close_Brace_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
     override protected def open_Parenthesis_State(config: Config, evt: CharEvent) = SExpressionState(NormalState.empty)
-    override protected def close_Parenthesis_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
-    override protected def open_Bracket_State(config: Config, evt: CharEvent) = BracketState()
-    override protected def close_Bracket_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
+    // override protected def close_Parenthesis_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
+    override protected def open_Bracket_State(config: Config, evt: CharEvent) = BracketState(NormalState.empty)
+    // override protected def close_Bracket_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
   }
 
   case object EndState extends LogicalLinesParseState {
@@ -274,11 +276,11 @@ object LogicalLines {
       copy(cs = cs ++ ps)(config, EndEvent)
 
     override protected def end_Result(config: Config) = {
-      val r = if (cs.isEmpty) result else result.add(cs.mkString)
+      val r = if (cs.isEmpty) result else result :+ cs.mkString
       ParseSuccess(r)
     }
     override protected def line_End_State(config: Config, evt: LineEndEvent): LogicalLinesParseState =
-      NormalState(Vector.empty, result.add(cs.mkString))
+      NormalState(Vector.empty, result :+ cs.mkString)
     override protected def character_State(c: Char) = copy(cs = cs :+ c)
     override protected def double_Quote_State(config: Config, evt: CharEvent) = DoubleQuoteState(this)
     override protected def single_Quote_State(config: Config, evt: CharEvent) = SingleQuoteState(this)
@@ -288,7 +290,7 @@ object LogicalLines {
     override protected def close_Brace_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
     override protected def open_Parenthesis_State(config: Config, evt: CharEvent) = SExpressionState(this)
     override protected def close_Parenthesis_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
-    override protected def open_Bracket_State(config: Config, evt: CharEvent) = BracketState()
+    override protected def open_Bracket_State(config: Config, evt: CharEvent) = BracketState(this)
     override protected def close_Bracket_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
   }
   object NormalState {
@@ -412,7 +414,14 @@ object LogicalLines {
       copy(text = text :+ c)
   }
 
-  case class BracketState() extends AwakeningLogicalLinesParseState {
+  case class BracketState(
+    parent: LogicalLinesParseState,
+    text: Vector[Char] = Vector.empty
+  ) extends AwakeningLogicalLinesParseState {
+    override protected def handle_End(config: Config): Transition = RAISE.notImplementedYetDefect // TODO error
+    override protected def character_State(c: Char) = copy(text = text :+ c)
+    override protected def close_Bracket_State(config: Config, evt: CharEvent) =
+      parent.addChild(config, '[' +: text :+ ']')
   }
 
   case class DoubleQuoteState(

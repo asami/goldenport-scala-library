@@ -8,11 +8,11 @@ import LogicalTokens._
 
 /*
  * @since   Aug. 19, 2018
- * @version Sep.  2, 2018
+ * @version Sep. 22, 2018
  * @author  ASAMI, Tomoharu
  */
 case class JsonParser() extends Parser with LogicalTokens.ComplexTokenizer {
-  def accept(parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState] = evt.c match {
+  def accept(config: Config, parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState] = evt.c match {
     case '{' => Some(JsonParser.JsonState(parent, evt))
     case _ => None
   }
@@ -34,12 +34,16 @@ object JsonParser {
   // }
 
   case class JsonToken(
-    json: JsValue,
+    text: String,
     location: Option[ParseLocation]
-  ) extends ExternalLogicalToken
+  ) extends ExternalLogicalToken {
+    lazy val json = Json.parse(text)
+  }
   object JsonToken {
-    def apply(json: JsValue, location: ParseLocation): JsonToken =
-      JsonToken(json, Some(location))
+    // def apply(json: JsValue, location: ParseLocation): JsonToken =
+    //   JsonToken(json, Some(location))
+    def apply(p: String, location: ParseLocation): JsonToken =
+      JsonToken(p, Some(location))
   }
 
   case class JsonState(
@@ -74,7 +78,7 @@ object JsonParser {
 
     private def _to_token(p: Vector[Char]): JsonToken = _to_token(p.mkString)
     private def _to_token(p: String): JsonToken = try {
-      JsonToken(Json.parse(p), location)
+      JsonToken(p, location)
     } catch {
       case NonFatal(e) => RAISE.noReachDefect(s"JSON: $p")
     }

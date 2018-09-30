@@ -1,12 +1,15 @@
-package org.goldenport.util
+package org.goldenport.io
 
 /*
  * @since   Sep. 24, 2012
  *  version Sep. 25, 2012
- * @version Sep.  2, 2017
+ *  version Sep.  2, 2017
+ * @version Sep. 18, 2018
  * @author  ASAMI, Tomoharu
  */
-case class MimeType(val name: String)
+case class MimeType(name: String) {
+  def isText: Boolean = MimeType.isText(this)
+}
 
 object MimeType {
   import org.goldenport.Strings.mimetype
@@ -88,4 +91,14 @@ object MimeType {
   ).map(x => x.name -> x).toMap
 
   def as(name: String): MimeType = mimetypes.get(name) getOrElse MimeType(name)
+
+  val textMimeTypes = Vector(
+    application_atom_xml,
+    application_ecmascript,
+    application_json,
+    application_javascript
+  )
+
+  def isText(p: MimeType): Boolean = isText(p.name)
+  def isText(p: String): Boolean = p.startsWith("text/") || textMimeTypes.exists(_.name == p)
 }

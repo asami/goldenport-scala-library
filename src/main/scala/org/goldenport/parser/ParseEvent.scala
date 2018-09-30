@@ -1,11 +1,12 @@
 package org.goldenport.parser
 
 import scalaz._, Scalaz._  
+import org.goldenport.RAISE
 import org.goldenport.util.VectorUtils
   
 /*
  * @since   Aug. 21, 2018
- * @version Sep.  2, 2018
+ * @version Sep. 22, 2018
  * @author  ASAMI, Tomoharu
  */
 trait ParseEvent
@@ -16,6 +17,13 @@ case class CharEvent(
   next2: Option[Char],
   location: ParseLocation
 ) extends ParseEvent {
+  def isMatch(p: String): Boolean = p.length match {
+    case 0 => false
+    case 1 => p(0) == c
+    case 2 => p(0) == c && Some(p(1)) == next
+    case 3 => p(0) == c && Some(p(1)) == next && Some(p(2)) == next2
+    case _ => RAISE.noReachDefect
+  }
 }
 object CharEvent {
   def make(p: String): Vector[CharEvent] = make(p.toVector)
@@ -69,6 +77,18 @@ object CharEvent {
     }
     VectorUtils.sliding3(ps)./:(Z())(_+_).r
   }
+}
+
+case class LogicalLineEvent(
+  line: LogicalLine
+) extends ParseEvent {
+  def location = line.location
+  def getSectionTitle = line.getSectionTitle
+  def getSectionUnderline = line.getSectionUnderline
+  def isEmptyLine = line.isEmptyLine
+}
+object LogicalLineEvent {
+  def make(p: LogicalLines): Vector[LogicalLineEvent] = p.lines.map(LogicalLineEvent.apply)
 }
 
 case object EndEvent extends ParseEvent

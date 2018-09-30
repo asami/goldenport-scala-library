@@ -4,7 +4,8 @@ import scalaz._, Scalaz._
   
 /*
  * @since   Aug. 21, 2018
- * @version Aug. 29, 2018
+ *  version Aug. 29, 2018
+ * @version Sep. 22, 2018
  * @author  ASAMI, Tomoharu
  */
 trait ParseReaderWriterState[C <: ParseConfig, AST] {
@@ -26,6 +27,12 @@ case class ParseReaderWriterStateClass[C <: ParseConfig, AST](
 
   def apply(events: Seq[Char]): OUT = {
     val es = CharEvent.make(events)
+    // println(s"es: $es")
+    _parse_events(es :+ EndEvent)
+  }
+
+  def apply(events: LogicalLines): OUT = {
+    val es = LogicalLineEvent.make(events)
     // println(s"es: $es")
     _parse_events(es :+ EndEvent)
   }

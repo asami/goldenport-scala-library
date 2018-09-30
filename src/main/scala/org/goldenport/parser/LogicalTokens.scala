@@ -5,8 +5,7 @@ import org.goldenport.exception.RAISE
 
 /*
  * @since   Aug. 28, 2018
- *  version Aug. 29, 2018
- * @version Sep.  2, 2018
+ * @version Sep. 30, 2018
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
@@ -19,6 +18,8 @@ case class LogicalTokens(
   def +(p: LogicalToken) = LogicalTokens(tokens :+ p)
   def :+(p: LogicalToken) = LogicalTokens(tokens :+ p)
   def +:(p: LogicalToken) = LogicalTokens(p +: tokens)
+
+  lazy val tokensWithEnd = tokens :+ EndToken
 }
 
 object LogicalTokens {
@@ -37,7 +38,7 @@ object LogicalTokens {
   def parse(p: String): LogicalTokens = parse(Config.default, p)
 
   def parse(config: Config, p: String): LogicalTokens = {
-    val parser = ParseReaderWriterStateClass[Config, LogicalTokens](Config.default, NormalState.init)
+    val parser = ParseReaderWriterStateClass[Config, LogicalTokens](config, NormalState.init)
     val (messages, result, state) = parser.apply(p)
     result match {
       case ParseSuccess(tokens, _) => tokens
@@ -46,15 +47,18 @@ object LogicalTokens {
     }
   }
 
+  def parseDebug(p: String): LogicalTokens = parse(Config.debug, p)
+
   sealed trait Tokenizer {
   }
 
   trait SimpleTokenizer extends Tokenizer {
-    def accept(p: String): Option[LogicalTokens]
+    def accept(config: Config, p: String, location: ParseLocation): Option[LogicalTokens] = accept_Token(config, p, location).map(LogicalTokens(_))
+    protected def accept_Token(config: Config, p: String, location: ParseLocation): Option[LogicalToken] = None
   }
 
   trait ComplexTokenizer extends Tokenizer {
-    def accept(parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState]
+    def accept(config: Config, parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState]
   }
 
   case class Config(
@@ -75,19 +79,25 @@ object LogicalTokens {
     def isComment(evt: CharEvent): Boolean = comments.contains(evt.c)
 
     def handle(parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState] =
-      _complex_tokenizers.flatMap(_.accept(parent, evt)).headOption
+      _complex_tokenizers.flatMap(_.accept(this, parent, evt)).headOption
 
-    def getTokens(p: String): Option[LogicalTokens] = _simple_tokenizers.flatMap(_.accept(p)).headOption
+    def getTokens(config: Config, p: String, l: ParseLocation): Option[LogicalTokens] = _simple_tokenizers.flatMap(_.accept(config, p, l)).headOption
   }
   object Config {
-    val a: LogicalTokens.ComplexTokenizer = JsonParser()
+    // val a: LogicalTokens.ComplexTokenizer = JsonParser()
     val default = Config(
       " \t\n\r\f".toVector,
       "(){}[],".toVector,
       ";".toVector,
-      Vector(),
+      Vector(
+        NumberToken,
+        DateTimeToken, LocalDateToken, LocalTimeToken,
+        UrlToken, UrnToken,
+        PathToken
+      ),
       Vector(JsonParser(), XmlParser())
     )
+    val debug = default.copy(isDebug = true)
   }
 
   trait LogicalTokensParseState extends ParseReaderWriterState[Config, LogicalTokens] {
@@ -95,6 +105,7 @@ object LogicalTokens {
     protected def use_Delimiter = true
     protected def use_Double_Quote = true
     protected def use_Single_Quote = true
+    protected def use_Bracket = true
 
     def apply(config: Config, evt: ParseEvent): Transition = {
       if (config.isDebug)
@@ -130,6 +141,8 @@ object LogicalTokens {
           m.c match {
             case '"' if use_Double_Quote => handle_double_quote(config, m)
             case ''' if use_Single_Quote => handle_single_quote(config, m)
+            case '[' if use_Bracket => handle_open_bracket(config, m)
+            case ']' if use_Bracket => handle_close_bracket(config, m)
             case c if config.isSpace(c) => handle_space(config, m)
             case c if use_Delimiter && config.isDelimiter(c) => handle_delimiter(config, m)
             case c if config.isComment(m) => handle_comment(config, m)
@@ -223,6 +236,23 @@ object LogicalTokens {
     protected def single_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState =
       character_State(config, evt)
 
+    protected final def handle_open_bracket(config: Config, evt: CharEvent): Transition =
+      handle_Open_Bracket(config, evt)
+
+    protected def handle_Open_Bracket(config: Config, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, open_Bracket_State(config, evt))
+
+    protected def open_Bracket_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+      character_State(config, evt)
+
+    protected final def handle_close_bracket(config: Config, evt: CharEvent): Transition =
+      handle_Close_Bracket(config, evt)
+
+    protected def handle_Close_Bracket(config: Config, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, close_Bracket_State(config, evt))
+
+    protected def close_Bracket_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+      character_State(config, evt)
 
     protected final def handle_character(config: Config, evt: CharEvent): Transition =
       handle_Character(config, evt)
@@ -239,7 +269,7 @@ object LogicalTokens {
     protected final def to_tokens(config: Config, p: Vector[Char], l: ParseLocation): LogicalTokens = to_tokens(config, p.mkString, l)
 
     protected final def to_tokens(config: Config, p: String, l: ParseLocation): LogicalTokens =
-      config.getTokens(p) getOrElse LogicalTokens(AtomToken(p, l))
+      config.getTokens(config, p, l) getOrElse LogicalTokens(AtomToken(p, l))
 
     // XXX
     // protected final def handle_open_angle_bracket(config: Config, evt: CharEvent): Transition =
@@ -340,7 +370,7 @@ object LogicalTokens {
 
   trait StringLiteralLogicalTokensParseState extends LogicalTokensParseState {
     override protected def double_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      if (evt.next == Some("\"") && evt.next2 == Some("\""))
+      if (evt.next == Some('"') && evt.next2 == Some('"'))
         SkipState(SkipState(RawStringState(this, evt)))
       else
         DoubleQuoteState(this, evt)
@@ -371,6 +401,7 @@ object LogicalTokens {
     override val use_Delimiter = false
     override val use_Double_Quote = false
     override val use_Single_Quote = false
+    override val use_Bracket = false
 
     override def addChildState(config: Config, p: LogicalTokens): LogicalTokensParseState =
       parent.addChildState(config, SpaceToken(spaces.mkString, None) +: p)
@@ -405,10 +436,11 @@ object LogicalTokens {
   case class DoubleQuoteState(
     parent: LogicalTokensParseState,
     text: Vector[Char],
-    location: Option[ParseLocation]
+    location: Option[ParseLocation],
+    prefix: Option[String]
   ) extends LogicalTokensParseState {
     override protected def double_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      parent.addChildState(config, DoubleStringToken(text.mkString, location))
+      parent.addChildState(config, DoubleStringToken(text.mkString, location, prefix))
 
     override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
       if (evt.c == '\\')
@@ -418,13 +450,16 @@ object LogicalTokens {
   }
   object DoubleQuoteState {
     def apply(p: LogicalTokensParseState, evt: CharEvent): DoubleQuoteState =
-      DoubleQuoteState(p, Vector.empty, Some(evt.location))
+      DoubleQuoteState(p, Vector.empty, Some(evt.location), None)
+    def apply(p: LogicalTokensParseState, evt: CharEvent, prefix: Option[String]): DoubleQuoteState =
+      DoubleQuoteState(p, Vector.empty, Some(evt.location), prefix)
   }
 
   case class SingleQuoteState(
     parent: LogicalTokensParseState,
     text: Vector[Char],
-    location: Option[ParseLocation]
+    location: Option[ParseLocation],
+    prefix: Option[String]
   ) extends LogicalTokensParseState {
     override protected def single_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState =
       parent.addChildState(config, SingleStringToken(text.mkString, location))
@@ -437,17 +472,20 @@ object LogicalTokens {
   }
   object SingleQuoteState {
     def apply(p: LogicalTokensParseState, evt: CharEvent): SingleQuoteState =
-      SingleQuoteState(p, Vector.empty, Some(evt.location))
+      SingleQuoteState(p, Vector.empty, Some(evt.location), None)
+    def apply(p: LogicalTokensParseState, evt: CharEvent, prefix: String): SingleQuoteState =
+      SingleQuoteState(p, Vector.empty, Some(evt.location), Some(prefix))
   }
 
   case class RawStringState(
     parent: LogicalTokensParseState,
     text: Vector[Char],
-    location: Option[ParseLocation]
+    location: Option[ParseLocation],
+    prefix: Option[String]
   ) extends LogicalTokensParseState {
     override protected def double_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState =
       if (evt.c == '"' && evt.next == Some('"') && evt.next2 == Some('"'))
-        SkipState(SkipState(parent.addChildState(config, RawStringToken(text.mkString, location))))
+        SkipState(SkipState(parent.addChildState(config, RawStringToken(text.mkString, location, prefix))))
       else
       copy(text = text :+ evt.c)
 
@@ -456,7 +494,50 @@ object LogicalTokens {
   }
   object RawStringState {
     def apply(p: LogicalTokensParseState, evt: CharEvent): RawStringState =
-      RawStringState(p, Vector.empty, Some(evt.location))
+      RawStringState(p, Vector.empty, Some(evt.location), None)
+    def apply(p: LogicalTokensParseState, evt: CharEvent, prefix: Option[String]): RawStringState =
+      RawStringState(p, Vector.empty, Some(evt.location), prefix)
+  }
+
+  case class BracketState(
+    parent: LogicalTokensParseState,
+    text: Vector[Char],
+    location: Option[ParseLocation],
+    prefix: Option[String]
+  ) extends LogicalTokensParseState {
+    override protected def close_Bracket_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+      parent.addChildState(config, BracketToken(text.mkString, location, prefix))
+
+    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+      copy(text = text :+ evt.c)
+  }
+  object BracketState {
+    def apply(p: LogicalTokensParseState, evt: CharEvent): BracketState =
+      BracketState(p, Vector.empty, Some(evt.location), None)
+    def apply(p: LogicalTokensParseState, evt: CharEvent, prefix: Option[String]): BracketState =
+      BracketState(p, Vector.empty, Some(evt.location), prefix)
+  }
+
+  case class RawBracketState(
+    parent: LogicalTokensParseState,
+    text: Vector[Char],
+    location: Option[ParseLocation],
+    prefix: Option[String]
+  ) extends LogicalTokensParseState {
+    override protected def close_Bracket_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+      if (evt.isMatch("]]]"))
+        SkipState(SkipState(parent.addChildState(config, RawBracketToken(text.mkString, location, prefix))))
+      else
+        copy(text = text :+ evt.c)
+
+    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+      copy(text = text :+ evt.c)
+  }
+  object RawBracketState {
+    def apply(p: LogicalTokensParseState, evt: CharEvent): RawBracketState =
+      RawBracketState(p, Vector.empty, Some(evt.location), None)
+    def apply(p: LogicalTokensParseState, evt: CharEvent, prefix: Option[String]): RawBracketState =
+      RawBracketState(p, Vector.empty, Some(evt.location), prefix)
   }
 
   case class NormalState(
@@ -504,11 +585,35 @@ object LogicalTokens {
       val a = if (cs.isEmpty) {
         LogicalTokens(DelimiterToken(evt.c, evt.location))
       } else {
-        val b = AtomToken(cs.mkString, location)
-        LogicalTokens(b, DelimiterToken(evt.c, evt.location))
+        val b = to_tokens(config, cs.mkString, location)
+        b + DelimiterToken(evt.c, evt.location)
       }
       val l = evt.location
       copy(Vector.empty, tokens + a, l)
+    }
+
+    override protected def double_Quote_State(config: Config, evt: CharEvent) = {
+      val prefix = if (cs.isEmpty) None else Some(cs.mkString)
+      val newparent = copy(cs = Vector.empty)
+      if (evt.isMatch("\"\"\""))
+        SkipState(SkipState(RawStringState(newparent, evt, prefix)))
+      else
+        DoubleQuoteState(newparent, evt, prefix)
+    }
+
+    override protected def single_Quote_State(config: Config, evt: CharEvent) = {
+      val prefix = cs.mkString
+      val newparent = copy(cs = Vector.empty)
+      SingleQuoteState(newparent, evt, prefix)
+    }
+
+    override protected def open_Bracket_State(config: Config, evt: CharEvent) = {
+      val prefix = if (cs.isEmpty) None else Some(cs.mkString)
+      val newparent = copy(cs = Vector.empty)
+      if (evt.isMatch("[[["))
+        SkipState(SkipState(RawBracketState(newparent, evt, prefix)))
+      else
+        BracketState(newparent, evt, prefix)
     }
 
     override protected def character_State(config: Config, evt: CharEvent) =
