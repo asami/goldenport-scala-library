@@ -53,7 +53,22 @@ libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "2.20.0"
 
 // libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.9.4"
 
-// libraryDependencies += "org.scalikejdbc" %% "scalikejdbc" % "2.2.6"
+libraryDependencies += "com.typesafe" % "config" % "1.2.1"
+
+// libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.9.4" 
+
+libraryDependencies += "org.typelevel" %% "spire" % "0.14.1"
+
+libraryDependencies += "commons-jxpath" % "commons-jxpath" % "1.3" % "provided"
+
+libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.25"
+
+libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3" % "provided"
+
+libraryDependencies += "net.sourceforge.nekohtml" % "nekohtml" % "1.9.22" % "compile"
+
+libraryDependencies += "com.typesafe.play" %% "play-json" % "2.2.2" % "provided" exclude("org.scala-stm", "scala-stm_2.10.0")
+
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
 
