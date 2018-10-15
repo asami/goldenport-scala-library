@@ -2,11 +2,11 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.0.1"
+version := "2.0.2-SNAPSHOT"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.12.7"
 
-crossScalaVersions := Seq("2.11.6", "2.10.5")
+// crossScalaVersions := Seq("2.11.6", "2.10.5")
 
 scalacOptions += "-deprecation"
 
@@ -28,34 +28,34 @@ libraryDependencies <++= scalaVersion { v =>
     Nil
   else
     Seq(
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
-      "org.scala-lang.modules" %% "scala-xml" %  "1.0.4"
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1",
+      "org.scala-lang.modules" %% "scala-xml" %  "1.1.1"
     )
 }
 
 libraryDependencies += "org.goldenport" % "goldenport-java-lib" % "0.1.3" % "compile"
 
-libraryDependencies += "org.goldenport" %% "goldenport-kestrel" % "2.0.0"
+libraryDependencies += "org.goldenport" %% "goldenport-kestrel" % "2.0.1-SNAPSHOT"
 
 // Defines important library dependencies
 
-libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.1.2"
+libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.26"
 
-libraryDependencies += "org.scalaz.stream" %% "scalaz-stream" % "0.6a" exclude("org.scala-lang", "scala-library_2.10.5")
+libraryDependencies += "org.scalaz.stream" %% "scalaz-stream" % "0.8.6a" exclude("org.scala-lang", "scala-library_2.10.5")
 
-libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.3-1"
+// libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.3-1"
 
-libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.3-1"
+// libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.3-1"
 
-libraryDependencies += "com.jsuereth" %% "scala-arm" % "1.4" exclude("org.scala-stm", "scala-stm_2.10.0")
+libraryDependencies += "com.jsuereth" %% "scala-arm" % "2.0" exclude("org.scala-stm", "scala-stm_2.10.0")
 
-libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "2.0.0"
+libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "2.20.0"
 
 // libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.9.4"
 
 // libraryDependencies += "org.scalikejdbc" %% "scalikejdbc" % "2.2.6"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.4" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
 
 libraryDependencies += "junit" % "junit" % "4.12" % "test"
 
