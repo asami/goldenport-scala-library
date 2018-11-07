@@ -5,7 +5,8 @@ import org.goldenport.exception.RAISE
 
 /*
  * @since   Aug. 20, 2018
- * @version Sep. 29, 2018
+ *  version Sep. 29, 2018
+ * @version Oct. 27, 2018
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -16,10 +17,17 @@ case class LogicalLines(
   def +(rhs: LogicalLines) = LogicalLines(lines ++ rhs.lines)
   def :+(p: String) = LogicalLines(lines :+ LogicalLine(p))
   def +:(p: String) = LogicalLines(LogicalLine(p) +: lines)
+
+  def text = lines.map(_.text + "\n").mkString
 }
 
 object LogicalLines {
   type Transition = (ParseMessageSequence, ParseResult[LogicalLines], LogicalLinesParseState)
+
+  implicit object LogicalLinesMonoid extends Monoid[LogicalLines] {
+    def zero = empty
+    def append(lhs: LogicalLines, rhs: => LogicalLines) = lhs + rhs
+  }
 
   val empty = LogicalLines(Vector.empty)
 
@@ -27,13 +35,15 @@ object LogicalLines {
 
   def apply(p: String, ps: String*): LogicalLines = LogicalLines(LogicalLine(p) +: ps.toVector.map(LogicalLine(_)))
 
-  def parse(in: String): LogicalLines = parse(in.toVector)
+  def parse(in: String): LogicalLines = parse(Config.default, in.toVector)
 
-  def parse(in: Seq[Char]): LogicalLines = {
-    val parser = ParseReaderWriterStateClass(Config(), InitState)
+  def parse(conf: Config, in: String): LogicalLines = parse(conf, in.toVector)
+
+  def parse(conf: Config, in: Seq[Char]): LogicalLines = {
+    val parser = ParseReaderWriterStateClass(conf, InitState)
     val (messages, result, state) = parser.apply(in)
     result match {
-      case ParseSuccess(ast, _) => ast
+      case ParseSuccess(ast, _) => ast.concatenate
       case ParseFailure(_, _) => RAISE.notImplementedYetDefect
       case EmptyParseResult() => RAISE.notImplementedYetDefect
     }
@@ -48,6 +58,10 @@ object LogicalLines {
     useBracket: Boolean = true // script
   ) extends ParseConfig {
   }
+  object Config {
+    val default = Config()
+    val raw = Config(false, false, false, false, false, false)
+  }
 
   trait LogicalLinesParseState extends ParseReaderWriterState[Config, LogicalLines] {
     def apply(config: Config, evt: ParseEvent): Transition = {
@@ -59,14 +73,20 @@ object LogicalLines {
 
     def addChild(config: Config, ps: Vector[Char]): LogicalLinesParseState = RAISE.noReachDefect(s"addChild(${getClass.getSimpleName})")
     def addChildEndTransition(config: Config, ps: Vector[Char]): Transition = RAISE.noReachDefect(s"addChildEndTransition(${getClass.getSimpleName})")
+    def addChildEndTransition(
+      config: Config,
+      msgs: ParseMessageSequence,
+      ps: Vector[Char]
+    ): Transition = addChildEndTransition(config, ps)
 
     protected final def handle_event(config: Config, evt: ParseEvent): Transition =
       evt match {
+        case StartEvent => handle_start(config)
         case EndEvent => handle_end(config)
         case m: LineEndEvent => handle_line_end(config, m)
         case m: CharEvent => m.c match {
           case '"' if config.useDoubleQuote => handle_double_quote(config, m)
-          case ''' if config.useSingleQuote => handle_single_quote(config, m)
+          case '\'' if config.useSingleQuote => handle_single_quote(config, m)
           case '<' if config.useAngleBracket => handle_open_angle_bracket(config, m)
           case '>' if config.useAngleBracket => handle_close_angle_bracket(config, m)
           case '{' if config.useBrace => handle_open_brace(config, m)
@@ -80,6 +100,17 @@ object LogicalLines {
           case c => handle_character(config, m)
         }
       }
+
+    protected final def handle_start(config: Config): Transition =
+      handle_Start(config)
+
+    protected def handle_Start(config: Config): Transition =
+      (ParseMessageSequence.empty, start_Result(config), start_State(config))
+
+    protected def start_Result(config: Config): ParseResult[LogicalLines] = 
+      ParseSuccess(LogicalLines.empty)
+
+    protected def start_State(config: Config): LogicalLinesParseState = this
 
     protected final def handle_end(config: Config): Transition =
       handle_End(config)
@@ -111,6 +142,7 @@ object LogicalLines {
 
     protected final def handle_single_quote(config: Config, evt: CharEvent): Transition =
       handle_Single_Quote(config, evt)
+
 
     protected def handle_Single_Quote(config: Config, evt: CharEvent): Transition =
       (ParseMessageSequence.empty, ParseResult.empty, single_Quote_State(config, evt))
@@ -279,6 +311,15 @@ object LogicalLines {
       val r = if (cs.isEmpty) result else result :+ cs.mkString
       ParseSuccess(r)
     }
+
+    override protected def handle_Newline(config: Config, evt: CharEvent): Transition =
+      handle_Line_End(config, LineEndEvent())
+
+    override protected def handle_Line_End(config: Config, evt: LineEndEvent): Transition = {
+      val r = result :+ cs.mkString
+      (ParseMessageSequence.empty, ParseSuccess(r), NormalState.empty)
+    }
+
     override protected def line_End_State(config: Config, evt: LineEndEvent): LogicalLinesParseState =
       NormalState(Vector.empty, result :+ cs.mkString)
     override protected def character_State(c: Char) = copy(cs = cs :+ c)
@@ -428,7 +469,12 @@ object LogicalLines {
     parent: LogicalLinesParseState,
     text: Vector[Char] = Vector.empty
   ) extends AwakeningLogicalLinesParseState {
-    override protected def handle_End(config: Config): Transition = RAISE.notImplementedYetDefect // TODO error
+    override protected def handle_End(config: Config): Transition =
+      parent.addChildEndTransition(
+        config,
+        ParseMessageSequence.warning("In '\"', reach to unexpected end."),
+        '"' +: text :+ '"'
+      )
     override protected def character_State(c: Char) = copy(text = text :+ c)
     override protected def double_Quote_State(config: Config, evt: CharEvent) =
       parent.addChild(config, '"' +: text :+ '"')
@@ -444,10 +490,5 @@ object LogicalLines {
   }
 
   case class RawStringState() extends AwakeningLogicalLinesParseState {
-  }
-
-  implicit object LogicalLinesMonoid extends Monoid[LogicalLines] {
-    def zero = empty
-    def append(lhs: LogicalLines, rhs: => LogicalLines) = lhs + rhs
   }
 }

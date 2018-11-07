@@ -10,7 +10,8 @@ import LogicalTokens.Config
 
 /*
  * @since   Aug. 28, 2018
- * @version Sep. 19, 2018
+ *  version Sep. 19, 2018
+ * @version Oct. 26, 2018
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -54,9 +55,9 @@ object DelimiterToken {
     DelimiterToken(text, Some(location))
 }
 
-sealed trait StringToken extends LiteralToken {
-  def prefix: Option[String]
-  def text: String
+case class SingleQuoteToken(
+  location: Option[ParseLocation]
+) extends LiteralToken {
 }
 
 case class AtomToken(
@@ -67,6 +68,11 @@ case class AtomToken(
 object AtomToken {
   def apply(text: String, location: ParseLocation): AtomToken =
     AtomToken(text, Some(location))
+}
+
+sealed trait StringToken extends LiteralToken {
+  def prefix: Option[String]
+  def text: String
 }
 
 case class DoubleStringToken(

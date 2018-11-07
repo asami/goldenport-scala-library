@@ -1,13 +1,15 @@
 package org.goldenport.io
 
-import java.io.InputStream
+import java.io._
 import java.nio.charset.Charset
 import java.net.{URL, URI}
 import scalax.io._
+import com.asamioffice.goldenport.io.UIO
 
 /*
  * @since   Oct.  9, 2017
- * @version Sep. 18, 2018
+ *  version Sep. 18, 2018
+ * @version Oct.  8, 2018
  * @author  ASAMI, Tomoharu
  */
 object IoUtils {
@@ -21,5 +23,12 @@ object IoUtils {
     Resource.fromInputStream(in).string(Codec(charset))
   def toText(in: InputStream, codec: Codec): String =
     Resource.fromInputStream(in).string(codec)
-}
 
+  def copyClose(in: InputStream, out: OutputStream): Unit =
+    for {
+      i <- resource.managed(in)
+      o <- resource.managed(out)
+    } {
+      UIO.stream2stream(in, out)
+    }
+}

@@ -6,7 +6,8 @@ import org.goldenport.util.VectorUtils
   
 /*
  * @since   Aug. 21, 2018
- * @version Sep. 22, 2018
+ *  version Sep. 22, 2018
+ * @version Oct.  9, 2018
  * @author  ASAMI, Tomoharu
  */
 trait ParseEvent
@@ -26,6 +27,10 @@ case class CharEvent(
   }
 }
 object CharEvent {
+  def apply(c: Char): CharEvent = CharEvent(c, None, None, ParseLocation.empty)
+
+  def apply(c: Int): CharEvent = CharEvent(c.toChar, None, None, ParseLocation.empty)
+
   def make(p: String): Vector[CharEvent] = make(p.toVector)
 
   def make(ps: Seq[Char]): Vector[CharEvent] = {
@@ -91,6 +96,7 @@ object LogicalLineEvent {
   def make(p: LogicalLines): Vector[LogicalLineEvent] = p.lines.map(LogicalLineEvent.apply)
 }
 
+case object StartEvent extends ParseEvent
 case object EndEvent extends ParseEvent
 
 case class LineEndEvent() extends ParseEvent

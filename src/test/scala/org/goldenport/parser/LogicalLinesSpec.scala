@@ -6,7 +6,8 @@ import org.scalatest._
 
 /*
  * @since   Aug. 24, 2018
- * @version Aug. 28, 2018
+ *  version Aug. 28, 2018
+ * @version Oct. 25, 2018
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -27,6 +28,31 @@ b" c
       val r = LogicalLines.parse(s)
       r should be(LogicalLines("""a "
 b" c"""))
+    }
+    "single quote" which {
+      "one" in {
+        val s = """'"""
+        val conf = LogicalLines.Config.raw
+        val r = LogicalLines.parse(conf, s)
+        r should be(LogicalLines("""'"""))
+      }
+      "one syntax error" in {
+        val s = """'"""
+        val r = LogicalLines.parse(s)
+        r should be(LogicalLines("""'""")) // TODO exception
+      }
+      "after one" in {
+        val s = """a'"""
+        val conf = LogicalLines.Config.raw
+        val r = LogicalLines.parse(conf, s)
+        r should be(LogicalLines("""a'"""))
+      }
+      "in one" in {
+        val s = """a'b"""
+        val conf = LogicalLines.Config.raw
+        val r = LogicalLines.parse(conf, s)
+        r should be(LogicalLines("""a'b"""))
+      }
     }
     "s-expression" which {
       "one line" in {

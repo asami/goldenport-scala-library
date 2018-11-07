@@ -5,7 +5,8 @@ import org.goldenport.exception.RAISE
 
 /*
  * @since   Aug. 20, 2018
- * @version Sep. 29, 2018
+ *  version Sep. 29, 2018
+ * @version Oct. 27, 2018
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -29,6 +30,10 @@ case class LogicalBlocks(
     this
   else
     LogicalBlocks(lhs +: blocks)
+
+  lazy val events = StartBlock +: blocks :+ EndBlock
+
+  def text = blocks.flatMap(_.getText).mkString
 }
 
 object LogicalBlocks {
@@ -47,8 +52,10 @@ object LogicalBlocks {
 
   def parse(in: String): LogicalBlocks = parse(Config.default, in)
 
-  def parse(config: Config, in: String): LogicalBlocks =
-    parse(config, LogicalLines.parse(in))
+  def parse(config: Config, in: String): LogicalBlocks = {
+    val c = LogicalLines.Config.raw
+    parse(config, LogicalLines.parse(c, in))
+  }
 
   def parse(in: LogicalLines): LogicalBlocks = parse(Config.default, in)
 
@@ -56,7 +63,7 @@ object LogicalBlocks {
     val parser = ParseReaderWriterStateClass[Config, LogicalBlocks](config, RootState.init)
     val (messages, result, state) = parser.apply(in)
     result match {
-      case ParseSuccess(blocks, _) => blocks
+      case ParseSuccess(blocks, _) => blocks.concatenate
       case ParseFailure(_, _) => RAISE.notImplementedYetDefect
       case EmptyParseResult() => RAISE.notImplementedYetDefect
     }
@@ -110,11 +117,23 @@ object LogicalBlocks {
 
     protected final def handle_event(config: Config, evt: ParseEvent): Transition =
       evt match {
+        case StartEvent => handle_start(config)
         case EndEvent => handle_end(config)
         case m: LogicalLineEvent => handle_line(config, m)
         case m: LineEndEvent => RAISE.noReachDefect
         case m: CharEvent => RAISE.noReachDefect
       }
+
+    protected final def handle_start(config: Config): Transition =
+      handle_Start(config)
+
+    protected def handle_Start(config: Config): Transition =
+      (ParseMessageSequence.empty, start_Result(config), start_State(config))
+
+    protected def start_Result(config: Config): ParseResult[LogicalBlocks] = 
+      ParseSuccess(LogicalBlocks.empty)
+
+    protected def start_State(config: Config): LogicalBlocksParseState = this
 
     protected final def handle_end(config: Config): Transition =
       handle_End(config)

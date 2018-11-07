@@ -27,7 +27,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Dec. 17, 2017
  *  version Jan. 14, 2018
  *  version May. 30, 2018
- * @version Aug. 31, 2018
+ *  version Aug. 31, 2018
+ * @version Oct. 10, 2018
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -291,6 +292,16 @@ object StringUtils {
   }
   def shortUrl(p: URL): String = shortUri(p.toURI)
   def shortUrn(p: Urn): String = p.text
+
+  def showConsole(p: String, newline: String, size: Int = 5): String = {
+    val max = size * 80
+    val a = if (p.length > max) p.substring(0, size * 80) else p
+    val b = Strings.tolines(a).take(size).mkString(newline)
+    if (p.length > max)
+      s"$b ... (total: ${p.length})"
+    else
+      b
+  }
 
   /*
    * List

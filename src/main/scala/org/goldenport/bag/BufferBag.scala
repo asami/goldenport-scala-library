@@ -16,7 +16,8 @@ import com.asamioffice.goldenport.io.UURL
  *  version Nov. 12, 2014
  *  version Sep. 22, 2016
  *  version Jul. 24, 2017
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Oct.  8, 2018
  * @author  ASAMI, Tomoharu
  */
 class BufferBag(
@@ -51,7 +52,11 @@ object BufferBag {
 
   def create(text: String, enc: String): BufferBag = {
     val codec = Charset.forName(enc)
-    val bag = new BufferBag(8192, Some(codec))
+    create(text, codec)
+  }
+
+  def create(text: String, charset: Charset): BufferBag = {
+    val bag = new BufferBag(8192, Some(charset))
     bag.write(text)
     bag
   }

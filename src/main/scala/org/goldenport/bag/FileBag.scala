@@ -21,7 +21,8 @@ import com.asamioffice.goldenport.io.UURL
  *  version Sep. 29, 2015
  *  version Oct. 27, 2015
  *  version Sep. 22, 2016
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Oct.  5, 2018
  * @author  ASAMI, Tomoharu
  */
 class FileBag(
@@ -89,6 +90,8 @@ object FileBag {
   def create(filename: String): FileBag = {
     new FileBag(Path.fromString(filename))
   }
+
+  def create(file: java.io.File): FileBag = new FileBag(Path(file))
 
   def create(codec: Option[Codec]): FileBag =
     new FileBag(_create_temp_path, codec)

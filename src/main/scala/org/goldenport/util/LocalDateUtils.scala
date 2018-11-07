@@ -10,14 +10,15 @@ import com.github.nscala_time.time.Imports._
  *  version Mar. 19, 2016
  *  version Aug. 29, 2017
  *  version May. 23, 2018
- * @version Jun. 14, 2018
+ *  version Jun. 14, 2018
+ * @version Oct. 10, 2018
  * @author  ASAMI, Tomoharu
  */
 object LocalDateUtils {
   def parse(s: String): LocalDate = LocalDate.parse(s.trim)
 
   def parseYYYYMMDD(s: String): LocalDate = {
-    println(s"parseYYYYMMDD: $s")
+    // println(s"parseYYYYMMDD: $s")
     new LocalDate(DateUtils.parseYYYYMMDD(s), DateTimeUtils.jodagmt)
   }
 

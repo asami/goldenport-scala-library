@@ -6,7 +6,8 @@ import org.scalatest._
 
 /*
  * @since   Sep. 22, 2018
- * @version Sep. 24, 2018
+, "def", "fhi")), LogicalParagraph(LogicalLines("xyz", "wxy", "vwx")))) * @version Oct. 25, 2018
+, "def", "fhi")), LogicalParagraph(LogicalLines("xyz", "wxy", "vwx")))) *  version Sep. 24, 2018
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -38,6 +39,16 @@ vwx
 """
         val r = LogicalBlocks.parse(s)
         r should be(LogicalBlocks(LogicalParagraph(LogicalLines("abc", "def", "fhi")), LogicalParagraph(LogicalLines("xyz", "wxy", "vwx"))))
+      }
+      "single quote in head" in {
+        val s = """'"""
+        val r = LogicalBlocks.parse(s)
+        r should be(LogicalBlocks(LogicalParagraph(LogicalLines("'"))))
+      }
+      "single quote" in {
+        val s = """a'b"""
+        val r = LogicalBlocks.parse(s)
+        r should be(LogicalBlocks(LogicalParagraph(LogicalLines("a'b"))))
       }
     }
     "section" which {

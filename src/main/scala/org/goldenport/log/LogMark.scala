@@ -5,7 +5,8 @@ import org.goldenport.value._
 
 /*
  * @since   Sep. 16, 2018
- * @version Sep. 17, 2018
+ *  version Sep. 17, 2018
+ * @version Oct.  6, 2018
  * @author  ASAMI, Tomoharu
  */
 case class LogMark(
@@ -21,7 +22,14 @@ object LogMark {
   sealed trait Location extends NamedValueInstance {
   }
   object Location extends EnumerationClass[Location] {
-    val elements = Vector()
+    val elements = Vector(
+      SystemLocation,
+      ExecuteLocation,
+      FunctionLocation,
+      ThreadLocation,
+      DatabaseLocation,
+      NetworkLocation
+    )
   }
   case object SystemLocation extends Location {
     val name = "system"
@@ -45,7 +53,13 @@ object LogMark {
   sealed trait Action extends NamedValueInstance {
   }
   object Action extends EnumerationClass[Action] {
-    val elements = Vector()
+    val elements = Vector(
+      ErrorAction,
+      StartAction,
+      EndAction,
+      EndErrorAction,
+      ProcessingAction
+    )
   }
   case object ErrorAction extends Action {
     val name = "error"
