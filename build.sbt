@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "1.2.27"
+version := "1.2.28"
 
 scalaVersion := "2.10.3"
 // crossScalaVersions := Seq("2.9.2", "2.9.1")
@@ -52,7 +52,6 @@ libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3" % "provide
 libraryDependencies += "net.sourceforge.nekohtml" % "nekohtml" % "1.9.22" % "compile"
 
 libraryDependencies += "com.typesafe.play" %% "play-json" % "2.2.2" % "provided" exclude("org.scala-stm", "scala-stm_2.10.0")
-
 
 libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.2.6" % "test"
 
