@@ -8,7 +8,8 @@ import scalaz.stream._
  * @since   Aug. 21, 2018
  *  version Aug. 29, 2018
  *  version Sep. 22, 2018
- * @version Oct. 10, 2018
+ *  version Oct. 10, 2018
+ * @version Nov. 12, 2018
  * @author  ASAMI, Tomoharu
  */
 trait ParseReaderWriterState[C <: ParseConfig, AST] {
@@ -30,12 +31,12 @@ case class ParseReaderWriterStateClass[C <: ParseConfig, AST](
 
   def apply(events: Seq[Char]): OUT = {
     val es = CharEvent.make(events)
-    _parse_events(es :+ EndEvent)
+    _parse_events(es)
   }
 
   def apply(events: LogicalLines): OUT = {
     val es = LogicalLineEvent.make(events)
-    _parse_events(es :+ EndEvent)
+    _parse_events(es)
   }
 
   private def _parse_events(events: Seq[ParseEvent]): OUT = {

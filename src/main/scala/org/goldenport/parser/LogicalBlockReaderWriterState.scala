@@ -4,10 +4,11 @@ import scalaz._, Scalaz._
   
 /*
  * @since   Oct. 14, 2018
- * @version Oct. 14, 2018
+ * @version Nov. 11, 2018
  * @author  ASAMI, Tomoharu
  */
 trait LogicalBlockReaderWriterState[C <: ParseConfig, AST] {
+  def result: AST
   def apply(config: C, event: LogicalBlock): (ParseMessageSequence, ParseResult[AST], LogicalBlockReaderWriterState[C, AST])
 }
 
@@ -26,7 +27,9 @@ case class LogicalBlockReaderWriterStateClass[C <: ParseConfig, AST](
 
   def apply(s: String): OUT = {
     val blocks = LogicalBlocks.parse(s)
-    _parse_blocks(blocks.events)
+    val r = _parse_blocks(blocks.events)
+    println(s"LogicalBlockReaderWriterStateClass: ${blocks} => $r")
+    r
   }
 
   private def _parse_blocks(blocks: Seq[LogicalBlock]): OUT = {
@@ -34,7 +37,10 @@ case class LogicalBlockReaderWriterStateClass[C <: ParseConfig, AST](
       for {
         _ <- z
         r <- action(x)
-      } yield r
+      } yield {
+        println(s"LogicalBlockReaderWriterStateClass#_parse_blocks: $r")
+        r
+      }
     )
     a.run(config, init)
   }
