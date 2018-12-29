@@ -19,7 +19,8 @@ import com.asamioffice.goldenport.text.UString
  *  version Jan. 14, 2015
  *  version Oct. 25, 2015
  *  version Mar. 10, 2016
- * @version Mar. 21, 2017
+ *  version Mar. 21, 2017
+ * @version Dec. 10, 2018
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -76,6 +77,16 @@ object Strings {
     val AlreadyReported = "Already Reported"
     val IMUsed = "IM Used"
     val AuthenticationSuccessful = "Authentication Successful"
+    // 300
+    val MultipleChoices = "Multiple Choices"
+    val MovedPermanently = "Moved Permanently"
+    val Found = "Found" // Moved temporarily
+    val SeeOther = "See Other"
+    val NotModified = "Mot Modified"
+    val UseProxy = "Use Proxy"
+    val SwitchProxy = "Switch Proxy"
+    val TemporaryRedirect = "Temporary Redirect"
+    val PermanentRedirect = "Permanent Redirect"
     // 400
     val BadRequest = "Bad Request"
     val Unauthorized = "Unauthorized"
@@ -107,6 +118,15 @@ object Strings {
       208 -> AlreadyReported,
       226 -> IMUsed,
       230 -> AuthenticationSuccessful,
+      300 -> MultipleChoices,
+      301 -> MovedPermanently,
+      302 -> Found,
+      303 -> SeeOther,
+      304 -> NotModified,
+      305 -> UseProxy,
+      306 -> SwitchProxy,
+      307 -> TemporaryRedirect,
+      308 -> PermanentRedirect,
       400 -> BadRequest,
       401 -> Unauthorized,
       402 -> PaymentRequired,

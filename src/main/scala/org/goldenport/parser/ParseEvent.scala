@@ -7,10 +7,13 @@ import org.goldenport.util.VectorUtils
 /*
  * @since   Aug. 21, 2018
  *  version Sep. 22, 2018
- * @version Oct.  9, 2018
+ *  version Oct.  9, 2018
+ * @version Dec. 16, 2018
  * @author  ASAMI, Tomoharu
  */
-trait ParseEvent
+trait ParseEvent {
+  def getLogicalLineText: Option[String] = None
+}
 
 case class CharEvent(
   c: Char,
@@ -91,6 +94,7 @@ case class LogicalLineEvent(
   def getSectionTitle = line.getSectionTitle
   def getSectionUnderline = line.getSectionUnderline
   def isEmptyLine = line.isEmptyLine
+  override def getLogicalLineText = Some(line.text)
 }
 object LogicalLineEvent {
   def make(p: LogicalLines): Vector[LogicalLineEvent] = p.lines.map(LogicalLineEvent.apply)
