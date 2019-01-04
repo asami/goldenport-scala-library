@@ -6,7 +6,8 @@ import org.scalatest._
 
 /*
  * @since   Aug. 26, 2018
- * @version Sep.  2, 2018
+ *  version Sep.  2, 2018
+ * @version Jan.  3, 2019
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -41,6 +42,44 @@ c d)"""
         CharEvent(' ', Some('d'), Some(')'), ParseLocation(2, 2)),
         CharEvent('d', Some(')'), None, ParseLocation(2, 3)),
         CharEvent(')', None, None, ParseLocation(2, 4))
+      ))
+    }
+    "raw string" in {
+      val s = "\"\"\"a\"\"\""
+      val r = CharEvent.make(s)
+      r should be(Vector(
+        CharEvent('"', Some('"'), Some('"'), ParseLocation(1, 1)),
+        CharEvent('"', Some('"'), Some('a'), ParseLocation(1, 2)),
+        CharEvent('"', Some('a'), Some('"'), ParseLocation(1, 3)),
+        CharEvent('a', Some('"'), Some('"'), ParseLocation(1, 4)),
+        CharEvent('"', Some('"'), Some('"'), ParseLocation(1, 5)),
+        CharEvent('"', Some('"'), None, ParseLocation(1, 6)),
+        CharEvent('"', None, None, ParseLocation(1, 7))
+      ))
+    }
+    "raw string 2" in {
+      val s = "\"\"\"\"\"\""
+      val r = CharEvent.make(s)
+      r should be(Vector(
+        CharEvent('"', Some('"'), Some('"'), ParseLocation(1, 1)),
+        CharEvent('"', Some('"'), Some('"'), ParseLocation(1, 2)),
+        CharEvent('"', Some('"'), Some('"'), ParseLocation(1, 3)),
+        CharEvent('"', Some('"'), Some('"'), ParseLocation(1, 4)),
+        CharEvent('"', Some('"'), None, ParseLocation(1, 5)),
+        CharEvent('"', None, None, ParseLocation(1, 6))
+      ))
+    }
+    "raw string 3" in {
+      val s = "\"\"\"\"\"\"\""
+      val r = CharEvent.make(s)
+      r should be(Vector(
+        CharEvent('"', Some('"'), Some('"'), ParseLocation(1, 1)),
+        CharEvent('"', Some('"'), Some('"'), ParseLocation(1, 2)),
+        CharEvent('"', Some('"'), Some('"'), ParseLocation(1, 3)),
+        CharEvent('"', Some('"'), Some('"'), ParseLocation(1, 4)),
+        CharEvent('"', Some('"'), Some('"'), ParseLocation(1, 5)),
+        CharEvent('"', Some('"'), None, ParseLocation(1, 6)),
+        CharEvent('"', None, None, ParseLocation(1, 7))
       ))
     }
   }

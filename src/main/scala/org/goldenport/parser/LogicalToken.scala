@@ -5,13 +5,14 @@ import java.net.{URL, URI}
 import org.joda.time._
 import org.goldenport.Strings
 import org.goldenport.values.Urn
-import org.goldenport.util.{DateTimeUtils, LocalDateUtils}
+import org.goldenport.util.{DateTimeUtils, LocalDateUtils, LocalDateTimeUtils}
 import LogicalTokens.Config
 
 /*
  * @since   Aug. 28, 2018
  *  version Sep. 19, 2018
- * @version Oct. 26, 2018
+ *  version Oct. 26, 2018
+ * @version Jan.  2, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -144,6 +145,25 @@ object DateTimeToken extends LogicalTokens.SimpleTokenizer {
 
   def apply(config: Config, s: String, location: ParseLocation): DateTimeToken =
     DateTimeToken(DateTimeUtils.parseIsoDateTimeJst(s), Some(location)) // TODO
+
+  override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
+    Try(apply(config, s, location)).toOption
+}
+
+case class LocalDateTimeToken(
+  datetime: LocalDateTime,
+  location: Option[ParseLocation]
+) extends LiteralToken {
+}
+object LocalDateTimeToken extends LogicalTokens.SimpleTokenizer {
+  def apply(p: DateTime, location: ParseLocation): DateTimeToken =
+    DateTimeToken(p, Some(location))
+
+  def apply(config: Config, s: String, location: Option[ParseLocation]): LocalDateTimeToken =
+    LocalDateTimeToken(LocalDateTimeUtils.parse(s), location)
+
+  def apply(config: Config, s: String, location: ParseLocation): LocalDateTimeToken =
+    LocalDateTimeToken(LocalDateTimeUtils.parse(s), Some(location))
 
   override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
     Try(apply(config, s, location)).toOption

@@ -6,7 +6,8 @@ import org.goldenport.exception.RAISE
 /*
  * @since   Aug. 20, 2018
  *  version Sep. 29, 2018
- * @version Oct. 27, 2018
+ *  version Oct. 27, 2018
+ * @version Dec. 31, 2018
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -169,13 +170,13 @@ object LogicalBlocks {
 
     override def line_State(config: Config, evt: LogicalLineEvent) = {
       evt.getSectionTitle.map { title =>
-        SectionState(this, title, evt.location)
+        SectionState(this, title, Some(evt.location))
       }.orElse {
         evt.getSectionUnderline.map { underline =>
           ??? // syntax error
         }
       }.getOrElse {
-        InputState(this, Vector(evt.line), LogicalBlocks.empty, evt.location)
+        InputState(this, Vector(evt.line), LogicalBlocks.empty, Some(evt.location))
       }
     }
   }
@@ -197,13 +198,13 @@ object LogicalBlocks {
 
     override def line_State(config: Config, evt: LogicalLineEvent) = {
       evt.getSectionTitle.map { title =>
-        SectionState(this, title, evt.location)
+        SectionState(this, title, Some(evt.location))
       }.orElse {
         evt.getSectionUnderline.map { underline =>
           ??? // syntax error
         }
       }.getOrElse {
-        InputState(this, Vector(evt.line), LogicalBlocks.empty, evt.location)
+        InputState(this, Vector(evt.line), LogicalBlocks.empty, Some(evt.location))
       }
     }
   }
@@ -232,7 +233,7 @@ object LogicalBlocks {
 
     override def line_State(config: Config, evt: LogicalLineEvent) =
       evt.getSectionTitle.map { title =>
-        SectionState(this, title, evt.location)
+        SectionState(this, title, Some(evt.location))
       }.orElse {
         evt.getSectionUnderline.map { underline =>
           ???
@@ -323,13 +324,13 @@ object LogicalBlocks {
       evt.getSectionTitle.map { x =>
         if (title.level == x.level) {
           // println("same")
-          SectionState(parent.addChildState(config, _close), x, evt.location)
+          SectionState(parent.addChildState(config, _close), x, Some(evt.location))
         } else if (title.level < x.level) {
           // println("down")
-          SectionState(_flush_state, x, evt.location)
+          SectionState(_flush_state, x, Some(evt.location))
         } else {
           println(s"up: ($this) <= $evt")
-          val r = SectionState(up(config, x), x, evt.location)
+          val r = SectionState(up(config, x), x, Some(evt.location))
           println(s"up: ($this) => $r")
           r
         }

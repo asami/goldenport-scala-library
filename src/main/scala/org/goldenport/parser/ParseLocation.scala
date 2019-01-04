@@ -4,7 +4,8 @@ import java.net.URI
 
 /*
  * @since   Aug. 26, 2018
- * @version Sep.  2, 2018
+ *  version Sep.  2, 2018
+ * @version Jan.  2, 2019
  * @author  ASAMI, Tomoharu
  */
 case class ParseLocation(
@@ -12,6 +13,12 @@ case class ParseLocation(
   line: Option[Int],
   offset: Option[Int]
 ) extends Parser {
+  def adjustPrefix(prefix: Option[String]): ParseLocation =
+    prefix.map(adjustPrefix).getOrElse(this)
+
+  def adjustPrefix(prefix: String): ParseLocation =
+    offset.map(x => copy(offset = Some(math.max(x - prefix.length, 1)))).
+      getOrElse(this)
 }
 
 object ParseLocation {

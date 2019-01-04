@@ -8,10 +8,11 @@ import org.goldenport.util.VectorUtils
  * @since   Aug. 21, 2018
  *  version Sep. 22, 2018
  *  version Oct.  9, 2018
- * @version Dec. 16, 2018
+ * @version Dec. 31, 2018
  * @author  ASAMI, Tomoharu
  */
 trait ParseEvent {
+  def location: ParseLocation
   def getLogicalLineText: Option[String] = None
 }
 
@@ -90,7 +91,7 @@ object CharEvent {
 case class LogicalLineEvent(
   line: LogicalLine
 ) extends ParseEvent {
-  def location = line.location
+  def location = line.location.getOrElse(ParseLocation.empty)
   def getSectionTitle = line.getSectionTitle
   def getSectionUnderline = line.getSectionUnderline
   def isEmptyLine = line.isEmptyLine
@@ -100,7 +101,11 @@ object LogicalLineEvent {
   def make(p: LogicalLines): Vector[LogicalLineEvent] = p.lines.map(LogicalLineEvent.apply)
 }
 
-case object StartEvent extends ParseEvent
-case object EndEvent extends ParseEvent
+case object StartEvent extends ParseEvent {
+  val location = ParseLocation.empty
+}
+case object EndEvent extends ParseEvent {
+  val location = ParseLocation.empty
+}
 
-case class LineEndEvent() extends ParseEvent
+case class LineEndEvent(location: ParseLocation) extends ParseEvent

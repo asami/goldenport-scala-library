@@ -5,7 +5,7 @@ import org.goldenport.Strings
 
 /*
  * @since   Oct. 29, 2017
- * @version Oct. 31, 2017
+ * @version Jan.  3, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Urn(
@@ -20,6 +20,7 @@ case class Urn(
   private def _fragment = fragment.fold("")(x => "#" + x)
   lazy val text = s"urn:$nid:${nss}${_rqcomponents}${_fragment}"
   lazy val submodule = components.headOption.getOrElse("")
+  lazy val toURI = new URI(text)
 }
 
 object Urn {

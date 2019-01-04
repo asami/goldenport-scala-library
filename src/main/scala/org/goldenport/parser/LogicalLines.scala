@@ -6,7 +6,9 @@ import org.goldenport.exception.RAISE
 /*
  * @since   Aug. 20, 2018
  *  version Sep. 29, 2018
- * @version Oct. 27, 2018
+ *  version Oct. 27, 2018
+ *  version Dec. 31, 2018
+ * @version Jan.  1, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -229,7 +231,7 @@ object LogicalLines {
       (ParseMessageSequence.empty, ParseResult.empty, newline_State(config, evt))
 
     protected def newline_State(config: Config, evt: CharEvent): LogicalLinesParseState =
-      line_End_State(config, LineEndEvent())
+      line_End_State(config, LineEndEvent(evt.location))
 
     protected final def handle_carrige_return(config: Config, evt: CharEvent): Transition =
       handle_Carrige_Return(config, evt)
@@ -240,9 +242,9 @@ object LogicalLines {
     protected def carrige_Return_State(config: Config, evt: CharEvent): LogicalLinesParseState =
       evt.next match {
         case Some('\n') => SkipState(
-          line_End_State(config, LineEndEvent())
+          line_End_State(config, LineEndEvent(evt.location))
         )
-        case _ => line_End_State(config, LineEndEvent())
+        case _ => line_End_State(config, LineEndEvent(evt.location))
       }
 
     protected final def handle_character(config: Config, evt: CharEvent): Transition =
@@ -313,7 +315,7 @@ object LogicalLines {
     }
 
     override protected def handle_Newline(config: Config, evt: CharEvent): Transition =
-      handle_Line_End(config, LineEndEvent())
+      handle_Line_End(config, LineEndEvent(evt.location))
 
     override protected def handle_Line_End(config: Config, evt: LineEndEvent): Transition = {
       val r = result :+ cs.mkString
@@ -401,6 +403,7 @@ object LogicalLines {
     override def addChild(config: Config, ps: Vector[Char]) = copy(tag = tag ++ ps)
 
     override protected def handle_End(config: Config): Transition = RAISE.notImplementedYetDefect // TODO error
+
     override protected def character_State(config: Config, evt: CharEvent) = {
       evt.c match {
         case '/' => evt.next match {
@@ -412,6 +415,7 @@ object LogicalLines {
         case c => copy(tag = tag :+ c)
       }
     }
+
     override protected def close_Angle_Bracket_State(config: Config, evt: CharEvent) = {
       XmlTextState(this, Vector.empty)
     }
@@ -425,6 +429,7 @@ object LogicalLines {
     lazy val tagString = s"</${tagName}>"
 
     override protected def close_Angle_Bracket_State(config: Config, evt: CharEvent) = {
+      println(s"XmlTextState#close_Angle_Bracket_State: $evt")
       if (tagName == text.open.tagName)
         text.open.parent.addChild(config, s"""${text.open.tagString}${text.textString}${tagString}""".toVector)
       else
@@ -443,9 +448,13 @@ object LogicalLines {
   ) extends AwakeningLogicalLinesParseState {
     lazy val textString = text.mkString
 
+    override protected def end_Result(config: Config): ParseResult[LogicalLines] =
+      RAISE.notImplementedYetDefect(this, textString)
+
     override def addChild(config: Config, ps: Vector[Char]) = copy(text = text ++ ps)
 
     override protected def open_Angle_Bracket_State(config: Config, evt: CharEvent) = {
+      println(s"XmlTextState#close_Angle_Bracket_State: $evt")
       if (evt.next == Some('/'))
         XmlCloseState(this)
       else

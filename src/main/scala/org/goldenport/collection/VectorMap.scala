@@ -1,16 +1,18 @@
 package org.goldenport.collection
 
 import scalaz._, Scalaz._
+import org.goldenport.RAISE
 import org.goldenport.util.VectorUtils
 
 /*
  * @since   Dec.  8, 2018
- * @version Dec. 27, 2018
+ * @version Dec. 30, 2018
  * @author  ASAMI, Tomoharu
  */
 sealed trait VectorMap[K, +V] extends Map[K, V] {
   override def toVector = vector
   def vector: Vector[(K, V)]
+  lazy val list: List[(K, V)] = vector.toList
   def update[W >: V](k: K, v: W): VectorMap[K, W] = update(k -> v)
   def update[W >: V](p: (K, W)): VectorMap[K, W]
   def update[W >: V](p: Map[K, W]): VectorMap[K, W]
@@ -23,6 +25,12 @@ sealed trait VectorMap[K, +V] extends Map[K, V] {
 
   protected def update_vector[W >: V](ps: Vector[(K, W)], xs: Seq[(K, W)]): Vector[(K, W)] =
     VectorUtils.updateMap(ps, xs)
+
+  def applyIgnoreCase(k: String)(implicit ev: K <:< String): V =
+    getIgnoreCase(k) getOrElse RAISE.noSuchElement(k)
+
+  def getIgnoreCase(k: String)(implicit ev: K <:< String): Option[V] =
+    vector.find(_._1.equalsIgnoreCase(k)).map(_._2)
 }
 
 case class PlainVectorMap[K, +V](
@@ -81,7 +89,7 @@ object VectorMap {
 
   def apply[K, V](): VectorMap[K, V] = empty
   def apply[K, V](p: (K, V), ps: (K, V)*): VectorMap[K, V] = PlainVectorMap(p +: ps.toVector)
-  def apply[K, V](ps: Vector[(K, V)]): VectorMap[K, V] = PlainVectorMap(ps)
+  def apply[K, V](ps: Iterable[(K, V)]): VectorMap[K, V] = PlainVectorMap(ps.toVector)
 
   implicit def VectorMapMonoid[K, V: Monoid] = new Monoid[VectorMap[K, V]] {
     def zero = empty

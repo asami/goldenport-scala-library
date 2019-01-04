@@ -10,7 +10,8 @@ import org.goldenport.util.DateTimeUtils
 
 /*
  * @since   Aug. 24, 2018
- * @version Sep. 22, 2018
+ *  version Sep. 22, 2018
+ * @version Jan.  1, 2019
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -159,6 +160,13 @@ xyz'"""
       }
     }
     "jxpath" which {
+      "typical" in {
+        val s = """/a/b/c"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          PathToken(s, ParseLocation.init)
+        ))
+      }
     }
     "jexl" which {
     }

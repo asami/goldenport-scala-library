@@ -6,7 +6,8 @@ import org.goldenport.exception.RAISE
 /*
  * @since   Aug. 28, 2018
  *  version Sep. 30, 2018
- * @version Oct. 26, 2018
+ *  version Oct. 26, 2018
+ * @version Jan.  3, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
@@ -93,7 +94,7 @@ object LogicalTokens {
       ";".toVector,
       Vector(
         NumberToken,
-        DateTimeToken, LocalDateToken, LocalTimeToken,
+        LocalDateToken, LocalDateTimeToken, LocalTimeToken, DateTimeToken, 
         UrlToken, UrnToken,
         PathToken
       ),
@@ -459,14 +460,21 @@ object LogicalTokens {
     location: Option[ParseLocation],
     prefix: Option[String]
   ) extends LogicalTokensParseState {
-    override protected def double_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      parent.addChildState(config, DoubleStringToken(text.mkString, location, prefix))
+    override def addChildState(config: Config, p: Vector[Char]): LogicalTokensParseState =
+      copy(text = text ++ p)
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def double_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState = {
+      println(s"DoubleQuote#double_Quote_State: $evt")
+      parent.addChildState(config, DoubleStringToken(text.mkString, location, prefix))
+    }
+
+    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState = {
+      println(s"DoubleQuoteState#double_Quote_State: $evt")
       if (evt.c == '\\')
-        RAISE.notImplementedYetDefect
+        StringQuoteEscapeState(this)
       else
         copy(text = text :+ evt.c)
+    }
   }
   object DoubleQuoteState {
     def apply(p: LogicalTokensParseState, evt: CharEvent): DoubleQuoteState =
@@ -475,18 +483,42 @@ object LogicalTokens {
       DoubleQuoteState(p, Vector.empty, Some(evt.location), prefix)
   }
 
+  case class StringQuoteEscapeState(
+    parent: LogicalTokensParseState
+  ) extends LogicalTokensParseState {
+    override val use_Delimiter = false
+    override val use_Double_Quote = false
+    override val use_Single_Quote = false
+    override val use_Bracket = false
+
+    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+      evt.c match {
+        case '\\' => parent.addChildState(config, Vector('\\'))
+        case '"' => parent.addChildState(config, Vector('"'))
+        case '\'' => parent.addChildState(config, Vector('\''))
+        case 't' => parent.addChildState(config, Vector('\t'))
+        case 'f' => parent.addChildState(config, Vector('\f'))
+        case 'n' => parent.addChildState(config, Vector('\n'))
+        case 'r' => parent.addChildState(config, Vector('\r'))
+        case c => parent.addChildState(config, Vector(c))
+      }
+  }
+
   case class SingleQuoteState(
     parent: LogicalTokensParseState,
     text: Vector[Char],
     location: Option[ParseLocation],
     prefix: Option[String]
   ) extends LogicalTokensParseState {
+    override def addChildState(config: Config, p: Vector[Char]): LogicalTokensParseState =
+      copy(text = text ++ p)
+
     override protected def single_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState =
       parent.addChildState(config, SingleStringToken(text.mkString, location))
 
     override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
       if (evt.c == '\\')
-        RAISE.notImplementedYetDefect
+        StringQuoteEscapeState(this)
       else
         copy(text = text :+ evt.c)
   }
@@ -501,16 +533,33 @@ object LogicalTokens {
     parent: LogicalTokensParseState,
     text: Vector[Char],
     location: Option[ParseLocation],
-    prefix: Option[String]
+    prefix: Option[String],
+    inClosing: Boolean = false
   ) extends LogicalTokensParseState {
-    override protected def double_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      if (evt.c == '"' && evt.next == Some('"') && evt.next2 == Some('"'))
-        SkipState(SkipState(parent.addChildState(config, RawStringToken(text.mkString, location, prefix))))
-      else
-      copy(text = text :+ evt.c)
+    override protected def line_End_State(config: Config, evt: LineEndEvent): LogicalTokensParseState =
+      parent.addChildState(config, RawStringToken(text.mkString, location, prefix))
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def double_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState = {
+      println(s"RawStringState#double_Quote_State: $evt")
+      if (evt.c == '"' && evt.next == Some('"') && evt.next2 == Some('"')) {
+        if (inClosing)
+          copy(text = text :+ evt.c)
+        else
+          copy(inClosing = true)
+      } else if (evt.c == '"' && evt.next == Some('"')) {
+        if (inClosing)
+          SkipState(parent.addChildState(config, RawStringToken(text.mkString, location, prefix)))
+        else
+          copy(text = text :+ evt.c)
+      } else {
+        copy(text = text :+ evt.c)
+      }
+    }
+
+    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState = {
+      println(s"RawStringState#character_State: $evt")
       copy(text = text :+ evt.c)
+    }
   }
   object RawStringState {
     def apply(p: LogicalTokensParseState, evt: CharEvent): RawStringState =
@@ -525,8 +574,18 @@ object LogicalTokens {
     location: Option[ParseLocation],
     prefix: Option[String]
   ) extends LogicalTokensParseState {
+    private def _token = prefix.map(x =>
+      if (x.contains('/'))
+        _path_token(x)
+      else
+        _bracket_token
+    ).getOrElse(_bracket_token)
+
+    private def _bracket_token = BracketToken(text.mkString, location, prefix)
+    private def _path_token(s: String) = PathToken(s"${s}[${text.mkString}]", location)
+
     override protected def close_Bracket_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      parent.addChildState(config, BracketToken(text.mkString, location, prefix))
+      parent.addChildState(config, _token)
 
     override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
       copy(text = text :+ evt.c)
@@ -535,7 +594,7 @@ object LogicalTokens {
     def apply(p: LogicalTokensParseState, evt: CharEvent): BracketState =
       BracketState(p, Vector.empty, Some(evt.location), None)
     def apply(p: LogicalTokensParseState, evt: CharEvent, prefix: Option[String]): BracketState =
-      BracketState(p, Vector.empty, Some(evt.location), prefix)
+      BracketState(p, Vector.empty, Some(evt.location.adjustPrefix(prefix)), prefix)
   }
 
   case class RawBracketState(
@@ -613,6 +672,8 @@ object LogicalTokens {
     }
 
     override protected def double_Quote_State(config: Config, evt: CharEvent) = {
+      println(s"NormalState#double_Quote_State: $evt")
+      println(s"""NormalState#double_Quote_State - ${evt.isMatch("\"\"\"")}""")
       val prefix = if (cs.isEmpty) None else Some(cs.mkString)
       val newparent = copy(cs = Vector.empty)
       if (evt.isMatch("\"\"\""))
