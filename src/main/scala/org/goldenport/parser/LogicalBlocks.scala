@@ -7,7 +7,8 @@ import org.goldenport.exception.RAISE
  * @since   Aug. 20, 2018
  *  version Sep. 29, 2018
  *  version Oct. 27, 2018
- * @version Dec. 31, 2018
+ *  version Dec. 31, 2018
+ * @version Jan.  5, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -61,6 +62,7 @@ object LogicalBlocks {
   def parse(in: LogicalLines): LogicalBlocks = parse(Config.default, in)
 
   def parse(config: Config, in: LogicalLines): LogicalBlocks = {
+    println(s"LogicalBlocks#parse $in")
     val parser = ParseReaderWriterStateClass[Config, LogicalBlocks](config, RootState.init)
     val (messages, result, state) = parser.apply(in)
     result match {
@@ -353,5 +355,11 @@ object LogicalBlocks {
 
     override def apply(config: Config, evt: ParseEvent): Transition =
       (ParseMessageSequence.empty, ParseResult.empty, this)
+  }
+
+  def main(args: Array[String]) {
+    val s = org.goldenport.io.IoUtils.toText(args(0))
+    val r = LogicalBlocks.parse(s)
+    println("LogicalBlocks#main:" + r)
   }
 }
