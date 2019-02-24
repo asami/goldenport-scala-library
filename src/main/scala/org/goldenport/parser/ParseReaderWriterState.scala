@@ -10,7 +10,8 @@ import scalaz.stream._
  *  version Sep. 22, 2018
  *  version Oct. 10, 2018
  *  version Nov. 12, 2018
- * @version Jan.  5, 2019
+ *  version Jan.  5, 2019
+ * @version Feb. 16, 2019
  * @author  ASAMI, Tomoharu
  */
 trait ParseReaderWriterState[C <: ParseConfig, AST] {
@@ -32,7 +33,7 @@ case class ParseReaderWriterStateClass[C <: ParseConfig, AST](
 
   def apply(events: Seq[Char]): OUT = {
     val es = CharEvent.make(events)
-    println(s"ParseReaderWriterState#apply $es")
+    // println(s"ParseReaderWriterState#apply $es")
     _parse_events(es)
   }
 
@@ -57,7 +58,7 @@ case class ParseReaderWriterStateClass[C <: ParseConfig, AST](
       r match {
         case m: EmptyParseResult[AST] => _fsm(newstate)
         case ParseSuccess(x, warns) => Process.emit(x) fby _fsm(newstate)
-        case ParseFailure(errs, warns) => ???
+        case ParseFailure(errs, warns) => throw ParseSyntaxErrorException(errs, warns)
       }
     }
 

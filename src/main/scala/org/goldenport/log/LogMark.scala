@@ -6,7 +6,8 @@ import org.goldenport.value._
 /*
  * @since   Sep. 16, 2018
  *  version Sep. 17, 2018
- * @version Oct.  6, 2018
+ *  version Oct.  6, 2018
+ * @version Feb. 17, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogMark(
@@ -24,7 +25,8 @@ object LogMark {
   object Location extends EnumerationClass[Location] {
     val elements = Vector(
       SystemLocation,
-      ExecuteLocation,
+      InterpreterLocation,
+      ApplicationLocation,
       FunctionLocation,
       ThreadLocation,
       DatabaseLocation,
@@ -34,11 +36,14 @@ object LogMark {
   case object SystemLocation extends Location {
     val name = "system"
   }
-  case object ExecuteLocation extends Location {
-    val name = "execute"
+  case object InterpreterLocation extends Location {
+    val name = "interpreter"
   }
   case object FunctionLocation extends Location {
     val name = "function"
+  }
+  case object ApplicationLocation extends Location {
+    val name = "application"
   }
   case object ThreadLocation extends Location {
     val name = "thread"

@@ -5,7 +5,8 @@ import scalaz._, Scalaz._
 /*
  * @since   Aug. 30, 2018
  *  version Sep.  9, 2018
- * @version Oct. 26, 2018
+ *  version Oct. 26, 2018
+ * @version Feb. 16, 2019
  * @author  ASAMI, Tomoharu
  */
 trait LogicalTokenReaderWriterState[C <: ParseConfig, AST] {
@@ -28,7 +29,7 @@ case class LogicalTokenReaderWriterStateClass[C <: ParseConfig, AST](
   def apply(s: String): OUT = {
     val tokens = LogicalTokens.parse(s)
     val r = _parse_tokens(tokens.tokensWithEnd)
-    println(s"LogicalTokenReaderWriterState: $s => $tokens => $r")
+    // println(s"LogicalTokenReaderWriterState: $s => $tokens => $r")
     r
   }
 
@@ -36,7 +37,7 @@ case class LogicalTokenReaderWriterStateClass[C <: ParseConfig, AST](
     val c = LogicalTokens.Config.sexpr
     val tokens = LogicalTokens.parse(c, s)
     val r = _parse_tokens(tokens.tokensWithEnd)
-    println(s"LogicalTokenReaderWriterState#applySExpr: $s => $tokens => $r")
+    // println(s"LogicalTokenReaderWriterState#applySExpr: $s => $tokens => $r")
     r
   }
 

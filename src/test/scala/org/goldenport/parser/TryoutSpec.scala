@@ -8,11 +8,22 @@ import org.goldenport.parser._
 
 /*
  * @since   Jan.  1, 2019
- * @version Jan.  5, 2019
+ * @version Feb.  9, 2019
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
 class TryoutSpec extends WordSpec with Matchers with GivenWhenThen {
+  // "token" should {
+  //   "expression" which {
+  //     "numerical expression" in {
+  //       val s = """a+b"""
+  //       val r = LogicalTokens.parse(s)
+  //       r should be(LogicalTokens(
+  //         ExpressionToken(s, ParseLocation.start)
+  //       ))
+  //     }
+  //   }
+  // }
   // LogicalTokensSpec
   // "token" should {
   //   "number" which {
@@ -49,15 +60,19 @@ class TryoutSpec extends WordSpec with Matchers with GivenWhenThen {
   //   }
   // }
   // LogicalBlocksSpec
-  "LogicalBlocks" should {
-    "section" which {
-      "one section" in {
-        val s = """* div1
-content1
-"""
-        val r = LogicalBlocks.parse(s)
-        r should be(LogicalBlocks(LogicalSection("div1", LogicalBlocks(LogicalParagraph("content1")))))
-      }
+//   "LogicalBlocks" should {
+//     "section" which {
+//       "one section" in {
+//         val s = """* div1
+// content1
+// """
+//         val r = LogicalBlocks.parse(s)
+//         r should be(LogicalBlocks(
+//           LogicalSection("div1", LogicalBlocks(
+//             LogicalParagraph("content1", ParseLocation(2, 1))
+//           ), ParseLocation.start)
+//         ))
+//       }
 //       "one section with space" in {
 //         val s = """* div1
 
@@ -147,12 +162,12 @@ content1
 //           ))
 //         ))
 //       }
-    }
-  }
-  "main" should {
-    "LogicalBlocks" in {
-      val f = "/Users/asami/src/Project2017/EverforthFramework/src/main/resources/com/everforth/everforth/spec/doc/AppResource.org"
-      LogicalBlocks.main(Array(f))
-    }
-  }
+//    }
+//  }
+  // "main" should {
+  //   "LogicalBlocks" in {
+  //     val f = "/Users/asami/src/Project2017/EverforthFramework/src/main/resources/com/everforth/everforth/spec/doc/AppResource.org"
+  //     LogicalBlocks.main(Array(f))
+  //   }
+  // }
 }

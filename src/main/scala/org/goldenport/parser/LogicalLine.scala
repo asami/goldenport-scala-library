@@ -7,7 +7,7 @@ import org.goldenport.i18n.I18NElement
 
 /*
  * @since   Sep. 22, 2018
- * @version Sep. 23, 2018
+ * @version Feb.  2, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLine(
@@ -23,6 +23,13 @@ case class LogicalLine(
 object LogicalLine {
   val sectionOutlineMarks = Vector('*', '#')
   val sectionUnderlineMarks = Vector('=', '-')
+
+  def apply(
+    text: String,
+    location: ParseLocation
+  ): LogicalLine = LogicalLine(text, Some(location))
+
+  def start(text: String) = LogicalLine(text, ParseLocation.start)
 
   // ** TITLE
   case class SectionTitle(mark: String, level: Int, title: String) {

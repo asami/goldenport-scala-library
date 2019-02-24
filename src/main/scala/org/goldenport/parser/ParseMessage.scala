@@ -5,10 +5,15 @@ import org.goldenport.i18n.I18NString
   
 /*
  * @since   Aug. 21, 2018
- * @version Oct. 14, 2018
+ *  version Oct. 14, 2018
+ * @version Feb.  2, 2019
  * @author  ASAMI, Tomoharu
  */
 trait ParseMessage {
+  def msg: I18NString
+  def location: Option[ParseLocation]
+
+  def en: String = location.map(x => s"${x.show}: $msg").getOrElse(msg.en)
 }
 
 case class ErrorMessage(
@@ -20,6 +25,16 @@ object ErrorMessage {
   def apply(msg: String): ErrorMessage = ErrorMessage(
     I18NString(msg),
     None
+  )
+
+  def apply(en: String, ja: String): ErrorMessage = ErrorMessage(
+    I18NString(en, ja),
+    None
+  )
+
+  def apply(en: String, ja: String, location: Option[ParseLocation]): ErrorMessage = ErrorMessage(
+    I18NString(en, ja),
+    location
   )
 }
 

@@ -2,6 +2,7 @@ package org.goldenport.util
 
 import scalaz.NonEmptyList
 import scala.util.control.NonFatal
+import Character.UnicodeBlock
 import java.net.{URL, URI}
 import java.net.URLEncoder
 import com.asamioffice.goldenport.text.{UString, UPathString}
@@ -28,10 +29,137 @@ import org.goldenport.values.{PathName, Urn}
  *  version Jan. 14, 2018
  *  version May. 30, 2018
  *  version Aug. 31, 2018
- * @version Oct. 10, 2018
+ *  version Oct. 10, 2018
+ * @version Feb. 14, 2019
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
+  // RFC-3986
+  val uriReservedChars = Vector(
+    '!', '#', '$', '&', '\'', '(', ')', '*', '+', ',', '/', ':',
+    ';', '=', '?', '@', '[', ']'
+  )
+
+  val uriAvailableSpecialChars = Vector(
+    '-', '.', '_', '~'
+  )
+
+  val uriSafeSpecialChars = Vector(
+    '-', '_'
+  )
+
+  val unsafeChars = Vector(
+    // char -> byte
+    '\u00ab',
+    '\u00af',
+    '\u00b5',
+    '\u00b7',
+    '\u00b8',
+    '\u00bb',
+    '\u2014',
+    '\u2015',
+    '\u2016',
+    '\u2212',
+    '\u2225',
+    '\u301c', // 〜 0xFF5E
+    '\u3094',
+    '\uff02',
+    '\uff07',
+    '\uff0d',
+    '\uff5e',
+    '\uffe0',
+    '\uffe1',
+    '\uffe2',
+    '\uffe4',
+    // byte -> char
+    '\u815c',
+    '\u8160',
+    '\u8161',
+    '\u817c',
+    '\u8191',
+    '\u8192',
+    '\u81ca',
+    // Java round trip
+    '\u00a5',
+    '\u203e',
+    // Windows 31J
+    '\u00a2',
+    '\u00a3',
+    '\u00a5',
+    '\u00ab',
+    '\u00ac',
+    '\u00af',
+    '\u00b5',
+    '\u00b7',
+    '\u00b8',
+    '\u00bb',
+    '\u203e',
+    '\u3094',
+    // Shift_JIS
+    '\u00a2',
+    '\u00a3',
+    '\u00a5',
+    '\u00ac',
+    '\u2014',
+    '\u2016',
+    '\u203e',
+    '\u2212',
+    '\u301c'
+  ).distinct
+
+  val numericalSymbols = Vector(
+    '+', '*', '-', '/', '=', '&', '|'
+  )
+
+  // TODO
+  val scriptSymbolChars = Vector(
+    '.', ',',
+    '(', ')', '{', '}', '[', ']',
+    '$', '@'
+  ) ++ numericalSymbols
+
+  // TODO
+  val lispSymbolChars = Vector(
+    '.', ',',
+    '(', ')', '{', '}', '[', ']',
+    '$', '@'
+  ) ++ numericalSymbols
+
+  val safeJapaneseCharBlocks = Vector(
+    UnicodeBlock.HIRAGANA,
+    UnicodeBlock.KATAKANA,
+    UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS
+  )
+
+  // FUTURE
+  val safeI18NCharBlocks = safeJapaneseCharBlocks ++ Vector(
+  )
+
+  val symbolCharBlocks = Vector(
+    UnicodeBlock.CJK_SYMBOLS_AND_PUNCTUATION,
+    UnicodeBlock.GEOMETRIC_SHAPES,
+    UnicodeBlock.GENERAL_PUNCTUATION,
+    UnicodeBlock.SPECIALS,
+    UnicodeBlock.BOX_DRAWING,
+    UnicodeBlock.MISCELLANEOUS_SYMBOLS,
+    UnicodeBlock.ARROWS,
+    UnicodeBlock.MATHEMATICAL_OPERATORS
+  )
+
+  val unsafeIdentifierCharBlocks = Vector(
+    UnicodeBlock.HALFWIDTH_AND_FULLWIDTH_FORMS,
+    UnicodeBlock.CJK_SYMBOLS_AND_PUNCTUATION,
+    UnicodeBlock.GEOMETRIC_SHAPES,
+    UnicodeBlock.GENERAL_PUNCTUATION,
+    UnicodeBlock.SPECIALS,
+    UnicodeBlock.BOX_DRAWING,
+    UnicodeBlock.MISCELLANEOUS_SYMBOLS,
+    UnicodeBlock.ARROWS,
+    UnicodeBlock.LATIN_1_SUPPLEMENT,
+    UnicodeBlock.MATHEMATICAL_OPERATORS
+    // UnicodeBlock.GREEK
+  )
+
   def isAsciiAlphabetString(s: String) = s.forall(isAsciiAlphabetChar)
   def isAsciiAlphabetNumberString(s: String) = s.forall(isAsciiAlphabetNumberChar)
   def isAsciiNumberString(s: String) = s.forall(isAsciiNumberChar)
@@ -45,6 +173,72 @@ object StringUtils {
   def isAsciiAlphabetNumberChar(c: Char) =
     isAsciiAlphabetChar(c) || isAsciiNumberChar(c)
 
+  def isUriAvailableAlphabetNumberChar(c: Char) =
+    isAsciiAlphabetChar(c) || isAsciiNumberChar(c)
+
+  def isUriAvailableChar(c: Char) = {
+    isUriAvailableAlphabetNumberChar(c) ||
+    uriAvailableSpecialChars.contains(c)
+  }
+
+  def isSafeUriChar(c: Char) = {
+    isUriAvailableAlphabetNumberChar(c) ||
+    uriSafeSpecialChars.contains(c)
+  }
+
+  // http://d.hatena.ne.jp/cero-t/20100204/1265302329
+  // http://www.bugbearr.jp/?Java/%E6%96%87%E5%AD%97%E3%82%B3%E3%83%BC%E3%83%89
+  def isUnsafeChar(c: Char) = unsafeChars.contains(c)
+
+  def isNumericalSymbol(s: String) = s.forall(isNumericalSymbolChar)
+
+  def isNumericalSymbolChar(c: Char) = numericalSymbols.contains(c)
+
+  def isI18NIdentifier(s: String) =
+    if (s.isEmpty)
+      false
+    else
+      s.forall(isI18NIdentifierChar)
+
+  def isI18NIdentifierChar(c: Char) =
+    safeI18NCharBlocks.contains(UnicodeBlock.of(c))
+
+  // JEXL
+  def isScriptIdentifier(s: String) = s.headOption.
+    map(x => isScriptIdentifierFirstChar(x) && s.tail.forall(isScriptIdentifierChar)).
+    getOrElse(false)
+
+  def isScriptIdentifierI18N(s: String) = isScriptIdentifier(s) || isI18NIdentifier(s)
+
+
+  def isScriptIdentifierChar(c: Char) = isScriptIdentifierFirstChar(c) || isAsciiNumberChar(c)
+
+  def isScriptIdentifierFirstChar(c: Char) = isAsciiAlphabetChar(c) || c == '_' || c == '$'
+
+  def isScriptIdentifierI18NChar(c: Char) = isScriptIdentifierChar(c) || isI18NIdentifierChar(c)
+
+  def isScriptIdentifierI18NFirstChar(c: Char) = isScriptIdentifierFirstChar(c) || isI18NIdentifierChar(c)
+
+  def isScriptSymbolChar(c: Char) = scriptSymbolChars.contains(c)
+
+  // Lisp
+  def isLispIdentifier(s: String) = s.headOption.
+    map(x => isLispIdentifierFirstChar(x) && s.tail.forall(isLispIdentifierChar)).
+    getOrElse(false)
+
+  def isLispIdentifierI18N(s: String) = isLispIdentifier(s) || isI18NIdentifier(s)
+
+  def isLispIdentifierChar(c: Char) = isLispIdentifierFirstChar(c) || isAsciiNumberChar(c) || c == '-'
+
+  def isLispIdentifierFirstChar(c: Char) = isAsciiAlphabetChar(c) || c == '_'
+
+  def isLispIdentifierI18NChar(c: Char) = isLispIdentifierChar(c) || isI18NIdentifierChar(c)
+
+  def isLispIdentifierI18NFirstChar(c: Char) = isLispIdentifierFirstChar(c) || isI18NIdentifierChar(c)
+
+  def isLispSymbolChar(c: Char) = lispSymbolChars.contains(c)
+
+  //
   def dropWhileRight(s: String, p: Char => Boolean): String =
     s.lastOption.map(l =>
       if (p(l))

@@ -4,7 +4,8 @@ import scalaz._, Scalaz._
   
 /*
  * @since   Nov. 12, 2018
- * @version Dec.  2, 2018
+ *  version Dec.  2, 2018
+ * @version Feb. 16, 2019
  * @author  ASAMI, Tomoharu
  */
 trait LogicalLineReaderWriterState[C <: ParseConfig, AST] {
@@ -45,7 +46,7 @@ case class LogicalLineReaderWriterStateClass[C <: ParseConfig, AST](
 
   def apply(ps: Seq[LogicalLine]): OUT = {
     val r = _parse_lines(ps)
-    println(s"LogicalLineReaderWriterStateClass: ${ps} => $r")
+    // println(s"LogicalLineReaderWriterStateClass: ${ps} => $r")
     r
   }
 
@@ -60,7 +61,7 @@ case class LogicalLineReaderWriterStateClass[C <: ParseConfig, AST](
         _ <- z
         r <- action(x)
       } yield {
-        println(s"LogicalLineReaderWriterStateClass#_parse_lines: $r")
+        // println(s"LogicalLineReaderWriterStateClass#_parse_lines: $r")
         r
       }
     )

@@ -5,7 +5,8 @@ import scalaz._, Scalaz._
 /*
  * @since   Aug. 21, 2018
  *  version Nov. 18, 2018
- * @version Dec.  2, 2018
+ *  version Dec.  2, 2018
+ * @version Feb.  2, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait ParseResult[AST] {
@@ -40,4 +41,7 @@ case class ParseFailure[AST](
 
 object ParseResult {
   def empty[AST] = EmptyParseResult[AST]()
+
+  def error[AST](en: String, ja: String, location: Option[ParseLocation]): ParseFailure[AST] =
+    ParseFailure(Vector(ErrorMessage(en, ja, location)), Vector.empty)
 }

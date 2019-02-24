@@ -7,7 +7,8 @@ import org.goldenport.util.HoconUtils.RichConfig
 
 /*
  * @since   Sep. 16, 2018
- * @version Oct.  6, 2018
+ *  version Oct.  6, 2018
+ * @version Feb. 11, 2019
  * @author  ASAMI, Tomoharu
  */
 trait Config {
@@ -56,6 +57,9 @@ trait Config {
   private def _logger_setup(p: Logger): Logger = {
     p
   }
+
+  def getString(key: String): Option[String] = properties.getStringOption(key)
+  def getBoolean(key: String): Option[Boolean] = properties.getBooleanOption(key)
 }
 
 object Config {

@@ -10,7 +10,8 @@ import org.goldenport.log.LogLevel
 
 /*
  * @since   Oct.  4, 2018
- * @version Oct. 10, 2018
+ *  version Oct. 10, 2018
+ * @version Feb.  8, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Config(

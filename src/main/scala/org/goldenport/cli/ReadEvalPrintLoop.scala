@@ -10,16 +10,16 @@ import org.goldenport.parser.LogicalLines.{InitState, LogicalLinesParseState}
 
 /*
  * @since   Oct.  4, 2018
- * @version Oct. 10, 2018
+ *  version Oct. 10, 2018
+ * @version Feb. 14, 2019
  * @author  ASAMI, Tomoharu
  */
 class ReadEvalPrintLoop(
   environment: Environment,
-  init: ReadEvalPrintLoop.IState
+  init: ReadEvalPrintLoop.IState,
+  logicalLinesConfig: LogicalLines.Config = LogicalLines.Config.default
 ) {
   import ReadEvalPrintLoop._
-
-  val logicalLinesConfig = LogicalLines.Config.default
 
   def stdInParseEvents: Process[Task, ParseEvent] =
     Process.repeatEval(Task.delay {

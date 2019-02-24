@@ -7,18 +7,18 @@ import org.goldenport.util.AnyRefUtils
 
 /*
  * @since   Oct. 15, 2018
- * @version Oct. 15, 2018
+ * @version Feb. 16, 2019
  * @author  ASAMI, Tomoharu
  */
 case class RecordDynamicPropertyHandler() extends DynamicPropertyHandler {
-  println(s"RecordDynamicPropertyHandler")
+  // println(s"RecordDynamicPropertyHandler")
 
   def getPropertyNames(o: AnyRef): Array[String] = {
     val r: Array[String] = o match {
       case m: IRecord => m.keyNames.toArray
       case m => Array()
     }
-    println(s"RecordDynamicPropertyHandler: $o => $r")
+    // println(s"RecordDynamicPropertyHandler: $o => $r")
     r
   }
 
@@ -30,7 +30,7 @@ case class RecordDynamicPropertyHandler() extends DynamicPropertyHandler {
       }
       case m => null
     }
-    println(s"RecordDynamicPropertyHandler: $o/$name => $r")
+    // println(s"RecordDynamicPropertyHandler: $o/$name => $r")
     AnyRefUtils.toAnyRef(r)
   }
 

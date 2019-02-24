@@ -6,18 +6,18 @@ import org.goldenport.RAISE
 
 /*
  * @since   Oct. 14, 2018
- * @version Oct. 14, 2018
+ * @version Feb. 16, 2019
  * @author  ASAMI, Tomoharu
  */
 case class JsonDynamicPropertyHandler() extends DynamicPropertyHandler {
-  println(s"JsonDynamicPropertyHandler")
+  // println(s"JsonDynamicPropertyHandler")
 
   def getPropertyNames(o: AnyRef): Array[String] = {
     val r: Array[String] = o match {
       case m: JsObject => m.fields.map(_._1).toArray
       case m => Array()
     }
-    println(s"JsonDynamicPropertyHandler: $o => $r")
+    // println(s"JsonDynamicPropertyHandler: $o => $r")
     r
   }
 
@@ -37,7 +37,7 @@ case class JsonDynamicPropertyHandler() extends DynamicPropertyHandler {
       }
       case m => null
     }
-    println(s"JsonDynamicPropertyHandler: $o/$name => $r")
+    // println(s"JsonDynamicPropertyHandler: $o/$name => $r")
     r
   }
 

@@ -1,15 +1,14 @@
 package org.goldenport.cli
 
-import org.goldenport.cli.spec.Service
-
 /*
  * @since   Oct.  6, 2018
- * @version Oct.  8, 2018
+ *  version Oct.  8, 2018
+ * @version Feb. 18, 2019
  * @author  ASAMI, Tomoharu
  */
 case class ServiceCall(
   environment: Environment,
-  specification: Service,
+  specification: spec.Service,
   request: Request,
   response: Response
 ) {
