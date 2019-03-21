@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.0.2-SNAPSHOT"
+version := "2.1.0"
 
 scalaVersion := "2.12.7"
 
@@ -35,7 +35,7 @@ libraryDependencies <++= scalaVersion { v =>
 
 libraryDependencies += "org.goldenport" % "goldenport-java-lib" % "0.1.3" % "compile"
 
-libraryDependencies += "org.goldenport" %% "goldenport-kestrel" % "2.0.1-SNAPSHOT"
+libraryDependencies += "org.goldenport" %% "goldenport-kestrel" % "2.1.0"
 
 // Defines important library dependencies
 
@@ -43,9 +43,9 @@ libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.26"
 
 libraryDependencies += "org.scalaz.stream" %% "scalaz-stream" % "0.8.6a" exclude("org.scala-lang", "scala-library_2.10.5")
 
-// libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.3-1"
+libraryDependencies += "com.madgag" %% "scala-io-core" % "0.4.9"
 
-// libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.3-1"
+libraryDependencies += "com.madgag" %% "scala-io-file" % "0.4.9"
 
 libraryDependencies += "com.jsuereth" %% "scala-arm" % "2.0" exclude("org.scala-stm", "scala-stm_2.10.0")
 
@@ -67,7 +67,7 @@ libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3" % "provide
 
 libraryDependencies += "net.sourceforge.nekohtml" % "nekohtml" % "1.9.22" % "compile"
 
-libraryDependencies += "com.typesafe.play" %% "play-json" % "2.2.2" % "provided" exclude("org.scala-stm", "scala-stm_2.10.0")
+libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.10" % "provided" exclude("org.scala-stm", "scala-stm_2.10.0")
 
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"

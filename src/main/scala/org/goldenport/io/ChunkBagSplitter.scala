@@ -14,7 +14,8 @@ import org.goldenport.bag.{
 
 /*
  * @since   Oct.  5, 2015
- * @version Sep. 21, 2017
+ *  version Sep. 21, 2017
+ * @version Oct. 15, 2018
  * @author  ASAMI, Tomoharu
  */
 class ChunkBagSplitter[T](bag: ChunkBag, threasholdSize: Int) {
@@ -99,8 +100,8 @@ object ChunkBagSplitter {
   def splitInputStreamWithCloseWithGather(in: InputStream): Task[List[ChunkBag]] = {
     val a = io.chunkR(in)
     val b = Process.constant(8192).toSource.through(a)
-    val c = b.pipe(fsm(InitState))
-    val d: Task[IndexedSeq[Seq[Task[ChunkBag]]]] = c.runLog
+    val c: Process[Task, Seq[Task[ChunkBag]]] = b.pipe(fsm(InitState))
+    val d: Task[IndexedSeq[Seq[Task[ChunkBag]]]] = c.runLog[Task, Seq[Task[ChunkBag]]]
     val e: Task[Task[List[ChunkBag]]] = d.map { x =>
       Nondeterminism[Task].gather(x.flatten)
     }

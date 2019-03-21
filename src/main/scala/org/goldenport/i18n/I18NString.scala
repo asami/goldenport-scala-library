@@ -12,7 +12,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version May. 25, 2017
  *  version Jul. 11, 2017
  *  version Aug. 29, 2017
- * @version Sep.  1, 2017
+ *  version Sep.  1, 2017
+ * @version Oct. 15, 2018
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -172,6 +173,7 @@ object I18NString {
     }
     ps.foldLeft(Z())(_+_).r
   }
+  def apply(ps: Map[Locale, String]): I18NString = apply(ps.toVector)
 
   // def apply(p: RI18NString): I18NString = I18NString(p.en, p.ja, Map.empty, p.parameters)
 
@@ -188,7 +190,7 @@ object I18NString {
       Json.parse(p) match {
         case JsObject(ms) => // TODO parameters
           val a = for ((l, s) <- ms) yield (new Locale(l), s.toString)
-          apply(a)
+          apply(a.toVector)
         case m => throw new IllegalArgumentException(s"I18NString#parse: $m")
       }
     }

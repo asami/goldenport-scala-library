@@ -22,7 +22,8 @@ import org.goldenport.util._
  *  version Sep.  2, 2017
  *  version Oct. 29, 2017
  *  version Aug. 30, 2018
- * @version Sep.  4, 2018
+ *  version Sep.  4, 2018
+ * @version Oct. 15, 2018
  * @author  ASAMI, Tomoharu
  */
 object JsonUtils {
@@ -32,7 +33,6 @@ object JsonUtils {
   def getInt(key: String, j: JsValue): Option[Int] =
     (j \\ key).headOption.map(element =>
       element match {
-        case _: JsUndefined => raiseMissing(key)
         case JsNull => raiseMissing(key)
         case JsBoolean(x) => raiseMismatch(key, element)
         case JsNumber(x) => x.toInt
@@ -75,7 +75,6 @@ object JsonUtils {
   def getString(key: String, j: JsValue): Option[String] =
     (j \\ key).headOption.map(element =>
       element match {
-        case _: JsUndefined => raiseMissing(key)
         case JsNull => raiseMissing(key)
         case JsBoolean(x) => x.toString
         case JsNumber(x) => x.toString
@@ -86,7 +85,6 @@ object JsonUtils {
     )
 
   def toString(j: JsValue): String = j match {
-    case _: JsUndefined => raiseUndefined(j)
     case JsNull => raiseNull(j)
     case JsBoolean(x) => x.toString
     case JsNumber(x) => x.toString
@@ -96,7 +94,6 @@ object JsonUtils {
   }
 
   def toBoolean(j: JsValue): Boolean = j match {
-    case _: JsUndefined => raiseUndefined(j)
     case JsNull => raiseNull(j)
     case JsBoolean(x) => x
     case JsNumber(x) => raiseJsnumber(j)
@@ -149,7 +146,6 @@ object JsonUtils {
 
   def toSeq(j: JsValue): Seq[JsValue] = {
     j match {
-      case _: JsUndefined => Nil
       case JsNull => Nil
       case JsArray(xs) => xs
       case _ => Vector(j)
@@ -158,7 +154,6 @@ object JsonUtils {
 
   def toVector(j: JsValue): Vector[JsValue] = {
     j match {
-      case _: JsUndefined => Vector.empty
       case JsNull => Vector.empty
       case JsArray(xs) => xs.toVector
       case _ => Vector(j)
@@ -166,7 +161,6 @@ object JsonUtils {
   }
 
   def getValue(j: JsValue): Option[Any] = j match {
-    case _: JsUndefined => None
     case JsNull => None
     case JsBoolean(x) => Some(x)
     case JsNumber(x) => Some(x)
@@ -176,7 +170,6 @@ object JsonUtils {
   }
 
   def getValueS(j: JsValue): Option[Any] = j match {
-    case _: JsUndefined => None
     case JsNull => None
     case JsBoolean(x) => Some(x)
     case JsNumber(x) => Some(x)
@@ -192,7 +185,6 @@ object JsonUtils {
   def getStringMap(j: JsObject, key: String): Option[Map[String, String]] =
     j.value.get(key).map(element =>
       element match {
-        case _: JsUndefined => raiseMissing(key)
         case JsNull => raiseMissing(key)
         case JsBoolean(x) => raiseMismatch(key, element)
         case JsNumber(x) => raiseMismatch(key, element)

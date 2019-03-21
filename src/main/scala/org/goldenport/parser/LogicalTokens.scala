@@ -5,7 +5,8 @@ import org.goldenport.exception.RAISE
 
 /*
  * @since   Aug. 28, 2018
- * @version Sep. 30, 2018
+ *  version Sep. 30, 2018
+ * @version Oct. 30, 2018
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
@@ -140,7 +141,7 @@ object LogicalTokens {
         case m: CharEvent => handle_tokenizer(config, m) getOrElse {
           m.c match {
             case '"' if use_Double_Quote => handle_double_quote(config, m)
-            case ''' if use_Single_Quote => handle_single_quote(config, m)
+            case '\'' if use_Single_Quote => handle_single_quote(config, m)
             case '[' if use_Bracket => handle_open_bracket(config, m)
             case ']' if use_Bracket => handle_close_bracket(config, m)
             case c if config.isSpace(c) => handle_space(config, m)

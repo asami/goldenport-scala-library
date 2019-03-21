@@ -9,14 +9,15 @@ import scalaz._, Scalaz._
  *  version Oct. 19, 2016
  *  version Jul. 25, 2017
  *  version Aug. 29, 2017
- * @version Jan. 20, 2018
+ *  version Jan. 20, 2018
+ * @version Oct. 15, 2018
  * @author  ASAMI, Tomoharu
  */
 object ScalazUtils {
   def makeOptionNonEmptyList[T](a: Seq[T]): Option[NonEmptyList[T]] =
     a.toList match {
       case Nil => None
-      case x :: xs => Some(NonEmptyList.nel(x, xs))
+      case x :: xs => Some(NonEmptyList.nel(x, IList.fromList(xs)))
     }
 
   def makeOptionNonEmptyList[T](a: Option[T]): Option[NonEmptyList[T]] =

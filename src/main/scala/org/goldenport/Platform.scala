@@ -12,7 +12,8 @@ import com.asamioffice.goldenport.io.UFile
  *  version Dec. 19, 2014
  *  version Sep. 24, 2015
  *  version Jul. 29, 2017
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Oct. 15, 2018
  * @author  ASAMI, Tomoharu
  */
 object Platform {

@@ -1,7 +1,7 @@
 package org.goldenport.util
 
 import scala.language.implicitConversions
-import scalaz.NonEmptyList
+import scalaz.{NonEmptyList, IList}
 import scala.util.Try
 import scala.util.control.NonFatal
 import scala.concurrent.duration._
@@ -18,7 +18,8 @@ import org.goldenport.i18n.{I18NString, I18NElement}
  *  version Jun. 23, 2017
  *  version Aug. 29, 2017
  *  version Oct. 27, 2017
- * @version Dec. 14, 2017
+ *  version Dec. 14, 2017
+ * @version Oct. 15, 2018
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -107,13 +108,13 @@ object HoconUtils {
   def getNonEmptyListString(config: Config, key: String): Option[NonEmptyList[String]] =
     asStringList(config, key) match {
       case Nil => None
-      case x :: xs => Some(NonEmptyList.nel(x, xs))
+      case x :: xs => Some(NonEmptyList.nel(x, IList.fromList(xs)))
     }
 
   def getEagerNonEmptyListString(config: Config, key: String): Option[NonEmptyList[String]] =
     asEagerStringList(config, key) match {
       case Nil => None
-      case x :: xs => Some(NonEmptyList.nel(x, xs))
+      case x :: xs => Some(NonEmptyList.nel(x, IList.fromList(xs)))
     }
 
   def getUrl(config: Config, key: String): Option[URL] =

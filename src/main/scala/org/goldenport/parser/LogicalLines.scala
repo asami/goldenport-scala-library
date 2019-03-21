@@ -5,7 +5,8 @@ import org.goldenport.exception.RAISE
 
 /*
  * @since   Aug. 20, 2018
- * @version Sep. 29, 2018
+ *  version Sep. 29, 2018
+ * @version Oct. 30, 2018
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -66,7 +67,7 @@ object LogicalLines {
         case m: LineEndEvent => handle_line_end(config, m)
         case m: CharEvent => m.c match {
           case '"' if config.useDoubleQuote => handle_double_quote(config, m)
-          case ''' if config.useSingleQuote => handle_single_quote(config, m)
+          case '\'' if config.useSingleQuote => handle_single_quote(config, m)
           case '<' if config.useAngleBracket => handle_open_angle_bracket(config, m)
           case '>' if config.useAngleBracket => handle_close_angle_bracket(config, m)
           case '{' if config.useBrace => handle_open_brace(config, m)

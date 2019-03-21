@@ -1,10 +1,13 @@
 package org.goldenport.util
 
+import scalaz._
+
 /*
  * @since   May. 11, 2018
  *  version Jun. 29, 2018
  *  version Jul. 16, 2018
- * @version Aug.  5, 2018
+ *  version Aug.  5, 2018
+ * @version Oct. 30, 2018
  * @author  ASAMI, Tomoharu
  */
 object ListUtils {
@@ -12,6 +15,8 @@ object ListUtils {
     case Nil => None
     case xs => Some(xs)
   }
+
+  def toOption[T](ps: IList[T]): Option[List[T]] = toOption(ps.toList)
 
   def toOptionOneOrList[T](ps: List[T]): Option[Any] = ps match {
     case Nil => None
