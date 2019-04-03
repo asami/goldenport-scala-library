@@ -21,7 +21,8 @@ import org.goldenport.i18n.{I18NString, I18NElement}
  *  version Oct. 27, 2017
  *  version Dec. 14, 2017
  *  version Oct. 21, 2018
- * @version Nov. 19, 2018
+ *  version Nov. 19, 2018
+ * @version Mar. 24, 2019
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -34,6 +35,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def asEagerStringVector(key: String) = HoconUtils.asEagerStringVector(config, key)
   def asUrlList(key: String) = HoconUtils.asUrlList(config, key)
   def asDuration(key: String, fallback: FiniteDuration) = HoconUtils.asDuration(config, key, fallback)
+  def takeString(key: String): String = HoconUtils.takeString(config, key)
   def takeI18NString(key: String) = HoconUtils.takeI18NString(config, key)
   def takeI18NElement(key: String) = HoconUtils.takeI18NElement(config, key)
   def getObjectOption(key: String) = HoconUtils.getObject(config, key)
@@ -51,6 +53,9 @@ case class RichConfig(config: Config) extends AnyVal {
   def getI18NStringOption(key: String) = HoconUtils.getI18NString(config, key)
   def getI18NElementOption(key: String) = HoconUtils.getI18NElement(config, key)
   def getConfigOption(key: String) = HoconUtils.getConfig(config, key)
+  def getRichConfigOption(key: String) = HoconUtils.getRichConfig(config, key)
+  def childConfigMap: Map[String, Config] = HoconUtils.childConfigMap(config)
+  def childRichConfigMap: Map[String, RichConfig] = HoconUtils.childRichConfigMap(config)
   def +(rhs: RichConfig): RichConfig = new RichConfig(rhs.config.withFallback(config))
 }
 

@@ -12,7 +12,8 @@ import org.goldenport.util.DateTimeUtils
  * @since   Aug. 24, 2018
  *  version Sep. 22, 2018
  *  version Jan.  1, 2019
- * @version Feb.  9, 2019
+ *  version Feb.  9, 2019
+ * @version Mar. 10, 2019
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -75,6 +76,13 @@ class LogicalTokensSpec extends WordSpec with Matchers with GivenWhenThen {
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
           DoubleStringToken("abc", ParseLocation.start)
+        ))
+      }
+      "delimiter" in {
+        val s = "\"(+ 1 2 3)\""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          DoubleStringToken("(+ 1 2 3)", ParseLocation.start)
         ))
       }
       "multi line" in {
@@ -184,6 +192,55 @@ xyz'"""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
           ExpressionToken(s, ParseLocation.start)
+        ))
+      }
+    }
+    "script" which {
+      "typical" in {
+        val s = """${a + b}"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ScriptToken("a + b", ParseLocation.start)
+        ))
+      }
+      "short form" in {
+        val s = """$a+b"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ScriptToken("a+b", ParseLocation.start)
+        ))
+      }
+      "multi line" in {
+        val s = """${
+val c = a + b
+print(c)
+}"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ScriptToken("""
+val c = a + b
+print(c)
+""", ParseLocation.start)
+        ))
+      }
+      "nest curly bracket" in {
+        val s = """${{"a": "b"}}"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ScriptToken("""{"a": "b"}""", ParseLocation.start)
+        ))
+      }
+      "extra mark" in {
+        val s = """${{{
+val c = a + b
+print(c)
+}}}"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ScriptToken("""
+val c = a + b
+print(c)
+""", ParseLocation.start)
         ))
       }
     }

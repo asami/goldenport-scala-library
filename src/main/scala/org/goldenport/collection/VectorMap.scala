@@ -6,7 +6,8 @@ import org.goldenport.util.VectorUtils
 
 /*
  * @since   Dec.  8, 2018
- * @version Dec. 30, 2018
+ *  version Dec. 30, 2018
+ * @version Mar. 24, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait VectorMap[K, +V] extends Map[K, V] {
@@ -27,7 +28,7 @@ sealed trait VectorMap[K, +V] extends Map[K, V] {
     VectorUtils.updateMap(ps, xs)
 
   def applyIgnoreCase(k: String)(implicit ev: K <:< String): V =
-    getIgnoreCase(k) getOrElse RAISE.noSuchElement(k)
+    getIgnoreCase(k) getOrElse RAISE.noSuchElementFault(k)
 
   def getIgnoreCase(k: String)(implicit ev: K <:< String): Option[V] =
     vector.find(_._1.equalsIgnoreCase(k)).map(_._2)

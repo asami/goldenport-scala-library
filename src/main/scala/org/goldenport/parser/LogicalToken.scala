@@ -14,7 +14,8 @@ import LogicalTokens.Config
  *  version Sep. 19, 2018
  *  version Oct. 26, 2018
  *  version Jan.  2, 2019
- * @version Feb. 14, 2019
+ *  version Feb. 25, 2019
+ * @version Mar.  9, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -131,6 +132,29 @@ object NumberToken extends LogicalTokens.SimpleTokenizer {
 
   override protected def accept_Token(config: Config, p: String, location: ParseLocation) =
     Try(NumberToken(BigDecimal(p), Some(location))).toOption
+}
+
+case class ComplexToken(
+  n: spire.math.Complex[Double],
+  location: Option[ParseLocation]
+) extends LiteralToken {
+}
+object ComlexToken extends LogicalTokens.SimpleTokenizer {
+  val regex = """([+-]?\d+[.]?\d+([eE][+-]\d+)?)?([+-]\d+[.]?\d+([eE][+-]\d+)?)[i]""".r
+
+  def apply(p: spire.math.Complex[Double], l: ParseLocation): ComplexToken = ComplexToken(p, Some(l))
+
+  override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
+    regex.findFirstMatchIn(s).flatMap { m =>
+      val whole = m.group(0)
+      if (s == whole) {
+        val real = Option(m.group(1)).map(_.toDouble).getOrElse(0.0D).toDouble
+        val imaginary = m.group(3).toDouble
+        Some(ComplexToken(spire.math.Complex(real, imaginary), Some(location)))
+      } else {
+        None
+      }
+    }
 }
 
 case class DateTimeToken(
@@ -329,11 +353,17 @@ object ExpressionToken extends LogicalTokens.SimpleTokenizer {
   private def _is_expression(p: String) =
     _is_not_atom(p) && p.headOption.
       map(x =>
-        _is_accept(x) && p.tail.forall(_is_accept)
+        _is_accept_first(x) && p.tail.forall(_is_accept)
       ).getOrElse(false)
 
-  private def _is_not_atom(p: String) =
-    !(StringUtils.isLispIdentifierI18N(p) || StringUtils.isNumericalSymbol(p))
+  @inline
+  private def _is_atom(p: String) = 
+    StringUtils.isLispIdentifierI18N(p) || StringUtils.isNumericalSymbol(p) || p == "."
+
+  @inline
+  private def _is_not_atom(p: String) = !_is_atom(p)
+
+  private def _is_accept_first(c: Char) = StringUtils.isLispIdentifierI18NChar(c)
 
   // '(', '{', '[' and '@' : in first character, used by another token type.
   // '/' : used by PathToken.
@@ -364,4 +394,26 @@ case class RawBracketToken(
 object RawBracketToken {
   def apply(text: String, location: ParseLocation): RawBracketToken =
     RawBracketToken(text, Some(location))
+}
+
+case class ScriptToken(
+  text: String,
+  location: Option[ParseLocation],
+  prefix: Option[String] = None
+) extends LiteralToken {
+}
+object ScriptToken {
+  def apply(text: String, location: ParseLocation): ScriptToken =
+    ScriptToken(text, Some(location))
+}
+
+case class ExplicitLiteralToken(
+  text: String,
+  location: Option[ParseLocation],
+  prefix: Option[String] = None
+) extends LiteralToken {
+}
+object ExplicitLiteralToken {
+  def apply(text: String, location: ParseLocation): LiteralToken =
+    ExplicitLiteralToken(text, Some(location))
 }

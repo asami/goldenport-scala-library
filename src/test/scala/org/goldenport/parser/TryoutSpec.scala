@@ -8,11 +8,64 @@ import org.goldenport.parser._
 
 /*
  * @since   Jan.  1, 2019
- * @version Feb.  9, 2019
+ *  version Feb.  9, 2019
+ * @version Mar. 10, 2019
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
 class TryoutSpec extends WordSpec with Matchers with GivenWhenThen {
+  "token" should {
+    "script" which {
+//       "typical" in {
+//         val s = """${a + b}"""
+//         val r = LogicalTokens.parse(s)
+//         r should be(LogicalTokens(
+//           ScriptToken("a + b", ParseLocation.start)
+//         ))
+//       }
+//       "short form" in {
+//         val s = """$a+b"""
+//         val r = LogicalTokens.parse(s)
+//         r should be(LogicalTokens(
+//           ScriptToken("a+b", ParseLocation.start)
+//         ))
+//       }
+//       "multi line" in {
+//         val s = """${
+// val c = a + b
+// print(c)
+// }"""
+//         val r = LogicalTokens.parse(s)
+//         r should be(LogicalTokens(
+//           ScriptToken("""
+// val c = a + b
+// print(c)
+// """, ParseLocation.start)
+//         ))
+//       }
+      // "nest curly bracket" in {
+      //   val s = """${{"a": "b"}}"""
+      //   val r = LogicalTokens.parse(s)
+      //   r should be(LogicalTokens(
+      //     ScriptToken("""{"a": "b"}""", ParseLocation.start)
+      //   ))
+      // }
+//       "extra mark" in {
+//         val s = """${{{
+// val c = a + b
+// print(c)
+// }}}"""
+//         val r = LogicalTokens.parse(s)
+//         r should be(LogicalTokens(
+//           ScriptToken("""
+// val c = a + b
+// print(c)
+// """, ParseLocation.start)
+//         ))
+//       }
+    }
+  }
+
   // "token" should {
   //   "expression" which {
   //     "numerical expression" in {

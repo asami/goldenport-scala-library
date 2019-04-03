@@ -3,12 +3,13 @@ package org.goldenport.config
 import com.typesafe.config.{Config => Hocon, ConfigFactory => HoconFactory}
 import org.slf4j._
 import org.goldenport.log._
-import org.goldenport.util.HoconUtils.RichConfig
+import org.goldenport.hocon.RichConfig
 
 /*
  * @since   Sep. 16, 2018
  *  version Oct.  6, 2018
- * @version Feb. 11, 2019
+ *  version Feb. 11, 2019
+ * @version Mar. 24, 2019
  * @author  ASAMI, Tomoharu
  */
 trait Config {
@@ -20,7 +21,7 @@ trait Config {
   // message resource
   // logger
 
-  protected def properties: RichConfig // Typesafe Config (Human-Optimized Config Object Notation)
+  def properties: RichConfig // Typesafe Config (Human-Optimized Config Object Notation)
   protected def logLevel: LogLevel
 
   // private def _set_root_logger_level {

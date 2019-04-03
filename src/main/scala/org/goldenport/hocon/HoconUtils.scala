@@ -23,7 +23,8 @@ import org.goldenport.util.AnyUtils
  *  version Oct. 27, 2017
  *  version Dec. 14, 2017
  *  version Oct. 21, 2018
- * @version Nov. 19, 2018
+ *  version Nov. 19, 2018
+ * @version Mar. 24, 2019
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -54,6 +55,8 @@ object HoconUtils {
 
   def asDuration(config: Config, key: String, fallback: FiniteDuration): Duration =
     getDuration(config, key) getOrElse fallback
+
+  def takeString(config: Config, key: String): String = config.getString(key)
 
   def takeUrl(config: Config, key: String): URL =
     new URL(config.getString(key))
@@ -158,11 +161,36 @@ object HoconUtils {
     else
       None
 
-  def getConfig(config: Config, key: String): Option[RichConfig] =
+  def getConfig(config: Config, key: String): Option[Config] =
     if (config.hasPath(key))
-      Option(config.getConfig(key)).map(RichConfig.apply)
+      Option(config.getConfig(key))
     else
       None
+
+  def getRichConfig(config: Config, key: String): Option[RichConfig] =
+    getConfig(config, key).map(RichConfig.apply)
+
+  // def childConfigSet(p: Config): Set[(String, Config)] = p.entrySet.asScala.
+  //   flatMap { x =>
+  //     x.getValue match {
+  //       case m: Config => Some(x.getKey -> m)
+  //       case m => None
+  //     }
+  //   }
+
+  // def childRichConfigSet(p: Config): Set[(String, RichConfig)] =
+  //   childConfigSet(p).mapValues(RichConfig.apply)
+
+  def childConfigMap(p: Config): Map[String, Config] = p.entrySet.asScala.
+    flatMap { x =>
+      x.getValue match {
+        case m: Config => Some(x.getKey -> m)
+        case m => None
+      }
+    }.toMap
+
+  def childRichConfigMap(p: Config): Map[String, RichConfig] =
+    childConfigMap(p).mapValues(RichConfig.apply)
 
   //
   def getObject(p: ConfigValue): Option[ConfigObject] = Option(p) collect {

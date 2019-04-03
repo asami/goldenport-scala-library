@@ -7,7 +7,8 @@ package org.goldenport
  *  version Oct. 29, 2017
  *  version Jan. 12, 2018
  *  version Aug. 28, 2018
- * @version Dec. 31, 2018
+ *  version Dec. 31, 2018
+ * @version Mar. 24, 2019
  * @author  ASAMI, Tomoharu
  */
 package object exception {
@@ -25,7 +26,7 @@ package object exception {
     def unsupportedOperationFault(msg: String): Nothing = throw new UnsupportedOperationException(msg)
     def missingPropertyFault(name: String): Nothing = throw new MissingPropertyFaultException(name)
     def invalidArgumentFault(s: String): Nothing = throw new IllegalArgumentException(s)
-    def noSuchElement(name: String): Nothing = throw new NoSuchElementException(name)
+    def noSuchElementFault(name: String): Nothing = throw new NoSuchElementException(name)
     def syntaxErrorFault(s: String): Nothing = throw new SyntaxErrorFaultException(s)
   }
 }

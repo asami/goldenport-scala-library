@@ -4,7 +4,8 @@ import Environment._
 
 /*
  * @since   Oct.  5, 2018
- * @version Feb. 24, 2019
+ *  version Feb. 24, 2019
+ * @version Mar.  2, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Environment(
@@ -12,6 +13,7 @@ case class Environment(
   service: AppEnvironment = NoneAppEnvironment
 ) {
   def charset = config.charset
+  def newline = config.newline
   def locale = config.locale
   def timezone = config.timezone
   def toAppEnvironment[T <: AppEnvironment] = service.asInstanceOf[T]

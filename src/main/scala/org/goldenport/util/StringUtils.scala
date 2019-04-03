@@ -30,7 +30,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version May. 30, 2018
  *  version Aug. 31, 2018
  *  version Oct. 10, 2018
- * @version Feb. 14, 2019
+ *  version Feb. 14, 2019
+ * @version Mar.  5, 2019
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -246,6 +247,8 @@ object StringUtils {
       else
         s
     ).getOrElse(s)
+
+  def dropRightNewlines(s: String): String = dropWhileRight(s, x => x == '\n' || x == '\r')
 
   // Ignore head '/' in rhs
   def concatPath(lhs: String, rhs: String): String = {
@@ -486,6 +489,12 @@ object StringUtils {
   }
   def shortUrl(p: URL): String = shortUri(p.toURI)
   def shortUrn(p: Urn): String = p.text
+
+  def normalizeBaseUrl(p: String): String =
+    if (p.endsWith("/"))
+      p
+    else
+      p + "/"
 
   def showConsole(p: String, newline: String, size: Int = 5): String = {
     val max = size * 80

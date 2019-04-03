@@ -6,7 +6,8 @@ import org.goldenport.Strings
 /*
  * @since   Oct.  4, 2018
  *  version Oct. 21, 2018
- * @version Feb. 24, 2019
+ *  version Feb. 24, 2019
+ * @version Mar.  4, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Request(
@@ -23,7 +24,9 @@ case class Request(
   def add(p: Switch) = copy(switches = switches :+ p)
   def add(p: Property) = copy(properties = properties :+ p)
 
-  def isVerbose: Boolean = RAISE.notImplementedYetDefect
+  def isVerbose: Boolean = switches.exists(_.name == "v")
+  def isInteractive: Boolean = switches.exists(_.name == "i")
+
 }
 
 object Request {

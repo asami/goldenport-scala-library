@@ -5,13 +5,13 @@ import java.net.URL
 import java.nio.charset.Charset
 import java.util.{Locale, TimeZone}
 import com.typesafe.config.{Config => HoconConfig, ConfigFactory}
-import org.goldenport.util.HoconUtils.RichConfig
+import org.goldenport.hocon.RichConfig
 import org.goldenport.log.LogLevel
 
 /*
  * @since   Oct.  4, 2018
- *  version Oct. 10, 2018
- * @version Feb.  8, 2019
+ *  version Feb.  8, 2019
+ * @version Mar. 24, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Config(

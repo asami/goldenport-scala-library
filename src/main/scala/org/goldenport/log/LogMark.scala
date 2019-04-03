@@ -7,15 +7,15 @@ import org.goldenport.value._
  * @since   Sep. 16, 2018
  *  version Sep. 17, 2018
  *  version Oct.  6, 2018
- * @version Feb. 17, 2019
+ * @version Feb. 25, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogMark(
   location: LogMark.Location,
   action: LogMark.Action,
-  label: String
+  label: Option[String]
 ) {
-  def name = s"${location.name}.${action.name}.${label}"
+  def name = label.map(x => s"${location.name}.${action.name}.${x}").getOrElse(s"${location.name}")
   lazy val marker: Marker = MarkerFactory.getMarker(name)
 }
 
@@ -54,6 +54,9 @@ object LogMark {
   case object NetworkLocation extends Location {
     val name = "network"
   }
+  case class ObjectLocation(o: Object) extends Location {
+    val name = o.getClass.getSimpleName
+  }
 
   sealed trait Action extends NamedValueInstance {
   }
@@ -81,4 +84,10 @@ object LogMark {
   case object ProcessingAction extends Action {
     val name = "processing"
   }
+
+  def apply(
+    location: LogMark.Location,
+    action: LogMark.Action,
+    label: String
+  ): LogMark = LogMark(location, action, Some(label))
 }
