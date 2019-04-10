@@ -8,7 +8,8 @@ package org.goldenport
  *  version Jan. 12, 2018
  *  version Aug. 28, 2018
  *  version Dec. 31, 2018
- * @version Mar. 24, 2019
+name:  *  version Mar. 24, 2019
+name:  * @version Apr.  7, 2019
  * @author  ASAMI, Tomoharu
  */
 package object exception {
@@ -27,6 +28,7 @@ package object exception {
     def missingPropertyFault(name: String): Nothing = throw new MissingPropertyFaultException(name)
     def invalidArgumentFault(s: String): Nothing = throw new IllegalArgumentException(s)
     def noSuchElementFault(name: String): Nothing = throw new NoSuchElementException(name)
+    def illegalStateFault(msg: String): Nothing = throw new IllegalStateException(msg)
     def syntaxErrorFault(s: String): Nothing = throw new SyntaxErrorFaultException(s)
   }
 }

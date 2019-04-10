@@ -9,7 +9,8 @@ import org.goldenport.hocon.RichConfig
  * @since   Sep. 16, 2018
  *  version Oct.  6, 2018
  *  version Feb. 11, 2019
- * @version Mar. 24, 2019
+ *  version Mar. 24, 2019
+ * @version Apr.  8, 2019
  * @author  ASAMI, Tomoharu
  */
 trait Config {
@@ -22,7 +23,7 @@ trait Config {
   // logger
 
   def properties: RichConfig // Typesafe Config (Human-Optimized Config Object Notation)
-  protected def logLevel: LogLevel
+  def logLevel: LogLevel
 
   // private def _set_root_logger_level {
   //   LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) match {

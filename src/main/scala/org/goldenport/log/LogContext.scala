@@ -6,7 +6,8 @@ import org.goldenport.config._
 
 /*
  * @since   Feb. 16, 2019
- * @version Feb. 24, 2019
+ *  version Feb. 24, 2019
+ * @version Apr.  8, 2019
  * @author  ASAMI, Tomoharu
  */
 class LogContext(mark: LogMark) {
@@ -15,8 +16,12 @@ class LogContext(mark: LogMark) {
 }
 
 object LogContext {
-  private lazy val _logger_factory: ILoggerFactory = LoggerFactory.getILoggerFactory()
+  class ThreadContext() {
+    private var _logger_by_name: Map[String, Logger] = Map.empty
+  }
   private var _logger_by_name: Map[String, Logger] = Map.empty
+
+  private def _logger_factory: ILoggerFactory = LoggerFactory.getILoggerFactory()
 
   def setRootLevel(level: LogLevel): ILoggerFactory = {
     _logger_factory match {
@@ -43,7 +48,9 @@ object LogContext {
 
   lazy val defaultLogger: Logger = _logger_setup(_logger_factory.getLogger(""))
 
-  def logger(mark: LogMark): Logger = _logger_by_name.
+  def logger(mark: LogMark): Logger = _logger_factory.getLogger(mark.name)
+
+  def logger_OLD(mark: LogMark): Logger = _logger_by_name.
     get(mark.name).getOrElse {
       val r = _logger_setup(_logger_factory.getLogger(mark.name))
       _logger_by_name += (mark.name -> r)
