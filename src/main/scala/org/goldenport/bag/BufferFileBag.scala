@@ -5,6 +5,7 @@ import scalaz.concurrent.Task
 import scala.collection.mutable.ArrayBuffer
 import scalax.io._
 import java.io._
+import java.nio.ByteBuffer
 import java.net.URL
 import scodec.bits.ByteVector
 import com.asamioffice.goldenport.io.UURL
@@ -18,7 +19,8 @@ import com.asamioffice.goldenport.io.UURL
  *  version Sep. 22, 2016
  *  version Aug. 29, 2017
  *  version Sep. 17, 2018
- * @version Oct.  5, 2018
+ *  version Oct.  5, 2018
+ * @version Mar. 27, 2019
  * @author  ASAMI, Tomoharu
  */
 class BufferFileBag(
@@ -171,8 +173,15 @@ object BufferFileBag {
 
   def fromInputStreamAndClose(p: InputStream): BufferFileBag = {
     val bag = new BufferFileBag()
-    for (in <- resource.managed(p)) 
+    for (in <- resource.managed(p))
       bag.write(in)
+    bag
+  }
+
+  def fromByteBuffer(p: ByteBuffer): BufferFileBag = {
+    val bag = new BufferFileBag()
+    while (p.hasRemaining())
+      bag.write(_.write(p.get()))
     bag
   }
 
