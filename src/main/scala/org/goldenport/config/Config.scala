@@ -2,13 +2,15 @@ package org.goldenport.config
 
 import com.typesafe.config.{Config => Hocon, ConfigFactory => HoconFactory}
 import org.slf4j._
-import ch.qos.logback.classic.Level
 import org.goldenport.log._
-import org.goldenport.util.HoconUtils.RichConfig
+import org.goldenport.hocon.RichConfig
 
 /*
  * @since   Sep. 16, 2018
- * @version Sep. 18, 2018
+ *  version Oct.  6, 2018
+ *  version Feb. 11, 2019
+ *  version Mar. 24, 2019
+ * @version Apr.  8, 2019
  * @author  ASAMI, Tomoharu
  */
 trait Config {
@@ -20,8 +22,8 @@ trait Config {
   // message resource
   // logger
 
-  protected def hocon: RichConfig // Typesafe Config (Human-Optimized Config Object Notation)
-  protected def logLevel: Option[Level]
+  def properties: RichConfig // Typesafe Config (Human-Optimized Config Object Notation)
+  def logLevel: LogLevel
 
   // private def _set_root_logger_level {
   //   LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) match {
@@ -31,10 +33,9 @@ trait Config {
   // }
 
   private def _set_root_logger_level(p: ch.qos.logback.classic.LoggerContext) {
-    logLevel.map { x =>
-      val root = p.getLogger(Logger.ROOT_LOGGER_NAME)
-      root.setLevel(x)
-    }
+    val x = LogbackUtils.toLogbackLevel(logLevel)
+    val root = p.getLogger(Logger.ROOT_LOGGER_NAME)
+    root.setLevel(x)
   }
 
   private lazy val _logger_factory: ILoggerFactory = {
@@ -58,12 +59,15 @@ trait Config {
   private def _logger_setup(p: Logger): Logger = {
     p
   }
+
+  def getString(key: String): Option[String] = properties.getStringOption(key)
+  def getBoolean(key: String): Option[Boolean] = properties.getBooleanOption(key)
 }
 
 object Config {
   case class BasicConfig(
-    hocon: RichConfig,
-    logLevel: Option[Level]
+    logLevel: LogLevel,
+    properties: RichConfig
   ) extends Config {
   }
 

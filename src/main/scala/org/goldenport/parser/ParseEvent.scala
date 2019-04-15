@@ -6,10 +6,15 @@ import org.goldenport.util.VectorUtils
   
 /*
  * @since   Aug. 21, 2018
- * @version Sep. 22, 2018
+ *  version Sep. 22, 2018
+ *  version Oct.  9, 2018
+ * @version Dec. 31, 2018
  * @author  ASAMI, Tomoharu
  */
-trait ParseEvent
+trait ParseEvent {
+  def location: ParseLocation
+  def getLogicalLineText: Option[String] = None
+}
 
 case class CharEvent(
   c: Char,
@@ -26,6 +31,10 @@ case class CharEvent(
   }
 }
 object CharEvent {
+  def apply(c: Char): CharEvent = CharEvent(c, None, None, ParseLocation.empty)
+
+  def apply(c: Int): CharEvent = CharEvent(c.toChar, None, None, ParseLocation.empty)
+
   def make(p: String): Vector[CharEvent] = make(p.toVector)
 
   def make(ps: Seq[Char]): Vector[CharEvent] = {
@@ -82,15 +91,21 @@ object CharEvent {
 case class LogicalLineEvent(
   line: LogicalLine
 ) extends ParseEvent {
-  def location = line.location
+  def location = line.location.getOrElse(ParseLocation.empty)
   def getSectionTitle = line.getSectionTitle
   def getSectionUnderline = line.getSectionUnderline
   def isEmptyLine = line.isEmptyLine
+  override def getLogicalLineText = Some(line.text)
 }
 object LogicalLineEvent {
   def make(p: LogicalLines): Vector[LogicalLineEvent] = p.lines.map(LogicalLineEvent.apply)
 }
 
-case object EndEvent extends ParseEvent
+case object StartEvent extends ParseEvent {
+  val location = ParseLocation.empty
+}
+case object EndEvent extends ParseEvent {
+  val location = ParseLocation.empty
+}
 
-case class LineEndEvent() extends ParseEvent
+case class LineEndEvent(location: ParseLocation) extends ParseEvent

@@ -7,7 +7,7 @@ import scala.util.control.NonFatal
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 import java.net.{URL, URI}
-import com.typesafe.config.Config
+import com.typesafe.config.{ConfigFactory, Config}
 import org.goldenport.Strings
 import org.goldenport.i18n.{I18NString, I18NElement}
 
@@ -19,10 +19,15 @@ import org.goldenport.i18n.{I18NString, I18NElement}
  *  version Aug. 29, 2017
  *  version Oct. 27, 2017
  *  version Dec. 14, 2017
- * @version Oct. 15, 2018
+ *  version Oct. 21, 2018
+ * @version Nov.  5, 2018
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
+  def parse(p: String): RichConfig = new RichConfig(ConfigFactory.parseString(p))
+
+  def isDefined(config: Config, key: String): Boolean = config.hasPath(key)
+
   def asBoolean(config: Config, key: String, fallback: Boolean): Boolean =
     if (config.hasPath(key))
       config.getBoolean(key)
@@ -144,7 +149,15 @@ object HoconUtils {
     else
       None
 
+  def getConfig(config: Config, key: String): Option[RichConfig] =
+    if (config.hasPath(key))
+      Option(config.getConfig(key)).map(RichConfig.apply)
+    else
+      None
+
   case class RichConfig(config: Config) extends AnyVal {
+    def withFallback(p: RichConfig): RichConfig = RichConfig(config.withFallback(p.config))
+    def isDefined(key: String): Boolean = HoconUtils.isDefined(config, key)
     def asBoolean(key: String, fallback: Boolean): Boolean = HoconUtils.asBoolean(config, key, fallback)
     def asStringList(key: String) = HoconUtils.asStringList(config, key)
     def asEagerStringList(key: String) = HoconUtils.asEagerStringList(config, key)
@@ -167,6 +180,16 @@ object HoconUtils {
     def getUriListOption(key: String) = HoconUtils.getUriList(config, key)
     def getI18NStringOption(key: String) = HoconUtils.getI18NString(config, key)
     def getI18NElementOption(key: String) = HoconUtils.getI18NElement(config, key)
+    def getConfigOption(key: String) = HoconUtils.getConfig(config, key)
+    def +(rhs: RichConfig): RichConfig = new RichConfig(rhs.config.withFallback(config))
+  }
+  object RichConfig {
+    val empty = RichConfig(ConfigFactory.empty())
+
+    implicit object RichConfigMonoid extends Monoid[RichConfig] {
+      def zero = empty
+      def append(lhs: RichConfig, rhs: => RichConfig) = lhs + rhs
+    }
   }
 
   object Implicits {

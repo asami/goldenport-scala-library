@@ -2,10 +2,15 @@ package org.goldenport.parser
 
 import scalaz._, Scalaz._
 import org.goldenport.exception.RAISE
+import org.goldenport.log.Loggable
 
 /*
  * @since   Aug. 20, 2018
- * @version Sep. 29, 2018
+ *  version Sep. 29, 2018
+ *  version Oct. 27, 2018
+ *  version Dec. 31, 2018
+ *  version Jan. 26, 2019
+ * @version Feb. 24, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -29,6 +34,10 @@ case class LogicalBlocks(
     this
   else
     LogicalBlocks(lhs +: blocks)
+
+  lazy val events = StartBlock +: blocks :+ EndBlock
+
+  def text = blocks.flatMap(_.getText).mkString
 }
 
 object LogicalBlocks {
@@ -47,16 +56,22 @@ object LogicalBlocks {
 
   def parse(in: String): LogicalBlocks = parse(Config.default, in)
 
-  def parse(config: Config, in: String): LogicalBlocks =
-    parse(config, LogicalLines.parse(in))
+  def parse(config: Config, in: String): LogicalBlocks = {
+    val c = if (config.isLocation)
+      LogicalLines.Config.raw
+    else
+      LogicalLines.Config.raw.withoutLocation
+    parse(config, LogicalLines.parse(c, in))
+  }
 
   def parse(in: LogicalLines): LogicalBlocks = parse(Config.default, in)
 
   def parse(config: Config, in: LogicalLines): LogicalBlocks = {
+    // println(s"LogicalBlocks#parse $in")
     val parser = ParseReaderWriterStateClass[Config, LogicalBlocks](config, RootState.init)
     val (messages, result, state) = parser.apply(in)
     result match {
-      case ParseSuccess(blocks, _) => blocks
+      case ParseSuccess(blocks, _) => blocks.concatenate
       case ParseFailure(_, _) => RAISE.notImplementedYetDefect
       case EmptyParseResult() => RAISE.notImplementedYetDefect
     }
@@ -65,23 +80,37 @@ object LogicalBlocks {
   def parseDebug(s: String): LogicalBlocks = parse(Config.debug, s)
 
   case class Config(
-    isDebug: Boolean = false
+    isDebug: Boolean,
+    isLocation: Boolean,
+    lineConfig: LogicalLines.Config,
+    verbatims: Vector[LogicalBlock.VerbatimMarkClass]
   ) extends ParseConfig {
+    def getVerbatimMark(p: LogicalLine): Option[LogicalBlock.VerbatimMark] =
+      verbatims.toStream.flatMap(_.get(p)).headOption
+
+    def addVerbatims(p: Seq[LogicalBlock.VerbatimMarkClass]): Config = copy(
+      verbatims = verbatims ++ p
+    )
+
+    def forLisp: Config = copy(lineConfig = LogicalLines.Config.lisp)
   }
   object Config {
-    val default = Config()
-    val debug = Config(true)
+    val verbatimDefault = Vector(LogicalBlock.RawBackquoteMarkClass)
+
+    val default = Config(false, true, LogicalLines.Config.default, verbatimDefault)
+    val debug = Config(true, true, LogicalLines.Config.default, verbatimDefault)
+    val noLocation = Config(false, false, LogicalLines.Config.default, verbatimDefault)
   }
 
-  trait LogicalBlocksParseState extends ParseReaderWriterState[Config, LogicalBlocks] {
+  trait LogicalBlocksParseState extends ParseReaderWriterState[Config, LogicalBlocks] with Loggable {
     def result: LogicalBlocks
 
     def apply(config: Config, evt: ParseEvent): Transition = {
       if (config.isDebug)
-        println(s"IN ($this) <= $evt") // TODO slf4j
+        log_debug(s"IN ($this) <= $evt")
       val r = handle_event(config, evt)
       if (config.isDebug)
-        println(s"OUT ($this) => $r") // TODO slf4j
+        log_debug(s"OUT ($this) => $r")
       r
     }
 
@@ -110,11 +139,23 @@ object LogicalBlocks {
 
     protected final def handle_event(config: Config, evt: ParseEvent): Transition =
       evt match {
+        case StartEvent => handle_start(config)
         case EndEvent => handle_end(config)
         case m: LogicalLineEvent => handle_line(config, m)
         case m: LineEndEvent => RAISE.noReachDefect
         case m: CharEvent => RAISE.noReachDefect
       }
+
+    protected final def handle_start(config: Config): Transition =
+      handle_Start(config)
+
+    protected def handle_Start(config: Config): Transition =
+      (ParseMessageSequence.empty, start_Result(config), start_State(config))
+
+    protected def start_Result(config: Config): ParseResult[LogicalBlocks] = 
+      ParseSuccess(LogicalBlocks.empty)
+
+    protected def start_State(config: Config): LogicalBlocksParseState = this
 
     protected final def handle_end(config: Config): Transition =
       handle_End(config)
@@ -148,15 +189,22 @@ object LogicalBlocks {
     override def addChildState(config: Config, p: LogicalBlocks): LogicalBlocksParseState =
       RootState(blocks + p)
 
+    override protected def end_Result(config: Config): ParseResult[LogicalBlocks] =
+      ParseSuccess(blocks)
+
     override def line_State(config: Config, evt: LogicalLineEvent) = {
       evt.getSectionTitle.map { title =>
-        SectionState(this, title, evt.location)
+        SectionState(this, title, evt)
       }.orElse {
         evt.getSectionUnderline.map { underline =>
-          ??? // syntax error
+          RAISE.notImplementedYetDefect("section underline")
         }
+      }.orElse {
+        config.getVerbatimMark(evt.line).map(mark =>
+          VerbatimState(this, mark, evt)
+        )
       }.getOrElse {
-        InputState(this, Vector(evt.line), LogicalBlocks.empty, evt.location)
+        InputState(this, evt)
       }
     }
   }
@@ -176,15 +224,22 @@ object LogicalBlocks {
     override def addChildState(config: Config, p: LogicalBlocks): LogicalBlocksParseState =
       RootState(blocks + p)
 
-    override def line_State(config: Config, evt: LogicalLineEvent) = {
+    override protected def end_Result(config: Config): ParseResult[LogicalBlocks] =
+      ParseSuccess(blocks)
+
+    override protected def line_State(config: Config, evt: LogicalLineEvent) = {
       evt.getSectionTitle.map { title =>
-        SectionState(this, title, evt.location)
+        SectionState(this, title, evt)
       }.orElse {
         evt.getSectionUnderline.map { underline =>
-          ??? // syntax error
+          RAISE.notImplementedYetDefect("section underline")
         }
+      }.orElse {
+        config.getVerbatimMark(evt.line).map(mark =>
+          VerbatimState(this, mark, evt)
+        )
       }.getOrElse {
-        InputState(this, Vector(evt.line), LogicalBlocks.empty, evt.location)
+        InputState(this, evt)
       }
     }
   }
@@ -213,11 +268,15 @@ object LogicalBlocks {
 
     override def line_State(config: Config, evt: LogicalLineEvent) =
       evt.getSectionTitle.map { title =>
-        SectionState(this, title, evt.location)
+        SectionState(this, title, evt)
       }.orElse {
         evt.getSectionUnderline.map { underline =>
-          ???
+          RAISE.notImplementedYetDefect("section underline")
         }
+      }.orElse {
+        config.getVerbatimMark(evt.line).map(mark =>
+          VerbatimState(this, mark, evt)
+        )
       }.getOrElse {
         if (evt.isEmptyLine)
           NeutralState(parent, blocks :+ LogicalBlock(cs))
@@ -227,6 +286,10 @@ object LogicalBlocks {
   }
   object InputState {
 //    val init = InputState(Vector.empty, LogicalBlocks.empty, ParseLocation.init)
+    def apply(
+      parent: LogicalBlocksParseState,
+      evt: LogicalLineEvent
+    ): InputState = InputState(parent, Vector(evt.line), LogicalBlocks.empty, evt.location.toOption)
   }
 
   case class SectionState(
@@ -252,9 +315,9 @@ object LogicalBlocks {
       copy(cs = Vector.empty, blocks = blocks :+ LogicalBlock(cs))
 
     override def addChildState(config: Config, p: LogicalBlocks): LogicalBlocksParseState = {
-      println(s"addChildState: ($this) <= $p")
+      // println(s"addChildState: ($this) <= $p")
       val r = copy(cs = Vector.empty, blocks = (blocks :+ LogicalBlock(cs)) + p)
-      println(s"addChildState: ($this) => $r")
+      // println(s"addChildState: ($this) => $r")
       r
     }
 
@@ -267,14 +330,14 @@ object LogicalBlocks {
     def up(config: Config, p: LogicalLine.SectionTitle): LogicalBlocksParseState = parent match {
       case m: SectionState =>
         if (title.level == p.level) {
-          println(s"up - same ($this) <= $p")
+          // println(s"up - same ($this) <= $p")
           val r = m.addChildState(config, _close)
-          println(s"up - same ($this) => $r")
+          // println(s"up - same ($this) => $r")
           r
         } else if (title.level > p.level) {
-          println(s"up - up ($this) <= $p")
+          // println(s"up - up ($this) <= $p")
           val r = m.up(config, _close, p)
-          println(s"up - up ($this) => $r")
+          // println(s"up - up ($this) => $r")
           r
         } else {
           RAISE.noReachDefect
@@ -285,14 +348,14 @@ object LogicalBlocks {
     def up(config: Config, s: LogicalSection, p: LogicalLine.SectionTitle): LogicalBlocksParseState = parent match {
       case m: SectionState =>
         if (title.level == p.level) {
-          println(s"up2 - same ($this) <= $s / $p")
+          // println(s"up2 - same ($this) <= $s / $p")
           val r = m.addChildState(config, _close :+ s)
-          println(s"up2 - same ($this) => $r")
+          // println(s"up2 - same ($this) => $r")
           r
         } else if (title.level > p.level) {
-          println(s"up2 - up ($this) <= $s / $p")
+          // println(s"up2 - up ($this) <= $s / $p")
           val r = m.up(config, _close :+ s, p)
-          println(s"up2 - up ($this) => $r")
+          // println(s"up2 - up ($this) => $r")
           r
         } else {
           RAISE.noReachDefect
@@ -304,20 +367,24 @@ object LogicalBlocks {
       evt.getSectionTitle.map { x =>
         if (title.level == x.level) {
           // println("same")
-          SectionState(parent.addChildState(config, _close), x, evt.location)
+          SectionState(parent.addChildState(config, _close), x, evt)
         } else if (title.level < x.level) {
           // println("down")
-          SectionState(_flush_state, x, evt.location)
+          SectionState(_flush_state, x, evt)
         } else {
-          println(s"up: ($this) <= $evt")
-          val r = SectionState(up(config, x), x, evt.location)
-          println(s"up: ($this) => $r")
+          // println(s"up: ($this) <= $evt")
+          val r = SectionState(up(config, x), x, evt)
+          // println(s"up: ($this) => $r")
           r
         }
       }.orElse {
         evt.getSectionUnderline.map { underline =>
-          ???
+          RAISE.notImplementedYetDefect("section underline")
         }
+      }.orElse {
+        config.getVerbatimMark(evt.line).map(mark =>
+          VerbatimState(this, mark, evt)
+        )
       }.getOrElse {
         if (evt.isEmptyLine)
           _flush_state
@@ -326,6 +393,33 @@ object LogicalBlocks {
       }
   }
   object SectionState {
+    def apply(
+      parent: LogicalBlocksParseState,
+      title: LogicalLine.SectionTitle,
+      evt: LogicalLineEvent
+    ): SectionState = SectionState(parent, title, evt.location.toOption)
+  }
+
+  case class VerbatimState(
+    parent: LogicalBlocksParseState,
+    mark: LogicalBlock.VerbatimMark,
+    location: Option[ParseLocation],
+    lines: Vector[LogicalLine] = Vector.empty
+  ) extends LogicalBlocksParseState {
+    def result = LogicalBlocks(LogicalVerbatim(mark, LogicalLines(lines), location))
+
+    override def line_State(config: Config, evt: LogicalLineEvent) =
+      if (mark.isDone(evt.line))
+        parent.addChildState(config, result)
+      else
+        copy(lines = lines :+ evt.line)
+  }
+  object VerbatimState {
+    def apply(
+      parent: LogicalBlocksParseState,
+    mark: LogicalBlock.VerbatimMark,
+      evt: LogicalLineEvent
+    ): VerbatimState = VerbatimState(parent, mark, evt.location.toOption)
   }
 
   case object EndState extends LogicalBlocksParseState {
@@ -333,5 +427,11 @@ object LogicalBlocks {
 
     override def apply(config: Config, evt: ParseEvent): Transition =
       (ParseMessageSequence.empty, ParseResult.empty, this)
+  }
+
+  def main(args: Array[String]) {
+    val s = org.goldenport.io.IoUtils.toText(args(0))
+    val r = LogicalBlocks.parse(s)
+    println("LogicalBlocks#main:" + r)
   }
 }

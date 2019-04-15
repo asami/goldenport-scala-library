@@ -8,7 +8,8 @@ import LogicalTokens._
 
 /*
  * @since   Aug. 19, 2018
- * @version Sep. 22, 2018
+ *  version Sep. 22, 2018
+ * @version Oct. 15, 2018
  * @author  ASAMI, Tomoharu
  */
 case class JsonParser() extends Parser with LogicalTokens.ComplexTokenizer {
@@ -56,6 +57,7 @@ object JsonParser {
       p.tokens./:(this) { (z, x) =>
         x match {
           case m: StringToken => z.copy(text = text ++ _to_string(m))
+          case m: JsonToken => z.copy(text = text ++ m.text)
           case m => RAISE.noReachDefect(s"JsonState#addChildState: $m")
         }
       }

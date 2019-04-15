@@ -5,12 +5,17 @@ import java.net.{URL, URI}
 import org.joda.time._
 import org.goldenport.Strings
 import org.goldenport.values.Urn
-import org.goldenport.util.{DateTimeUtils, LocalDateUtils}
+import org.goldenport.util.StringUtils
+import org.goldenport.util.{DateTimeUtils, LocalDateUtils, LocalDateTimeUtils}
 import LogicalTokens.Config
 
 /*
  * @since   Aug. 28, 2018
- * @version Sep. 19, 2018
+ *  version Sep. 19, 2018
+ *  version Oct. 26, 2018
+ *  version Jan.  2, 2019
+ *  version Feb. 25, 2019
+ * @version Mar.  9, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -43,7 +48,7 @@ object SpaceToken {
 case class DelimiterToken(
   s: String,
   location: Option[ParseLocation]
-) extends LiteralToken {
+) extends LogicalToken {
 }
 object DelimiterToken {
   def apply(c: Char): DelimiterToken = DelimiterToken(c.toString, None)
@@ -54,9 +59,9 @@ object DelimiterToken {
     DelimiterToken(text, Some(location))
 }
 
-sealed trait StringToken extends LiteralToken {
-  def prefix: Option[String]
-  def text: String
+case class SingleQuoteToken(
+  location: Option[ParseLocation]
+) extends LogicalToken {
 }
 
 case class AtomToken(
@@ -67,6 +72,11 @@ case class AtomToken(
 object AtomToken {
   def apply(text: String, location: ParseLocation): AtomToken =
     AtomToken(text, Some(location))
+}
+
+sealed trait StringToken extends LiteralToken {
+  def prefix: Option[String]
+  def text: String
 }
 
 case class DoubleStringToken(
@@ -124,6 +134,29 @@ object NumberToken extends LogicalTokens.SimpleTokenizer {
     Try(NumberToken(BigDecimal(p), Some(location))).toOption
 }
 
+case class ComplexToken(
+  n: spire.math.Complex[Double],
+  location: Option[ParseLocation]
+) extends LiteralToken {
+}
+object ComlexToken extends LogicalTokens.SimpleTokenizer {
+  val regex = """([+-]?\d+[.]?\d+([eE][+-]\d+)?)?([+-]\d+[.]?\d+([eE][+-]\d+)?)[i]""".r
+
+  def apply(p: spire.math.Complex[Double], l: ParseLocation): ComplexToken = ComplexToken(p, Some(l))
+
+  override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
+    regex.findFirstMatchIn(s).flatMap { m =>
+      val whole = m.group(0)
+      if (s == whole) {
+        val real = Option(m.group(1)).map(_.toDouble).getOrElse(0.0D).toDouble
+        val imaginary = m.group(3).toDouble
+        Some(ComplexToken(spire.math.Complex(real, imaginary), Some(location)))
+      } else {
+        None
+      }
+    }
+}
+
 case class DateTimeToken(
   datetime: DateTime,
   location: Option[ParseLocation]
@@ -140,7 +173,40 @@ object DateTimeToken extends LogicalTokens.SimpleTokenizer {
     DateTimeToken(DateTimeUtils.parseIsoDateTimeJst(s), Some(location)) // TODO
 
   override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
-    Try(apply(config, s, location)).toOption
+    if (s.count(_ == 'T') == 1 && s.count(_ == ':') >= 2 
+      && (
+        s.count(_ == '-') match {
+          case 2 => s.count(x => x == 'Z' || x == '+') == 1
+          case 3 => !s.exists(x => x == 'Z' || x == '+')
+          case _ => false
+        }
+      ))
+      Try(apply(config, s, location)).toOption
+    else
+      None
+}
+
+case class LocalDateTimeToken(
+  datetime: LocalDateTime,
+  location: Option[ParseLocation]
+) extends LiteralToken {
+}
+object LocalDateTimeToken extends LogicalTokens.SimpleTokenizer {
+  def apply(p: DateTime, location: ParseLocation): DateTimeToken =
+    DateTimeToken(p, Some(location))
+
+  def apply(config: Config, s: String, location: Option[ParseLocation]): LocalDateTimeToken =
+    LocalDateTimeToken(LocalDateTimeUtils.parse(s), location)
+
+  def apply(config: Config, s: String, location: ParseLocation): LocalDateTimeToken =
+    LocalDateTimeToken(LocalDateTimeUtils.parse(s), Some(location))
+
+  override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
+    if (s.count(_ == '-') == 2 && s.count(_ == 'T') == 1 && s.contains(':') &&
+      !s.exists(x => x == 'Z' || x == '+'))
+      Try(apply(config, s, location)).toOption
+    else
+      None
 }
 
 case class LocalDateToken(
@@ -158,8 +224,11 @@ object LocalDateToken extends LogicalTokens.SimpleTokenizer {
   def apply(config: Config, s: String, location: ParseLocation): LocalDateToken =
     LocalDateToken(LocalDateUtils.parse(s), Some(location))
 
-  override protected def accept_Token(config: Config, p: String, location: ParseLocation) =
-    Try(apply(config, p, location)).toOption
+  override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
+    if (s.count(_ == '-') == 2 && !s.contains(':'))
+      Try(apply(config, s, location)).toOption
+    else
+      None
 }
 
 case class LocalTimeToken(
@@ -178,7 +247,32 @@ object LocalTimeToken extends LogicalTokens.SimpleTokenizer {
     LocalTimeToken(LocalTime.parse(s), Some(location))
 
   override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
-    Try(apply(config, s, location)).toOption
+    if (s.count(_ == ':') <= 2 && !s.contains('-'))
+      Try(apply(config, s, location)).toOption
+    else
+      None
+}
+
+case class MonthDayToken(
+  monthday: MonthDay,
+  location: Option[ParseLocation]
+) extends LiteralToken {
+}
+object MonthDayToken extends LogicalTokens.SimpleTokenizer {
+  def apply(p: MonthDay, location: ParseLocation): MonthDayToken =
+    MonthDayToken(p, Some(location))
+
+  def apply(config: Config, s: String, location: Option[ParseLocation]): MonthDayToken =
+    MonthDayToken(MonthDay.parse(s), location)
+
+  def apply(config: Config, s: String, location: ParseLocation): MonthDayToken =
+    MonthDayToken(MonthDay.parse(s), Some(location))
+
+  override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
+    if (s.startsWith("--") && s.forall(x => StringUtils.isAsciiNumberChar(x) || x == '-'))
+      Try(apply(config, s, location)).toOption
+    else
+      None
 }
 
 case class UrlToken(
@@ -237,7 +331,47 @@ object PathToken extends LogicalTokens.SimpleTokenizer {
     else
       None
 
-  private def _is_path(p: String) = p.contains('/')
+  private def _is_path(p: String) = p.startsWith("@") || p.contains('/')
+}
+
+case class ExpressionToken(
+  text: String,
+  location: Option[ParseLocation]
+) extends LiteralToken {
+}
+object ExpressionToken extends LogicalTokens.SimpleTokenizer {
+  def apply(text: String, location: ParseLocation): ExpressionToken =
+    ExpressionToken(text, Some(location))
+
+  override protected def accept_Token(config: Config, p: String, location: ParseLocation) =
+    if (_is_expression(p))
+      Try(apply(p, location)).toOption
+    else
+      None
+
+  // TODO function name with hypen (e.g. my-func) is allowed.
+  private def _is_expression(p: String) =
+    _is_not_atom(p) && p.headOption.
+      map(x =>
+        _is_accept_first(x) && p.tail.forall(_is_accept)
+      ).getOrElse(false)
+
+  @inline
+  private def _is_atom(p: String) = 
+    StringUtils.isLispIdentifierI18N(p) || StringUtils.isNumericalSymbol(p) || p == "."
+
+  @inline
+  private def _is_not_atom(p: String) = !_is_atom(p)
+
+  private def _is_accept_first(c: Char) = StringUtils.isLispIdentifierI18NChar(c)
+
+  // '(', '{', '[' and '@' : in first character, used by another token type.
+  // '/' : used by PathToken.
+  private def _is_accept(c: Char) = {
+    val r = StringUtils.isLispIdentifierI18NChar(c) || StringUtils.isScriptSymbolChar(c)
+//    println(s"ExpressionToken#_is_accept $c => $r")
+    r
+  }
 }
 
 case class BracketToken(
@@ -260,4 +394,26 @@ case class RawBracketToken(
 object RawBracketToken {
   def apply(text: String, location: ParseLocation): RawBracketToken =
     RawBracketToken(text, Some(location))
+}
+
+case class ScriptToken(
+  text: String,
+  location: Option[ParseLocation],
+  prefix: Option[String] = None
+) extends LiteralToken {
+}
+object ScriptToken {
+  def apply(text: String, location: ParseLocation): ScriptToken =
+    ScriptToken(text, Some(location))
+}
+
+case class ExplicitLiteralToken(
+  text: String,
+  location: Option[ParseLocation],
+  prefix: Option[String] = None
+) extends LiteralToken {
+}
+object ExplicitLiteralToken {
+  def apply(text: String, location: ParseLocation): LiteralToken =
+    ExplicitLiteralToken(text, Some(location))
 }

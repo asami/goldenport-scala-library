@@ -28,4 +28,12 @@ object UrlUtils {
     } { file =>
       file.exists
     }
+
+  def normalizeBaseUrl(p: URL): URL = {
+    val s = p.toExternalForm
+    if (s.endsWith("/"))
+      p
+    else
+      new URL(s + "/")
+  }
 }

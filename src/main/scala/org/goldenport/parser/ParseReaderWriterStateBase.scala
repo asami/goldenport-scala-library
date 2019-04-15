@@ -4,7 +4,7 @@ import scalaz._, Scalaz._
   
 /*
  * @since   Sep.  3, 2018
- * @version Sep.  3, 2018
+ * @version Nov. 18, 2018
  * @author  ASAMI, Tomoharu
  */
 trait ParseReaderWriterStateBase[C <: ParseConfig, EVENT, AST] {
@@ -17,7 +17,7 @@ trait ParseReaderWriterStateClassBase[C <: ParseConfig, EVENT, AST] {
   type S = ParseReaderWriterStateBase[C, EVENT, AST]
   type B = ParseResult[AST]
   type RWS = ReaderWriterState[C, ParseMessageSequence, S, B]
-  type OUT = (ParseMessageSequence, B, S)
+  type OUT = (ParseMessageSequence, Vector[B], S)
 
   def initrws: RWS = ReaderWriterState((c, s) => (ParseMessageSequence.empty, ParseResult.empty, init))
 
@@ -29,12 +29,28 @@ trait ParseReaderWriterStateClassBase[C <: ParseConfig, EVENT, AST] {
   // }
 
   def parse(events: Seq[EVENT]): OUT = {
-    val a = events./:(initrws)((z, x) =>
-      for {
-        _ <- z
-        r <- action(x)
-      } yield r
-    )
-    a.run(config, init)
+    case class Z(
+      msgs: ParseMessageSequence = ParseMessageSequence.empty,
+      rs: Vector[B] = Vector.empty,
+      state: S = init
+    ) {
+      def r: OUT = (msgs, rs, state)
+      def +(rhs: EVENT): Z = {
+        val (ms, r, s) = state.apply(config, rhs)
+        r match {
+          case _: EmptyParseResult[AST] => Z(msgs + ms, rs, s)
+          case m: ParseSuccess[AST] => Z(msgs + ms :++ m.warnings, rs :+ m, s)
+          case m: ParseFailure[AST] => Z(msgs + ms :++ m.warnings :++ m.errors, rs, s)
+        }
+      }
+    }
+    events./:(Z())(_+_).r
+    // val a = events./:(initrws)((z, x) =>
+    //   for {
+    //     _ <- z
+    //     r <- action(x)
+    //   } yield r
+    // )
+    // a.run(config, init)
   }
 }

@@ -11,6 +11,7 @@ import scalaz._, Scalaz._
  *  version Aug. 29, 2017
  *  version Jan. 20, 2018
  * @version Oct. 15, 2018
+ * @version Dec.  7, 2018
  * @author  ASAMI, Tomoharu
  */
 object ScalazUtils {
@@ -82,4 +83,18 @@ object ScalazUtils {
   }
 
   def isLeaf[T](p: Tree[T]): Boolean = p.subForest.isEmpty
+
+  def toVector[T](p: Tree[T]): Vector[T] =
+    p.rootLabel +: childrenToVector(p)
+
+  def childrenToVector[T](p: Tree[T]): Vector[T] =
+    p.subForest.toVector.flatMap(toVector)
+
+  def toList[T](p: Tree[T]): List[T] = toVector(p).toList
+
+  def toStream[T](p: Tree[T]): Stream[T] =
+    p.rootLabel +: toStream(p)
+
+  def childrenToStream[T](p: Tree[T]): Stream[T] = 
+    p.subForest.flatMap(toStream)
 }

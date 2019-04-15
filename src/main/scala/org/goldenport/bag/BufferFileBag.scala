@@ -17,7 +17,8 @@ import com.asamioffice.goldenport.io.UURL
  *  version Sep. 29, 2015
  *  version Sep. 22, 2016
  *  version Aug. 29, 2017
- * @version Sep. 17, 2018
+ *  version Sep. 17, 2018
+ * @version Oct.  5, 2018
  * @author  ASAMI, Tomoharu
  */
 class BufferFileBag(
@@ -162,6 +163,16 @@ object BufferFileBag {
   def fromInputStream(in: InputStream): BufferFileBag = {
     val bag = new BufferFileBag()
     bag.write(in)
+    bag
+  }
+
+  def fromInputStreamNoClose(p: InputStream): BufferFileBag =
+    fromInputStream(p)
+
+  def fromInputStreamAndClose(p: InputStream): BufferFileBag = {
+    val bag = new BufferFileBag()
+    for (in <- resource.managed(p)) 
+      bag.write(in)
     bag
   }
 

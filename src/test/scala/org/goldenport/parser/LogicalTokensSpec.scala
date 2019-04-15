@@ -10,7 +10,10 @@ import org.goldenport.util.DateTimeUtils
 
 /*
  * @since   Aug. 24, 2018
- * @version Sep. 22, 2018
+ *  version Sep. 22, 2018
+ *  version Jan.  1, 2019
+ *  version Feb.  9, 2019
+ * @version Mar. 10, 2019
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -21,42 +24,49 @@ class LogicalTokensSpec extends WordSpec with Matchers with GivenWhenThen {
         val s = "1"
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          NumberToken(1, ParseLocation.init)
+          NumberToken(1, ParseLocation.start)
         ))
       }
       "url" in {
         val s = "http://www.yahoo.com"
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          UrlToken("http://www.yahoo.com", ParseLocation.init)
+          UrlToken("http://www.yahoo.com", ParseLocation.start)
         ))
       }
       "urn" in {
         val s = "URN:ISBN:4-8399-0454-5"
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          UrnToken("URN:ISBN:4-8399-0454-5", ParseLocation.init)
+          UrnToken("URN:ISBN:4-8399-0454-5", ParseLocation.start)
         ))
       }
       "datetime" in {
         val s = "2018-09-09T10:11:12+09:00"
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          DateTimeToken(DateTimeUtils.parseIsoDateTimeJst(s), ParseLocation.init)
+          DateTimeToken(DateTimeUtils.parseIsoDateTimeJst(s), ParseLocation.start)
         ))
       }
       "localdate" in {
         val s = "2018-09-09"
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          LocalDateToken(LocalDate.parse(s), ParseLocation.init)
+          LocalDateToken(LocalDate.parse(s), ParseLocation.start)
         ))
       }
       "localtime" in {
         val s = "10:11:12"
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          LocalTimeToken(LocalTime.parse(s), ParseLocation.init)
+          LocalTimeToken(LocalTime.parse(s), ParseLocation.start)
+        ))
+      }
+      "localtime short" in {
+        val s = "10:11"
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          LocalTimeToken(LocalTime.parse(s), ParseLocation.start)
         ))
       }
     }
@@ -65,14 +75,21 @@ class LogicalTokensSpec extends WordSpec with Matchers with GivenWhenThen {
         val s = "\"abc\""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          DoubleStringToken("abc", ParseLocation.init)
+          DoubleStringToken("abc", ParseLocation.start)
+        ))
+      }
+      "delimiter" in {
+        val s = "\"(+ 1 2 3)\""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          DoubleStringToken("(+ 1 2 3)", ParseLocation.start)
         ))
       }
       "multi line" in {
         val s = "\"abc\nxyz\""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          DoubleStringToken("abc\nxyz", ParseLocation.init)
+          DoubleStringToken("abc\nxyz", ParseLocation.start)
         ))
       }
     }
@@ -81,7 +98,7 @@ class LogicalTokensSpec extends WordSpec with Matchers with GivenWhenThen {
         val s = "'abc'"
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          SingleStringToken("abc", ParseLocation.init)
+          SingleStringToken("abc", ParseLocation.start)
         ))
       }
       "multi line" in {
@@ -89,7 +106,7 @@ class LogicalTokensSpec extends WordSpec with Matchers with GivenWhenThen {
 xyz'"""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          SingleStringToken("abc\nxyz", ParseLocation.init)
+          SingleStringToken("abc\nxyz", ParseLocation.start)
         ))
       }
     }
@@ -98,14 +115,14 @@ xyz'"""
         val s = "\"\"\"abc\"\"\""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          RawStringToken("abc", ParseLocation.init)
+          RawStringToken("abc", ParseLocation.start)
         ))
       }
       "multi line" in {
         val s = "\"\"\"abc\nxyz\"\"\""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          RawStringToken("abc\nxyz", ParseLocation.init)
+          RawStringToken("abc\nxyz", ParseLocation.start)
         ))
       }
     }
@@ -114,7 +131,7 @@ xyz'"""
         val s = """{"a":"b", "c":"d"}"""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          JsonParser.JsonToken(s, ParseLocation.init)
+          JsonParser.JsonToken(s, ParseLocation.start)
         ))
       }
       "multi lines" in {
@@ -124,7 +141,7 @@ xyz'"""
 }"""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          JsonParser.JsonToken(s, ParseLocation.init)
+          JsonParser.JsonToken(s, ParseLocation.start)
         ))
       }
     }
@@ -133,34 +150,99 @@ xyz'"""
         val s = """<a/>"""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          XmlParser.XmlToken(s, ParseLocation.init)
+          XmlParser.XmlToken(s, ParseLocation.start)
         ))
       }
       "one line" in {
         val s = """<a x="10">b</a>"""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          XmlParser.XmlToken(s, ParseLocation.init)
+          XmlParser.XmlToken(s, ParseLocation.start)
         ))
       }
       "one line nest" in {
         val s = """<a x="10"><b y="20">xyz</b></a>"""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          XmlParser.XmlToken(s, ParseLocation.init)
+          XmlParser.XmlToken(s, ParseLocation.start)
         ))
       }
       "one line nest empty tag" in {
         val s = """<a x="10"><b/></a>"""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          XmlParser.XmlToken(s, ParseLocation.init)
+          XmlParser.XmlToken(s, ParseLocation.start)
         ))
       }
     }
     "jxpath" which {
+      "typical" in {
+        val s = """/a/b/c"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          PathToken(s, ParseLocation.start)
+        ))
+      }
     }
     "jexl" which {
+    }
+    "expression" which {
+      "numerical expression" in {
+        val s = """a+b"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ExpressionToken(s, ParseLocation.start)
+        ))
+      }
+    }
+    "script" which {
+      "typical" in {
+        val s = """${a + b}"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ScriptToken("a + b", ParseLocation.start)
+        ))
+      }
+      "short form" in {
+        val s = """$a+b"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ScriptToken("a+b", ParseLocation.start)
+        ))
+      }
+      "multi line" in {
+        val s = """${
+val c = a + b
+print(c)
+}"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ScriptToken("""
+val c = a + b
+print(c)
+""", ParseLocation.start)
+        ))
+      }
+      "nest curly bracket" in {
+        val s = """${{"a": "b"}}"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ScriptToken("""{"a": "b"}""", ParseLocation.start)
+        ))
+      }
+      "extra mark" in {
+        val s = """${{{
+val c = a + b
+print(c)
+}}}"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ScriptToken("""
+val c = a + b
+print(c)
+""", ParseLocation.start)
+        ))
+      }
     }
   }
   "line" should {
@@ -171,7 +253,7 @@ c
 """
       val r = LogicalTokens.parse(s)
       r should be(LogicalTokens(
-        AtomToken("a", ParseLocation.init),
+        AtomToken("a", ParseLocation.start),
         SpaceToken("\n", ParseLocation(1, 2)),
         AtomToken("b", ParseLocation(2, 1)),
         SpaceToken("\n", ParseLocation(2, 2)),
@@ -185,7 +267,7 @@ b" c
 """
       val r = LogicalTokens.parse(s)
       r should be(LogicalTokens(
-        AtomToken("a", ParseLocation.init),
+        AtomToken("a", ParseLocation.start),
         SpaceToken(" ", ParseLocation(1, 2)),
         DoubleStringToken("\nb", ParseLocation(1, 3)),
         SpaceToken(" ", ParseLocation(2, 3)),
@@ -198,7 +280,7 @@ b" c
         val s = """(a b c d)"""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          DelimiterToken("(", ParseLocation.init),
+          DelimiterToken("(", ParseLocation.start),
           AtomToken("a", ParseLocation(1, 2)),
           SpaceToken(" ", ParseLocation(1, 3)),
           AtomToken("b", ParseLocation(1, 4)),
@@ -213,7 +295,7 @@ b" c
         val s = """(1 2 30 456)"""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          DelimiterToken("(", ParseLocation.init),
+          DelimiterToken("(", ParseLocation.start),
           NumberToken(1, ParseLocation(1, 2)),
           SpaceToken(" ", ParseLocation(1, 3)),
           NumberToken(2, ParseLocation(1, 4)),
@@ -229,7 +311,7 @@ b" c
 c d)"""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          DelimiterToken("(", ParseLocation.init),
+          DelimiterToken("(", ParseLocation.start),
           AtomToken("a", ParseLocation(1, 2)),
           SpaceToken(" ", ParseLocation(1, 3)),
           AtomToken("b", ParseLocation(1, 4)),
@@ -245,7 +327,7 @@ c d)"""
 " c d)"""
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          DelimiterToken("(", ParseLocation.init),
+          DelimiterToken("(", ParseLocation.start),
           AtomToken("a", ParseLocation(1, 2)),
           SpaceToken(" ", ParseLocation(1, 3)),
           AtomToken("b", ParseLocation(1, 4)),

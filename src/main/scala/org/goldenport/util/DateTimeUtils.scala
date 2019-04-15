@@ -1,5 +1,6 @@
 package org.goldenport.util
 
+import scala.util.Try
 import java.util.{Date, TimeZone, Locale}
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
@@ -16,7 +17,8 @@ import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
  *  version Sep.  4, 2016
  *  version Jan. 20, 2017
  *  version Aug. 29, 2017
- * @version Oct.  3, 2017
+ *  version Oct.  3, 2017
+ * @version Dec. 29, 2018
  * @author  ASAMI, Tomoharu
  */
 object DateTimeUtils {
@@ -152,12 +154,16 @@ object DateTimeUtils {
   def toSimpleString24Jst(dt: java.sql.Timestamp): String = ???
 
   // Parser
-  def parseIsoDateTime(s: String, tz: DateTimeZone): DateTime = {
+  def parseIsoDateTime(s: String, tz: DateTimeZone): DateTime = Try(
     if (tz == jodajst)
       isoJstFormatter.parseDateTime(s)
     else
       ISODateTimeFormat.dateTimeParser.withZone(tz).parseDateTime(s)
-  }
+  ).recover {
+    case e => LocalDateTime.parse(s).toDateTime(tz)
+  }.recover {
+    case e => LocalDate.parse(s).toDateTimeAtStartOfDay(tz)
+  }.get
 
   def parseIsoDateTimeJst(s: String): DateTime = {
     parseIsoDateTime(s, jodajst)

@@ -15,12 +15,18 @@ import org.goldenport.util.StringUtils
  *  version Aug. 29, 2017
  *  version Nov.  6, 2017
  *  version Jan. 12, 2018
- * @version Mar. 13, 2018
+ *  version Mar. 13, 2018
+ * @version Dec. 27, 2018
  * @author  ASAMI, Tomoharu
  */
 case class PathName(v: String) {
   override def toString() = v
 
+  def isEmpty: Boolean = v.isEmpty
+  def head: String = firstComponent
+  def headOption: Option[String] = if (isEmpty) Some(firstComponent) else None
+  def tail: PathName = tailOption.get
+  def tailOption: Option[PathName] = getChild
   lazy val components: List[String] = Strings.totokens(v, "/")
   lazy val firstComponent: String = components.headOption.getOrElse("")
   lazy val lastConcreteComponent: String = {
@@ -34,6 +40,11 @@ case class PathName(v: String) {
       None
     else
       Some(PathName(components.init))
+  lazy val getChild: Option[PathName] = components.tail match {
+    case Nil => None
+    case xs => Some(PathName(xs.mkString("/")))
+  }
+
   def isBase: Boolean = v == "" || v == "/"
   def isAbsolute: Boolean = v.startsWith("/")
 

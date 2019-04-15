@@ -5,15 +5,17 @@ import org.goldenport.value._
 
 /*
  * @since   Sep. 16, 2018
- * @version Sep. 17, 2018
+ *  version Sep. 17, 2018
+ *  version Oct.  6, 2018
+ * @version Feb. 25, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogMark(
   location: LogMark.Location,
   action: LogMark.Action,
-  label: String
+  label: Option[String]
 ) {
-  def name = s"${location.name}.${action.name}.${label}"
+  def name = label.map(x => s"${location.name}.${action.name}.${x}").getOrElse(s"${location.name}")
   lazy val marker: Marker = MarkerFactory.getMarker(name)
 }
 
@@ -21,16 +23,27 @@ object LogMark {
   sealed trait Location extends NamedValueInstance {
   }
   object Location extends EnumerationClass[Location] {
-    val elements = Vector()
+    val elements = Vector(
+      SystemLocation,
+      InterpreterLocation,
+      ApplicationLocation,
+      FunctionLocation,
+      ThreadLocation,
+      DatabaseLocation,
+      NetworkLocation
+    )
   }
   case object SystemLocation extends Location {
     val name = "system"
   }
-  case object ExecuteLocation extends Location {
-    val name = "execute"
+  case object InterpreterLocation extends Location {
+    val name = "interpreter"
   }
   case object FunctionLocation extends Location {
     val name = "function"
+  }
+  case object ApplicationLocation extends Location {
+    val name = "application"
   }
   case object ThreadLocation extends Location {
     val name = "thread"
@@ -41,11 +54,20 @@ object LogMark {
   case object NetworkLocation extends Location {
     val name = "network"
   }
+  case class ObjectLocation(o: Object) extends Location {
+    val name = o.getClass.getSimpleName
+  }
 
   sealed trait Action extends NamedValueInstance {
   }
   object Action extends EnumerationClass[Action] {
-    val elements = Vector()
+    val elements = Vector(
+      ErrorAction,
+      StartAction,
+      EndAction,
+      EndErrorAction,
+      ProcessingAction
+    )
   }
   case object ErrorAction extends Action {
     val name = "error"
@@ -62,4 +84,10 @@ object LogMark {
   case object ProcessingAction extends Action {
     val name = "processing"
   }
+
+  def apply(
+    location: LogMark.Location,
+    action: LogMark.Action,
+    label: String
+  ): LogMark = LogMark(location, action, Some(label))
 }

@@ -22,7 +22,8 @@ import com.asamioffice.goldenport.io.UIO
  *  version Feb. 29, 2016
  *  version Sep. 22, 2016
  *  version Jul. 24, 2017
- * @version Aug. 30, 2017
+ *  version Aug. 30, 2017
+ * @version Oct.  5, 2018
  * @author  ASAMI, Tomoharu
  */
 trait ChunkBag extends Bag {
@@ -82,6 +83,15 @@ trait ChunkBag extends Bag {
   def write(in: => InputStream): Unit = {
     for (out <- resource.managed(openOutputStream()))
       UIO.stream2stream(in, out)
+  }
+
+  def writeClose(p: => InputStream): Unit = {
+    for {
+      in <- resource.managed(p)
+      out <- resource.managed(openOutputStream())
+    } {
+      UIO.stream2stream(in, out)
+    }
   }
 
   def writeClose[T](r: InputResource[T]): Unit = {
