@@ -1,7 +1,7 @@
 package org.goldenport.util
 
 import scala.language.implicitConversions
-import scalaz.{NonEmptyList, IList}
+import scalaz._, Scalaz._
 import scala.util.Try
 import scala.util.control.NonFatal
 import scala.concurrent.duration._

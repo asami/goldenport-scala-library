@@ -125,13 +125,13 @@ object HoconUtils {
   def getNonEmptyListString(config: Config, key: String): Option[NonEmptyList[String]] =
     asStringList(config, key) match {
       case Nil => None
-      case x :: xs => Some(NonEmptyList.nel(x, xs))
+      case x :: xs => Some(NonEmptyList.nel(x, IList.fromList(xs)))
     }
 
   def getEagerNonEmptyListString(config: Config, key: String): Option[NonEmptyList[String]] =
     asEagerStringList(config, key) match {
       case Nil => None
-      case x :: xs => Some(NonEmptyList.nel(x, xs))
+      case x :: xs => Some(NonEmptyList.nel(x, IList.fromList(xs)))
     }
 
   def getUrl(config: Config, key: String): Option[URL] =

@@ -30,7 +30,6 @@ case class JsonDynamicPropertyHandler() extends DynamicPropertyHandler {
           case m: JsNumber => m.value
           case m: JsObject => m
           case m: JsArray => m.value.toArray
-          case m: JsUndefined => null
           case JsNull => null
         }
         case None => null
