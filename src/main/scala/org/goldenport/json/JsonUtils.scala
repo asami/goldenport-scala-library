@@ -2,6 +2,7 @@ package org.goldenport.json
 
 import scala.xml._
 import scala.concurrent.duration._
+import java.util.Locale
 import java.net.{URL, URI}
 import java.sql.Timestamp
 import org.joda.time.DateTime
@@ -22,7 +23,8 @@ import org.goldenport.util._
  *  version Sep.  2, 2017
  *  version Oct. 29, 2017
  *  version Aug. 30, 2018
- * @version Sep.  4, 2018
+ *  version Sep.  4, 2018
+ * @version Apr. 28, 2019
  * @author  ASAMI, Tomoharu
  */
 object JsonUtils {
@@ -434,6 +436,7 @@ object JsonUtils {
         }.toList
       )
     }
+    implicit val LocaleFormat = new ValueFormat[Locale](new Locale(_), _.toString)
     implicit val UrlFormat = new ValueFormat[URL](new URL(_), _.toString)
     implicit val UriFormat = new ValueFormat[URI](new URI(_), _.toString)
     implicit val FinitDurationFormat = new ValueFormat[FiniteDuration](

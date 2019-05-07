@@ -9,7 +9,8 @@ import org.goldenport.util.StringUtils
  * @since   Oct.  6, 2017
  *  version Oct.  6, 2017
  *  version Dec. 20, 2017
- * @version Jan. 14, 2018
+ *  version Jan. 14, 2018
+ * @version Apr. 26, 2019
  * @author  ASAMI, Tomoharu
  */
 case class UriBuilder(
@@ -29,6 +30,8 @@ case class UriBuilder(
     getQueryString getOrElse null,
     fragment getOrElse null
   )
+
+  def addPath(p: URI): UriBuilder = addPath(p.getPath)
 
   def addPath(p: String): UriBuilder = copy(path = StringUtils.concatPath(path, p))
 

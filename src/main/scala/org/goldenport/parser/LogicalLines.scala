@@ -9,7 +9,8 @@ import org.goldenport.exception.RAISE
  *  version Oct. 27, 2018
  *  version Dec. 31, 2018
  *  version Jan.  1, 2019
- * @version Feb. 16, 2019
+ *  version Feb. 16, 2019
+ * @version May.  2, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -87,6 +88,13 @@ object LogicalLines {
   }
 
   trait LogicalLinesParseState extends ParseReaderWriterState[Config, LogicalLines] {
+    protected def use_double_quote(config: Config) = config.useDoubleQuote
+    protected def use_single_quote(config: Config) = config.useSingleQuote
+    protected def use_angle_bracket(config: Config) = config.useAngleBracket
+    protected def use_brace(config: Config) = config.useBrace
+    protected def use_parenthesis(config: Config) = config.useParenthesis
+    protected def use_bracket(config: Config) = config.useBracket
+
     def location: Option[ParseLocation]
 
     def apply(config: Config, evt: ParseEvent): Transition = {
@@ -110,16 +118,16 @@ object LogicalLines {
         case EndEvent => handle_end(config)
         case m: LineEndEvent => handle_line_end(config, m)
         case m: CharEvent => m.c match {
-          case '"' if config.useDoubleQuote => handle_double_quote(config, m)
-          case '\'' if config.useSingleQuote => handle_single_quote(config, m)
-          case '<' if config.useAngleBracket => handle_open_angle_bracket(config, m)
-          case '>' if config.useAngleBracket => handle_close_angle_bracket(config, m)
-          case '{' if config.useBrace => handle_open_brace(config, m)
-          case '}' if config.useBrace => handle_close_brace(config, m)
-          case '(' if config.useParenthesis => handle_open_parenthesis(config, m)
-          case ')' if config.useParenthesis => handle_close_parenthesis(config, m)
-          case '[' if config.useBracket => handle_open_bracket(config, m)
-          case ']' if config.useBracket => handle_close_bracket(config, m)
+          case '"' if use_double_quote(config) => handle_double_quote(config, m)
+          case '\'' if use_single_quote(config) => handle_single_quote(config, m)
+          case '<' if use_angle_bracket(config) => handle_open_angle_bracket(config, m)
+          case '>' if use_angle_bracket(config) => handle_close_angle_bracket(config, m)
+          case '{' if use_brace(config) => handle_open_brace(config, m)
+          case '}' if use_brace(config) => handle_close_brace(config, m)
+          case '(' if use_parenthesis(config) => handle_open_parenthesis(config, m)
+          case ')' if use_parenthesis(config) => handle_close_parenthesis(config, m)
+          case '[' if use_bracket(config) => handle_open_bracket(config, m)
+          case ']' if use_bracket(config) => handle_close_bracket(config, m)
           case '\n' => handle_newline(config, m)
           case '\r' => handle_carrige_return(config, m)
           case c => handle_character(config, m)
@@ -539,6 +547,12 @@ object LogicalLines {
     location: Option[ParseLocation],
     text: Vector[Char] = Vector.empty
   ) extends AwakeningLogicalLinesParseState {
+    override protected def use_single_quote(config: Config) = false
+    override protected def use_angle_bracket(config: Config) = false
+    override protected def use_brace(config: Config) = false
+    override protected def use_parenthesis(config: Config) = false
+    override protected def use_bracket(config: Config) = false
+
     override protected def handle_End(config: Config): Transition =
       parent.addChildEndTransition(
         config,
@@ -559,6 +573,12 @@ object LogicalLines {
     text: Vector[Char],
     location: Option[ParseLocation]
   ) extends AwakeningLogicalLinesParseState {
+    override protected def use_double_quote(config: Config) = false
+    override protected def use_angle_bracket(config: Config) = false
+    override protected def use_brace(config: Config) = false
+    override protected def use_parenthesis(config: Config) = false
+    override protected def use_bracket(config: Config) = false
+
     override protected def end_Result(config: Config): ParseResult[LogicalLines] =
       ParseResult.error("Unpredictable end in a single quote string.", "シングルクオートの文字列中で最後になりました。", location)
 
