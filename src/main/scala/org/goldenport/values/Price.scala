@@ -6,8 +6,8 @@ import spire.math.Rational
 
 /*
  * @since   Apr. 12, 2018
- *  version Apr. 22, 2018
- * @version Jun. 29, 2018
+ *  version Jun. 29, 2018
+ * @version May. 18, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait Price {
@@ -64,6 +64,11 @@ case class PriceExcludingTax(
 
   def +(rhs: PriceExcludingTax): PriceExcludingTax =
     PriceExcludingTax(price + rhs.price, tax + rhs.tax)
+  def -(rhs: PriceExcludingTax): PriceExcludingTax =
+    PriceExcludingTax(price - rhs.price, tax - rhs.tax)
+
+  def +(rhs: BigDecimal): PriceExcludingTax = copy(price + rhs)
+  def -(rhs: BigDecimal): PriceExcludingTax = copy(price - rhs)
 }
 object PriceExcludingTax {
   val ZERO = PriceExcludingTax(BigDecimal(0), 0)
@@ -86,8 +91,11 @@ case class PriceIncludingTax(
   def priceExcludingTax = price - tax
   def toExcludingTax: PriceExcludingTax = PriceExcludingTax(price - tax, tax)
 
-  def +(rhs: PriceIncludingTax): PriceIncludingTax =
-    PriceIncludingTax(price + rhs.price, tax + rhs.tax)
+  def +(rhs: PriceIncludingTax): PriceIncludingTax = copy(price + rhs.price)
+  def -(rhs: PriceNoTax): PriceIncludingTax = copy(price - rhs.price)
+
+  def +(rhs: BigDecimal): PriceIncludingTax = copy(price + rhs)
+  def -(rhs: BigDecimal): PriceIncludingTax = copy(price - rhs)
 }
 object PriceIncludingTax {
   val ZERO = PriceIncludingTax(BigDecimal(0), 0)
@@ -114,6 +122,11 @@ case class PriceNoTax(price: BigDecimal) extends Price {
 
   def +(rhs: PriceNoTax): PriceNoTax =
     PriceNoTax(price + rhs.price)
+  def -(rhs: PriceNoTax): PriceNoTax =
+    PriceNoTax(price - rhs.price)
+
+  def +(rhs: BigDecimal): PriceNoTax = copy(price - rhs)
+  def -(rhs: BigDecimal): PriceNoTax = copy(price - rhs)
 }
 object PriceNoTax {
   val ZERO = PriceNoTax(BigDecimal(0))
