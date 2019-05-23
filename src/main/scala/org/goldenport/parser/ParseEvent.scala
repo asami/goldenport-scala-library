@@ -8,12 +8,108 @@ import org.goldenport.util.VectorUtils
  * @since   Aug. 21, 2018
  *  version Sep. 22, 2018
  *  version Oct.  9, 2018
- * @version Dec. 31, 2018
+ *  version Dec. 31, 2018
+ * @version Apr. 21, 2019
  * @author  ASAMI, Tomoharu
  */
 trait ParseEvent {
   def location: ParseLocation
   def getLogicalLineText: Option[String] = None
+}
+object ParseEvent {
+  import scalaz.concurrent.Task
+  import scalaz.stream._
+
+  case class SlidingConsoleState(
+    input: Vector[CharEvent]
+  ) {
+    private def _push(p: CharEvent) = SlidingConsoleState(input :+ p)
+
+    def in(p: CharEvent): (SlidingConsoleState, Vector[CharEvent]) = {
+      p.c match {
+        case '\n' => _push(p).flush
+        case '\r' => _push(p).flush
+        case _ => (_push(p), Vector.empty)
+      }
+    }
+
+    def flush: (SlidingConsoleState, Vector[CharEvent]) = {
+      val a = input.sliding(3).toVector
+      val init = a.init.flatMap(_.toList match {
+        case Nil => RAISE.noReachDefect
+        case x :: Nil => RAISE.noReachDefect
+        case x :: y :: Nil => RAISE.noReachDefect
+        case x :: y :: z :: _ => Vector(x.withNexts(y, z))
+      })
+      val last = a.last.toList match {
+        case Nil => RAISE.noReachDefect
+        case x :: Nil => Vector(x)
+        case x :: y :: Nil => Vector(x.withNext(y), y)
+        case x :: y :: z :: _ => Vector(x.withNexts(y, z), y.withNext(z), z)
+      }
+      (SlidingConsoleState.init, init ++ last)
+    }
+  }
+  object SlidingConsoleState {
+    val init = SlidingConsoleState(Vector.empty)
+  }
+
+  // case class SlidingInteractiveState(
+  //   next: Option[CharEvent] = None,
+  //   next2: Option[CharEvent] = None
+  // ) {
+  //   private def _push(p: CharEvent) = SlidingState(Some(p), next)
+
+  //   def in(p: CharEvent): (SlidingState, Vector[CharEvent]) = (next, next2) match {
+  //     case (Some(n), Some(n2)) => (_push(p), Vector(p.withNexts(n, n2)))
+  //     case (Some(n), None) => (_push(p), Vector(p.withNext(n)))
+  //     case (None, None) => (_push(p), Vector(p))
+  //     case _ => (_push(p), Vector(p))
+  //   }
+
+  //   def flush: Vector[CharEvent] = Vector.empty
+
+  //   def flush2: Vector[CharEvent] = (next, next2) match {
+  //     case (Some(n), Some(n2)) => Vector(n.withNext(n2), n2)
+  //     case (Some(n), None) => Vector(n)
+  //     case (None, None) => Vector.empty
+  //     case _ => Vector.empty
+  //   }
+  // }
+
+  def stdInParseEvents: Process[Task, ParseEvent] =
+    Process.repeatEval(Task.delay {
+      Option(System.in.read()).
+        map(CharEvent.apply).
+        getOrElse(EndEvent)
+    })
+
+  def slidingConsole: Process1[ParseEvent, ParseEvent] = slidingConsole(SlidingConsoleState.init)
+
+  def slidingConsole(state: SlidingConsoleState): Process1[ParseEvent, ParseEvent] = Process.receive1 { evt: ParseEvent =>
+    evt match {
+      case StartEvent => Process.emit(StartEvent) fby slidingConsole(state)
+      case EndEvent =>
+        val (s, x) = state.flush
+        Process.emitAll(x :+ EndEvent) fby slidingConsole(s)
+      case m: CharEvent =>
+        val (s, x) = state.in(m)
+        Process.emitAll(x) fby slidingConsole(s)
+    }
+  }
+
+
+  // def slidingInteractive: Process1[ParseEvent, ParseEvent] = slidingInteractive(SlidingInteractiveState())
+
+  // def slidingInteractive(state: SlidingState): Process1[ParseEvent, ParseEvent] = Process.receive1 { evt: ParseEvent =>
+  //   evt match {
+  //     case StartEvent => Process.emit(StartEvent) fby slidingInteractive(state)
+  //     case EndEvent => Process.emitAll(state.flush :+ EndEvent)
+  //     case m: CharEvent =>
+  //       val (s, x) = state.in(m)
+  //       Process.emitAll(x) fby slidingInteractive(s)
+  //   }
+  // }
 }
 
 case class CharEvent(
@@ -29,6 +125,15 @@ case class CharEvent(
     case 3 => p(0) == c && Some(p(1)) == next && Some(p(2)) == next2
     case _ => RAISE.noReachDefect
   }
+
+  def withNext(n: CharEvent) = copy(
+    next = Some(n.c)
+  )
+
+  def withNexts(n: CharEvent, n2: CharEvent) = copy(
+    next = Some(n.c),
+    next2 = Some(n2.c)
+  )
 }
 object CharEvent {
   def apply(c: Char): CharEvent = CharEvent(c, None, None, ParseLocation.empty)

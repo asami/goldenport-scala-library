@@ -5,8 +5,9 @@ import org.goldenport.util.VectorUtils
 
 /*
  * @since   Dec.  8, 2018
- *  version Dec. 28, 2018
- * @version Feb. 27, 2019
+ *  version Feb. 27, 2019
+ *  version Apr. 26, 2019
+ * @version May.  2, 2019
  * @author  ASAMI, Tomoharu
  */
 case class NonEmptyVector[T](head: T, tail: Vector[T]) {
@@ -28,6 +29,7 @@ case class NonEmptyVector[T](head: T, tail: Vector[T]) {
   def last = tail.lastOption getOrElse head
 
   def :+(p: T): NonEmptyVector[T] = copy(tail = tail :+ p)
+  def +:(p: T): NonEmptyVector[T] = copy(head = p, tail = head +: tail)
   def ++(ps: NonEmptyVector[T]) = copy(tail = (tail :+ ps.head) ++ ps.tail)
   def ++(ps: Seq[T]) = copy(tail = (tail :+ ps.head) ++ ps.tail)
 
@@ -61,14 +63,19 @@ case class NonEmptyVector[T](head: T, tail: Vector[T]) {
 }
 
 object NonEmptyVector {
-//  implicit def NonEmptyVectorFunctor[T]: Functor[NonEmptyVector[T]] = ???
-  implicit def NonEmptyVectorSemigroup[T]: Semigroup[NonEmptyVector[T]] = ???
+  implicit def NonEmptyVectorSemigroup[T]: Semigroup[NonEmptyVector[T]] = new Semigroup[NonEmptyVector[T]] {
+    def append(lhs: NonEmptyVector[T], rhs: => NonEmptyVector[T]) = lhs ++ rhs
+  }
 
-  def apply[T](p: Seq[T]): NonEmptyVector[T] = apply(p.toVector)
-  def apply[T](p: Vector[T]): NonEmptyVector[T] = NonEmptyVector(p.head, p.tail)
+  def apply[T](p: Seq[T]): NonEmptyVector[T] = NonEmptyVector(p.head, p.tail.toVector)
+  // def apply[T](p: Vector[T]): NonEmptyVector[T] = NonEmptyVector(p.head, p.tail)
   def apply[T](p: T, ps: T*): NonEmptyVector[T] = NonEmptyVector(p, ps.toVector)
 
-  def createOption[T](p: Seq[T]): Option[NonEmptyVector[T]] = createOption(p.toVector)
-  def createOption[T](p: Vector[T]): Option[NonEmptyVector[T]] =
-    p.headOption.map(x => NonEmptyVector(x, p.tail))
+  def createOption[T](p: Seq[T]): Option[NonEmptyVector[T]] =
+    p.headOption.map(x => NonEmptyVector(x, p.tail.toVector))
+  // def createOption[T](p: Vector[T]): Option[NonEmptyVector[T]] =
+  //   p.headOption.map(x => NonEmptyVector(x, p.tail))
+
+  def createOption[T](p: Option[Seq[T]]): Option[NonEmptyVector[T]] =
+    p.flatMap(seq => seq.headOption.map(x => NonEmptyVector(x, seq.tail.toVector)))
 }

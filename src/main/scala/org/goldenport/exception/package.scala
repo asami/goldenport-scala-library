@@ -8,8 +8,8 @@ package org.goldenport
  *  version Jan. 12, 2018
  *  version Aug. 28, 2018
  *  version Dec. 31, 2018
-name:  *  version Mar. 24, 2019
-name:  * @version Apr.  7, 2019
+ *  version Mar. 24, 2019
+ * @version Apr.  7, 2019
  * @author  ASAMI, Tomoharu
  */
 package object exception {

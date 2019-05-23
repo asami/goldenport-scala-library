@@ -4,11 +4,15 @@ package org.goldenport.io
  * @since   Sep. 24, 2012
  *  version Sep. 25, 2012
  *  version Sep.  2, 2017
- * @version Sep. 18, 2018
+ *  version Sep. 18, 2018
+ * @version Apr. 12, 2019
  * @author  ASAMI, Tomoharu
  */
 case class MimeType(name: String) {
   def isText: Boolean = MimeType.isText(this)
+  def isXml: Boolean = MimeType.isXml(name)
+  def isHtml: Boolean = MimeType.isHtml(name)
+  def isJson: Boolean = MimeType.isJson(name)
 }
 
 object MimeType {
@@ -101,4 +105,7 @@ object MimeType {
 
   def isText(p: MimeType): Boolean = isText(p.name)
   def isText(p: String): Boolean = p.startsWith("text/") || textMimeTypes.exists(_.name == p)
+  def isXml(p: String): Boolean = p.endsWith("xml")
+  def isHtml(p: String): Boolean = p == mimetype.application_xhtml_xml || p.endsWith("html")
+  def isJson(p: String): Boolean = p == mimetype.application_json
 }

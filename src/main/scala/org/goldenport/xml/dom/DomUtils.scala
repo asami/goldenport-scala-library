@@ -23,7 +23,8 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version Apr. 18, 2016
  *  version May. 13, 2016
  *  version Jun. 14, 2016
- * @version Oct. 12, 2017
+ *  version Oct. 12, 2017
+ * @version May.  3, 2019
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -41,6 +42,22 @@ object DomUtils {
 //   conf.setFeature("http://cyberneko.org/html/features/scanner/notify-builtin-refs", true)
     conf.setProperty("http://cyberneko.org/html/properties/names/elems", "match")
     conf.setProperty("http://cyberneko.org/html/properties/names/attrs", "no-change")
+    conf.setProperty("http://cyberneko.org/html/properties/default-encoding", "UTF-8")
+    val parser = new org.apache.xerces.parsers.DOMParser(conf)
+    parser.parse(new InputSource(new StringReader(s)))
+    parser.getDocument()
+  }
+
+  def parseHtmlLowerCase(s: String): Document = {
+    // http://nekohtml.sourceforge.net/faq.html
+    // http://qiita.com/ak_nishiumi/items/56ce3c78868acfdcfb46
+    val conf = new org.cyberneko.html.HTMLConfiguration()
+//   conf.setFeature("http://cyberneko.org/html/features/balance-tags", false)
+//   conf.setFeature("http://cyberneko.org/html/features/balance-tags/document-fragment", true) true causes a illegal behavior
+//   conf.setFeature("http://cyberneko.org/html/features/balance-tags/ignore-outside-content", true)
+//   conf.setFeature("http://cyberneko.org/html/features/scanner/notify-builtin-refs", true)
+    conf.setProperty("http://cyberneko.org/html/properties/names/elems", "lower")
+    conf.setProperty("http://cyberneko.org/html/properties/names/attrs", "lower")
     conf.setProperty("http://cyberneko.org/html/properties/default-encoding", "UTF-8")
     val parser = new org.apache.xerces.parsers.DOMParser(conf)
     parser.parse(new InputSource(new StringReader(s)))

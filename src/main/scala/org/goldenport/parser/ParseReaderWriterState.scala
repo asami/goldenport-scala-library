@@ -11,7 +11,8 @@ import scalaz.stream._
  *  version Oct. 10, 2018
  *  version Nov. 12, 2018
  *  version Jan.  5, 2019
- * @version Feb. 16, 2019
+ *  version Feb. 16, 2019
+ * @version May.  6, 2019
  * @author  ASAMI, Tomoharu
  */
 trait ParseReaderWriterState[C <: ParseConfig, AST] {

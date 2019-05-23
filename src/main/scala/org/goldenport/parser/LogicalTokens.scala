@@ -9,7 +9,8 @@ import org.goldenport.exception.RAISE
  *  version Oct. 30, 2018
  *  version Jan.  3, 2019
  *  version Feb. 16, 2019
- * @version Mar. 10, 2019
+ *  version Mar. 10, 2019
+ * @version May.  6, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
@@ -180,7 +181,8 @@ object LogicalTokens {
     protected final def handle_tokenizer(config: Config, evt: CharEvent): Option[Transition] =
       if (use_Tokenizer)
         config.handle(this, evt).map(x =>
-          (ParseMessageSequence.empty, end_Result(config), x)
+          // (ParseMessageSequence.empty, end_Result(config), x)
+          (ParseMessageSequence.empty, ParseResult.empty, x)
         )
       else
         None
@@ -540,6 +542,12 @@ object LogicalTokens {
     location: Option[ParseLocation],
     prefix: Option[String]
   ) extends LogicalTokensParseState {
+    override protected def use_Tokenizer = false
+    override protected def use_Delimiter = false
+    override protected def use_Single_Quote = false
+    override protected def use_Bracket = false
+    override protected def use_Dollar = false
+
     override def addChildState(config: Config, p: Vector[Char]): LogicalTokensParseState =
       copy(text = text ++ p)
 
@@ -585,6 +593,12 @@ object LogicalTokens {
     location: Option[ParseLocation],
     prefix: Option[String]
   ) extends LogicalTokensParseState {
+    override protected def use_Tokenizer = false
+    override protected def use_Delimiter = false
+    override protected def use_Double_Quote = false
+    override protected def use_Bracket = false
+    override protected def use_Dollar = false
+
     override def addChildState(config: Config, p: Vector[Char]): LogicalTokensParseState =
       copy(text = text ++ p)
 
@@ -611,6 +625,12 @@ object LogicalTokens {
     prefix: Option[String],
     inClosing: Boolean = false
   ) extends LogicalTokensParseState {
+    override protected def use_Tokenizer = false
+    override protected def use_Delimiter = false
+    override protected def use_Single_Quote = false
+    override protected def use_Bracket = false
+    override protected def use_Dollar = false
+
     override protected def line_End_State(config: Config, evt: LineEndEvent): LogicalTokensParseState =
       parent.addChildState(config, RawStringToken(text.mkString, location, prefix))
 

@@ -7,7 +7,8 @@ import org.goldenport.parser.ParseLocation
  *  version Aug. 30, 2017
  *  version Oct. 29, 2017
  *  version Jan. 12, 2018
- * @version Feb.  2, 2019
+Some(location)) *  version Feb.  2, 2019
+Some(location)) * @version Apr. 14, 2019
  * @author  ASAMI, Tomoharu
  */
 abstract class GoldenportException(
@@ -41,6 +42,9 @@ class SyntaxErrorFaultException(
   location: Option[ParseLocation] = None
 ) extends GoldenportException(message)
 object SyntaxErrorFaultException {
+  def apply(message: String): SyntaxErrorFaultException =
+    new SyntaxErrorFaultException(message, null, None)
+
   def apply(message: String, location: ParseLocation): SyntaxErrorFaultException =
     new SyntaxErrorFaultException(message, null, Some(location))
 }

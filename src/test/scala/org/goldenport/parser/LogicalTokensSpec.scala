@@ -13,7 +13,8 @@ import org.goldenport.util.DateTimeUtils
  *  version Sep. 22, 2018
  *  version Jan.  1, 2019
  *  version Feb.  9, 2019
- * @version Mar. 10, 2019
+ *  version Mar. 10, 2019
+ * @version Apr. 13, 2019
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -144,6 +145,20 @@ xyz'"""
           JsonParser.JsonToken(s, ParseLocation.start)
         ))
       }
+      "number value" in {
+        val s = """{"a":1}"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          JsonParser.JsonToken(s, ParseLocation.start)
+        ))
+      }
+      // "prefix" in {
+      //   val s = """json{"a":1}"""
+      //   val r = LogicalTokens.parse(s)
+      //   r should be(LogicalTokens(
+      //     JsonParser.JsonToken(s, ParseLocation.start)
+      //   ))
+      // }
     }
     "xml" which {
       "empty tag" in {

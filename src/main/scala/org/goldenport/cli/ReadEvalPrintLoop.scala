@@ -10,8 +10,8 @@ import org.goldenport.parser.LogicalLines.{InitState, LogicalLinesParseState}
 
 /*
  * @since   Oct.  4, 2018
- *  version Oct. 10, 2018
- * @version Feb. 14, 2019
+ *  version Feb. 14, 2019
+ * @version Apr. 21, 2019
  * @author  ASAMI, Tomoharu
  */
 class ReadEvalPrintLoop(
@@ -21,6 +21,7 @@ class ReadEvalPrintLoop(
 ) {
   import ReadEvalPrintLoop._
 
+  // TODO migrate to ParseEvent
   def stdInParseEvents: Process[Task, ParseEvent] =
     Process.repeatEval(Task.delay {
       Option(System.in.read()).
@@ -30,6 +31,7 @@ class ReadEvalPrintLoop(
 
   def execute() = {
     (Process.emit(StartEvent) fby stdInParseEvents).
+      pipe(ParseEvent.slidingConsole).
       pipe(_logical_line(InitState)).
       pipe(_fsm(init)).
       through(io.stdOut).run.run

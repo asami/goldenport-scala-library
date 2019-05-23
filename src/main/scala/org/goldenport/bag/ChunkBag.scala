@@ -23,7 +23,8 @@ import com.asamioffice.goldenport.io.UIO
  *  version Sep. 22, 2016
  *  version Jul. 24, 2017
  *  version Aug. 30, 2017
- * @version Oct.  5, 2018
+ *  version Oct.  5, 2018
+ * @version Apr. 21, 2019
  * @author  ASAMI, Tomoharu
  */
 trait ChunkBag extends Bag {
@@ -271,8 +272,16 @@ trait ChunkBag extends Bag {
     toInputResource.byteArray
   }
 
+  def toTextFirstPage: String = {
+    toText // TODO
+  }
+
   def toText: String = {
     toInputResource.string(Codec.UTF8)
+  }
+
+  def toText(encoding: String): String = {
+    toInputResource.string(encoding)
   }
 
   def toTextTry: Try[String] = {

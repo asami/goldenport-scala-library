@@ -6,6 +6,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
+import java.util.Locale
 import java.net.{URL, URI}
 import com.typesafe.config._
 import org.goldenport.Strings
@@ -24,7 +25,8 @@ import org.goldenport.util.AnyUtils
  *  version Dec. 14, 2017
  *  version Oct. 21, 2018
  *  version Nov. 19, 2018
- * @version Mar. 24, 2019
+ *  version Mar. 24, 2019
+ * @version Apr. 28, 2019
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -63,6 +65,8 @@ object HoconUtils {
 
   def takeUri(config: Config, key: String): URI =
     new URI(config.getString(key))
+
+  def takeLocale(config: Config, key: String): Locale = new Locale(config.getString(key))
 
   def takeI18NString(config: Config, key: String): I18NString =
     I18NString.parse(config.getString(key))
@@ -148,6 +152,12 @@ object HoconUtils {
 
   def getUriList(config: Config, key: String): Option[List[URI]] =
     getStringList(config, key).map(_.map(new URI(_)))
+
+  def getLocale(config: Config, key: String): Option[Locale] =
+    if (config.hasPath(key))
+      Some(takeLocale(config, key))
+    else
+      None
 
   def getI18NString(config: Config, key: String): Option[I18NString] =
     if (config.hasPath(key))

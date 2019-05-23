@@ -13,7 +13,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Jul. 11, 2017
  *  version Aug. 29, 2017
  *  version Sep.  1, 2017
- * @version Oct. 15, 2018
+ *  version Oct. 15, 2018
+ * @version Apr. 30, 2019
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -156,6 +157,7 @@ object I18NString {
   val empty = I18NString("")
 
   def apply(en: String, ja: String): I18NString = I18NString(en, ja, Map.empty, Vector.empty)
+  def apply(en: String, params: Seq[Any]): I18NString = I18NString(en, en, Map.empty, params.toVector)
   def apply(en: String, ja: String, params: Seq[Any]): I18NString = I18NString(en, ja, Map.empty, params.toVector)
   def apply(en: String): I18NString = I18NString(en, en, Map.empty, Vector.empty)
   def apply(ps: Seq[(Locale, String)]): I18NString = {

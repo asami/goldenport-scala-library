@@ -7,16 +7,29 @@ import org.goldenport.util.VectorUtils
 /*
  * @since   Dec.  8, 2018
  *  version Dec. 30, 2018
- * @version Mar. 24, 2019
+ *  version Mar. 24, 2019
+ * @version May. 10, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait VectorMap[K, +V] extends Map[K, V] {
+  override def +[W >: V](kv: (K, W)): VectorMap[K, W]
+  override def -(key: K): VectorMap[K, V]
   override def toVector = vector
   def vector: Vector[(K, V)]
-  lazy val list: List[(K, V)] = vector.toList
+  override def toList: List[(K, V)] = vector.toList
+  lazy val list: List[(K, V)] = toList
+  def toValues: Vector[V] = vector.map(_._2)
+  lazy val valueVector: Vector[V] = toValues
+  def toValueList: List[V] = vector.map(_._2).toList
+  lazy val valueList: List[V] = toValueList
   def update[W >: V](k: K, v: W): VectorMap[K, W] = update(k -> v)
   def update[W >: V](p: (K, W)): VectorMap[K, W]
   def update[W >: V](p: Map[K, W]): VectorMap[K, W]
+  def append[W >: V](k: K, v: W): VectorMap[K, W] = append(k -> v)
+  def append[W >: V](p: (K, W)): VectorMap[K, W] = remove(p._1).update(p)
+  def prepend[W >: V](k: K, v: W): VectorMap[K, W] = prepend(k -> v)
+  def prepend[W >: V](p: (K, W)): VectorMap[K, W] = RAISE.notImplementedYetDefect
+  def remove(k: K): VectorMap[K, V]
 
   protected def update_vector[W >: V](ps: Vector[(K, W)], x: (K, W)): Vector[(K, W)] =
     VectorUtils.updateMap(ps, x)
@@ -47,6 +60,7 @@ case class PlainVectorMap[K, +V](
   def update[W >: V](p: Map[K, W]): VectorMap[K, W] = PlainVectorMap(
     update_vector(vector, p)
   )
+  def remove(k: K): VectorMap[K, V] = this.-(k)
 }
 object PlainVectorMap {
   private val _empty = PlainVectorMap(Vector.empty)
@@ -78,6 +92,7 @@ case class IndexedVectorMap[K, +V](
     update_vector(vector, p),
     map ++ p
   )
+  def remove(k: K): VectorMap[K, V] = this.-(k)
 }
 object IndexedVectorMap {
   private val _empty = IndexedVectorMap(Vector.empty, Map.empty)

@@ -8,7 +8,8 @@ import org.scalatest._
  * @since   Aug. 24, 2018
  *  version Aug. 28, 2018
  *  version Oct. 25, 2018
- * @version Feb. 13, 2019
+ *  version Feb. 13, 2019
+ * @version Apr. 13, 2019
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -96,6 +97,11 @@ c d)"""
   "a":"b",
   "c":"d"
 }"""))
+      }
+      "number value" in {
+        val s = """{"a":1}"""
+        val r = LogicalLines.parse(s)
+        r should be(LogicalLines.start("""{"a":1}"""))
       }
     }
     "xml" which {
