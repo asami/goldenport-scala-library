@@ -31,7 +31,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Aug. 31, 2018
  *  version Oct. 10, 2018
  *  version Feb. 14, 2019
- * @version Mar.  5, 2019
+ *  version Mar.  5, 2019
+ * @version May. 19, 2019
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -522,6 +523,38 @@ object StringUtils {
   } catch {
     case NonFatal(e) => Right(s)
   }
+
+  def intOption(s: String): Option[Int] =
+    if (s.isEmpty) {
+      None
+    } else {
+      val c = s(0)
+      if (c == '+' || c == '-' || ('0' <= c && c <= '9')) {
+        try {
+          Some(s.toInt)
+        } catch {
+          case NonFatal(e) => None
+        }
+      } else {
+        None
+      }
+    }
+
+  def longOption(s: String): Option[Long] =
+    if (s.isEmpty) {
+      None
+    } else {
+      val c = s(0)
+      if (c == '+' || c == '-' || ('0' <= c && c <= '9')) {
+        try {
+          Some(s.toLong)
+        } catch {
+          case NonFatal(e) => None
+        }
+      } else {
+        None
+      }
+    }
 
   /*
    * Display

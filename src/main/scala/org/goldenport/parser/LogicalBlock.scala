@@ -7,7 +7,8 @@ import org.goldenport.i18n.I18NElement
  * @since   Sep. 22, 2018
  *  version Oct. 27, 2018
  *  version Jan. 20, 2019
- * @version Feb.  9, 2019
+ *  version Feb.  9, 2019
+ * @version May. 19, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalBlock {
@@ -64,6 +65,8 @@ case class LogicalSection(
   def isEmpty = false
 
   def lines: LogicalLines = blocks.lines
+
+  def +(rhs: LogicalSection): LogicalSection = copy(blocks = blocks + rhs.blocks)
 
   def :+(rhs: LogicalBlock): LogicalSection = copy(blocks = blocks :+ rhs)
   def :+(rhs: LogicalBlocks): LogicalSection = copy(blocks = blocks + rhs)

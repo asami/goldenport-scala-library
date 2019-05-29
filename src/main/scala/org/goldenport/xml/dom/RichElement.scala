@@ -5,7 +5,8 @@ import org.w3c.dom._
 
 /*
  * @since   Apr. 11, 2016
- * @version Oct. 12, 2017
+ *  version Oct. 12, 2017
+ * @version May. 27, 2019
  * @author  ASAMI, Tomoharu
  */
 case class RichElement(element: Element) extends AnyVal {
@@ -21,6 +22,20 @@ case class RichElement(element: Element) extends AnyVal {
     } else
       element
   }
+
+  def getElementByLocalNameIC(localname: String): Option[Element] = DomUtils.getElementByLocalNameIC(element, localname)
+
+  def getElementByLocalNameIC(localname: String, localname2: String, localnames: String*): Option[Element] = DomUtils.getElementByLocalNameIC(element, localname, localname2, localnames:_*)
+
+  def elements: List[Element] = DomUtils.elements(element)
+
+  def elementsByLocalNameIC(localname: String): List[Element] = DomUtils.elementsByLocalNameIC(element, localname)
+
+  def elementsByLocalNameIC(localname: String, localname2: String, localnames: String*): List[Element] = DomUtils.elementsByLocalNameIC(element, localname, localname2, localnames:_*)
+
+  def elementsVectorByLocalNameIC(localname: String): Vector[Element] = DomUtils.elementsVectorByLocalNameIC(element, localname)
+
+  def elementsVectorByLocalNameIC(localname: String, localname2: String, localnames: String*): Vector[Element] = DomUtils.elementsVectorByLocalNameIC(element, localname, localname2, localnames:_*)
 }
 
 object RichElement {

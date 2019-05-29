@@ -11,7 +11,8 @@ import org.goldenport.log.LogLevel
 /*
  * @since   Oct.  4, 2018
  *  version Feb.  8, 2019
- * @version Mar. 24, 2019
+ *  version Mar. 24, 2019
+ * @version May. 19, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Config(
@@ -19,6 +20,9 @@ case class Config(
   newline: String,
   locale: Locale,
   timezone: TimeZone,
+  homeDirectory: Option[File],
+  workDirectory: Option[File],
+  projectDirectory: Option[File],
   logLevel: LogLevel,
   properties: RichConfig
 ) {
@@ -97,11 +101,17 @@ object Config {
     val newline = System.lineSeparator()
     val locale = Locale.getDefault()
     val timezone = TimeZone.getDefault()
+    val homedir = Option(System.getProperty("user.home")).map(x => new File(x))
+    val workdir = Option(System.getProperty("user.dir")).map(x => new File(x))
+    val projectdir = None // TODO
     Config(
       charset,
       newline,
       locale,
       timezone,
+      homedir,
+      workdir,
+      projectdir,
       LogLevel.Warn,
       RichConfig(hocon)
     )

@@ -24,7 +24,7 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version May. 13, 2016
  *  version Jun. 14, 2016
  *  version Oct. 12, 2017
- * @version May.  3, 2019
+ * @version May. 27, 2019
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -455,6 +455,26 @@ object DomUtils {
   def elementsSteream(node: Node): Stream[Element] =
     elementsIndexedSeq(node).toStream
 
+  def elementsByLocalNameIC(node: Node, localname: String): List[Element] =
+    elementsVectorByLocalNameIC(node, localname).toList
+
+  def elementsByLocalNameIC(node: Node, localname: String, localname2: String, localnames: String*): List[Element] =
+    elementsVectorByLocalNameIC(node, localname, localname2, localnames: _*).toList
+
+  def elementsVectorByLocalNameIC(node: Node, localname: String): Vector[Element] =
+    childrenIndexedSeq(node).collect {
+      case m: Element => m
+    }.filter(x => localname.equalsIgnoreCase(x.getLocalName)).toVector
+
+  def elementsVectorByLocalNameIC(node: Node, localname: String, localname2: String, localnames: String*): Vector[Element] = {
+    val names = (localnames.toVector :+ localname :+ localname2).map(_.toLowerCase)
+    childrenIndexedSeq(node).collect {
+      case m: Element => m
+    }.filter(x =>
+      names.contains(Option(x.getLocalName).map(_.toLowerCase).getOrElse(""))
+    ).toVector
+  }
+
   def copyNode(doc: Document)(src: Node): Node = src match {
     case m: CDATASection => copyCDATASection(doc)(m)
     case m: Comment => copyComment(doc)(m)
@@ -550,6 +570,10 @@ object DomUtils {
         xs.toStream.flatMap(findElementBreadth(p)).headOption
     }
   }
+
+  def getElementByLocalNameIC(node: Node, localname: String): Option[Element] = ???
+
+  def getElementByLocalNameIC(node: Node, localname: String, localname2: String, localnames: String*): Option[Element] = ???
 
   def isMatch(p: Element => Boolean)(node: Node): Boolean =
     node match {
