@@ -10,7 +10,8 @@ import org.goldenport.log.Loggable
  *  version Oct. 27, 2018
  *  version Dec. 31, 2018
  *  version Jan. 26, 2019
- * @version Feb. 24, 2019
+ *  version Feb. 24, 2019
+ * @version Jun.  9, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -360,7 +361,8 @@ object LogicalBlocks {
         } else {
           RAISE.noReachDefect
         }
-      case _ => RAISE.noReachDefect
+      case m: RootState => m.addChildState(config, _close :+ s)
+      case m => RAISE.noReachDefect(s"LogicalBlocks#up $m")
     }
 
     override def line_State(config: Config, evt: LogicalLineEvent) =

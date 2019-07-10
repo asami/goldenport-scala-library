@@ -11,7 +11,8 @@ import org.goldenport.xml.XmlUtils.{makeString, parseNodeSeq}
  *  version Sep. 11, 2017
  *  version Oct. 30, 2017
  *  version Nov.  1, 2017
- * @version Jan.  5, 2018
+ *  version Jan.  5, 2018
+ * @version Jul.  6, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait I18NElement {
@@ -19,6 +20,7 @@ sealed trait I18NElement {
   def get(locale: Locale): Option[NodeSeq]
   def toI18NString: I18NString
   def toJsonString: String
+  def key: String = toI18NString.key
 }
 
 object I18NElement {
@@ -42,7 +44,7 @@ case class NodeSeqI18NElement(v: Map[Locale, NodeSeq]) extends I18NElement {
   lazy val ja: NodeSeq = v.get(Locale.JAPANESE) getOrElse en
   def apply(locale: Locale): NodeSeq = v.get(locale) getOrElse en
   def get(locale: Locale): Option[NodeSeq] = v.get(locale) // TODO country/variation. See I18NString.
-  def toI18NString: I18NString = I18NString(v.mapValues(x => XmlPrinter.html(x)).toVector)
+  lazy val toI18NString: I18NString = I18NString(v.mapValues(x => XmlPrinter.html(x)).toVector)
   def toJsonString = toI18NString.toJsonString
 }
 object NodeSeqI18NElement {

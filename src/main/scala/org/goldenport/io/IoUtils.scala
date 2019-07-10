@@ -10,7 +10,8 @@ import com.asamioffice.goldenport.io.{UIO, UURL}
  * @since   Oct.  9, 2017
  *  version Sep. 18, 2018
  *  version Oct.  8, 2018
- * @version May. 19, 2019
+ *  version May. 19, 2019
+ * @version Jun. 24, 2019
  * @author  ASAMI, Tomoharu
  */
 object IoUtils {
@@ -47,4 +48,7 @@ object IoUtils {
     } {
       UIO.stream2stream(in, out)
     }
+
+  def toInputStream(p: String): InputStream = new StringInputStream(p)
+  def toInputStream(p: String, charset: Charset): InputStream = new StringInputStream(p, charset)
 }

@@ -15,7 +15,8 @@ import LogicalTokens.Config
  *  version Oct. 26, 2018
  *  version Jan.  2, 2019
  *  version Feb. 25, 2019
- * @version Mar.  9, 2019
+ *  version Mar.  9, 2019
+ * @version Jun. 30, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -383,6 +384,17 @@ case class BracketToken(
 object BracketToken {
   def apply(text: String, location: ParseLocation): BracketToken =
     BracketToken(text, Some(location))
+}
+
+case class DoubleBracketToken(
+  text: String,
+  location: Option[ParseLocation],
+  prefix: Option[String] = None
+) extends LiteralToken {
+}
+object DoubleBracketToken {
+  def apply(text: String, location: ParseLocation): DoubleBracketToken =
+    DoubleBracketToken(text, Some(location))
 }
 
 case class RawBracketToken(

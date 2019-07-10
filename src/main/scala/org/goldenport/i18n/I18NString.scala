@@ -13,7 +13,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Jul. 11, 2017
  *  version Aug. 29, 2017
  *  version Sep.  1, 2017
- * @version Apr. 30, 2019
+ *  version Apr. 30, 2019
+ * @version Jun.  8, 2019
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -206,5 +207,11 @@ object I18NString {
     case Nil => empty
     case x :: Nil => x
     case x :: xs => xs./:(x)(_ concat _)
+  }
+
+  def concatOption(ps: Seq[I18NString]): Option[I18NString] = ps.toList match {
+    case Nil => None
+    case x :: Nil => Some(x)
+    case x :: xs => Some(xs./:(x)(_ concat _))
   }
 }

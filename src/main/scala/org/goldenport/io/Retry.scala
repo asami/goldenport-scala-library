@@ -11,10 +11,12 @@ import scala.concurrent.duration._
 import java.util.concurrent.ExecutorService
 import org.goldenport.RAISE
 import org.goldenport.i18n.I18NString
+import org.goldenport.collection.NonEmptyVector
+import org.goldenport.incident._
 
 /*
  * @since   Dec. 10, 2014
- * @version Jun.  2, 2019
+ * @version Jun. 10, 2019
  * @author  ASAMI, Tomoharu
  */
 class Retry[T](
@@ -29,6 +31,13 @@ class Retry[T](
   import Retry._
 
   val log = mutable.ArrayBuffer[Retry.Log]()
+
+  def incident: RetrySequenceIncident = {
+    val xs = log.toIndexedSeq.zipWithIndex.map {
+      case (x, i) => RetryIncident(x.start, x.end, x.reason.map(_.message), i, x.outcome)
+    }
+    RetrySequenceIncident(NonEmptyVector(xs))
+  }
 
   def run: T = {
     _run match {
@@ -70,6 +79,7 @@ class Retry[T](
   private def _run: Outcome[T] = {
     @annotation.tailrec
     def go(count: Int, duration: Long): Outcome[T] = {
+      val start = System.currentTimeMillis
       val rr: Consequence[T] = try {
         val r: T = body()
         retryCondition(r) match {
@@ -86,30 +96,30 @@ class Retry[T](
       }
       rr match {
         case m: SuccessConsequence[T] =>
-          _log_success(m)
+          _log_success(start, m)
           SuccessOutcome(m.v)
         case m: ValueErrorConsequence[T] =>
-          _log_error(m)
+          _log_error(start, m)
           ValueErrorOutcome(m.v)
         case m: ValueFailureConsequence[T] =>
           if (maxTryCount > count) {
-            _log_retry(m)
+            _log_retry(start, m)
             Thread.sleep(duration)
             go(count + 1, (duration * backoffFactor).toLong)
           } else {
-            _log_error(m)
+            _log_error(start, m)
             ValueErrorOutcome(m.v)
           }
         case m: ExceptionErrorConsequence[T] =>
-          _log_error(m)
+          _log_error(start, m)
           ExceptionErrorOutcome(m.e)
         case m: ExceptionFailureConsequence[T] =>
           if (maxTryCount > count) {
-            _log_retry(m)
+            _log_retry(start, m)
             Thread.sleep(duration)
             go(count + 1, (duration * backoffFactor).toLong)
           } else {
-            _log_error(m)
+            _log_error(start, m)
             ExceptionErrorOutcome(m.e)
           }
       }
@@ -117,26 +127,26 @@ class Retry[T](
     go(1, initDuration.toMillis)
   }
 
-  private def _log_success(p: SuccessConsequence[T]): Unit =
-    log += Log(SuccessEventKind)
+  private def _log_success(start: Long, p: SuccessConsequence[T]): Unit =
+    log += Log(SuccessEventKind, start, p.v)
 
-  private def _log_error(p: ValueErrorConsequence[T]): Unit =
-    log += Log(ErrorEventKind, p.reason)
+  private def _log_error(start: Long, p: ValueErrorConsequence[T]): Unit =
+    log += Log(ErrorEventKind, start, p.reason)
 
-  private def _log_error(p: ValueFailureConsequence[T]): Unit =
-    log += Log(ErrorEventKind, p.reason)
+  private def _log_error(start: Long, p: ValueFailureConsequence[T]): Unit =
+    log += Log(ErrorEventKind, start, p.reason)
 
-  private def _log_error(p: ExceptionErrorConsequence[T]): Unit =
-    log += Log(ErrorEventKind, p.reason)
+  private def _log_error(start: Long, p: ExceptionErrorConsequence[T]): Unit =
+    log += Log(ErrorEventKind, start, p.reason, p.e)
 
-  private def _log_error(p: ExceptionFailureConsequence[T]): Unit =
-    log += Log(ErrorEventKind, p.reason)
+  private def _log_error(start: Long, p: ExceptionFailureConsequence[T]): Unit =
+    log += Log(ErrorEventKind, start, p.reason, p.e)
 
-  private def _log_retry(p: ValueFailureConsequence[T]): Unit =
-    log += Log(RetryEventKind, p.reason)
+  private def _log_retry(start: Long, p: ValueFailureConsequence[T]): Unit =
+    log += Log(RetryEventKind, start, p.reason)
 
-  private def _log_retry(p: ExceptionFailureConsequence[T]): Unit =
-    log += Log(RetryEventKind, p.reason)
+  private def _log_retry(start: Long, p: ExceptionFailureConsequence[T]): Unit =
+    log += Log(RetryEventKind, start, p.reason, p.e)
 }
 
 object Retry {
@@ -151,7 +161,14 @@ object Retry {
   }
   case class ErrorStrategy(reason: Reason) extends Strategy {
   }
+  object ErrorStrategy {
+    def apply(msg: String): ErrorStrategy = ErrorStrategy(Reason(msg))
+    def apply(e: Thread): ErrorStrategy = ErrorStrategy(s"${e}")
+  }
   case class RetryStrategy(reason: Reason) extends Strategy {
+  }
+  object RetryStrategy {
+    def apply(msg: String): RetryStrategy = RetryStrategy(Reason(msg))
   }
 
   sealed trait Consequence[T]
@@ -162,10 +179,13 @@ object Retry {
   case class ExceptionFailureConsequence[T](e: Throwable, reason: Reason) extends Consequence[T]
 
   sealed trait Outcome[T] {
+    def isSuccess: Boolean
   }
   case class SuccessOutcome[T](v: T) extends Outcome[T] {
+    def isSuccess: Boolean = true
   }
   sealed trait ErrorOutcome[T] extends Outcome[T] {
+    def isSuccess: Boolean = false
   }
   case class ValueErrorOutcome[T](v: T) extends ErrorOutcome[T] {
   }
@@ -181,16 +201,29 @@ object Retry {
   case object RetryEventKind extends EventKind {
   }
 
-  case class Log(kind: EventKind, reason: Option[Reason])
+  case class Log(
+    kind: EventKind,
+    start: Long,
+    end: Long,
+    reason: Option[Reason],
+    outcome: Outcome[_]
+  )
   object Log {
-    def apply(kind: EventKind): Log = Log(kind, None)
-    def apply(kind: EventKind, reason: Reason): Log = Log(kind, Some(reason))
+    def apply(kind: EventKind, start: Long, v: Any): Log = Log(kind, start, System.currentTimeMillis, None, _outcome(kind, v))
+    def apply(kind: EventKind, start: Long, reason: Reason, v: Any): Log = Log(kind, start, System.currentTimeMillis, Some(reason), _outcome(kind, v))
+    def apply(kind: EventKind, start: Long, reason: Reason, e: Throwable): Log = Log(kind, start, System.currentTimeMillis, Some(reason), Retry.ExceptionErrorOutcome(e))
+
+    private def _outcome(kind: EventKind, v: Any): Retry.Outcome[_] = kind match {
+      case SuccessEventKind => Retry.SuccessOutcome(v)
+      case ErrorEventKind => Retry.ValueErrorOutcome(v)
+      case RetryEventKind => Retry.ValueErrorOutcome(v)
+    }
   }
 
   def apply[T](body: => T): Retry[T] = create(body)
 
   def create[T](body: => T): Retry[T] = {
-    create(body, 3, 1.second, 2.0, _ => true, defaultRetryException, _ => Unit)
+    create(body, 3, 1.second, 2.0, _ => SuccessStrategy, defaultRetryException, _ => Unit)
   }
 
   def create[T](
@@ -198,7 +231,7 @@ object Retry {
     maxTryCount: Int,
     initDuration: FiniteDuration,
     backoffFactor: Double,
-    isRetry: T => Boolean
+    isRetry: T => Strategy
   ): Retry[T] = create(body, maxTryCount, initDuration, backoffFactor, isRetry, defaultRetryException, _ => Unit)
 
   def create[T](
@@ -206,26 +239,26 @@ object Retry {
     maxTryCount: Int,
     initDuration: FiniteDuration,
     backoffFactor: Double,
-    isRetry: T => Boolean,
-    isRetryException: Throwable => Boolean,
+    isRetry: T => Strategy,
+    isRetryException: Throwable => Strategy,
     onRetry: Int => Unit
   ): Retry[T] = {
-    new Retry(() => body, maxTryCount, initDuration, backoffFactor, _retry_condition(isRetry), _retry_exception_condition(isRetryException), onRetry)
+    new Retry(() => body, maxTryCount, initDuration, backoffFactor, isRetry, isRetryException, onRetry)
   }
 
-  private def _retry_condition[T](p: T => Boolean): T => Strategy = (x: T) => {
-    if (p(x))
-      SuccessStrategy
-    else
+  private def _retry_condition[T](isretryp: T => Boolean): T => Strategy = (x: T) => {
+    if (isretryp(x))
       RetryStrategy(Reason(s"Illegal value: $x"))
+    else
+      SuccessStrategy
   }
 
-  private def _retry_exception_condition(p: Throwable => Boolean): Throwable => Strategy =
+  private def _retry_exception_condition(isretryp: Throwable => Boolean): Throwable => Strategy =
     (x: Throwable) => {
-      if (p(x))
-        SuccessStrategy
+      if (isretryp(x))
+        RetryStrategy(s"Illegal exception: $x")
       else
-        RetryStrategy(Reason(s"Illegal exception: $x"))
+        ErrorStrategy(s"Illegal exception: $x")
     }
 
   def retry[T](body: => T): T = {
@@ -240,37 +273,32 @@ object Retry {
     isRetryException: Throwable => Boolean,
     onRetry: Int => Unit
   ): T = {
-    create(body, maxTryCount, initDuration, backoffFactor, (_: T) => true, isRetryException, onRetry).run
+    create(body, maxTryCount, initDuration, backoffFactor, (_: T) => SuccessStrategy, _retry_exception_condition(isRetryException), onRetry).run
   }
 
-  def defaultRetryException(e: Throwable): Boolean = {
+  def defaultRetryException(e: Throwable): Strategy = {
     e match {
       case x: java.io.FileNotFoundException => {
         val msg = x.getMessage
         if (msg.startsWith("http:") || msg.startsWith("https:")) {
-          //        log_skip(r, "サーバー上にファイル「%s」がないので「%s」をスキップしました。".format(msg, RecordUtils.formatSnapshot(r)))
-          false
+          ErrorStrategy(s"サーバー上にファイル「$msg」がないのでリトライせずエラーとしました。")
         } else {
-          //        log_skip(r, "ファイルアクセスエラー「%s」のため「%s」をスキップしました。".format(msg, RecordUtils.formatSnapshot(r)))
-          false
+          ErrorStrategy(s"ファイルアクセスエラー「$msg」のためリトライせずエラーとしました。")
         }
       }
       case x: java.net.UnknownHostException => {
-        //      log_skip(r, "サーバー「%s」が見つからないので「%s」をスキップしました。".format(x.getMessage, RecordUtils.formatSnapshot(r)))
-        false
+        ErrorStrategy("サーバー「${x.getMessage}」が見つからないのでリトライせずエラーとしました。")
       }
       case x: IllegalArgumentException => { // image format error in ImageStore
-                                            //      log_skip(r, "「%s」のため「%s」をスキップしました。".format(x.getMessage, RecordUtils.formatSnapshot(r)))
-        false
+        ErrorStrategy(s"「${x.getMessage}」のためリトライせずエラーとしました。")
       }
       case x: javax.imageio.IIOException => {
-        //      log_skip(r, "画像処理エラー「%s」のため「%s」をスキップしました。".format(x.getMessage, RecordUtils.formatSnapshot(r)))
-        false
+        ErrorStrategy(s"画像処理エラー「${x.getMessage}」のためリトライせずエラーとしました。")
       }
       case x if _is_fatal_sql_error(x) => {
-        //log_skip(r, "SQLで致命的なエラー「%s」が発生しました。このため「%s」をスキップしました。".format(x.getMessage, RecordUtils.formatSnapshot(r)))
-        false
+        ErrorStrategy(s"SQLで致命的なエラー「${x.getMessage}」が発生しました。このためリトライせずエラーとしました。")
       }
+      case x => RetryStrategy(s"Illegal exception: $x")
     }
   }
 

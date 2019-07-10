@@ -6,7 +6,7 @@ import org.goldenport.matrix._
 
 /*
  * @since   Feb. 10, 2019
- * @version Feb. 10, 2019
+ * @version Jun. 23, 2019
  * @author  ASAMI, Tomoharu
  */
 case class BreezeMatrix(matrix: Matrix[Double]) extends IMatrix[Double] {
@@ -15,6 +15,8 @@ case class BreezeMatrix(matrix: Matrix[Double]) extends IMatrix[Double] {
   def height: Int = ???
   def rowIterator: Iterator[Vector[Double]] = ???
   def columnIterator: Iterator[Vector[Double]] = ???
+
+  def appendRows(ps: IMatrix[Double]): BreezeMatrix = ???
 }
 
 object BreezeMatrix {

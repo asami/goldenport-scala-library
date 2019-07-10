@@ -10,7 +10,8 @@ import org.goldenport.exception.RAISE
  *  version Jan.  3, 2019
  *  version Feb. 16, 2019
  *  version Mar. 10, 2019
- * @version May.  6, 2019
+ *  version May.  6, 2019
+ * @version Jun. 30, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
@@ -692,6 +693,28 @@ object LogicalTokens {
       BracketState(p, Vector.empty, Some(evt.location.adjustPrefix(prefix)), prefix)
   }
 
+  case class DoubleBracketState(
+    parent: LogicalTokensParseState,
+    text: Vector[Char],
+    location: Option[ParseLocation],
+    prefix: Option[String]
+  ) extends LogicalTokensParseState {
+    override protected def close_Bracket_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+      if (evt.isMatch("]]"))
+        SkipState(parent.addChildState(config, DoubleBracketToken(text.mkString, location, prefix)))
+      else
+        copy(text = text :+ evt.c)
+
+    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+      copy(text = text :+ evt.c)
+  }
+  object DoubleBracketState {
+    def apply(p: LogicalTokensParseState, evt: CharEvent): DoubleBracketState =
+      DoubleBracketState(p, Vector.empty, Some(evt.location), None)
+    def apply(p: LogicalTokensParseState, evt: CharEvent, prefix: Option[String]): DoubleBracketState =
+      DoubleBracketState(p, Vector.empty, Some(evt.location), prefix)
+  }
+
   case class RawBracketState(
     parent: LogicalTokensParseState,
     text: Vector[Char],
@@ -909,6 +932,8 @@ object LogicalTokens {
       val newparent = copy(cs = Vector.empty)
       if (evt.isMatch("[[["))
         SkipState(SkipState(RawBracketState(newparent, evt, prefix)))
+      else if (evt.isMatch("[["))
+        SkipState(DoubleBracketState(newparent, evt, prefix))
       else
         BracketState(newparent, evt, prefix)
     }

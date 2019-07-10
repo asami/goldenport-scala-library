@@ -8,10 +8,12 @@ import org.goldenport.util.VectorUtils
  * @since   Dec.  8, 2018
  *  version Dec. 30, 2018
  *  version Mar. 24, 2019
- * @version May. 10, 2019
+ *  version May. 10, 2019
+ * @version Jul.  7, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait VectorMap[K, +V] extends Map[K, V] {
+  def ++[W >: V](p: VectorMap[K, W]): VectorMap[K, W]
   override def +[W >: V](kv: (K, W)): VectorMap[K, W]
   override def -(key: K): VectorMap[K, V]
   override def toVector = vector
@@ -50,6 +52,7 @@ sealed trait VectorMap[K, +V] extends Map[K, V] {
 case class PlainVectorMap[K, +V](
   vector: Vector[(K, V)]
 ) extends VectorMap[K, V] {
+  def ++[W >: V](p: VectorMap[K, W]): VectorMap[K, W] = PlainVectorMap(vector ++ p.vector)
   def +[W >: V](kv: (K, W)): VectorMap[K, W] =
     PlainVectorMap(VectorUtils.updateMap(vector, kv))
   def -(key: K): VectorMap[K, V] = PlainVectorMap(VectorUtils.removeMap(vector, key))
@@ -71,6 +74,10 @@ case class IndexedVectorMap[K, +V](
   vector: Vector[(K, V)],
   map: Map[K, V]
 ) extends VectorMap[K, V] {
+  def ++[W >: V](p: VectorMap[K, W]): VectorMap[K, W] = IndexedVectorMap(
+    vector ++ p.vector,
+    map ++ p.vector.toMap
+  )
   def +[W >: V](kv: (K, W)): VectorMap[K, W] =
     IndexedVectorMap(
       VectorUtils.updateMap(vector, kv),

@@ -24,7 +24,8 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version May. 13, 2016
  *  version Jun. 14, 2016
  *  version Oct. 12, 2017
- * @version May. 27, 2019
+ *  version May. 27, 2019
+ * @version Jun. 30, 2019
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -207,6 +208,28 @@ object DomUtils {
     result.getNode
   }
 
+  // class DomBuilder() extends org.xml.sax.ContentHandler {
+  //   def startDocument(): Unit = {}
+  //   def endDocument(): Unit = {}
+  //   def startElement(x$1: String,x$2: String,x$3: String,x$4: org.xml.sax.Attributes): Unit = {
+  //     println(x$1)
+  //     println(x$2)
+  //     println(x$3)
+  //     println(x$4)
+  //   }
+  //   def endElement(x$1: String,x$2: String,x$3: String): Unit = {}
+  //   def startPrefixMapping(x$1: String,x$2: String): Unit = {}
+  //   def endPrefixMapping(x$1: String): Unit = ???
+  //   def characters(x$1: Array[Char],x$2: Int,x$3: Int): Unit = {
+  //     println("characters")
+  //     println(new String(x$1, x$2, x$3))
+  //   }
+  //   def ignorableWhitespace(x$1: Array[Char],x$2: Int,x$3: Int): Unit = {}
+  //   def setDocumentLocator(x$1: org.xml.sax.Locator): Unit = {}
+  //   def skippedEntity(x$1: String): Unit = {}
+  //   def processingInstruction(x$1: String,x$2: String): Unit = {}
+  // }
+
   def transform(stylesheet: String, xml: String): Node = {
     val stylesource = new StreamSource(new StringReader(stylesheet))
     val transformer = TransformerFactory.newInstance().newTransformer(stylesource)
@@ -225,6 +248,7 @@ object DomUtils {
     result.getNode
   }
 
+  // Don't work when the stylesheet is a node.
   def transform(stylesheet: Node, node: Node): Node = {
     val stylesource = new DOMSource(stylesheet)
     val transformer = TransformerFactory.newInstance().newTransformer(stylesource)
@@ -571,9 +595,11 @@ object DomUtils {
     }
   }
 
-  def getElementByLocalNameIC(node: Node, localname: String): Option[Element] = ???
+  def getElementByLocalNameIC(node: Node, localname: String): Option[Element] =
+    elementsVectorByLocalNameIC(node, localname).headOption
 
-  def getElementByLocalNameIC(node: Node, localname: String, localname2: String, localnames: String*): Option[Element] = ???
+  def getElementByLocalNameIC(node: Node, localname: String, localname2: String, localnames: String*): Option[Element] =
+    elementsVectorByLocalNameIC(node, localname, localname2, localnames: _*).headOption
 
   def isMatch(p: Element => Boolean)(node: Node): Boolean =
     node match {

@@ -6,13 +6,15 @@ import org.goldenport.util.StringUtils
 
 /*
  * @since   Oct. 22, 2015
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Jun. 24, 2019
  * @author  ASAMI, Tomoharu
  */
 object MimeUtils {
   type MimeType = String
   type Suffix = String
 
+  // See MimeType
   def filenameToMimetype(filename: String): Option[\/[Suffix, MimeType]] = {
     StringUtils.getSuffix(filename).map(x => x.toLowerCase match {
       case "json" => \/-(application_json)
