@@ -4,10 +4,11 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest._
 import scala.xml._
+import org.goldenport.RAISE
 
 /*
  * @since   Jun. 29, 2019
- * @version Jun. 30, 2019
+ * @version Jul. 10, 2019
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -64,7 +65,7 @@ class DomUtilsSpec extends WordSpec with Matchers with GivenWhenThen {
         val r = doc match {
           case m: org.w3c.dom.Document => m.getDocumentElement
           case m: org.w3c.dom.Element => RAISE.noReachDefect
-          case m: org.w3c.dom.Node => 
+          case m: org.w3c.dom.Node => RAISE.noReachDefect
         }
         println(r)
       }

@@ -1,8 +1,10 @@
 package org.goldenport.parser
 
+import org.goldenport.RAISE
+
 /*
  * @since   Jul.  7, 2019
- * @version Jul.  7, 2019
+ * @version Jul. 15, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait XmlOrJsonOrToken {
@@ -14,7 +16,8 @@ object XmlOrJsonOrToken {
     case '<' => XmlXmlOrJsonOrToken(p)
     case '{' => JsonXmlOrJsonOrToken(p)
     case '"' => StringXmlOrJsonOrToken(p)
-    case _ => TokenXmlOrJsonOrToken(p)
+    case '[' => RAISE.notImplementedYetDefect // vector or matrix
+    case _ => TokenXmlOrJsonOrToken(p) // TODO token
   }.getOrElse(EmptyXmlOrJsonOrToken)
 }
 
@@ -35,5 +38,5 @@ case class StringXmlOrJsonOrToken(text: String) extends XmlOrJsonOrToken {
 }
 
 case class TokenXmlOrJsonOrToken(text: String) extends XmlOrJsonOrToken {
-  def string: String = text // xXX
+  def string: String = text // XXX
 }

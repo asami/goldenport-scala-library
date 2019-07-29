@@ -24,7 +24,8 @@ import org.goldenport.util._
  *  version Oct. 29, 2017
  *  version Aug. 30, 2018
  *  version Sep.  4, 2018
- * @version Apr. 28, 2019
+ *  version Apr. 28, 2019
+ * @version Jul. 20, 2019
  * @author  ASAMI, Tomoharu
  */
 object JsonUtils {
@@ -205,6 +206,27 @@ object JsonUtils {
         case JsArray(xs) => raiseMismatch(key, element)
       }
     )
+
+  def toListResult[T](ps: Seq[JsResult[T]]): JsResult[List[T]] =
+    toVectorResult(ps).map(_.toList)
+
+  def toVectorResult[T](ps: Seq[JsResult[T]]): JsResult[Vector[T]] = {
+    case class Z(
+      results: Vector[T] = Vector.empty,
+      errors: Vector[JsError] = Vector.empty
+    ) {
+      def r = if (errors.isEmpty)
+        JsSuccess(results)
+      else
+        errors.head // TODO
+
+      def +(rhs: JsResult[T]) = rhs match {
+        case JsSuccess(s, _) => copy(results = results :+ s)
+        case m: JsError => copy(errors = errors :+ m)
+      }
+    }
+    ps./:(Z())(_+_).r
+  }
 
   /*
    * Json String

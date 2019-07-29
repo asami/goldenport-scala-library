@@ -25,7 +25,8 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version Jun. 14, 2016
  *  version Oct. 12, 2017
  *  version May. 27, 2019
- * @version Jun. 30, 2019
+ *  version Jun. 30, 2019
+ * @version Jul. 28, 2019
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -497,6 +498,28 @@ object DomUtils {
     }.filter(x =>
       names.contains(Option(x.getLocalName).map(_.toLowerCase).getOrElse(""))
     ).toVector
+  }
+
+  def isElementTextMix(p: Node): Boolean = isElementTextMix(childrenIndexedSeq(p))
+
+  def isElementTextMix(ps: Seq[Node]): Boolean = {
+    case class Z(elementcount: Int = 0, textcount: Int = 0) {
+      def r = elementcount > 0 && textcount > 0
+
+      def +(rhs: Node) = rhs match {
+        case m: Text => // including CDATASection
+          if (m.isElementContentWhitespace || Strings.blankp(m.getWholeText))
+            this
+          else
+            copy(textcount = textcount + 1)
+        case m: Element => copy(elementcount = elementcount + 1)
+        case m => this
+      }
+    }
+    if (ps.isEmpty)
+      false
+    else
+      ps./:(Z())(_+_).r
   }
 
   def copyNode(doc: Document)(src: Node): Node = src match {

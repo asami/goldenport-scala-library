@@ -3,7 +3,8 @@ package org.goldenport.util
 /*
  * @since   Jul. 16, 2018
  *  version Aug. 26, 2018
- * @version Dec. 27, 2018
+ *  version Dec. 27, 2018
+ * @version Jul. 29, 2019
  * @author  ASAMI, Tomoharu
  */
 object VectorUtils {
@@ -89,4 +90,37 @@ object VectorUtils {
 
   def removeMap[K, V](p: Vector[(K, V)], k: K): Vector[(K, V)] =
     p.filterNot(_._1 == k)
+
+  def split3[T](p: T => Boolean)(ps: Seq[T]): (Vector[T], Vector[T], Vector[T]) = {
+    val LEFT = 0
+    val CENTER = 1
+    val RIGHT = 2
+    case class Z(
+      left: Vector[T] = Vector.empty,
+      cencter: Vector[T] = Vector.empty,
+      right: Vector[T] = Vector.empty,
+      current: Int = LEFT
+    ) {
+      def r = (left, cencter, right)
+      def +(rhs: T) =
+        if (_is_left) {
+          if (p(rhs))
+            copy(cencter = cencter :+ rhs, current = CENTER)
+          else
+            copy(left = left :+ rhs)
+        } else if (_is_center) {
+          if (p(rhs))
+            copy(cencter = cencter :+ rhs)
+          else
+            copy(right = right :+ rhs, current = RIGHT)
+        } else {
+          copy(right = right :+ rhs)
+        }
+
+      private def _is_left = current == LEFT
+      private def _is_center = current == CENTER
+      private def _is_right = !(_is_left || _is_center)
+    }
+    ps./:(Z())(_+_).r
+  }
 }

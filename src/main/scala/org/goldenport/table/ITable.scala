@@ -2,19 +2,22 @@ package org.goldenport.table
 
 import org.goldenport.RAISE
 import org.goldenport.matrix.{IMatrix, VectorRowColumnMatrix}
+import org.goldenport.extension.Showable
 
 /*
  * @since   Feb. 11, 2019
- * @version Jun. 23, 2019
+ *  version Jun. 23, 2019
+ * @version Jul. 28, 2019
  * @author  ASAMI, Tomoharu
  */
-trait ITable {
-  def print: String
-  def display: String
-  def show: String
+trait ITable extends Showable {
+  def width: Int
+  def height: Int
 }
 
 case class Table(matrix: IMatrix[Any], schema: Option[ISchema]) extends ITable {
+  def width = matrix.width
+  def height = matrix.height
   def print: String = toString
   def display: String = print
   def show: String = display

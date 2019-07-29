@@ -5,7 +5,7 @@ import org.goldenport.RAISE
 /*
  * @since   Feb. 10, 2019
  *  version Jun. 30, 2019
- * @version Jul.  7, 2019
+ * @version Jul. 16, 2019
  * @author  ASAMI, Tomoharu
  */
 trait IMatrix[T] {
@@ -15,6 +15,7 @@ trait IMatrix[T] {
   def rowIterator: Iterator[Vector[T]]
   def columnIterator: Iterator[Vector[T]]
   // 
+  def appendRow(p: Seq[T]): IMatrix[T]
   def appendRows(ps: IMatrix[T]): IMatrix[T]
 }
 
@@ -22,6 +23,7 @@ case class ArrayMatrix[T](matrix: Array[T], width: Int, height: Int) extends IMa
   def apply(x: Int, y: Int): T = matrix(y * width + x)
   def rowIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
   def columnIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
+  def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.unsupportedOperationFault
   def appendRows(ps: IMatrix[T]): IMatrix[T] = RAISE.unsupportedOperationFault
 }
 
@@ -31,6 +33,7 @@ case class ArrayRowColumnMatrix[T](matrix: Array[Array[T]]) extends IMatrix[T] {
   def height: Int = matrix.length
   def rowIterator: Iterator[Vector[T]] = matrix.iterator.map(_.toVector)
   def columnIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
+  def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.unsupportedOperationFault
   def appendRows(ps: IMatrix[T]): IMatrix[T] = RAISE.unsupportedOperationFault
 }
 
@@ -40,6 +43,7 @@ case class ArrayColumnRowMatrix[T](matrix: Array[Array[T]]) extends IMatrix[T] {
   lazy val height: Int = matrix.map(_.length).max
   def rowIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
   def columnIterator: Iterator[Vector[T]] = matrix.iterator.map(_.toVector)
+  def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.unsupportedOperationFault
   def appendRows(ps: IMatrix[T]): IMatrix[T] = RAISE.unsupportedOperationFault
 }
 
@@ -47,6 +51,7 @@ case class VectorMatrix[T](matrix: Vector[T], width: Int, height: Int) extends I
   def apply(x: Int, y: Int): T = matrix(y * width + x)
   def rowIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
   def columnIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
+  def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.unsupportedOperationFault
   def appendRows(ps: IMatrix[T]): IMatrix[T] = RAISE.unsupportedOperationFault
 }
 
@@ -61,10 +66,17 @@ trait VectorRowColumnMatrixBase[T] extends IMatrix[T] {
 }
 
 case class VectorRowColumnMatrix[T](matrix: Vector[Vector[T]]) extends VectorRowColumnMatrixBase[T] {
+  def appendRow(ps: Seq[T]): VectorRowColumnMatrix[T] =
+    VectorRowColumnMatrix(matrix :+ ps.toVector)
+
   def appendRows(ps: IMatrix[T]): VectorRowColumnMatrix[T] =
     VectorRowColumnMatrix(matrix ++ ps.rowIterator)
 }
 object VectorRowColumnMatrix {
+  private val _empty = VectorRowColumnMatrix(Vector.empty)
+
+  def empty[T] = _empty.asInstanceOf[VectorRowColumnMatrix[T]]
+
   def create[T](data: Seq[Seq[T]]): VectorRowColumnMatrix[T] =
     VectorRowColumnMatrix(data.toVector.map(_.toVector))
 }
@@ -79,6 +91,7 @@ case class VectorColumnRowMatrix[T](
   def rowIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
   def columnIterator: Iterator[Vector[T]] = matrix.iterator
 
+  def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.unsupportedOperationFault
   def appendRows(ps: IMatrix[T]): VectorRowColumnMatrix[T] = RAISE.notImplementedYetDefect
 }
 object VectorColumnRowMatrix {

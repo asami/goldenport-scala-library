@@ -4,9 +4,11 @@ import scala.util.Try
 import java.net.{URL, URI}
 import org.joda.time._
 import org.goldenport.Strings
+import org.goldenport.xsv.Lxsv
 import org.goldenport.values.Urn
 import org.goldenport.util.StringUtils
 import org.goldenport.util.{DateTimeUtils, LocalDateUtils, LocalDateTimeUtils}
+import org.goldenport.util.AnyUtils
 import LogicalTokens.Config
 
 /*
@@ -16,14 +18,24 @@ import LogicalTokens.Config
  *  version Jan.  2, 2019
  *  version Feb. 25, 2019
  *  version Mar.  9, 2019
- * @version Jun. 30, 2019
+ *  version Jun. 30, 2019
+ * @version Jul. 21, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
   def location: Option[ParseLocation]
-  def show: String = ???
+  def raw: String
+  def value: Any
+  def print: String = AnyUtils.toString(value)
+  def show: String = s"LogicalToken(${getClass.getSimpleName})#show"
 }
 object LogicalToken {
+  def create(config: LogicalTokens.Config, p: Any): LogicalToken = p match {
+    case m: Int => NumberToken(m)
+    case m: String => LogicalTokens.parse(config, m).head
+    case m => LogicalTokens.parse(config, AnyUtils.toString(m)).head
+  }
+  
 }
 
 sealed trait LiteralToken extends LogicalToken
@@ -32,12 +44,26 @@ trait ExternalLogicalToken extends LiteralToken
 
 case object EndToken extends LogicalToken {
   val location = None
+  val raw = ""
+  val value = ""
+  override val print = ""
+}
+
+case class EmptyToken(location: Option[ParseLocation]) extends LogicalToken {
+  val raw = ""
+  val value = ""
+  override val print = ""
+}
+object EmptyToken extends EmptyToken(None) {
 }
 
 case class SpaceToken(
   s: String,
   location: Option[ParseLocation]
 ) extends LogicalToken {
+  def raw = s
+  def value = s
+  override def print = s
 }
 object SpaceToken {
   def apply(s: String, location: ParseLocation): SpaceToken = SpaceToken(
@@ -50,6 +76,9 @@ case class DelimiterToken(
   s: String,
   location: Option[ParseLocation]
 ) extends LogicalToken {
+  def raw = s
+  def value = s
+  override def print = s
 }
 object DelimiterToken {
   def apply(c: Char): DelimiterToken = DelimiterToken(c.toString, None)
@@ -63,12 +92,18 @@ object DelimiterToken {
 case class SingleQuoteToken(
   location: Option[ParseLocation]
 ) extends LogicalToken {
+  val raw = "'"
+  val value = "'"
+  override val print = ""
 }
 
 case class AtomToken(
   name: String,
   location: Option[ParseLocation]
 ) extends LiteralToken {
+  def raw = name
+  def value = name
+  override def print = name
 }
 object AtomToken {
   def apply(text: String, location: ParseLocation): AtomToken =
@@ -85,6 +120,9 @@ case class DoubleStringToken(
   location: Option[ParseLocation],
   prefix: Option[String] = None
 ) extends StringToken {
+  def raw = s""""$text""""
+  def value = text
+  override def print = text
 }
 object DoubleStringToken {
   def apply(text: String, location: ParseLocation): DoubleStringToken =
@@ -93,9 +131,12 @@ object DoubleStringToken {
 
 case class SingleStringToken(
   text: String,
-  location: Option[ParseLocation],
+  location: Option[ParseLocation] = None,
   prefix: Option[String] = None
 ) extends StringToken {
+  def raw = s"'$text'"
+  def value = text
+  override def print = text
 }
 object SingleStringToken {
   def apply(text: String, location: ParseLocation): SingleStringToken =
@@ -107,6 +148,9 @@ case class RawStringToken(
   location: Option[ParseLocation],
   prefix: Option[String] = None
 ) extends StringToken {
+  def raw = "\"\"\"" + text + "\"\"\""
+  def value = text
+  override def print = text
 }
 object RawStringToken {
   def apply(text: String, location: ParseLocation): RawStringToken =
@@ -117,14 +161,20 @@ case class BooleanToken(
   b: Boolean,
   location: Option[ParseLocation]
 ) extends LiteralToken {
+  def raw = b.toString // TODO
+  def value = b
 }
 
 case class NumberToken(
   n: BigDecimal,
   location: Option[ParseLocation]
 ) extends LiteralToken {
+  def raw = n.toString // TODO
+  def value = n
 }
 object NumberToken extends LogicalTokens.SimpleTokenizer {
+  def apply(n: Int): NumberToken = NumberToken(BigDecimal(n), None)
+
   def apply(n: Int, location: Option[ParseLocation]): NumberToken =
     NumberToken(BigDecimal(n), location)
 
@@ -139,6 +189,8 @@ case class ComplexToken(
   n: spire.math.Complex[Double],
   location: Option[ParseLocation]
 ) extends LiteralToken {
+  def raw = n.toString // TODO
+  def value = n
 }
 object ComlexToken extends LogicalTokens.SimpleTokenizer {
   val regex = """([+-]?\d+[.]?\d+([eE][+-]\d+)?)?([+-]\d+[.]?\d+([eE][+-]\d+)?)[i]""".r
@@ -162,6 +214,8 @@ case class DateTimeToken(
   datetime: DateTime,
   location: Option[ParseLocation]
 ) extends LiteralToken {
+  def raw = datetime.toString // TODO
+  def value = datetime
 }
 object DateTimeToken extends LogicalTokens.SimpleTokenizer {
   def apply(p: DateTime, location: ParseLocation): DateTimeToken =
@@ -191,6 +245,8 @@ case class LocalDateTimeToken(
   datetime: LocalDateTime,
   location: Option[ParseLocation]
 ) extends LiteralToken {
+  def raw = datetime.toString // TODO
+  def value = datetime
 }
 object LocalDateTimeToken extends LogicalTokens.SimpleTokenizer {
   def apply(p: DateTime, location: ParseLocation): DateTimeToken =
@@ -214,6 +270,8 @@ case class LocalDateToken(
   date: LocalDate,
   location: Option[ParseLocation]
 ) extends LiteralToken {
+  def raw = date.toString // TODO
+  def value = date
 }
 object LocalDateToken extends LogicalTokens.SimpleTokenizer {
   def apply(p: LocalDate, location: ParseLocation): LocalDateToken =
@@ -236,6 +294,8 @@ case class LocalTimeToken(
   time: LocalTime,
   location: Option[ParseLocation]
 ) extends LiteralToken {
+  def raw = time.toString // TODO
+  def value = time
 }
 object LocalTimeToken extends LogicalTokens.SimpleTokenizer {
   def apply(p: LocalTime, location: ParseLocation): LocalTimeToken =
@@ -258,6 +318,8 @@ case class MonthDayToken(
   monthday: MonthDay,
   location: Option[ParseLocation]
 ) extends LiteralToken {
+  def raw = monthday.toString // TODO
+  def value = monthday
 }
 object MonthDayToken extends LogicalTokens.SimpleTokenizer {
   def apply(p: MonthDay, location: ParseLocation): MonthDayToken =
@@ -280,6 +342,8 @@ case class UrlToken(
   url: URL,
   location: Option[ParseLocation]
 ) extends LiteralToken {
+  def raw = url.toString // TODO
+  def value = url
 }
 object UrlToken extends LogicalTokens.SimpleTokenizer {
   def apply(s: String, location: Option[ParseLocation]): UrlToken =
@@ -296,6 +360,8 @@ case class UrnToken(
   urn: Urn,
   location: Option[ParseLocation]
 ) extends LiteralToken {
+  def raw = urn.toString // TODO
+  def value = urn
 }
 object UrnToken extends LogicalTokens.SimpleTokenizer {
   def apply(s: String, location: Option[ParseLocation]): UrnToken =
@@ -321,6 +387,8 @@ case class PathToken(
   path: String,
   location: Option[ParseLocation]
 ) extends LiteralToken {
+  def raw = path
+  def value = path
 }
 object PathToken extends LogicalTokens.SimpleTokenizer {
   def apply(s: String, location: ParseLocation): PathToken =
@@ -339,6 +407,9 @@ case class ExpressionToken(
   text: String,
   location: Option[ParseLocation]
 ) extends LiteralToken {
+  def raw = text
+  def value = text
+  override def print = text
 }
 object ExpressionToken extends LogicalTokens.SimpleTokenizer {
   def apply(text: String, location: ParseLocation): ExpressionToken =
@@ -375,11 +446,57 @@ object ExpressionToken extends LogicalTokens.SimpleTokenizer {
   }
 }
 
+case class XsvToken(
+  text: String,
+  location: Option[ParseLocation]
+) extends LiteralToken {
+  def raw = text
+  def value = text // TODO
+  override def print = text
+}
+object XsvToken extends LogicalTokens.SimpleTokenizer {
+  def apply(s: String, location: ParseLocation): XsvToken =
+    XsvToken(s, Some(location))
+
+  override protected def accept_Token(config: Config, p: String, location: ParseLocation) =
+    if (_is_xsv(p))
+      Try(apply(p, location)).toOption
+    else
+      None
+
+  private def _is_xsv(p: String) = false // TODO
+}
+
+case class LxsvToken(
+  text: String,
+  location: Option[ParseLocation]
+) extends LiteralToken {
+  def raw = text
+  def value = text
+  override def print = text
+  def lxsv: Lxsv = Lxsv.create(text)
+}
+object LxsvToken extends LogicalTokens.SimpleTokenizer {
+  def apply(s: String, location: ParseLocation): LxsvToken =
+    LxsvToken(s, Some(location))
+
+  override protected def accept_Token(config: Config, p: String, location: ParseLocation) =
+    if (_is_lxsv(p))
+      Try(apply(p, location)).toOption
+    else
+      None
+
+  private def _is_lxsv(p: String): Boolean = Lxsv.isLxsvToken(p)
+}
+
 case class BracketToken(
   text: String,
   location: Option[ParseLocation],
   prefix: Option[String] = None
 ) extends LiteralToken {
+  def raw = s"[$text]" // TODO
+  def value = text
+  override def print = text
 }
 object BracketToken {
   def apply(text: String, location: ParseLocation): BracketToken =
@@ -391,6 +508,9 @@ case class DoubleBracketToken(
   location: Option[ParseLocation],
   prefix: Option[String] = None
 ) extends LiteralToken {
+  def raw = s"[[$text]]" // TODO
+  def value = text
+  override def print = text
 }
 object DoubleBracketToken {
   def apply(text: String, location: ParseLocation): DoubleBracketToken =
@@ -402,6 +522,9 @@ case class RawBracketToken(
   location: Option[ParseLocation],
   prefix: Option[String] = None
 ) extends LiteralToken {
+  def raw = s"[[[$text]]]" // TODO
+  def value = text
+  override def print = text
 }
 object RawBracketToken {
   def apply(text: String, location: ParseLocation): RawBracketToken =
@@ -413,6 +536,9 @@ case class ScriptToken(
   location: Option[ParseLocation],
   prefix: Option[String] = None
 ) extends LiteralToken {
+  def raw = "${" + text + "}" // TODO
+  def value = text
+  override def print = text
 }
 object ScriptToken {
   def apply(text: String, location: ParseLocation): ScriptToken =
@@ -424,6 +550,9 @@ case class ExplicitLiteralToken(
   location: Option[ParseLocation],
   prefix: Option[String] = None
 ) extends LiteralToken {
+  def raw = text
+  def value = text
+  override def print = text
 }
 object ExplicitLiteralToken {
   def apply(text: String, location: ParseLocation): LiteralToken =

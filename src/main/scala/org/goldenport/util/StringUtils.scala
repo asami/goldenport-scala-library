@@ -32,7 +32,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Oct. 10, 2018
  *  version Feb. 14, 2019
  *  version Mar.  5, 2019
- * @version May. 19, 2019
+ *  version May. 19, 2019
+ * @version Jul. 29, 2019
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -286,9 +287,9 @@ object StringUtils {
   def isSuffix(s: String, suffix: Set[String]): Boolean =
     suffix.contains(toSuffix(s))
 
-  def toSuffix(s: String): String = UPathString.getSuffix(s)
+  def toSuffix(s: String): String = getSuffix(s).getOrElse("")
 
-  def getSuffix(s: String): Option[String] = Option(UPathString.getSuffix(s))
+  def getSuffix(s: String): Option[String] = Option(UPathString.getSuffix(s)).map(_.toLowerCase)
 
   def toPathnameBody(s: String): String = UPathString.getPathnameBody(s)
 
@@ -497,14 +498,30 @@ object StringUtils {
     else
       p + "/"
 
-  def showConsole(p: String, newline: String, size: Int = 5): String = {
-    val max = size * 80
-    val a = if (p.length > max) p.substring(0, size * 80) else p
-    val b = Strings.tolines(a).take(size).mkString(newline)
-    if (p.length > max)
-      s"$b ... (total: ${p.length})"
+  def print(p: String, newline: String): String = {
+    val a = Strings.tolines(p)
+    val c = a.mkString(newline)
+    c
+  }
+
+  def printConsole(p: String, newline: String, size: Int = 5): String = {
+    val a = Strings.tolines(p)
+    val c = a.take(size).mkString(newline)
+    if (a.length > size)
+      s"$c ... (${a.length}/${p.length})"
     else
-      b
+      c
+  }
+
+  def showConsole(p: String, newline: String, size: Int = 5): String = {
+    val width = 80
+    val a = Strings.tolines(p)
+    val b = a.map(Strings.cutstring(_, width))
+    val c = b.take(size).mkString(newline)
+    if (a.length > size)
+      s"$c ... (${a.length}/${p.length})"
+    else
+      c
   }
 
   /*

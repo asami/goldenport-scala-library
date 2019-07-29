@@ -11,7 +11,8 @@ import org.goldenport.exception.RAISE
  *  version Feb. 16, 2019
  *  version Mar. 10, 2019
  *  version May.  6, 2019
- * @version Jun. 30, 2019
+ *  version Jun. 30, 2019
+ * @version Jul. 17, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
@@ -93,7 +94,6 @@ object LogicalTokens {
     def getTokens(config: Config, p: String, l: ParseLocation): Option[LogicalTokens] = _simple_tokenizers.flatMap(_.accept(config, p, l)).headOption
   }
   object Config {
-    // val a: LogicalTokens.ComplexTokenizer = JsonParser()
     val default = Config(
       " \t\n\r\f".toVector,
       "(){}[]".toVector, // "(){}[],".toVector, get rid of ',' for expression token
@@ -101,6 +101,7 @@ object LogicalTokens {
       Vector(
         NumberToken,
         LocalDateToken, LocalDateTimeToken, LocalTimeToken, DateTimeToken, MonthDayToken,
+        LxsvToken, XsvToken,
         UrlToken, UrnToken,
         PathToken, ExpressionToken
       ),
@@ -110,6 +111,26 @@ object LogicalTokens {
     )
     val sexpr = default.copy(useSingleQuoteToken = true)
     val debug = default.copy(isDebug = true)
+    val xsv = default.copy(
+      "".toVector,
+      " \t,;".toVector
+    )
+    val csv = default.copy(
+      "".toVector,
+      ",".toVector
+    )
+    val tsv = default.copy(
+      "".toVector,
+      "\t".toVector
+    )
+    val scsv = default.copy(
+      "".toVector,
+      ";".toVector
+    )
+    val ssv = default.copy(
+      "".toVector,
+      " \t".toVector
+    )
   }
 
   trait LogicalTokensParseState extends ParseReaderWriterState[Config, LogicalTokens] {
@@ -160,7 +181,7 @@ object LogicalTokens {
             case '$' if use_Dollar => handle_dollar(config, m)
             case c if config.isSpace(c) => handle_space(config, m)
             case c if use_Delimiter && config.isDelimiter(c) => handle_delimiter(config, m)
-            case c if config.isComment(m) => handle_comment(config, m)
+            case c if config.isComment(m) => handle_comment(config, m) // TODO handle not " ;" (e.g. "id:1;name:taro")
             case _ => handle_character(config, m)
           }
         }
