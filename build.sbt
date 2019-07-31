@@ -15,7 +15,7 @@ scalacOptions += "-feature"
 
 // resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
 
-resolvers += "Asami Maven Repository" at "http://www.asamioffice.com/maven"
+// resolvers += "Asami Maven Repository" at "http://www.asamioffice.com/maven"
 
 resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository"
 
@@ -62,4 +62,15 @@ libraryDependencies += "junit" % "junit" % "4.8" % "test"
 // libraryDependencies += "org.goldenport" %% "goldenport-scalatest-lib" % "1.0.0" % "test"
 
 //
-publishTo := Some(Resolver.file("asamioffice", file("target/maven-repository")))
+// publishTo := Some(Resolver.file("asamioffice", file("target/maven-repository")))
+AutoMkcol.globalSettings
+
+credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+
+publishTo <<= version { v: String =>
+  val backlog = "https://everforth.backlog.jp/dav/APC/maven/"
+  if (v.trim.endsWith("SNAPSHOT"))
+    Some("Backlog snapshots" at backlog + "snapshots")
+  else
+    Some("Backlog releases" at backlog + "releases")
+}
