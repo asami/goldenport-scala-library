@@ -5,6 +5,7 @@ import java.net.URL
 import java.nio.charset.Charset
 import java.util.{Locale, TimeZone}
 import com.typesafe.config.{Config => HoconConfig, ConfigFactory}
+import org.goldenport.i18n.I18NContext
 import org.goldenport.hocon.RichConfig
 import org.goldenport.log.LogLevel
 
@@ -12,20 +13,23 @@ import org.goldenport.log.LogLevel
  * @since   Oct.  4, 2018
  *  version Feb.  8, 2019
  *  version Mar. 24, 2019
- * @version May. 19, 2019
+ *  version May. 19, 2019
+ * @version Aug.  4, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Config(
-  charset: Charset,
-  newline: String,
-  locale: Locale,
-  timezone: TimeZone,
+  i18nContext: I18NContext,
   homeDirectory: Option[File],
   workDirectory: Option[File],
   projectDirectory: Option[File],
   logLevel: LogLevel,
   properties: RichConfig
 ) {
+  def charset: Charset = i18nContext.charset
+  def newline: String = i18nContext.newline
+  def locale: Locale = i18nContext.locale
+  def timezone: TimeZone = i18nContext.timezone
+
   def withLogLevel(p: LogLevel) = copy(logLevel = p)
 }
 
@@ -105,10 +109,12 @@ object Config {
     val workdir = Option(System.getProperty("user.dir")).map(x => new File(x))
     val projectdir = None // TODO
     Config(
-      charset,
-      newline,
-      locale,
-      timezone,
+      I18NContext(
+        charset,
+        newline,
+        locale,
+        timezone
+      ),
       homedir,
       workdir,
       projectdir,
