@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "1.2.43"
+version := "1.2.44"
 
 scalaVersion := "2.10.3"
 // crossScalaVersions := Seq("2.9.2", "2.9.1")
@@ -13,7 +13,7 @@ scalacOptions += "-unchecked"
 
 scalacOptions += "-feature"
 
-// resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
+resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
 
 // resolvers += "Asami Maven Repository" at "http://www.asamioffice.com/maven"
 
@@ -63,14 +63,22 @@ libraryDependencies += "junit" % "junit" % "4.8" % "test"
 
 //
 // publishTo := Some(Resolver.file("asamioffice", file("target/maven-repository")))
-AutoMkcol.globalSettings
+// AutoMkcol.globalSettings
 
-credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+// credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
-publishTo <<= version { v: String =>
-  val backlog = "https://everforth.backlog.jp/dav/APC/maven/"
-  if (v.trim.endsWith("SNAPSHOT"))
-    Some("Backlog snapshots" at backlog + "snapshots")
-  else
-    Some("Backlog releases" at backlog + "releases")
+// publishTo <<= version { v: String =>
+//   val backlog = "https://everforth.backlog.jp/dav/APC/maven/"
+//   if (v.trim.endsWith("SNAPSHOT"))
+//     Some("Backlog snapshots" at backlog + "snapshots")
+//   else
+//     Some("Backlog releases" at backlog + "releases")
+// }
+
+val mavenrepo = settingKey[String]("mavenrepo")
+
+mavenrepo := sys.env.getOrElse("PUBLISH_MAVEN_REPO", default = "target/maven-repository")
+
+publishTo <<= mavenrepo { v: String =>
+  Some(Resolver.file("file", file(v)))
 }
