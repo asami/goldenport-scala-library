@@ -1,6 +1,7 @@
 package org.goldenport.io
 
-import java.net.URL
+import java.io.File
+import java.net.{URL, URI}
 import org.goldenport.util.StringUtils
 
 /*
@@ -9,7 +10,8 @@ import org.goldenport.util.StringUtils
  *  version Sep.  2, 2017
  *  version Sep. 18, 2018
  *  version Apr. 12, 2019
- * @version Jun. 25, 2019
+ *  version Jun. 25, 2019
+ * @version Aug. 18, 2019
  * @author  ASAMI, Tomoharu
  */
 case class MimeType(name: String) {
@@ -36,6 +38,7 @@ object MimeType {
   val application_xml_dtd = MimeType(mimetype.application_xml_dtd)
   val application_zip = MimeType(mimetype.application_zip)
   val application_x_gzip = MimeType(mimetype.application_x_gzip)
+  val application_excel = MimeType(mimetype.application_excel)
   val image_gif = MimeType(mimetype.image_gif)
   val image_jpeg = MimeType(mimetype.image_jpeg)
   val image_pjpeg = MimeType(mimetype.image_pjpeg)
@@ -74,6 +77,7 @@ object MimeType {
   val APPLICATION_XML_DTD = application_xml_dtd
   val APPLICATION_ZIP = application_zip
   val APPLICATION_X_GZIP = application_x_gzip
+  val APPLICATION_EXCEL = application_excel
   val IMAGE_GIF = image_gif
   val IMAGE_JPEG = image_jpeg
   val IMAGE_PJPEG = image_pjpeg
@@ -163,6 +167,9 @@ object MimeType {
     application_json -> "json",
     application_pdf -> "pdf",
     application_postscript -> "ps",
+    application_zip -> "zip",
+    application_x_gzip -> "gzip",
+    application_excel -> "xlsx",
     image_gif -> "gif",
     image_jpeg -> "jpeg",
     image_png -> "png",
@@ -176,9 +183,11 @@ object MimeType {
     text_xsl -> "xsl"
   )
 
-  lazy val suffixMimeMap = mimeSuffixMap map {
+  lazy val suffixMimeMap = mimeSuffixMap.map {
     case (m, s) => s -> m
-  }
+  } ++ Map(
+    "xls" -> application_excel
+  )
 
   def isText(p: MimeType): Boolean = isText(p.name)
   def isText(p: String): Boolean = p.startsWith("text/") || textMimeTypes.exists(_.name == p)
@@ -191,5 +200,7 @@ object MimeType {
 
   def getSuffix(p: MimeType): Option[String] = mimeSuffixMap.get(p)
   def getBySuffix(p: String): Option[MimeType] = suffixMimeMap.get(p.toLowerCase)
+  def getBySuffix(p: File): Option[MimeType] = StringUtils.getSuffix(p.getPath).flatMap(getBySuffix)
   def getBySuffix(p: URL): Option[MimeType] = StringUtils.getSuffix(p.getFile).flatMap(getBySuffix)
+  def getBySuffix(p: URI): Option[MimeType] = getBySuffix(p.toURL)
 }

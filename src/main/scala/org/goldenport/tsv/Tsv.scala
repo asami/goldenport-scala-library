@@ -7,7 +7,7 @@ import org.goldenport.matrix._
 
 /*
  * @since   Jul.  7, 2019
- * @version Jul. 16, 2019
+ * @version Aug. 24, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Tsv(matrix: VectorRowColumnMatrix[String]) extends IMatrix[String] {
@@ -18,4 +18,5 @@ case class Tsv(matrix: VectorRowColumnMatrix[String]) extends IMatrix[String] {
   def columnIterator: Iterator[Vector[String]] = ???
   def appendRow(ps: Seq[String]): IMatrix[String] = RAISE.unsupportedOperationFault
   def appendRows(ps: IMatrix[String]): IMatrix[String] = RAISE.unsupportedOperationFault
+  def transpose: IMatrix[String] = RAISE.notImplementedYetDefect
 }

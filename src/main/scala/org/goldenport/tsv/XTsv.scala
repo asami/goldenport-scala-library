@@ -9,7 +9,7 @@ import org.goldenport.parser.{LogicalParagraph, LogicalLine, XmlOrJsonOrToken}
 
 /*
  * @since   Jul.  7, 2019
- * @version Jul. 16, 2019
+ * @version Aug. 24, 2019
  * @author  ASAMI, Tomoharu
  */
 case class XTsv(matrix: VectorRowColumnMatrix[XmlOrJsonOrToken]) extends IMatrix[XmlOrJsonOrToken] {
@@ -20,6 +20,7 @@ case class XTsv(matrix: VectorRowColumnMatrix[XmlOrJsonOrToken]) extends IMatrix
   def columnIterator: Iterator[Vector[XmlOrJsonOrToken]] = matrix.columnIterator
   def appendRow(ps: Seq[XmlOrJsonOrToken]): IMatrix[XmlOrJsonOrToken] = RAISE.unsupportedOperationFault
   def appendRows(ps: IMatrix[XmlOrJsonOrToken]): IMatrix[XmlOrJsonOrToken] = RAISE.unsupportedOperationFault
+  def transpose: IMatrix[XmlOrJsonOrToken] = RAISE.notImplementedYetDefect
 }
 
 object XTsv {

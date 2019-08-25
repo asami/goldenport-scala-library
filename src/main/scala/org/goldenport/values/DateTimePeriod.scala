@@ -20,7 +20,8 @@ import org.goldenport.values.Week._
  *  version Nov. 19, 2015
  *  version Feb.  5, 2018
  *  version Jun. 20, 2018
- * @version Jan. 10, 2019
+ *  version Jan. 10, 2019
+ * @version Aug. 14, 2019
  * @author  ASAMI, Tomoharu
  */
 case class DateTimePeriod(
@@ -417,6 +418,20 @@ object DateTimePeriod {
         end.map(toDateTime),
         true,
         inclusive
+      )
+    }
+
+    def create(
+      start: Option[String],
+      end: Option[String],
+      low: Boolean,
+      high: Boolean
+    ): DateTimePeriod = {
+      DateTimePeriod(
+        start.map(toDateTime),
+        end.map(toDateTime),
+        low,
+        high
       )
     }
 

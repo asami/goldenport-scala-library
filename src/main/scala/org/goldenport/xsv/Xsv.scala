@@ -9,7 +9,7 @@ import org.goldenport.value._
 
 /*
  * @since   Jul. 16, 2019
- * @version Jul. 21, 2019
+ * @version Aug. 24, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Xsv(
@@ -23,6 +23,7 @@ case class Xsv(
   def columnIterator: Iterator[Vector[LogicalToken]] = matrix.columnIterator
   def appendRow(ps: Seq[LogicalToken]): Xsv = copy(matrix = matrix appendRow ps)
   def appendRows(ps: IMatrix[LogicalToken]): Xsv = copy(matrix = matrix appendRows ps)
+  def transpose: IMatrix[LogicalToken] = RAISE.notImplementedYetDefect
 }
 
 object Xsv {

@@ -14,7 +14,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Aug. 29, 2017
  *  version Sep.  1, 2017
  *  version Apr. 30, 2019
- * @version Jun.  8, 2019
+ *  version Jun.  8, 2019
+ * @version Aug. 16, 2019
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -76,6 +77,11 @@ case class I18NString(
       (Locale.ENGLISH -> en) + (Locale.JAPANESE -> ja)
   lazy val localeList: List[(Locale, String)] = localeMap.toList
   lazy val localeVector: Vector[(Locale, String)] = localeMap.toVector
+
+  private lazy val _keys = localeVector.map(_._2.toLowerCase)
+
+  def containsKey(p: String): Boolean = _keys.contains(p.toLowerCase)
+  def containsKey(ps: Seq[String]): Boolean = ps.exists(containsKey)
 
   def +(rhs: I18NString): I18NString = concat(rhs, "")
   def concat(rhs: I18NString): I18NString = concat(rhs, ";")

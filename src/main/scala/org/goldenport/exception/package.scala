@@ -2,6 +2,7 @@ package org.goldenport
 
 import java.io.FileNotFoundException
 import java.net.{URL, URI}
+import org.goldenport.io.ResourceHandle
 
 /*
  * @snice   Aug. 30, 2017
@@ -13,7 +14,7 @@ import java.net.{URL, URI}
  *  version Dec. 31, 2018
  *  version Mar. 24, 2019
  *  version Apr.  7, 2019
- * @version Aug.  4, 2019
+ * @version Aug. 23, 2019
  * @author  ASAMI, Tomoharu
  */
 package object exception {
@@ -29,11 +30,14 @@ package object exception {
     def illegalConfigurationDefect(s: String): Nothing = throw new IllegalConfigurationDefectException(s)
     def unsupportedOperationFault: Nothing = throw new UnsupportedOperationException()
     def unsupportedOperationFault(msg: String): Nothing = throw new UnsupportedOperationException(msg)
+    def unsupportedOperationFault(o: Object, msg: String): Nothing = unsupportedOperationFault(o.getClass, msg)
+    def unsupportedOperationFault(c: Class[_], msg: String): Nothing = throw new UnsupportedOperationException(s"${c.getSimpleName}#${msg}")
     def missingPropertyFault(name: String): Nothing = throw new MissingPropertyFaultException(name)
     def invalidArgumentFault(s: String): Nothing = throw new IllegalArgumentException(s)
     def noSuchElementFault(name: String): Nothing = throw new NoSuchElementException(name)
     def illegalStateFault(msg: String): Nothing = throw new IllegalStateException(msg)
     def syntaxErrorFault(s: String): Nothing = throw new SyntaxErrorFaultException(s)
     def fileNotFouncFault(uri: URI): Nothing = throw new FileNotFoundException(uri.toString)
+    def fileNotFouncFault(r: ResourceHandle): Nothing = throw new FileNotFoundException(r.name)
   }
 }

@@ -8,7 +8,9 @@ import MatrixVisualizer._
 /*
  * @since   Jun. 16, 2019
  *  version Jun. 23, 2019
- * @version Jul.  7, 2019
+ *  version Jul.  7, 2019
+ * @version Aug. 24, 2019
+ * @version Aug. 24, 2019
  * @author  ASAMI, Tomoharu
  */
 case class MatrixVisualizer[T](
@@ -310,7 +312,7 @@ object MatrixVisualizer {
     def horizontalVerticalSeparator: String
   }
   object LineStyle extends EnumerationClass[LineStyle] {
-    val elements = Vector(SpaceLineStyle, CommaLineStyle, AsciiLineStyle, JisLineStyle)
+    val elements = Vector(SpaceLineStyle, CommaLineStyle, AsciiLineStyle, JisLineStyle, LinearAlgebraStyle)
   }
   case object SpaceLineStyle extends LineStyle {
     val name = "space"
@@ -411,6 +413,25 @@ object MatrixVisualizer {
     def horizontalSeparator: String = "─"
     def horizontalVerticalSeparator: String = "┼"
   }
+  case object LinearAlgebraStyle extends LineStyle {
+    val name = "linearAlgebra"
+
+    def topLeftCorner: String = "┌"
+    def topRightCorner: String = "┐"
+    def topBorder: String = " "
+    def topSeparator: String = " "
+    def bottomLeftCorner: String = "└"
+    def bottomRightCorner: String = "┘"
+    def bottomBorder: String = " "
+    def bottomSeparator: String = " "
+    def leftBorder: String = "│"
+    def rightBorder: String = "│"
+    def verticalSeparator: String = " "
+    def leftHorizontalSeparator: String = " "
+    def rightHorizontalSeparator: String = " "
+    def horizontalSeparator: String = " "
+    def horizontalVerticalSeparator: String = " "
+  }
 
   sealed trait BorderStyle extends NamedValueInstance {
   }
@@ -471,6 +492,8 @@ object MatrixVisualizer {
   object Cell {
     def apply(p: String): Cell = Cell(Vector(p))
   }
+
+  def linearAlgebra[T] = MatrixVisualizer(TopEndBorder, BottomEndBorder, true, true, false, LinearAlgebraStyle, "\n", (_: T).toString)
 
   def border[T](f: T => String) = MatrixVisualizer(TopEndBorder, BottomEndBorder, true, true, true, AsciiLineStyle, "\n", f)
   def header[T](f: T => String) = MatrixVisualizer(TopEndBorder, MiddleBorder, true, true, true, AsciiLineStyle, "\n", f)
