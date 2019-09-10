@@ -11,7 +11,8 @@ import org.goldenport.log.Loggable
  *  version Dec. 31, 2018
  *  version Jan. 26, 2019
  *  version Feb. 24, 2019
- * @version Jun.  9, 2019
+ *  version Jun.  9, 2019
+ * @version Sep.  8, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -83,6 +84,7 @@ object LogicalBlocks {
   case class Config(
     isDebug: Boolean,
     isLocation: Boolean,
+    isScript: Boolean, // not document
     lineConfig: LogicalLines.Config,
     verbatims: Vector[LogicalBlock.VerbatimMarkClass]
   ) extends ParseConfig {
@@ -94,13 +96,20 @@ object LogicalBlocks {
     )
 
     def forLisp: Config = copy(lineConfig = LogicalLines.Config.lisp)
+
+    def withoutLocation: Config = copy(isLocation = false)
   }
   object Config {
     val verbatimDefault = Vector(LogicalBlock.RawBackquoteMarkClass)
+    val verbatimEmpty = Vector(LogicalBlock.RawBackquoteMarkClass)
 
-    val default = Config(false, true, LogicalLines.Config.default, verbatimDefault)
-    val debug = Config(true, true, LogicalLines.Config.default, verbatimDefault)
-    val noLocation = Config(false, false, LogicalLines.Config.default, verbatimDefault)
+    // document
+    val default = Config(false, true, false, LogicalLines.Config.default, verbatimDefault)
+    val debug = Config(true, true, false, LogicalLines.Config.default, verbatimDefault)
+    val noLocation = Config(false, false, false, LogicalLines.Config.default, verbatimDefault)
+    // script
+    val expression = Config(false, false, true, LogicalLines.Config.default, verbatimEmpty)
+    val script = Config(false, true, true, LogicalLines.Config.default, verbatimEmpty)
   }
 
   trait LogicalBlocksParseState extends ParseReaderWriterState[Config, LogicalBlocks] with Loggable {
@@ -194,19 +203,22 @@ object LogicalBlocks {
       ParseSuccess(blocks)
 
     override def line_State(config: Config, evt: LogicalLineEvent) = {
-      evt.getSectionTitle.map { title =>
-        SectionState(this, title, evt)
-      }.orElse {
-        evt.getSectionUnderline.map { underline =>
-          RAISE.notImplementedYetDefect("section underline")
-        }
-      }.orElse {
-        config.getVerbatimMark(evt.line).map(mark =>
-          VerbatimState(this, mark, evt)
-        )
-      }.getOrElse {
+      if (config.isScript)
         InputState(this, evt)
-      }
+      else
+        evt.getSectionTitle.map { title =>
+          SectionState(this, title, evt)
+        }.orElse {
+          evt.getSectionUnderline.map { underline =>
+            RAISE.notImplementedYetDefect("section underline")
+          }
+        }.orElse {
+          config.getVerbatimMark(evt.line).map(mark =>
+            VerbatimState(this, mark, evt)
+          )
+        }.getOrElse {
+          InputState(this, evt)
+        }
     }
   }
   object RootState {

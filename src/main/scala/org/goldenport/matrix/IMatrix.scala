@@ -8,7 +8,8 @@ import org.goldenport.matrix.breeze.BreezeMatrix
  * @since   Feb. 10, 2019
  *  version Jun. 30, 2019
  *  version Jul. 16, 2019
- * @version Aug. 26, 2019
+ *  version Aug. 26, 2019
+ * @version Sep.  9, 2019
  * @author  ASAMI, Tomoharu
  */
 trait IMatrix[T] extends Showable {
@@ -26,7 +27,15 @@ trait IMatrix[T] extends Showable {
   def show = MatrixVisualizer.linearAlgebra.plainText(this)
   //
   def transpose: IMatrix[T]
-  def +(rhs: IMatrix[Double])(implicit ev: T <:< Double): IMatrix[Double] = BreezeMatrix.create(this.asInstanceOf[IMatrix[Double]]) + BreezeMatrix.create(rhs)
+  def inv(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix.inv
+  def det(implicit ev: T <:< Double): Double = to_breeze_matrix.det
+  def rank(implicit ev: T <:< Double): Int = to_breeze_matrix.rank
+  def +(rhs: IMatrix[Double])(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix + BreezeMatrix.create(rhs)
+  def -(rhs: IMatrix[Double])(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix - BreezeMatrix.create(rhs)
+  def *(rhs: IMatrix[Double])(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix * BreezeMatrix.create(rhs)
+  def *(rhs: Double)(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix * rhs
+  //
+  protected def to_breeze_matrix: BreezeMatrix = BreezeMatrix.create(this.asInstanceOf[IMatrix[Double]])
 }
 
 case class ArrayMatrix[T](matrix: Array[T], width: Int, height: Int) extends IMatrix[T] {

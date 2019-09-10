@@ -7,7 +7,8 @@ import scala.collection.generic.CanBuildFrom
 /*
  * @since   Jun. 25, 2017
  *  version Aug. 30, 2017
- * @version Nov. 14, 2017
+ *  version Nov. 14, 2017
+ * @version Sep.  4, 2019
  * @author  ASAMI, Tomoharu
  */
 object MapUtils {
@@ -30,6 +31,8 @@ object MapUtils {
     }
     ps./:(Z())(_+_).r
   }
+
+  def toSingleMap[K, V](p: Map[K, Seq[V]]): Map[K, V] = p.mapValues(_.head)
 
   def complement[K, V](master: Map[K, V], aux: Map[K, V]): Map[K, V] = {
     case class Z(r: Map[K, V]) {
