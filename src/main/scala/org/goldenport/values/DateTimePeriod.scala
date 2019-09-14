@@ -1,13 +1,17 @@
 package org.goldenport.values
 
 import scalaz._, Scalaz._
+import scala.util.Try
 import scala.util.control.NonFatal
 import java.util.Date
 import java.text.SimpleDateFormat
 import java.sql.Timestamp
 import com.github.nscala_time.time.Imports._
 import org.joda.time.DateTimeConstants._
+import spire.math.Interval
+import spire.math.interval._
 import org.goldenport.util.{DateTimeUtils, DateUtils, AnyUtils}
+import org.goldenport.util.SpireUtils.Implicits._
 import org.goldenport.values.Week._
 
 /*
@@ -21,10 +25,11 @@ import org.goldenport.values.Week._
  *  version Feb.  5, 2018
  *  version Jun. 20, 2018
  *  version Jan. 10, 2019
- * @version Aug. 14, 2019
+ *  version Aug. 14, 2019
+ * @version Sep. 14, 2019
  * @author  ASAMI, Tomoharu
  */
-case class DateTimePeriod(
+case class DateTimePeriod( // TODO DateTimeInterval (java8 time)
   start: Option[DateTime],
   end: Option[DateTime],
   isStartInclusive: Boolean = true,
@@ -32,20 +37,30 @@ case class DateTimePeriod(
 ) {
   import DateTimePeriod._
 
-  def isValid(timestamp: Timestamp): Boolean = {
-    val ts = timestamp.getTime
-    (start, end) match {
-      case (None, None) => true
-      case (Some(s), None) => s.getMillis <= ts
-      case (None, Some(e)) => ts <= e.getMillis
-      case (Some(s), Some(e)) => s.getMillis <= ts && ts <= e.getMillis
-    }
+  def toInterval: Interval[DateTime] = {
+    val lower = _to_bound(start, isStartInclusive)
+    val higher = _to_bound(end, isEndInclusive)
+    Interval.fromBounds(lower, higher)
   }
+
+  private def _to_bound(p: Option[DateTime], inclusive: Boolean): Bound[DateTime] =
+    start.map(x => if (inclusive) Closed(x) else Open(x)).getOrElse(Unbound())
+
+  def isValid(p: DateTime): Boolean = isValid(p.getMillis)
+
+  def isValid(timestamp: Timestamp): Boolean = isValid(timestamp.getTime)
 
   // Assumes GMT
   def isValid(date: Date): Boolean = {
     val ts = DateUtils.toTimestampJst(date)
     isValid(ts)
+  }
+
+  def isValid(ts: Long): Boolean = (start, end) match {
+    case (None, None) => true
+    case (Some(s), None) => s.getMillis <= ts
+    case (None, Some(e)) => ts <= e.getMillis
+    case (Some(s), Some(e)) => s.getMillis <= ts && ts <= e.getMillis
   }
 
   def startTimestamp: Option[java.sql.Timestamp] = {
@@ -392,6 +407,25 @@ object DateTimePeriod {
     }
     (dt.getYear, dt.getMonthOfYear, dt.getDayOfMonth)
   }
+
+  def atOrAboveJst(year: Int, month: Int, day: Int): DateTimePeriod =
+    DateTimePeriod(Some(new DateTime(year, month, day, 0, 0, jodajst)), None)
+
+  /*
+   * Caution: Timezone depends running environment.
+   */
+  def parse(p: String): DateTimePeriod = parse(DateTime.now, p)
+
+  def parse(now: DateTime, p: String): DateTimePeriod = parse(now, now.getZone, p)
+
+  def parse(tz: DateTimeZone, p: String): DateTimePeriod = parse(DateTime.now, tz, p)
+
+  def parse(now: DateTime, tz: DateTimeZone, p: String): DateTimePeriod =
+    Builder(now, tz).fromExpression(p)
+
+  def parseJst(p: String): DateTimePeriod = parse(jodajst, p)
+
+  def parseOption(p: String): Option[DateTimePeriod] = Try(parse(p)).toOption
 
   case class Builder(
     datetime: DateTime,
@@ -760,6 +794,7 @@ object DateTimePeriod {
   }
 
   private def gmt = DateTimeUtils.gmt
+  private def jodajst = DateTimeUtils.jodajst
 
   private def sql_long2datetime(t: Long): String = {
     val format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")

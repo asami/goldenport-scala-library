@@ -1,5 +1,6 @@
 package org.goldenport.util
 
+import scala.util.control.NonFatal
 import scala.concurrent.duration._
 import scala.xml.NodeSeq
 import java.util.Date
@@ -9,6 +10,7 @@ import java.net.{URL, URI}
 import java.util.concurrent.TimeUnit
 import org.joda.time._
 import com.asamioffice.goldenport.io.UURL
+import org.goldenport.RAISE
 
 /*
  * See org.goldenport.record.util.AnyUtils
@@ -21,7 +23,8 @@ import com.asamioffice.goldenport.io.UURL
  *  version Sep.  4, 2017
  *  version Oct. 31, 2017
  *  version Nov. 13, 2017
- * @version Dec. 17, 2017
+ *  version Dec. 17, 2017
+ * @version Sep. 12, 2019
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -111,6 +114,30 @@ object AnyUtils {
       case v: BigDecimal => v
       case v => BigDecimal(toString(v))
     }
+  }
+  def toNumber(x: Any): Number = x match {
+    case m: BigInt => m
+    case m: BigDecimal => m
+    case m: Number => m
+    case m: Byte => m
+    case m: Short => m
+    case m: Int => m
+    case m: Long => m
+    case m: Float => m
+    case m: Double => m
+    case m: String => StringUtils.numberOption(m).
+        getOrElse(RAISE.invalidArgumentFault(s"Invalid number: $m"))
+  }
+  def toSpireNumber(x: Any): spire.math.Number = x match {
+    case m: BigInt => spire.math.Number(m)
+    case m: BigDecimal => spire.math.Number(m)
+    case m: Byte => spire.math.Number(m)
+    case m: Short => spire.math.Number(m)
+    case m: Int => spire.math.Number(m)
+    case m: Long => spire.math.Number(m)
+    case m: Float => spire.math.Number(m)
+    case m: Double => spire.math.Number(m)
+    case m: String => spire.math.Number(m)
   }
   def toTimestamp(x: Any): Timestamp = {
     x match {

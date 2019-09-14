@@ -1,6 +1,7 @@
 package org.goldenport.util
 
 import scalaz.NonEmptyList
+import scala.util.Try
 import scala.util.control.NonFatal
 import Character.UnicodeBlock
 import java.net.{URL, URI}
@@ -33,7 +34,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Feb. 14, 2019
  *  version Mar.  5, 2019
  *  version May. 19, 2019
- * @version Jul. 29, 2019
+ *  version Jul. 29, 2019
+ * @version Sep. 12, 2019
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -567,6 +569,38 @@ object StringUtils {
           Some(s.toLong)
         } catch {
           case NonFatal(e) => None
+        }
+      } else {
+        None
+      }
+    }
+
+  def numberOption(s: String): Option[Number] =
+    if (s.isEmpty) {
+      None
+    } else {
+      val length = s.length
+      val c = s(0)
+      if (c == '+' || c == '-' || ('0' <= c && c <= '9')) {
+        if (s.contains('.') || s.contains('e') || s.contains('E')) {
+          Try(s.toDouble: Number).toOption.orElse(Try(new java.math.BigDecimal(s)).toOption)
+        } else {
+          if (length > 11)
+            Try(s.toLong: Number).toOption.orElse(Try(new java.math.BigInteger(s)).toOption)
+          else if (length > 9)
+            Try(s.toInt: Number).toOption.orElse(Try(s.toLong: Number).toOption)
+          else
+            Try(s.toInt: Number).toOption
+        }
+      } else if (c == '.') {
+        if (length > 1) {
+          val c1 = s(1)
+          if ('0' <= c1 && c1 <= '9')
+            Try(s.toDouble: Number).toOption.orElse(Try(BigDecimal(s)).toOption)
+          else
+            None
+        } else {
+          None
         }
       } else {
         None

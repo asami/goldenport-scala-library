@@ -12,7 +12,8 @@ import org.goldenport.exception.RAISE
  *  version Mar. 10, 2019
  *  version May.  6, 2019
  *  version Jun. 30, 2019
- * @version Jul. 17, 2019
+ *  version Jul. 17, 2019
+ * @version Sep. 12, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
@@ -101,6 +102,8 @@ object LogicalTokens {
       Vector(
         NumberToken,
         LocalDateToken, LocalDateTimeToken, LocalTimeToken, DateTimeToken, MonthDayToken,
+        DateTimeIntervalToken,
+        IntervalToken, RangeToken,
         LxsvToken, XsvToken,
         UrlToken, UrnToken,
         PathToken, ExpressionToken

@@ -5,7 +5,7 @@ import java.net.{URL, URI}
 import org.joda.time._
 import org.goldenport.Strings
 import org.goldenport.xsv.Lxsv
-import org.goldenport.values.Urn
+import org.goldenport.values.{Urn, NumberRange, NumberInterval, DateTimePeriod}
 import org.goldenport.util.StringUtils
 import org.goldenport.util.{DateTimeUtils, LocalDateUtils, LocalDateTimeUtils}
 import org.goldenport.util.AnyUtils
@@ -19,7 +19,8 @@ import LogicalTokens.Config
  *  version Feb. 25, 2019
  *  version Mar.  9, 2019
  *  version Jun. 30, 2019
- * @version Jul. 21, 2019
+ *  version Jul. 21, 2019
+ * @version Sep. 12, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -209,6 +210,56 @@ object ComlexToken extends LogicalTokens.SimpleTokenizer {
       }
     }
 }
+case class RationalToken(
+  n: spire.math.Rational,
+  location: Option[ParseLocation]
+) extends LiteralToken {
+  def raw = n.toString // TODO
+  def value = n
+}
+case class RangeToken(
+  range: NumberRange,
+  location: Option[ParseLocation]
+) extends LiteralToken {
+  def raw = range.toString // TODO
+  def value = range
+}
+object RangeToken extends LogicalTokens.SimpleTokenizer {
+  def apply(p: NumberRange, location: ParseLocation): RangeToken =
+    RangeToken(p, Some(location))
+
+  def apply(config: Config, s: String, location: Option[ParseLocation]): RangeToken =
+    RangeToken(NumberRange.parse(s), location)
+
+  def apply(config: Config, s: String, location: ParseLocation): RangeToken =
+    RangeToken(NumberRange.parse(s), Some(location))
+
+  override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
+    None // TODO
+}
+case class IntervalToken(
+  interval: NumberInterval,
+  location: Option[ParseLocation]
+) extends LiteralToken {
+  def raw = interval.toString // TODO
+  def value = interval
+}
+object IntervalToken extends LogicalTokens.SimpleTokenizer {
+  def apply(p: NumberInterval, location: ParseLocation): IntervalToken =
+    IntervalToken(p, Some(location))
+
+  def apply(config: Config, s: String, location: Option[ParseLocation]): IntervalToken =
+    IntervalToken(NumberInterval.parse(s), location)
+
+  def apply(config: Config, s: String, location: ParseLocation): IntervalToken =
+    IntervalToken(NumberInterval.parse(s), Some(location))
+
+  override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
+    if (s.contains("~"))
+      NumberInterval.parseOption(s).map(apply(_, location))
+    else
+      None
+}
 
 case class DateTimeToken(
   datetime: DateTime,
@@ -334,6 +385,69 @@ object MonthDayToken extends LogicalTokens.SimpleTokenizer {
   override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
     if (s.startsWith("--") && s.forall(x => StringUtils.isAsciiNumberChar(x) || x == '-'))
       Try(apply(config, s, location)).toOption
+    else
+      None
+}
+case class PeriodToken(
+  period: Period,
+  location: Option[ParseLocation]
+) extends LiteralToken {
+  def raw = period.toString // TODO
+  def value = period
+}
+object PeriodToken extends LogicalTokens.SimpleTokenizer {
+  def apply(p: Period, location: ParseLocation): PeriodToken =
+    PeriodToken(p, Some(location))
+
+  def apply(config: Config, s: String, location: Option[ParseLocation]): PeriodToken =
+    PeriodToken(Period.parse(s), location)
+
+  def apply(config: Config, s: String, location: ParseLocation): PeriodToken =
+    PeriodToken(Period.parse(s), Some(location))
+
+  override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
+    None // TODO
+}
+case class DurationToken(
+  duration: Duration,
+  location: Option[ParseLocation]
+) extends LiteralToken {
+  def raw = duration.toString // TODO
+  def value = duration
+}
+object DurationToken extends LogicalTokens.SimpleTokenizer {
+  def apply(p: Duration, location: ParseLocation): DurationToken =
+    DurationToken(p, Some(location))
+
+  def apply(config: Config, s: String, location: Option[ParseLocation]): DurationToken =
+    DurationToken(Duration.parse(s), location)
+
+  def apply(config: Config, s: String, location: ParseLocation): DurationToken =
+    DurationToken(Duration.parse(s), Some(location))
+
+  override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
+    None // TODO
+}
+case class DateTimeIntervalToken( // Use IntervalToken if possible
+  interval: DateTimePeriod,
+  location: Option[ParseLocation]
+) extends LiteralToken {
+  def raw = interval.toString // TODO
+  def value = interval
+}
+object DateTimeIntervalToken extends LogicalTokens.SimpleTokenizer {
+  def apply(p: DateTimePeriod, location: ParseLocation): DateTimeIntervalToken =
+    DateTimeIntervalToken(p, Some(location))
+
+  def apply(config: Config, s: String, location: Option[ParseLocation]): DateTimeIntervalToken =
+    DateTimeIntervalToken(DateTimePeriod.parse(s), location)
+
+  def apply(config: Config, s: String, location: ParseLocation): DateTimeIntervalToken =
+    DateTimeIntervalToken(DateTimePeriod.parse(s), Some(location))
+
+  override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
+    if (s.contains("~"))
+      DateTimePeriod.parseOption(s).map(apply(_, location))
     else
       None
 }
