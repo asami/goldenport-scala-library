@@ -26,7 +26,7 @@ import org.goldenport.values.Week._
  *  version Jun. 20, 2018
  *  version Jan. 10, 2019
  *  version Aug. 14, 2019
- * @version Sep. 14, 2019
+ * @version Sep. 18, 2019
  * @author  ASAMI, Tomoharu
  */
 case class DateTimePeriod( // TODO DateTimeInterval (java8 time)
@@ -44,7 +44,7 @@ case class DateTimePeriod( // TODO DateTimeInterval (java8 time)
   }
 
   private def _to_bound(p: Option[DateTime], inclusive: Boolean): Bound[DateTime] =
-    start.map(x => if (inclusive) Closed(x) else Open(x)).getOrElse(Unbound())
+    p.map(x => if (inclusive) Closed(x) else Open(x)).getOrElse(Unbound())
 
   def isValid(p: DateTime): Boolean = isValid(p.getMillis)
 
@@ -425,6 +425,9 @@ object DateTimePeriod {
 
   def parseJst(p: String): DateTimePeriod = parse(jodajst, p)
 
+  /*
+   * Caution: Timezone depends running environment.
+   */
   def parseOption(p: String): Option[DateTimePeriod] = Try(parse(p)).toOption
 
   case class Builder(
