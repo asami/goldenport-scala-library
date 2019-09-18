@@ -35,7 +35,7 @@ import org.goldenport.values.{PathName, Urn}
  *  version Mar.  5, 2019
  *  version May. 19, 2019
  *  version Jul. 29, 2019
- * @version Sep. 12, 2019
+ * @version Sep. 15, 2019
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -543,10 +543,11 @@ object StringUtils {
     case NonFatal(e) => Right(s)
   }
 
-  def intOption(s: String): Option[Int] =
-    if (s.isEmpty) {
+  def intOption(p: String): Option[Int] =
+    if (p.isEmpty) {
       None
     } else {
+      val s = p.trim
       val c = s(0)
       if (c == '+' || c == '-' || ('0' <= c && c <= '9')) {
         try {
@@ -559,10 +560,11 @@ object StringUtils {
       }
     }
 
-  def longOption(s: String): Option[Long] =
-    if (s.isEmpty) {
+  def longOption(p: String): Option[Long] =
+    if (p.isEmpty) {
       None
     } else {
+      val s = p.trim
       val c = s(0)
       if (c == '+' || c == '-' || ('0' <= c && c <= '9')) {
         try {
@@ -575,10 +577,29 @@ object StringUtils {
       }
     }
 
-  def numberOption(s: String): Option[Number] =
-    if (s.isEmpty) {
+  def doubleOption(s: String): Option[Double] =
+    if (s.isEmpty)
+      None
+    else
+      numberOption(s).filter(_is_double).map(_.doubleValue)
+
+  private def _is_double(p: Any) = p match {
+    case _: Byte => true
+    case _: Short => true
+    case _: Int => true
+    case _: Long => true
+    case _: Float => true
+    case _: Double => true
+    case _: BigInt => false
+    case _: BigDecimal => false
+    case _ => false
+  }
+
+  def numberOption(p: String): Option[Number] =
+    if (p.isEmpty) {
       None
     } else {
+      val s = p.trim
       val length = s.length
       val c = s(0)
       if (c == '+' || c == '-' || ('0' <= c && c <= '9')) {

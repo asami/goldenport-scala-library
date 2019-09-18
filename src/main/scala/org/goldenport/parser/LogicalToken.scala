@@ -20,7 +20,7 @@ import LogicalTokens.Config
  *  version Mar.  9, 2019
  *  version Jun. 30, 2019
  *  version Jul. 21, 2019
- * @version Sep. 12, 2019
+ * @version Sep. 14, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -235,7 +235,10 @@ object RangeToken extends LogicalTokens.SimpleTokenizer {
     RangeToken(NumberRange.parse(s), Some(location))
 
   override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
-    None // TODO
+    if (s.contains('~') || s.contains(','))
+      NumberRange.parseOption(s).map(apply(_, location))
+    else
+      None
 }
 case class IntervalToken(
   interval: NumberInterval,
@@ -359,7 +362,7 @@ object LocalTimeToken extends LogicalTokens.SimpleTokenizer {
     LocalTimeToken(LocalTime.parse(s), Some(location))
 
   override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
-    if (s.count(_ == ':') <= 2 && !s.contains('-'))
+    if (s.count(_ == ':') <= 2 && !s.contains('-') && !s.contains(','))
       Try(apply(config, s, location)).toOption
     else
       None
@@ -447,7 +450,7 @@ object DateTimeIntervalToken extends LogicalTokens.SimpleTokenizer {
 
   override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
     if (s.contains("~"))
-      DateTimePeriod.parseOption(s).map(apply(_, location))
+      DateTimePeriod.parseOption(s).map(apply(_, location)) // TODO timezone, datetime
     else
       None
 }

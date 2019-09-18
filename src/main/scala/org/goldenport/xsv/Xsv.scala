@@ -6,10 +6,12 @@ import org.goldenport.RAISE
 import org.goldenport.matrix._
 import org.goldenport.parser._
 import org.goldenport.value._
+import org.goldenport.values.NumberRange
 
 /*
  * @since   Jul. 16, 2019
- * @version Aug. 24, 2019
+ *  version Aug. 24, 2019
+ * @version Sep. 16, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Xsv(
@@ -19,10 +21,16 @@ case class Xsv(
   def apply(x: Int, y: Int): LogicalToken = matrix.apply(x, y)
   def width: Int = matrix.width
   def height: Int = matrix.height
-  def rowIterator: Iterator[Vector[LogicalToken]] = matrix.rowIterator
-  def columnIterator: Iterator[Vector[LogicalToken]] = matrix.columnIterator
+  override def rowIterator: Iterator[Vector[LogicalToken]] = matrix.rowIterator
+  override def columnIterator: Iterator[Vector[LogicalToken]] = matrix.columnIterator
+  def projection(p: NumberRange): IMatrix[LogicalToken] = RAISE.notImplementedYetDefect
+  def selection(p: NumberRange): IMatrix[LogicalToken] = RAISE.notImplementedYetDefect
+  def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
+  def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def appendRow(ps: Seq[LogicalToken]): Xsv = copy(matrix = matrix appendRow ps)
   def appendRows(ps: IMatrix[LogicalToken]): Xsv = copy(matrix = matrix appendRows ps)
+  def appendColumn(ps: Seq[LogicalToken]): IMatrix[LogicalToken] = RAISE.unsupportedOperationFault
+  def appendColumns(ps: IMatrix[LogicalToken]): IMatrix[LogicalToken] = RAISE.unsupportedOperationFault
   def transpose: IMatrix[LogicalToken] = RAISE.notImplementedYetDefect
 }
 

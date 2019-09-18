@@ -2,7 +2,7 @@ package org.goldenport.extension
 
 /*
  * @since   Jul. 24, 2019
- * @version Jul. 26, 2019
+ * @version Sep. 18, 2019
  * @author  ASAMI, Tomoharu
  */
 trait Showable {
@@ -17,7 +17,7 @@ trait Showable {
   def display: String
 
   /*
-   * Show a shortened natural representation with some information.
+   * Sufficient short information for debug.
    */
   def show: String
 }

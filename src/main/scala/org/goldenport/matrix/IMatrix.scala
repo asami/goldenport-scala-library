@@ -2,6 +2,7 @@ package org.goldenport.matrix
 
 import org.goldenport.RAISE
 import org.goldenport.extension.Showable
+import org.goldenport.values.NumberRange
 import org.goldenport.matrix.breeze.BreezeMatrix
 
 /*
@@ -9,18 +10,40 @@ import org.goldenport.matrix.breeze.BreezeMatrix
  *  version Jun. 30, 2019
  *  version Jul. 16, 2019
  *  version Aug. 26, 2019
- * @version Sep.  9, 2019
+ * @version Sep. 16, 2019
  * @author  ASAMI, Tomoharu
  */
 trait IMatrix[T] extends Showable {
   def apply(x: Int, y: Int): T
   def width: Int
   def height: Int
-  def rowIterator: Iterator[Vector[T]]
-  def columnIterator: Iterator[Vector[T]]
+  def rowIterator: Iterator[Vector[T]] = new Iterator[Vector[T]] {
+    var y = 0
+    def hasNext: Boolean = height > y
+    def next(): Vector[T] = {
+      val xs = for (x <- 0 until width) yield { apply(x, y) }
+      y += 1
+      xs.toVector
+    }
+  }
+  def columnIterator: Iterator[Vector[T]] = new Iterator[Vector[T]] {
+    var x = 0
+    def hasNext: Boolean = width > x
+    def next(): Vector[T] = {
+      val xs = for (y <- 0 until height) yield { apply(x, y) }
+      x += 1
+      xs.toVector
+    }
+  }
+  def projection(p: NumberRange): IMatrix[T]
+  def selection(p: NumberRange): IMatrix[T]
+  def toDoubleMatrix: IMatrix[Double]
+  def makeDoubleMatrix: IMatrix[Double]
   // 
   def appendRow(p: Seq[T]): IMatrix[T]
   def appendRows(ps: IMatrix[T]): IMatrix[T]
+  def appendColumn(p: Seq[T]): IMatrix[T]
+  def appendColumns(p: IMatrix[T]): IMatrix[T]
   //
   def print = show
   def display = s"Matrix[${width}x${height}]"
@@ -40,10 +63,14 @@ trait IMatrix[T] extends Showable {
 
 case class ArrayMatrix[T](matrix: Array[T], width: Int, height: Int) extends IMatrix[T] {
   def apply(x: Int, y: Int): T = matrix(y * width + x)
-  def rowIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
-  def columnIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
-  def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.unsupportedOperationFault
-  def appendRows(ps: IMatrix[T]): IMatrix[T] = RAISE.unsupportedOperationFault
+  def projection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def selection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
+  def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
+  def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
+  def appendRows(ps: IMatrix[T]): IMatrix[T] = RAISE.notImplementedYetDefect
+  def appendColumn(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
+  def appendColumns(ps: IMatrix[T]): IMatrix[T] = RAISE.notImplementedYetDefect
   def transpose: IMatrix[T] = RAISE.notImplementedYetDefect
 }
 
@@ -51,10 +78,15 @@ case class ArrayRowColumnMatrix[T](matrix: Array[Array[T]]) extends IMatrix[T] {
   def apply(x: Int, y: Int): T = matrix(y)(x)
   lazy val width: Int = matrix.map(_.length).max
   def height: Int = matrix.length
-  def rowIterator: Iterator[Vector[T]] = matrix.iterator.map(_.toVector)
-  def columnIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
-  def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.unsupportedOperationFault
-  def appendRows(ps: IMatrix[T]): IMatrix[T] = RAISE.unsupportedOperationFault
+  override def rowIterator: Iterator[Vector[T]] = matrix.iterator.map(_.toVector)
+  def projection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def selection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
+  def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
+  def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
+  def appendRows(ps: IMatrix[T]): IMatrix[T] = RAISE.notImplementedYetDefect
+  def appendColumn(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
+  def appendColumns(ps: IMatrix[T]): IMatrix[T] = RAISE.notImplementedYetDefect
   def transpose: IMatrix[T] = RAISE.notImplementedYetDefect
 }
 
@@ -62,19 +94,28 @@ case class ArrayColumnRowMatrix[T](matrix: Array[Array[T]]) extends IMatrix[T] {
   def apply(x: Int, y: Int): T = matrix(x)(y)
   def width: Int = matrix.length
   lazy val height: Int = matrix.map(_.length).max
-  def rowIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
-  def columnIterator: Iterator[Vector[T]] = matrix.iterator.map(_.toVector)
-  def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.unsupportedOperationFault
-  def appendRows(ps: IMatrix[T]): IMatrix[T] = RAISE.unsupportedOperationFault
+  override def columnIterator: Iterator[Vector[T]] = matrix.iterator.map(_.toVector)
+  def projection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def selection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
+  def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
+  def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
+  def appendRows(ps: IMatrix[T]): IMatrix[T] = RAISE.notImplementedYetDefect
+  def appendColumn(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
+  def appendColumns(ps: IMatrix[T]): IMatrix[T] = RAISE.notImplementedYetDefect
   def transpose: IMatrix[T] = RAISE.notImplementedYetDefect
 }
 
 case class VectorMatrix[T](matrix: Vector[T], width: Int, height: Int) extends IMatrix[T] {
   def apply(x: Int, y: Int): T = matrix(y * width + x)
-  def rowIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
-  def columnIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
-  def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.unsupportedOperationFault
-  def appendRows(ps: IMatrix[T]): IMatrix[T] = RAISE.unsupportedOperationFault
+  def projection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def selection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
+  def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
+  def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
+  def appendRows(ps: IMatrix[T]): IMatrix[T] = RAISE.notImplementedYetDefect
+  def appendColumn(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
+  def appendColumns(ps: IMatrix[T]): IMatrix[T] = RAISE.notImplementedYetDefect
   def transpose: IMatrix[T] = RAISE.notImplementedYetDefect
 }
 
@@ -84,18 +125,39 @@ trait VectorRowColumnMatrixBase[T] extends IMatrix[T] {
   def apply(x: Int, y: Int): T = matrix(y)(x)
   lazy val width: Int = matrix.map(_.length).max
   def height: Int = matrix.length
-  def rowIterator: Iterator[Vector[T]] = matrix.iterator
-  def columnIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
+  override def rowIterator: Iterator[Vector[T]] = matrix.iterator
+  def projection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def selection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
+  def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
 
   def transpose: IMatrix[T] = VectorColumnRowMatrix(matrix)
 }
 
 case class VectorRowColumnMatrix[T](matrix: Vector[Vector[T]]) extends VectorRowColumnMatrixBase[T] {
+  override def projection(p: NumberRange): IMatrix[T] =
+    VectorRowColumnMatrix(MatrixUtils.projectionVector(matrix, p))
+
+  override def toDoubleMatrix: IMatrix[Double] =
+    VectorRowColumnMatrix(MatrixUtils.toDoubleVector(matrix))
+
+  override def makeDoubleMatrix: IMatrix[Double] =
+    VectorRowColumnMatrix(MatrixUtils.makeProjectionDoubleVector(matrix))
+
   def appendRow(ps: Seq[T]): VectorRowColumnMatrix[T] =
     VectorRowColumnMatrix(matrix :+ ps.toVector)
 
   def appendRows(ps: IMatrix[T]): VectorRowColumnMatrix[T] =
     VectorRowColumnMatrix(matrix ++ ps.rowIterator)
+
+  def appendColumn(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
+
+  def appendColumns(ps: IMatrix[T]): IMatrix[T] = {
+    val a = matrix.zip(ps.rowIterator.toVector).map {
+      case (l, r) => l ++ r
+    }
+    VectorRowColumnMatrix(a)
+  }
 }
 object VectorRowColumnMatrix {
   private val _empty = VectorRowColumnMatrix(Vector.empty)
@@ -113,11 +175,19 @@ case class VectorColumnRowMatrix[T](
   def apply(x: Int, y: Int): T = matrix(x)(y) // TODO empty value
   def width: Int = matrix.length
   lazy val height: Int = matrix.map(_.length).max
-  def rowIterator: Iterator[Vector[T]] = RAISE.notImplementedYetDefect
-  def columnIterator: Iterator[Vector[T]] = matrix.iterator
+  override def columnIterator: Iterator[Vector[T]] = matrix.iterator
+  def projection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def selection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
+  def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
 
   def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
-  def appendRows(ps: IMatrix[T]): VectorRowColumnMatrix[T] = RAISE.notImplementedYetDefect
+  def appendRows(p: IMatrix[T]): VectorRowColumnMatrix[T] = RAISE.notImplementedYetDefect
+  def appendColumn(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
+  def appendColumns(p: IMatrix[T]): IMatrix[T] = {
+    val a = matrix ++ p.columnIterator.toVector
+    VectorColumnRowMatrix(a)
+  }
   def transpose: IMatrix[T] = VectorRowColumnMatrix(matrix)
 }
 object VectorColumnRowMatrix {
