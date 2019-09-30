@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "1.2.47"
+version := "1.2.48"
 
 scalaVersion := "2.10.3"
 // crossScalaVersions := Seq("2.9.2", "2.9.1")
@@ -54,6 +54,8 @@ libraryDependencies += "net.sourceforge.nekohtml" % "nekohtml" % "1.9.22" % "com
 libraryDependencies += "com.typesafe.play" %% "play-json" % "2.2.2" % "provided" exclude("org.scala-stm", "scala-stm_2.10.0")
 
 libraryDependencies += "org.scalanlp" %% "breeze" % "0.13.2" % "compile"
+
+libraryDependencies += "black.ninia" % "jep" % "3.9.0" % "compile"
 
 libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.2.6" % "test"
 
