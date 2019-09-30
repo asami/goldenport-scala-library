@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit
 import org.joda.time._
 import com.asamioffice.goldenport.io.UURL
 import org.goldenport.RAISE
+import org.goldenport.extension.Showable
 
 /*
  * See org.goldenport.record.util.AnyUtils
@@ -24,7 +25,7 @@ import org.goldenport.RAISE
  *  version Oct. 31, 2017
  *  version Nov. 13, 2017
  *  version Dec. 17, 2017
- * @version Sep. 12, 2019
+ * @version Sep. 23, 2019
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -35,6 +36,7 @@ object AnyUtils {
       case m: NodeSeq => m.toString
       case m: Seq[_] => m.map(toString(_)).mkString(",")
       case m: Array[_] => m.map(toString(_)).mkString(",")
+      case m: Showable => m.print
       case _ => x.toString
     }
   }

@@ -12,7 +12,8 @@ import org.goldenport.xml.XmlUtils.{makeString, parseNodeSeq}
  *  version Oct. 30, 2017
  *  version Nov.  1, 2017
  *  version Jan.  5, 2018
- * @version Jul.  6, 2019
+ *  version Jul.  6, 2019
+ * @version Sep. 23, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait I18NElement {
@@ -62,6 +63,7 @@ case class I18NStringI18NElement(v: I18NString) extends I18NElement {
   def toJson = v.toJson
   def toJsonString = v.toJsonString
   lazy val toI18NString = I18NString(
+    makeString(v._c),
     makeString(v._en),
     makeString(v._ja),
     v.map.mapValues(makeString),

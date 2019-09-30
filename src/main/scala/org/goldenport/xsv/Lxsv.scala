@@ -10,15 +10,15 @@ import org.goldenport.extension.IRecord
 
 /*
  * @since   Jul. 16, 2019
- * @version Jul. 26, 2019
+ * @version Sep. 23, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Lxsv(
   strategy: Xsv.Strategy,
   vectormap: VectorMap[Symbol, LogicalToken]
 ) extends IRecord {
-  lazy val keys: List[Symbol] = vectormap.keys.toList
-  lazy val keyNames: List[String] = keys.map(_.name)
+  lazy val keySymbols: List[Symbol] = vectormap.keys.toList
+  lazy val keyNames: List[String] = keySymbols.map(_.name)
   def length: Int = vectormap.size
   def get(key: Symbol): Option[Any] = getToken(key)
   def get(key: String): Option[Any] = getToken(key)
@@ -29,6 +29,8 @@ case class Lxsv(
   }.mkString(strategy.outputSeparator.toString)
   def display: String = print // TODO
   def show: String = print // TODO
+
+  def valueMap: Map[Symbol, Any] = vectormap.mapValues(_.value)
 }
 
 object Lxsv {

@@ -14,7 +14,8 @@ import org.goldenport.util.DateTimeUtils
  *  version Jan.  1, 2019
  *  version Feb.  9, 2019
  *  version Mar. 10, 2019
- * @version Apr. 13, 2019
+ *  version Apr. 13, 2019
+ * @version Sep. 24, 2019
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -258,6 +259,27 @@ print(c)
 """, ParseLocation.start)
         ))
       }
+      "properties" in {
+        val s = """$[locale:ja]{a + b}"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ScriptToken("a + b", Some(ParseLocation.start), None, Some("locale:ja"))
+        ))
+      }
+      "has postfix" in {
+        val s = """$[locale:ja]{a + b}%,d"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ScriptToken("a + b", Some(ParseLocation.start), None, Some("locale:ja"), Some(",d"))
+        ))
+      }
+      "has complex postfix" in {
+        val s = """$[locale:ja]{a + b}%{,d}"""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ScriptToken("a + b", Some(ParseLocation.start), None, Some("locale:ja"), Some(",d"))
+        ))
+      }
     }
   }
   "line" should {
@@ -357,4 +379,13 @@ c d)"""
       }
     }
   }
+  // "tryout " should {
+  //   "properties" in {
+  //     val s = """$[locale:ja]{a + b}"""
+  //     val r = LogicalTokens.parse(s)
+  //     r should be(LogicalTokens(
+  //       ScriptToken("a + b", Some(ParseLocation.start), None, Some("locale:ja"))
+  //     ))
+  //   }
+  // }
 }

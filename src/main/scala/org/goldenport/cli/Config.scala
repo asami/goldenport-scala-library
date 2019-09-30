@@ -3,9 +3,11 @@ package org.goldenport.cli
 import java.io.File
 import java.net.URL
 import java.nio.charset.Charset
-import java.util.{Locale, TimeZone}
+import java.util.{Locale, TimeZone, Currency, ResourceBundle}
 import com.typesafe.config.{Config => HoconConfig, ConfigFactory}
 import org.goldenport.i18n.I18NContext
+import org.goldenport.i18n.CalendarFormatter
+import org.goldenport.i18n.EmptyResourceBundle
 import org.goldenport.hocon.RichConfig
 import org.goldenport.log.LogLevel
 
@@ -14,7 +16,8 @@ import org.goldenport.log.LogLevel
  *  version Feb.  8, 2019
  *  version Mar. 24, 2019
  *  version May. 19, 2019
- * @version Aug.  4, 2019
+ *  version Aug.  4, 2019
+ * @version Sep. 25, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Config(
@@ -35,6 +38,7 @@ case class Config(
 
 object Config {
   val default = build()
+  val c = default.copy(i18nContext = I18NContext.c)
   val empty = _create(ConfigFactory.load())
 
   def build(): Config = {
@@ -99,12 +103,19 @@ object Config {
       None
   }
 
-  private def _create(hocon: HoconConfig): Config = {
+  val DEFAULT_RESOURCE_BUNDLE_NAME = "Resources"
+
+  private def _create(hocon: HoconConfig): Config = _create(DEFAULT_RESOURCE_BUNDLE_NAME, hocon)
+
+  private def _create(resourcename: String, hocon: HoconConfig): Config = {
     // TODO hocon
     val charset = Charset.defaultCharset()
     val newline = System.lineSeparator()
     val locale = Locale.getDefault()
     val timezone = TimeZone.getDefault()
+    val currency = Currency.getInstance(locale)
+    val calenderformatters = CalendarFormatter.Factory.default
+    val bundle = EmptyResourceBundle
     val homedir = Option(System.getProperty("user.home")).map(x => new File(x))
     val workdir = Option(System.getProperty("user.dir")).map(x => new File(x))
     val projectdir = None // TODO
@@ -113,7 +124,10 @@ object Config {
         charset,
         newline,
         locale,
-        timezone
+        timezone,
+        currency,
+        calenderformatters,
+        bundle
       ),
       homedir,
       workdir,

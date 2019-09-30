@@ -20,7 +20,7 @@ import LogicalTokens.Config
  *  version Mar.  9, 2019
  *  version Jun. 30, 2019
  *  version Jul. 21, 2019
- * @version Sep. 14, 2019
+ * @version Sep. 28, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -546,18 +546,22 @@ object ExpressionToken extends LogicalTokens.SimpleTokenizer {
       ).getOrElse(false)
 
   @inline
-  private def _is_atom(p: String) = 
-    StringUtils.isLispIdentifierI18N(p) || StringUtils.isNumericalSymbol(p) || p == "."
+  private def _is_atom(p: String) = (
+    StringUtils.isLispIdentifierI18N(p) || StringUtils.isNumericalSymbol(p)
+      || p == "." || p == '%'
+  )
 
   @inline
   private def _is_not_atom(p: String) = !_is_atom(p)
 
+  @inline
   private def _is_accept_first(c: Char) = StringUtils.isLispIdentifierI18NChar(c)
 
   // '(', '{', '[' and '@' : in first character, used by another token type.
   // '/' : used by PathToken.
+  @inline
   private def _is_accept(c: Char) = {
-    val r = StringUtils.isLispIdentifierI18NChar(c) || StringUtils.isScriptSymbolChar(c)
+    val r = StringUtils.isLispIdentifierI18NChar(c) || StringUtils.isScriptSymbolChar(c) || c == '%'
 //    println(s"ExpressionToken#_is_accept $c => $r")
     r
   }
@@ -648,10 +652,15 @@ object RawBracketToken {
     RawBracketToken(text, Some(location))
 }
 
+/*
+ * prefix$[properties]{text}%{postfix}
+ */
 case class ScriptToken(
   text: String,
   location: Option[ParseLocation],
-  prefix: Option[String] = None
+  prefix: Option[String] = None,
+  properties: Option[String] = None,
+  postfix: Option[String] = None
 ) extends LiteralToken {
   def raw = "${" + text + "}" // TODO
   def value = text
@@ -660,6 +669,12 @@ case class ScriptToken(
 object ScriptToken {
   def apply(text: String, location: ParseLocation): ScriptToken =
     ScriptToken(text, Some(location))
+
+  def apply(text: String): ScriptToken =
+    ScriptToken(text, None)
+
+  def apply(text: String, properties: Option[String], postfix: Option[String]): ScriptToken =
+    ScriptToken(text, None, None, properties, postfix)
 }
 
 case class ExplicitLiteralToken(

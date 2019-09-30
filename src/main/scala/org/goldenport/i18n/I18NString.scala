@@ -15,10 +15,12 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Sep.  1, 2017
  *  version Apr. 30, 2019
  *  version Jun.  8, 2019
- * @version Aug. 16, 2019
+ *  version Aug. 16, 2019
+ * @version Sep. 23, 2019
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
+  private[i18n] val _c: String, // special locale for programming language
   private[i18n] val _en: String,
   private[i18n] val _ja: String,
   map: Map[Locale, String],
@@ -28,6 +30,7 @@ case class I18NString(
 
   def as(locale: Locale): String = get(locale) getOrElse _format(en)
 
+  lazy val c = _format(_c)
   lazy val en = _format(_en)
   lazy val ja = _format(_ja)
 
@@ -96,6 +99,7 @@ case class I18NString(
     }
     val locales = rhs.map./:(Z(map))(_+_).r
     I18NString(
+      s"${_c}${delimiter}${rhs._c}",
       s"${_en}${delimiter}${rhs._en}",
       s"${_ja}${delimiter}${rhs._ja}",
       locales,
@@ -104,6 +108,7 @@ case class I18NString(
   }
 
   def appendAll(s: String): I18NString = I18NString(
+    _c + s,
     _en + s,
     _ja + s,
     map.mapValues(_ + s),
@@ -126,6 +131,7 @@ case class I18NString(
       }
     }
     I18NString(
+      s"${_c}: ${p.c}",
       s"${_en}: ${p.en}",
       s"${_ja}: ${p.ja}",
       map./:(Z(p.map))(_+_).r,
@@ -138,7 +144,7 @@ case class I18NString(
   // )
 
   def update(f: String => String): I18NString = I18NString(
-    f(en), f(ja), map.map(x => (x._1, f(x._2))), parameters
+    f(c), f(en), f(ja), map.map(x => (x._1, f(x._2))), parameters
   )
 
   lazy val toJson: JsObject = {
@@ -162,14 +168,18 @@ case class I18NString(
 object I18NString {
   val empty = I18NString("")
 
-  def apply(en: String, ja: String): I18NString = I18NString(en, ja, Map.empty, Vector.empty)
-  def apply(en: String, params: Seq[Any]): I18NString = I18NString(en, en, Map.empty, params.toVector)
-  def apply(en: String, ja: String, params: Seq[Any]): I18NString = I18NString(en, ja, Map.empty, params.toVector)
-  def apply(en: String): I18NString = I18NString(en, en, Map.empty, Vector.empty)
+  def apply(en: String, ja: String): I18NString = I18NString(en, en, ja, Map.empty, Vector.empty)
+  def apply(en: String, params: Seq[Any]): I18NString = I18NString(en, en, en, Map.empty, params.toVector)
+  def apply(en: String, ja: String, params: Seq[Any]): I18NString = I18NString(en, en, ja, Map.empty, params.toVector)
+  def apply(en: String): I18NString = I18NString(en, en, en, Map.empty, Vector.empty)
   def apply(ps: Seq[(Locale, String)]): I18NString = {
     case class Z(map: Map[Locale, String] = Map.empty) {
-      def r = I18NString(_en, _ja, map, Vector.empty)
+      def r = I18NString(_c, _en, _ja, map, Vector.empty)
       def +(rhs: (Locale, String)) = Z(map + rhs)
+      private def _c: String = {
+        val xs = ps.toVector
+        LocaleUtils.getC(xs).orElse(LocaleUtils.getEnglish(xs)).orElse(LocaleUtils.getJapanese(xs)).orElse(xs.headOption.map(_._2)).getOrElse("-")
+      }
       private def _en: String = {
         val xs = ps.toVector
         LocaleUtils.getEnglish(xs).orElse(LocaleUtils.getJapanese(xs)).orElse(xs.headOption.map(_._2)).getOrElse("-")
@@ -185,11 +195,11 @@ object I18NString {
   // def apply(p: RI18NString): I18NString = I18NString(p.en, p.ja, Map.empty, p.parameters)
 
   def create(locale: Locale, s: String): I18NString = {
-    val a = if (LocaleUtils.isEnglish(locale) || LocaleUtils.isJapanese(locale))
+    val a = if (LocaleUtils.isC(locale) || LocaleUtils.isEnglish(locale) || LocaleUtils.isJapanese(locale))
       List.empty
     else
       List((locale, s))
-    I18NString(s, s, a.toMap, Vector.empty)
+    I18NString(s, s, s, a.toMap, Vector.empty)
   }
 
   def parse(p: String): I18NString = {
