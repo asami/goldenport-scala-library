@@ -7,10 +7,9 @@ import MatrixVisualizer._
 
 /*
  * @since   Jun. 16, 2019
- *  version Jun. 23, 2019
  *  version Jul.  7, 2019
- * @version Aug. 24, 2019
- * @version Aug. 24, 2019
+ *  version Aug. 24, 2019
+ * @version Oct. 11, 2019
  * @author  ASAMI, Tomoharu
  */
 case class MatrixVisualizer[T](
@@ -23,6 +22,13 @@ case class MatrixVisualizer[T](
   newline: String,
   textf: T => String
 ) {
+  val horizontalSeparatorGap = 3
+
+  private def _is_horizontal_separator(i: Int): Boolean =
+    horizontalSeparator && _is_gap(i)
+
+  private def _is_gap(i: Int): Boolean = (i % horizontalSeparatorGap) == 0
+
   def withLineStyle(p: LineStyle) = copy(lineStyle = p)
 
   def buildColumns(p: IMatrix[T]): ColumnInfos = {
@@ -74,21 +80,21 @@ case class MatrixVisualizer[T](
 
   private def _make(columns: ColumnInfos, rows: Rows): Rows = {
     val a: Seq[Row] = rows.rows.map { row =>
-      val xs = row.cells.zip(columns.columns).map {
+      val xs = row.effectiveCells(columns).zip(columns.columns).map {
         case (cell, column) => cell.normalize(column, charWidth)
       }
-      Row(xs)
+      Row(xs.toVector)
     }
-    Rows(a)
+    Rows(a.toVector)
   }
 
   private def _draw(columns: ColumnInfos, rows: Rows): String = {
     val sb = new StringBuilder()
     _draw_border(sb, columns, topBorder)
-    rows.rows.headOption.map { first =>
+    rows.headOption.map { first =>
       _draw_row(sb, columns, first)
-      for (row <- rows.rows.tail) {
-        if (horizontalSeparator)
+      for ((row, i) <- rows.tailWithIndex) {
+        if (_is_horizontal_separator(i))
           _draw_horizontal_separator(sb, columns)
         _draw_row(sb, columns, row)
       }
@@ -452,16 +458,26 @@ object MatrixVisualizer {
   }
 
   case class ColumnInfo(width: Int)
-  case class ColumnInfos(columns: Seq[ColumnInfo]) {
+  case class ColumnInfos(columns: IndexedSeq[ColumnInfo]) {
+    def length = columns.length
     def apply(i: Int): ColumnInfo = columns(i)
   }
-  case class Rows(rows: Seq[Row]) {
+  case class Rows(rows: IndexedSeq[Row]) {
     lazy val width = rows.map(_.width).max
+
+    def headOption = rows.headOption
+    def tailWithIndex = rows.tail.zipWithIndex
   }
-  case class Row(cells: Seq[Cell]) {
+  case class Row(cells: IndexedSeq[Cell]) {
     def width = cells.length
 
     def matrix: IMatrix[String] = VectorColumnRowMatrix(cells.map(_.lines), "")
+
+    def effectiveCells(p: ColumnInfos): IndexedSeq[Cell] =
+      if (cells.length >= p.length)
+        cells
+      else
+        (cells.toStream ++ Stream.continually(Cell.empty)).take(p.length).toVector
   }
   case class Cell(lines: Seq[String]) {
     def normalize(p: ColumnInfo, f: Char => Int) = Cell(lines.flatMap(_normalize(p.width, f, _)))
@@ -490,6 +506,8 @@ object MatrixVisualizer {
     }
   }
   object Cell {
+    val empty = Cell(Vector.empty)
+
     def apply(p: String): Cell = Cell(Vector(p))
   }
 

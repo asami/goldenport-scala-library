@@ -4,7 +4,8 @@ import org.goldenport.util.StringUtils
 
 /*
  * @since   Sep. 21, 2019
- * @version Sep. 27, 2019
+ *  version Sep. 27, 2019
+ * @version Oct. 11, 2019
  * @author  ASAMI, Tomoharu
  */
 case class InterpolationParser(
@@ -26,10 +27,17 @@ case class InterpolationParser(
 
   private def _get_first_dollar(p: CharSequence): Option[Cont] = {
     var dollarposition: Option[Int] = None
+    var afterdollar: Boolean = false
     for (i <- 0 until p.length - 1) {
       def nextchar = if (i >= p.length) null else p.charAt(i + 1)
       p.charAt(i) match {
-        case '$' => if (nextchar != '$') dollarposition = Some(i)
+        case '$' =>
+          if (afterdollar) {
+            dollarposition = None
+            afterdollar = false
+          } else if (nextchar != '$') {
+            dollarposition = Some(i)
+          }
         case _ => // do nothing
       }
       dollarposition.foreach(x =>
@@ -79,7 +87,7 @@ case class InterpolationParser(
   }
 
   private def _simple_parse(p: CharSequence): Cont =
-    if (p.length < 3)
+    if (p.length <= 1)
       Cont.end(p)
     else
       _simple_parse_option(p).getOrElse(Cont(p))
@@ -217,6 +225,10 @@ case class InterpolationParser(
             postfix.append(c)
           }
       }
+    }
+    state match {
+      case SHORT_IN => expression = p.subSequence(startpos + 2, p.length).toString
+      case _ => // do nothing
     }
     if (expression == null)
       Some(Cont.end(p))

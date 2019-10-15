@@ -1,10 +1,11 @@
 package org.goldenport.parser
 
 import org.goldenport.RAISE
+import org.goldenport.collection.NonEmptyVector
 
 /*
  * @since   Aug. 24, 2019
- * @version Aug. 24, 2019
+ * @version Oct. 14, 2019
  * @author  ASAMI, Tomoharu
  */
 case class CommandParser[T](
@@ -25,7 +26,7 @@ case class CommandParser[T](
       candidates.filter(_.name.startsWith(name)) match {
         case Nil => NotFound()
         case x :: Nil => Found(x.command)
-        case xs => Candidates(xs.map(_.command))
+        case x :: xs => Candidates(NonEmptyVector(x, xs))
       }
     )
 
@@ -36,9 +37,14 @@ case class CommandParser[T](
         case Some(x) => Found(x.command)
       }
     )
+
+  def append(p: CommandParser[T]): CommandParser[T] = copy(candidates ::: p.candidates)
 }
 
 object CommandParser {
+  private val _empty = CommandParser(Nil)
+  def empty[T] = _empty.asInstanceOf[CommandParser[T]]
+
   sealed trait Strategy
   case object NoConflictStrategy extends Strategy
   case object FirstMatchStrategy extends Strategy
@@ -52,8 +58,14 @@ object CommandParser {
   case class Found[T](command: T) extends Result[T] {
     def toOption: Option[T] = Some(command)
   }
-  case class Candidates[T](commands: List[T]) extends Result[T] {
+  case class Candidates[T](commands: NonEmptyVector[Slot[T]]) extends Result[T] {
     def toOption: Option[T] = None
+  }
+  object Candidates {
+    def create[T](p: (String, T), ps: (String, T)*): Candidates[T] = {
+      val xs = NonEmptyVector(Slot(p._1, p._2), ps.map(kv => Slot(kv._1, kv._2)))
+      Candidates(xs)
+    }
   }
 
   case class Slot[T](name: String, command: T)

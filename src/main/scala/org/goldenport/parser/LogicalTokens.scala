@@ -1,6 +1,7 @@
 package org.goldenport.parser
 
 import scalaz._, Scalaz._
+import scala.util.control.NonFatal
 import org.goldenport.exception.RAISE
 
 /*
@@ -13,14 +14,19 @@ import org.goldenport.exception.RAISE
  *  version May.  6, 2019
  *  version Jun. 30, 2019
  *  version Jul. 17, 2019
- * @version Sep. 28, 2019
+ *  version Sep. 28, 2019
+ * @version Oct. 12, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
   tokens: Vector[LogicalToken]
 ) {
   def isEmpty = tokens.isEmpty
-  lazy val head = tokens.head
+  lazy val head = try {
+    tokens.head
+  } catch {
+    case NonFatal(e) => RAISE.illegalStateFault("LogicalTokens#head empty")
+  }
   lazy val tail = LogicalTokens(tokens.tail)
   def +(p: LogicalTokens) = LogicalTokens(tokens ++ p.tokens)
   def +(p: LogicalToken) = LogicalTokens(tokens :+ p)
@@ -28,6 +34,14 @@ case class LogicalTokens(
   def +:(p: LogicalToken) = LogicalTokens(p +: tokens)
 
   lazy val tokensWithEnd = tokens :+ EndToken
+
+  def toStringToken: StringToken = SingleStringToken(tokens.map(_.raw).mkString)
+
+  def makeToken: LogicalToken = tokens.length match {
+    case 0 => EmptyToken
+    case 1 => head.clearLocation
+    case _ => toStringToken.clearLocation
+  }
 }
 
 object LogicalTokens {

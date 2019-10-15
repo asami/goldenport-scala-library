@@ -10,7 +10,8 @@ import org.goldenport.matrix.breeze.BreezeMatrix
  *  version Jun. 30, 2019
  *  version Jul. 16, 2019
  *  version Aug. 26, 2019
- * @version Sep. 16, 2019
+ *  version Sep. 16, 2019
+ * @version Oct.  8, 2019
  * @author  ASAMI, Tomoharu
  */
 trait IMatrix[T] extends Showable {
@@ -121,8 +122,17 @@ case class VectorMatrix[T](matrix: Vector[T], width: Int, height: Int) extends I
 
 trait VectorRowColumnMatrixBase[T] extends IMatrix[T] {
   def matrix: Vector[Vector[T]]
+  def emptyValue: Option[T]
 
-  def apply(x: Int, y: Int): T = matrix(y)(x)
+  def apply(x: Int, y: Int): T = {
+    if (y >= height || x >= width)
+      throw new IndexOutOfBoundsException(s"${getClass.getSimpleName}[$width, $height]: $x, $y")
+    val xs = matrix(y)
+    if (x >= xs.length)
+      emptyValue getOrElse RAISE.illegalStateFault(s"${getClass.getSimpleName}[$width, $height]: $x, $y: empty value undefined")
+    else
+      xs(x)
+  }
   lazy val width: Int = matrix.map(_.length).max
   def height: Int = matrix.length
   override def rowIterator: Iterator[Vector[T]] = matrix.iterator
@@ -134,7 +144,10 @@ trait VectorRowColumnMatrixBase[T] extends IMatrix[T] {
   def transpose: IMatrix[T] = VectorColumnRowMatrix(matrix)
 }
 
-case class VectorRowColumnMatrix[T](matrix: Vector[Vector[T]]) extends VectorRowColumnMatrixBase[T] {
+case class VectorRowColumnMatrix[T](
+  matrix: Vector[Vector[T]],
+  emptyValue: Option[T] = None
+) extends VectorRowColumnMatrixBase[T] {
   override def projection(p: NumberRange): IMatrix[T] =
     VectorRowColumnMatrix(MatrixUtils.projectionVector(matrix, p))
 
@@ -172,7 +185,15 @@ case class VectorColumnRowMatrix[T](
   matrix: Vector[Vector[T]],
   emptyValue: Option[T] = None
 ) extends IMatrix[T] {
-  def apply(x: Int, y: Int): T = matrix(x)(y) // TODO empty value
+  def apply(x: Int, y: Int): T = {
+    if (y >= height || x >= width)
+      throw new IndexOutOfBoundsException(s"${getClass.getSimpleName}[$width, $height]: $x, $y")
+    val xs = matrix(x)
+    if (y >= xs.length)
+      emptyValue getOrElse RAISE.illegalStateFault(s"${getClass.getSimpleName}[$width, $height]: $x, $y: empty value undefined")
+    else
+      xs(y)
+  }
   def width: Int = matrix.length
   lazy val height: Int = matrix.map(_.length).max
   override def columnIterator: Iterator[Vector[T]] = matrix.iterator

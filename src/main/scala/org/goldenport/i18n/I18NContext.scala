@@ -10,7 +10,8 @@ import org.goldenport.util.AnyUtils
 
 /*
  * @since   Aug.  4, 2019
- * @version Sep. 30, 2019
+ *  version Sep. 30, 2019
+ * @version Oct.  1, 2019
  * @author  ASAMI, Tomoharu
  */
 case class I18NContext(
@@ -178,6 +179,24 @@ object I18NContext {
     )
   }
   val c = default.copy(locale = LocaleUtils.C)
+  val test = {
+    val charset = Charset.defaultCharset()
+    val newline = System.lineSeparator()
+    val locale = Locale.getDefault()
+    val timezone = TimeZone.getDefault()
+    val currency = Currency.getInstance(locale)
+    val calenderformatters = CalendarFormatter.Factory.default
+    val bundle = EmptyResourceBundle
+    I18NContext(
+      charset,
+      newline,
+      locale,
+      timezone,
+      currency,
+      calenderformatters,
+      bundle
+    )
+  }
 
   def apply(
     charset: Charset,

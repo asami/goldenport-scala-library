@@ -10,7 +10,8 @@ import LogicalTokens._
  * @since   Aug. 19, 2018
  *  version Sep. 22, 2018
  *  version Oct. 15, 2018
- * @version Jul. 16, 2019
+ *  version Jul. 16, 2019
+ * @version Oct. 12, 2019
  * @author  ASAMI, Tomoharu
  */
 case class JsonParser() extends Parser with LogicalTokens.ComplexTokenizer {
@@ -41,6 +42,7 @@ object JsonParser {
   ) extends ExternalLogicalToken {
     def raw = text
     def value = json
+    def clearLocation: LogicalToken = copy(location = None)
     lazy val json = Json.parse(text)
   }
   object JsonToken {

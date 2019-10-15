@@ -25,7 +25,8 @@ import org.goldenport.extension.Showable
  *  version Oct. 31, 2017
  *  version Nov. 13, 2017
  *  version Dec. 17, 2017
- * @version Sep. 23, 2019
+ *  version Sep. 23, 2019
+ * @version Oct.  8, 2019
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -39,6 +40,18 @@ object AnyUtils {
       case m: Showable => m.print
       case _ => x.toString
     }
+  }
+  def toPrint(x: Any): String = x match {
+    case m: Showable => m.print
+    case m => toString(m)
+  }
+  def toDisplay(x: Any): String = x match {
+    case m: Showable => m.display
+    case m => toString(m)
+  }
+  def toShow(x: Any): String = x match {
+    case m: Showable => m.show
+    case m => toString(m)
   }
   def toBoolean(x: Any): Boolean = {
     x match {

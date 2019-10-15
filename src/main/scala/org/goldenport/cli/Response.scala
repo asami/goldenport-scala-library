@@ -1,8 +1,11 @@
 package org.goldenport.cli
 
+import org.goldenport.parser.CommandParser
+
 /*
  * @since   Oct.  6, 2018
- * @version Feb. 24, 2019
+ *  version Feb. 24, 2019
+ * @version Oct. 14, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait Response {
@@ -34,5 +37,13 @@ object Response {
 
   def apply(p: String): Response = StringResponse(p)
 
-  def notFound(msg: String): Response = ErrorResponse(404, msg)
+  def notFound(
+    cmd: String,
+    candidates: Option[CommandParser.Candidates[Engine.Candidate]]
+  ): Response = {
+    val msg = candidates.
+      map(cs => s"""Command '$cmd' is ambiguous: (${cs.commands.vector.map(_.name).mkString(", ")})""").
+      getOrElse(s"Command '$cmd' not found. ")
+    ErrorResponse(404, msg)
+  }
 }
