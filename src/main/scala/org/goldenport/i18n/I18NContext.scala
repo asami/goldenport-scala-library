@@ -1,17 +1,19 @@
 package org.goldenport.i18n
 
-import java.util._
+import scala.util.control.NonFatal
+import java.util.{Locale, Currency, TimeZone, ResourceBundle}
 import java.nio.charset.Charset
 import java.text.{NumberFormat, MessageFormat, DateFormat, DecimalFormat}
 import org.joda.time._
 import org.goldenport.RAISE
+import org.goldenport.Strings
 import org.goldenport.values.{DateTimePeriod, Money, Percent}
 import org.goldenport.util.AnyUtils
 
 /*
  * @since   Aug.  4, 2019
  *  version Sep. 30, 2019
- * @version Oct.  1, 2019
+ * @version Oct. 18, 2019
  * @author  ASAMI, Tomoharu
  */
 case class I18NContext(
@@ -212,4 +214,19 @@ object I18NContext {
     CalendarFormatter.Factory.default,
     default.resourceBundle
   )
+
+  private def _country_map = Map(
+    Locale.JAPANESE -> Locale.JAPAN
+  )
+
+  private val _default_currency = Currency.getInstance(Locale.US)
+
+  private def _currency(locale: Locale): Currency = try {
+    if (Strings.blankp(locale.getCountry))
+      _country_map.get(locale).map(Currency.getInstance).getOrElse(_default_currency)
+    else
+      Currency.getInstance(locale)
+  } catch {
+    case NonFatal(e) => _default_currency
+  }
 }

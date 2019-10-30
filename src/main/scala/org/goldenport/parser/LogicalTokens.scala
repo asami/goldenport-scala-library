@@ -15,12 +15,13 @@ import org.goldenport.exception.RAISE
  *  version Jun. 30, 2019
  *  version Jul. 17, 2019
  *  version Sep. 28, 2019
- * @version Oct. 12, 2019
+ * @version Oct. 28, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
   tokens: Vector[LogicalToken]
 ) {
+  def raw: String = tokens.map(_.raw).mkString
   def isEmpty = tokens.isEmpty
   lazy val head = try {
     tokens.head
@@ -122,7 +123,7 @@ object LogicalTokens {
         IntervalToken, RangeToken,
         DateTimeIntervalToken,
         LxsvToken, XsvToken,
-        UrlToken, UrnToken,
+        UrlToken, UrnToken, UriToken,
         PathToken, ExpressionToken
       ),
       Vector(JsonParser(), XmlParser()),
@@ -998,6 +999,64 @@ object LogicalTokens {
       copy(postfix = postfix :+ evt.c)
   }
 
+  case class UrnOrLxsvState(
+    parent: LogicalTokensParseState,
+    cs: Vector[Char],
+    location: ParseLocation
+  ) extends LogicalTokensParseState {
+    override val use_Tokenizer = true
+    override val use_Delimiter = true
+    override val use_Double_Quote = true
+    override val use_Single_Quote = false
+    override val use_Bracket = true
+    override val use_Dollar = false
+
+    def tokens(config: Config): LogicalTokens = to_tokens(config, cs.mkString, location)
+
+    private def _flush(config: Config): UrnOrLxsvState = this
+
+    private def _flush(config: Config, t: LogicalToken): UrnOrLxsvState =
+      copy(cs = cs ++ t.raw)
+
+    private def _flush(config: Config, t: LogicalTokens): UrnOrLxsvState =
+      copy(cs = cs ++ t.raw)
+
+    override def addChildState(config: Config, p: LogicalTokens): LogicalTokensParseState =
+      _flush(config, p)
+
+    override def addChildTransition(config: Config, p: LogicalToken, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, _flush(config, p))
+
+    override def addChildEndTransition(config: Config, p: LogicalToken): Transition =
+      _flush(config, p).apply(config, EndEvent)
+
+    override protected def end_Result(config: Config): ParseResult[LogicalTokens] =
+      ParseSuccess(_flush(config).tokens(config))
+
+    // override protected def space_State(config: Config, evt: CharEvent) =
+    //   SpaceState(this, evt)
+
+    override protected def delimiter_State(config: Config, evt: CharEvent) = {
+      val a = if (cs.isEmpty) {
+        LogicalTokens(DelimiterToken(evt.c, evt.location))
+      } else {
+        tokens(config) + DelimiterToken(evt.c, evt.location)
+      }
+      val l = evt.location
+      copy(cs = Vector.empty, location = l)
+    }
+
+    override protected def double_Quote_State(config: Config, evt: CharEvent) = {
+      if (evt.isMatch("\"\"\""))
+        SkipState(SkipState(RawStringState(this, evt)))
+      else
+        DoubleQuoteState(this, evt)
+    }
+
+    override protected def character_State(config: Config, evt: CharEvent) =
+      copy(cs = cs :+ evt.c)
+  }
+
   case class NormalState(
     cs: Vector[Char],
     tokens: LogicalTokens,
@@ -1087,13 +1146,70 @@ object LogicalTokens {
       DollarState(newparent, evt, prefix)
     }
 
-    override protected def character_State(config: Config, evt: CharEvent) =
-      if (cs.isEmpty)
-        copy(cs = cs :+ evt.c, location = evt.location)
-      else
-        copy(cs = cs :+ evt.c)
+    override protected def character_State(config: Config, evt: CharEvent) = {
+      val c = evt.c
+      c match {
+        case ':' =>
+          val parent = copy(cs = Vector.empty)
+          UrnOrLxsvState(parent, cs :+ c, evt.location)
+        case _ => 
+          if (cs.isEmpty)
+            copy(cs = cs :+ c, location = evt.location)
+          else
+            copy(cs = cs :+ c)
+      }
+    }
   }
   object NormalState {
     val init = NormalState(Vector.empty, LogicalTokens.empty, ParseLocation.start)
+  }
+
+  case class PartialParserStartState() extends LogicalTokensParseState {
+    override def addChildState(config: Config, p: LogicalTokens): LogicalTokensParseState = {
+      PartialParserEndState(p.makeToken)
+    }
+  }
+
+  case class PartialParserEndState(
+    token: LogicalToken
+  ) extends LogicalTokensParseState {
+    // def result: (LogicalToken, CharSequence) = ???
+  }
+
+  case class PartialParserStateMachine(
+    config: Config,
+    state: LogicalTokensParseState
+  ) {
+    def apply(c: Char): \/[PartialParserStateMachine, LogicalToken] = {
+      val (m, r, s) = state.apply(config, CharEvent(c))
+      s match {
+        case m: PartialParserEndState => \/-(m.token)
+        case _ => -\/(copy(state = s))
+      }
+    }
+
+    def getResult: Option[(LogicalToken, CharSequence)] = RAISE.notImplementedYetDefect
+  }
+  object PartialParserStateMachine {
+    def apply(config: Config): PartialParserStateMachine = PartialParserStateMachine(
+      config,
+      PartialParserStartState()
+    )
+  }
+
+  def parseHead(ps: CharSequence): (LogicalToken, CharSequence) = parseHead(Config.default, ps)
+
+  def parseHead(config: Config, ps: CharSequence): (LogicalToken, CharSequence) = {
+    var sm = PartialParserStateMachine(config)
+
+    for (i <- 0 until ps.length) {
+//      sm = sm.apply(ps.charAt(i))
+      // sm.getResult match {
+      //   case Some(s) => return s
+      //   case None => // do nothing
+      // }
+      RAISE.notImplementedYetDefect
+    }
+    RAISE.syntaxErrorFault("LogicalTokens.parseHead")
   }
 }

@@ -1,13 +1,18 @@
 package org.goldenport.log
 
+import java.net.URL
 import org.slf4j._
+import ch.qos.logback.classic.joran.JoranConfigurator
+import ch.qos.logback.core.joran.spi.JoranException
+import ch.qos.logback.core.util.StatusPrinter
 import org.goldenport.RAISE
 import org.goldenport.config._
 
 /*
  * @since   Feb. 16, 2019
  *  version Feb. 24, 2019
- * @version Apr.  8, 2019
+ *  version Apr.  8, 2019
+ * @version Oct. 27, 2019
  * @author  ASAMI, Tomoharu
  */
 class LogContext(mark: LogMark) {
@@ -22,6 +27,34 @@ object LogContext {
   private var _logger_by_name: Map[String, Logger] = Map.empty
 
   private def _logger_factory: ILoggerFactory = LoggerFactory.getILoggerFactory()
+
+  def init(url: Option[URL], level: Option[LogLevel]): ILoggerFactory = {
+    _logger_factory match {
+      case m: ch.qos.logback.classic.LoggerContext =>
+        _init(m, url, level)
+        m
+      case m => m
+    }
+  }
+
+  private def _init(
+    p: ch.qos.logback.classic.LoggerContext,
+    url: Option[URL],
+    level: Option[LogLevel]
+  ) {
+    url.foreach { x =>
+      try {
+        val configurator = new JoranConfigurator()
+        configurator.setContext(p)
+        p.reset() // XXX
+        configurator.doConfigure(x)
+      } catch {
+        case m: JoranException => RAISE.notImplementedYetDefect(s"$m")
+      }
+      StatusPrinter.printInCaseOfErrorsOrWarnings(p)
+    }
+    level.foreach(_set_root_logger_level(p, _))
+  }
 
   def setRootLevel(level: LogLevel): ILoggerFactory = {
     _logger_factory match {

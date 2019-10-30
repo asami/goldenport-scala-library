@@ -10,7 +10,7 @@ import org.goldenport.util.AnyRefUtils
 
 /*
  * @since   Sep. 12, 2019
- * @version Sep. 14, 2019
+ * @version Oct. 16, 2019
  * @author  ASAMI, Tomoharu
  */
 case class NumberInterval(interval: Interval[spire.math.Number]) extends Showable {
@@ -29,6 +29,7 @@ case class NumberInterval(interval: Interval[spire.math.Number]) extends Showabl
 
   def display = print
   def show = print
+  def embed = show
 
   def toRange: NumberRange = {
     val (start, si) = _to_number(interval.lowerBound)

@@ -9,7 +9,7 @@ import org.goldenport.i18n.I18NContext
 import org.goldenport.i18n.CalendarFormatter
 import org.goldenport.i18n.EmptyResourceBundle
 import org.goldenport.hocon.RichConfig
-import org.goldenport.log.LogLevel
+import org.goldenport.log.{LogConfig, LogLevel}
 
 /*
  * @since   Oct.  4, 2018
@@ -17,28 +17,30 @@ import org.goldenport.log.LogLevel
  *  version Mar. 24, 2019
  *  version May. 19, 2019
  *  version Aug.  4, 2019
- * @version Sep. 25, 2019
+ *  version Sep. 25, 2019
+ * @version Oct. 27, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Config(
-  i18nContext: I18NContext,
+  i18n: I18NContext,
   homeDirectory: Option[File],
   workDirectory: Option[File],
   projectDirectory: Option[File],
-  logLevel: LogLevel,
+  log: LogConfig,
   properties: RichConfig
 ) {
-  def charset: Charset = i18nContext.charset
-  def newline: String = i18nContext.newline
-  def locale: Locale = i18nContext.locale
-  def timezone: TimeZone = i18nContext.timezone
+  def charset: Charset = i18n.charset
+  def newline: String = i18n.newline
+  def locale: Locale = i18n.locale
+  def timezone: TimeZone = i18n.timezone
+  def logLevel: Option[LogLevel] = log.level
 
-  def withLogLevel(p: LogLevel) = copy(logLevel = p)
+  def withLogLevel(p: LogLevel) = copy(log = log.withLogLevel(p))
 }
 
 object Config {
   val default = build()
-  val c = default.copy(i18nContext = I18NContext.c)
+  val c = default.copy(i18n = I18NContext.c)
   val empty = _create(ConfigFactory.load())
 
   def build(): Config = {
@@ -132,7 +134,7 @@ object Config {
       homedir,
       workdir,
       projectdir,
-      LogLevel.Warn,
+      LogConfig.empty,
       RichConfig(hocon)
     )
   }

@@ -21,7 +21,7 @@ import LogicalTokens.Config
  *  version Jun. 30, 2019
  *  version Jul. 21, 2019
  *  version Sep. 28, 2019
- * @version Oct. 12, 2019
+ * @version Oct. 29, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -33,9 +33,23 @@ sealed trait LogicalToken {
   def clearLocation: LogicalToken
 }
 object LogicalToken {
-  def makeToken(config: LogicalTokens.Config, p: Any): LogicalToken = p match {
+  def buildToken(config: LogicalTokens.Config, p: Any): LogicalToken = p match {
+    case m: LogicalToken => m
+    case m: LogicalTokens => m.makeToken
     case "" => EmptyToken
     case m: Int => NumberToken(m)
+    case m: Number => NumberToken(m)
+    case m: String => StringToken(m)
+    case m => StringToken(AnyUtils.toString(m))
+  }
+
+  def makeToken(config: LogicalTokens.Config, p: Any): LogicalToken = p match {
+    case m: StringToken => LogicalTokens.parse(config, m.text).makeToken
+    case m: LogicalToken => m
+    case m: LogicalTokens => m.makeToken
+    case "" => EmptyToken
+    case m: Int => NumberToken(m)
+    case m: Number => NumberToken(m)
     case m: String => LogicalTokens.parse(config, m).makeToken
     case m => LogicalTokens.parse(config, AnyUtils.toString(m)).makeToken
   }
@@ -123,6 +137,9 @@ sealed trait StringToken extends LiteralToken {
   def prefix: Option[String]
   def text: String
 }
+object StringToken {
+  def apply(p: CharSequence): StringToken = DoubleStringToken(p.toString, None)
+}
 
 case class DoubleStringToken(
   text: String,
@@ -188,6 +205,8 @@ case class NumberToken(
 }
 object NumberToken extends LogicalTokens.SimpleTokenizer {
   def apply(n: Int): NumberToken = NumberToken(BigDecimal(n), None)
+
+  def apply(n: Number): NumberToken = NumberToken(AnyUtils.toBigDecimal(n), None)
 
   def apply(n: Int, location: Option[ParseLocation]): NumberToken =
     NumberToken(BigDecimal(n), location)
@@ -520,7 +539,35 @@ object UrnToken extends LogicalTokens.SimpleTokenizer {
     else
       None
 
-  private def _is_urn(p: String) = Strings.totokens(p, ":") match {
+  private def _is_urn(p: String) = UriToken.isUri(p) && (Strings.totokens(p, ":") match {
+    case Nil => false
+    case "urn" :: _ => true
+    case _ => false
+  })
+}
+
+case class UriToken(
+  uri: URI,
+  location: Option[ParseLocation]
+) extends LiteralToken {
+  def raw = uri.toString // TODO
+  def value = uri
+  def clearLocation: LogicalToken = copy(location = None)
+}
+object UriToken extends LogicalTokens.SimpleTokenizer {
+  def apply(s: String, location: Option[ParseLocation]): UriToken =
+    UriToken(new URI(s), location)
+
+  def apply(s: String, location: ParseLocation): UriToken =
+    UriToken(new URI(s), Some(location))
+
+  override protected def accept_Token(config: Config, p: String, location: ParseLocation) =
+    if (isUri(p))
+      Try(apply(p, location)).toOption
+    else
+      None
+
+  def isUri(p: String) = Strings.totokens(p, ":") match {
     case Nil => false
     case x :: Nil => false
     case x :: y :: _ => !x.forall(_.isDigit) && !y.startsWith("//") // datetime, url

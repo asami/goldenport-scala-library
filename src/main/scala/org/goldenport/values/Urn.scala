@@ -5,7 +5,8 @@ import org.goldenport.Strings
 
 /*
  * @since   Oct. 29, 2017
- * @version Jan.  3, 2019
+ *  version Jan.  3, 2019
+ * @version Oct. 28, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Urn(
@@ -34,7 +35,7 @@ object Urn {
     val (body, rqcomponents, fragment) = _body_rqcomponents_fragment(p)
     val (nid, module, components) = {
       val a = Strings.totokens(body, ":")
-      (a(1), a(2), a.drop(3))
+      (a(0), a(1), a.drop(2))
     }
     Urn(nid, module, components, rqcomponents, fragment)
   }

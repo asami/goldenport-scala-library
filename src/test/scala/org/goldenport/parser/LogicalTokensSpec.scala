@@ -15,13 +15,14 @@ import org.goldenport.util.DateTimeUtils
  *  version Feb.  9, 2019
  *  version Mar. 10, 2019
  *  version Apr. 13, 2019
- * @version Sep. 24, 2019
+ *  version Sep. 24, 2019
+ * @version Oct. 27, 2019
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
 class LogicalTokensSpec extends WordSpec with Matchers with GivenWhenThen {
   "token" should {
-    "number" which {
+    "number" ignore {
       "integer" in {
         val s = "1"
         val r = LogicalTokens.parse(s)
@@ -72,7 +73,7 @@ class LogicalTokensSpec extends WordSpec with Matchers with GivenWhenThen {
         ))
       }
     }
-    "string" which {
+    "string" ignore {
       "typical" in {
         val s = "\"abc\""
         val r = LogicalTokens.parse(s)
@@ -94,8 +95,22 @@ class LogicalTokensSpec extends WordSpec with Matchers with GivenWhenThen {
           DoubleStringToken("abc\nxyz", ParseLocation.start)
         ))
       }
+      "escape double quote" in {
+        val s = "\"abc\\\"xyz\""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          DoubleStringToken("abc\"xyz", ParseLocation.start)
+        ))
+      }
+      "escape newline" in {
+        val s = "\"abc\\nxyz\""
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          DoubleStringToken("abc\nxyz", ParseLocation.start)
+        ))
+      }
     }
-    "single string" which {
+    "single string" ignore {
       "typical" in {
         val s = "'abc'"
         val r = LogicalTokens.parse(s)
@@ -112,7 +127,7 @@ xyz'"""
         ))
       }
     }
-    "raw string" which {
+    "raw string" ignore {
       "typical" in {
         val s = "\"\"\"abc\"\"\""
         val r = LogicalTokens.parse(s)
@@ -128,7 +143,7 @@ xyz'"""
         ))
       }
     }
-    "json" which {
+    "json" ignore {
       "one line" in {
         val s = """{"a":"b", "c":"d"}"""
         val r = LogicalTokens.parse(s)
@@ -161,7 +176,7 @@ xyz'"""
       //   ))
       // }
     }
-    "xml" which {
+    "xml" ignore {
       "empty tag" in {
         val s = """<a/>"""
         val r = LogicalTokens.parse(s)
@@ -191,7 +206,7 @@ xyz'"""
         ))
       }
     }
-    "jxpath" which {
+    "jxpath" ignore {
       "typical" in {
         val s = """/a/b/c"""
         val r = LogicalTokens.parse(s)
@@ -200,9 +215,9 @@ xyz'"""
         ))
       }
     }
-    "jexl" which {
+    "jexl" ignore {
     }
-    "expression" which {
+    "expression" ignore {
       "numerical expression" in {
         val s = """a+b"""
         val r = LogicalTokens.parse(s)
@@ -211,7 +226,7 @@ xyz'"""
         ))
       }
     }
-    "script" which {
+    "script" ignore {
       "typical" in {
         val s = """${a + b}"""
         val r = LogicalTokens.parse(s)
@@ -312,7 +327,7 @@ b" c
         SpaceToken("\n", ParseLocation(2, 5))
       ))
     }
-    "s-expression" which {
+    "s-expression" ignore {
       "one line" in {
         val s = """(a b c d)"""
         val r = LogicalTokens.parse(s)
@@ -379,13 +394,20 @@ c d)"""
       }
     }
   }
-  // "tryout " should {
-  //   "properties" in {
-  //     val s = """$[locale:ja]{a + b}"""
-  //     val r = LogicalTokens.parse(s)
-  //     r should be(LogicalTokens(
-  //       ScriptToken("a + b", Some(ParseLocation.start), None, Some("locale:ja"))
-  //     ))
-  //   }
-  // }
+  "tryout " should {
+    "lxsv" in {
+      val s = """name:"value""""
+      val r = LogicalTokens.parse(s)
+      r should be(LogicalTokens(
+        LxsvToken("""name:"value"""", Some(ParseLocation.start))
+      ))
+    }
+    // "properties" in {
+    //   val s = """$[locale:ja]{a + b}"""
+    //   val r = LogicalTokens.parse(s)
+    //   r should be(LogicalTokens(
+    //     ScriptToken("a + b", Some(ParseLocation.start), None, Some("locale:ja"))
+    //   ))
+    // }
+  }
 }

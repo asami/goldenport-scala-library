@@ -8,12 +8,13 @@ import org.goldenport.util.AnyRefUtils
 
 /*
  * @since   Sep. 10, 2019
- * @version Sep. 15, 2019
+ * @version Oct. 16, 2019
  * @author  ASAMI, Tomoharu
  */
 trait NumberRange extends Showable {
   def display: String = print
   def show: String = print
+  def embed: String = print
   def isValid(index: Int): Boolean
 }
 

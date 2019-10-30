@@ -4,7 +4,7 @@ import scalaz._, Scalaz._
 import scalaz.stream._
 import org.goldenport.RAISE
 import org.goldenport.Strings
-import org.goldenport.parser.{LogicalToken, LogicalTokens}
+import org.goldenport.parser.{LogicalToken, LogicalTokens, StringToken}
 import org.goldenport.parser.{ParseResult, ParseSuccess, ParseFailure, EmptyParseResult}
 import org.goldenport.collection.VectorMap
 import org.goldenport.extension.IRecord
@@ -12,7 +12,7 @@ import org.goldenport.extension.IRecord
 /*
  * @since   Jul. 16, 2019
  *  version Sep. 23, 2019
- * @version Oct. 12, 2019
+ * @version Oct. 28, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Lxsv(
@@ -31,10 +31,13 @@ case class Lxsv(
   }.mkString(strategy.outputSeparator.toString)
   def display: String = print // TODO
   def show: String = print // TODO
+  def embed: String = print
 
   def valueMap: Map[Symbol, Any] = vectormap.mapValues(_.value)
 
-//  def withoutLocation: Lxsv = copy(vectormap = vectormap.mapValues(_.clearLocation))
+  def marshall: String = RAISE.notImplementedYetDefect("Implement simplified format.")
+
+  def withoutLocation: Lxsv = copy(vectormap = vectormap.mapValues(_.clearLocation))
 }
 
 object Lxsv {
@@ -42,6 +45,7 @@ object Lxsv {
 
   private val _lxsv_chars = Vector('\t', ';', ',', ' ')
   private val _lxsv_token_chars = Vector('\t', ';', ',')
+  private val _lxsv_candidate_chars = _lxsv_token_chars :+ '"'
   private val _complex_chars = Vector('<', '{', '[')
 
   def apply(strategy: Xsv.Strategy, p: (Symbol, Any), ps: (Symbol, Any)*): Lxsv = apply(p +: ps)
@@ -64,7 +68,11 @@ object Lxsv {
     case m: ParseFailure[_] => m.RAISE
   }
 
-//  def createWithoutLocation(p: String): Lxsv = create(p).withoutLocation
+  def createOption(p: String): Option[Lxsv] = parse(p) match {
+    case ParseSuccess(s, _) => Some(s)
+    case m: EmptyParseResult[_] => None
+    case m: ParseFailure[_] => None
+  }
 
   def parse(p: String): ParseResult[Lxsv] =
     Parser(_lxsv_chars, _complex_chars).apply(p)
@@ -72,82 +80,13 @@ object Lxsv {
   def parseToken(p: String): ParseResult[Lxsv] =
     Parser(_lxsv_token_chars, _complex_chars).apply(p)
 
-  // def parse(p: String): ParseResult[Lxsv] =
-  //   if (p.contains(':'))
-  //     _parse(p)
-  //   else
-  //     _error(p)
-
-  // private def _parse(p: String): ParseResult[Lxsv] =
-  //   _lxsv_chars.toStream.flatMap(x => _parse_option(x, p)).headOption.
-  //     map(ParseResult.success).
-  //     getOrElse(ParseResult.error(s"No lxsv: $p"))
-
-  // private def _parse_option(c: Char, p: String): Option[Lxsv] = {
-  //   val xs = Strings.totokens(p, c.toString)
-  //   case class Z(
-  //     keyvalues: Vector[(String, String)] = Vector.empty,
-  //     isError: Boolean = false
-  //   ) {
-  //     def r = if (isError)
-  //       None
-  //     else
-  //       Some(
-  //         Lxsv(keyvalues.map {
-  //           case (k, v) => Symbol(k) -> v
-  //         })
-  //       )
-
-  //     def +(rhs: String) =
-  //       if (isError)
-  //         this
-  //       else
-  //         Strings.tokeyvalue(rhs) match {
-  //           case (k, "") => Z(isError = true)
-  //           case (k, v) => Z(keyvalues = keyvalues :+ (k -> v))
-  //         }
-  //   }
-  //   xs./:(Z())(_+_).r
-  // }
-
-  // def parseToken(p: String): ParseResult[Lxsv] =
-  //   _lxsv_token_chars.toStream.flatMap(x => _parse_option(x, p)).headOption.
-  //     map(ParseResult.success).
-  //     getOrElse(ParseResult.error(s"No lxsv: $p"))
-
-  // private def _error(p: String): ParseResult[Lxsv] = ParseResult.error(p)
-
-  // def isExplicitLxsv(p: String): Boolean =
-  //   p.contains(':') && _is_lxsv(_lxsv_chars, p)
-
   def isExplicitLxsvToken(p: String): Boolean =
-    p.contains(':') && p.contains(_lxsv_token_chars)
-
-  // private def _is_lxsv(delimiters: Vector[Char], p: String): Boolean =
-  //   if (_is_complex(p))
-  //     _is_lxsv_complex(delimiters, p)
-  //   else
-  //     _is_lxsv_simple(delimiters, p)
-
-  // private def _is_complex(p: String) = p.contains(_complex_chars)
-
-  // private def _is_lxsv_simple(delimiters: Vector[Char], p: String): Boolean =
-  //   delimiters.exists(_is_lxsv_simple(_, p))
-
-  // private def _is_lxsv_complex(delimiters: Vector[Char], p: String): Boolean =
-  //   delimiters.exists(_is_lxsv_complex(_, p))
-
-  // private def _is_lxsv_simple(delimiter: Char, p: String): Boolean = {
-  //   val xs = Strings.totokens(p, delimiter.toString)
-  //   xs.length match {
-  //     case 0 => false
-  //     case 1 => false
-  //     case _ => xs.forall(_.contains(':'))
-  //   }
-  // }
-
-  // private def _is_lxsv_complex(delimiter: Char, p: String): Boolean =
-  //   _parse_option(delimiter, p).map(_.length > 1).getOrElse(false)
+    p.contains(':') && p.exists(_lxsv_candidate_chars.contains) && (
+      if (p.contains('"'))
+        createOption(p).isDefined
+      else
+        true
+    )
 
   case class Parser(
     delimiterCandidates: Vector[Char],
@@ -155,11 +94,14 @@ object Lxsv {
   ) {
     import Parser._
 
+    private val _config = LogicalTokens.Config.default
+
     private var _delimiter: Char = 0
     private var _state: Int = NORMAL
+    private var _psm: LogicalTokens.PartialParserStateMachine = null
     private var _buffer = new StringBuilder()
     private var _key: Symbol = null
-    private var _kvs: Vector[(Symbol, String)] = Vector.empty
+    private var _kvs: Vector[(Symbol, LogicalToken)] = Vector.empty
     private var _arg_count: Int = 0
     private var _is_complex: Boolean = false
 
@@ -180,6 +122,8 @@ object Lxsv {
           case ':' => _flush_key
           case '"' => _state = STRING_CANDIDATE
           case '\'' => _state = SINGLE_QUOTE
+          case '{' => _start_partial(c)
+          case '<' => _start_partial(c)
           case _ => if (_is_delimiter(c))
             _flush
           else if (_is_complex(c))
@@ -201,10 +145,21 @@ object Lxsv {
         }
         case STRING_CANDIDATE => c match {
           case '"' => _state = RAW_STRING_CANDIDATE
+          case '\\' => _state = ESCAPE_IN_STRING_CANDIDATE
           case _ =>
             _buffer.append(c)
             _state = DOUBLE_QUOTE
         }
+        case ESCAPE_IN_STRING_CANDIDATE =>
+          c match {
+            case '"' => _buffer.append(c)
+            case 'n' => _buffer.append('\n')
+            case 'r' => _buffer.append('\r')
+            case 't' => _buffer.append('\t')
+            case 'f' => _buffer.append('\f')
+            case _ => _buffer.append(c)
+          }
+          _state = DOUBLE_QUOTE
         case RAW_STRING_CANDIDATE => c match {
           case '"' => _state = RAW_STRING
           case _ => 
@@ -226,30 +181,15 @@ object Lxsv {
             _buffer.append('"')
             _buffer.append(c)
         }
+        case PARTIAL => _psm.apply(c) match {
+          case \/-(t) =>
+            _flush_token(t)
+            _state = NORMAL
+            _psm = null
+          case -\/(sm) => _psm = sm
+        }
       }
     }
-
-    // private def _parse_before_delimiter(c: Char) {
-    //   _state match {
-    //     case NORMAL => c match {
-    //       case '"' => _state = DOUBLE_QUOTE
-    //       case '\'' => _state = SINGLE_QUOTE
-    //       case _ =>
-    //         if (delimiterCandidates.contains(c))
-    //           _delimiter = c
-    //         _flush
-    //     }
-    //     case DOUBLE_QUOTE => c match {
-    //       case '"' => _state = RAW_STRING_CANDIDATE
-    //       case _ =>
-    //     }
-    //     case SINGLE_QUOTE => c match {
-    //       case '\'' =>
-    //         _state = NORMAL
-    //       case _ =>
-    //     }
-    //   }
-    // }
 
     private def _is_delimiter(c: Char) =
       if (_delimiter == 0) {
@@ -267,16 +207,33 @@ object Lxsv {
 
     private def _flush {
       if (_key == null) {
-        _kvs = _kvs :+ (Symbol(s"_${_arg_count}") -> _buffer.toString)
+        _kvs = _kvs :+ (Symbol(s"_${_arg_count}") -> StringToken(_buffer))
         _arg_count += 1
       } else {
-        _kvs = _kvs :+ (_key -> _buffer.toString)
+        _kvs = _kvs :+ (_key -> StringToken(_buffer))
       }
+      _key = null
       _buffer = new StringBuilder
     }
 
     private def _flush_key {
       _key = Symbol(_buffer.toString)
+      _buffer = new StringBuilder
+    }
+
+    private def _flush_token(p: LogicalToken) {
+      val t =
+        if (_buffer.isEmpty)
+          p
+        else
+          StringToken(_buffer ++ p.raw)
+      if (_key == null) {
+        _kvs = _kvs :+ (Symbol(s"_${_arg_count}") -> t) // TODO buffer
+        _arg_count += 1
+      } else {
+        _kvs = _kvs :+ (_key -> t) 
+      }
+      _key = null
       _buffer = new StringBuilder
     }
 
@@ -286,6 +243,14 @@ object Lxsv {
       case '\t' => Xsv.TsvStrategy
       case ';' => Xsv.SCsvStrategy
       case ' ' => Xsv.SsvStrategy
+    }
+
+    private def _start_partial(c: Char): Unit = {
+      _state = PARTIAL
+      LogicalTokens.PartialParserStateMachine(_config).apply(c) match {
+        case \/-(t) => RAISE.noReachDefect
+        case -\/(sm) => _psm = sm
+      }
     }
 
     def parseComplex(delimiter: Char, p: CharSequence): ParseResult[Lxsv] = {
@@ -322,8 +287,10 @@ object Lxsv {
     val SINGLE_QUOTE = 3
     val RAW_STRING = 4
     val STRING_CANDIDATE = 5
-    val RAW_STRING_CANDIDATE = 6
-    val RAW_STRING_CLOSE_CANDIDATE = 7
-    val RAW_STRING_CLOSE_CANDIDATE2 = 8
+    val ESCAPE_IN_STRING_CANDIDATE = 6
+    val RAW_STRING_CANDIDATE = 7
+    val RAW_STRING_CLOSE_CANDIDATE = 8
+    val RAW_STRING_CLOSE_CANDIDATE2 = 9
+    val PARTIAL = 10
   }
 }
