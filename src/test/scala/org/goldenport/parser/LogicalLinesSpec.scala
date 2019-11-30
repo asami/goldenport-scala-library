@@ -9,7 +9,8 @@ import org.scalatest._
  *  version Aug. 28, 2018
  *  version Oct. 25, 2018
  *  version Feb. 13, 2019
- * @version Apr. 13, 2019
+ *  version Apr. 13, 2019
+ * @version Nov. 26, 2019
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -23,13 +24,20 @@ c
       val r = LogicalLines.parse(s)
       r should be(LogicalLines.start("a", "b", "c"))
     }
-    "double quote" in {
+    "double quote" which {
+      "new line" in {
       val s = """a "
 b" c
 """
       val r = LogicalLines.parse(s)
       r should be(LogicalLines.start("""a "
 b" c"""))
+      }
+      "one" in {
+        val s = "\"\"\"a \"x \"\"\""
+        val r = LogicalLines.parse(s)
+        r should be(LogicalLines.start("\"\"\"a \"x \"\"\""))
+      }
     }
     "single quote" which {
       "one" in {

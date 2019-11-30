@@ -21,7 +21,8 @@ import LogicalTokens.Config
  *  version Jun. 30, 2019
  *  version Jul. 21, 2019
  *  version Sep. 28, 2019
- * @version Oct. 29, 2019
+ *  version Oct. 29, 2019
+ * @version Nov. 28, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -620,7 +621,11 @@ object ExpressionToken extends LogicalTokens.SimpleTokenizer {
   private def _is_expression(p: String) =
     _is_not_atom(p) && p.headOption.
       map(x =>
-        _is_accept_first(x) && p.tail.forall(_is_accept)
+        p.length match {
+          case 0 => false
+          case 1 => _is_accept_first_only(x)
+          case _ => _is_accept_first(x) && p.tail.forall(_is_accept)
+        }
       ).getOrElse(false)
 
   @inline
@@ -632,8 +637,16 @@ object ExpressionToken extends LogicalTokens.SimpleTokenizer {
   @inline
   private def _is_not_atom(p: String) = !_is_atom(p)
 
+  // # : history
+  // ? : stack
+  // ! : command
+  // . : stack head
   @inline
-  private def _is_accept_first(c: Char) = StringUtils.isLispIdentifierI18NChar(c)
+  private def _is_accept_first(c: Char) =
+    StringUtils.isLispIdentifierI18NChar(c) || c == '#' || c == '?' || c == '!' || c == '.'
+
+  @inline
+  private def _is_accept_first_only(c: Char) = StringUtils.isLispIdentifierI18NChar(c)
 
   // '(', '{', '[' and '@' : in first character, used by another token type.
   // '/' : used by PathToken.

@@ -11,7 +11,8 @@ import org.goldenport.values.NumberRange
 /*
  * @since   Jul. 16, 2019
  *  version Aug. 24, 2019
- * @version Sep. 16, 2019
+ *  version Sep. 16, 2019
+ * @version Nov. 10, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Xsv(
@@ -37,10 +38,11 @@ case class Xsv(
 object Xsv {
   sealed trait Strategy extends NamedValueInstance {
     def logicalTokenConfig: LogicalTokens.Config
-    def outputSeparator: Char
-    def inputSeparators: Seq[Char]
+    def outputKeyValueSeparator: Char
+    def outputDelimiter: Char
+    def inputDelimiters: Seq[Char]
     def isDelimiter(p: String): Boolean = p.length match {
-      case 1 => inputSeparators.contains(p(0))
+      case 1 => inputDelimiters.contains(p(0))
       case _ => false
     }
   }
@@ -51,32 +53,44 @@ object Xsv {
   object XsvStrategy extends Strategy {
     val name = "xsv"
     def logicalTokenConfig = LogicalTokens.Config.xsv
-    def outputSeparator: Char = ','
-    def inputSeparators: Seq[Char] = ";,\t "
+    def outputKeyValueSeparator: Char = ':'
+    def outputDelimiter: Char = '\t'
+    def inputDelimiters: Seq[Char] = ";,\t "
   }
   object CsvStrategy extends Strategy {
     val name = "csv"
     def logicalTokenConfig = LogicalTokens.Config.csv
-    def outputSeparator: Char = ','
-    def inputSeparators: Seq[Char] = ","
+    def outputKeyValueSeparator: Char = ':'
+    def outputDelimiter: Char = ','
+    def inputDelimiters: Seq[Char] = ","
   }
   object TsvStrategy extends Strategy {
     val name = "tsv"
     def logicalTokenConfig = LogicalTokens.Config.tsv
-    def outputSeparator: Char = '\t'
-    def inputSeparators: Seq[Char] = "\t"
+    def outputKeyValueSeparator: Char = ':'
+    def outputDelimiter: Char = '\t'
+    def inputDelimiters: Seq[Char] = "\t"
   }
   object SCsvStrategy extends Strategy {
     val name = "scsv"
     def logicalTokenConfig = LogicalTokens.Config.scsv
-    def outputSeparator: Char = ';'
-    def inputSeparators: Seq[Char] = ";"
+    def outputKeyValueSeparator: Char = ':'
+    def outputDelimiter: Char = ';'
+    def inputDelimiters: Seq[Char] = ";"
   }
   object SsvStrategy extends Strategy {
     val name = "ssv"
     def logicalTokenConfig = LogicalTokens.Config.ssv
-    def outputSeparator: Char = ' '
-    def inputSeparators: Seq[Char] = " \t"
+    def outputKeyValueSeparator: Char = ':'
+    def outputDelimiter: Char = ' '
+    def inputDelimiters: Seq[Char] = " \t"
+  }
+  object UrlStrategy extends Strategy {
+    val name = "url"
+    def logicalTokenConfig = LogicalTokens.Config.urlEncoding
+    def outputKeyValueSeparator: Char = '='
+    def outputDelimiter: Char = '&'
+    def inputDelimiters: Seq[Char] = "&"
   }
 
   def parse(p: LogicalParagraph): Xsv = parse(p.lines)

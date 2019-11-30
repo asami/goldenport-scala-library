@@ -35,7 +35,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Mar.  5, 2019
  *  version May. 19, 2019
  *  version Jul. 29, 2019
- * @version Sep. 15, 2019
+ *  version Sep. 15, 2019
+ * @version Nov. 28, 2019
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -627,6 +628,14 @@ object StringUtils {
         None
       }
     }
+
+  def getMarkInt(p: String): Option[(String, Int)] = {
+    val (name, number) = p.span(x => !isAsciiNumberChar(x))
+    if (name.isEmpty || number.isEmpty)
+      None
+    else
+      intOption(number).map(x => name -> x)
+  }
 
   /*
    * Display

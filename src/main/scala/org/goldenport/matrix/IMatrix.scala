@@ -11,7 +11,8 @@ import org.goldenport.matrix.breeze.BreezeMatrix
  *  version Jul. 16, 2019
  *  version Aug. 26, 2019
  *  version Sep. 16, 2019
- * @version Oct. 16, 2019
+ *  version Oct. 16, 2019
+ * @version Nov. 16, 2019
  * @author  ASAMI, Tomoharu
  */
 trait IMatrix[T] extends Showable {
@@ -58,6 +59,10 @@ trait IMatrix[T] extends Showable {
   def +(rhs: IMatrix[Double])(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix + BreezeMatrix.create(rhs)
   def -(rhs: IMatrix[Double])(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix - BreezeMatrix.create(rhs)
   def *(rhs: IMatrix[Double])(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix * BreezeMatrix.create(rhs)
+  def *(rhs: Vector[Double])(implicit ev: T <:< Double): IMatrix[Double] = {
+    val m = VectorColumnRowMatrix.create(Vector(rhs))
+    *(m)
+  }
   def *(rhs: Double)(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix * rhs
   //
   protected def to_breeze_matrix: BreezeMatrix = BreezeMatrix.create(this.asInstanceOf[IMatrix[Double]])

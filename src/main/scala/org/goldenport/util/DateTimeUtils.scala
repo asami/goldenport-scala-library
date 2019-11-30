@@ -18,8 +18,8 @@ import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
  *  version Jan. 20, 2017
  *  version Aug. 29, 2017
  *  version Oct.  3, 2017
-TimeZone *  version Dec. 29, 2018
-TimeZone * @version Sep. 25, 2019
+ *  version Dec. 29, 2018
+ * @version Sep. 25, 2019
  * @author  ASAMI, Tomoharu
  */
 object DateTimeUtils {
