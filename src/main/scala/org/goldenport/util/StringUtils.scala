@@ -36,7 +36,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version May. 19, 2019
  *  version Jul. 29, 2019
  *  version Sep. 15, 2019
- * @version Nov. 28, 2019
+ *  version Nov. 28, 2019
+ * @version Dec.  5, 2019
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -295,6 +296,13 @@ object StringUtils {
   def getSuffix(s: String): Option[String] = Option(UPathString.getSuffix(s)).map(_.toLowerCase)
 
   def toPathnameBody(s: String): String = UPathString.getPathnameBody(s)
+
+  def pathnameBodySuffix(p: String): (String, Option[String]) = {
+    (toPathnameBody(p), Option(UPathString.getSuffix(p)))
+  }
+
+  def pathnameBodySuffixLowered(p: String): (String, Option[String]) =
+    (toPathnameBody(p), getSuffix(p))
 
   def dimString(s: String, length: Int = 1000): String = {
     val postfix = "..."

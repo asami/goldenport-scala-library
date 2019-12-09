@@ -4,16 +4,18 @@ import scalaz._, Scalaz._
 import scalaz.stream._
 import org.goldenport.RAISE
 import org.goldenport.Strings
-import org.goldenport.parser.{LogicalToken, LogicalTokens, StringToken}
-import org.goldenport.parser.{ParseResult, ParseSuccess, ParseFailure, EmptyParseResult}
+import org.goldenport.io.{ResourceHandle, InputSource}
 import org.goldenport.collection.VectorMap
 import org.goldenport.extension.IRecord
+import org.goldenport.parser.{LogicalToken, LogicalTokens, StringToken, LogicalLines}
+import org.goldenport.parser.{ParseResult, ParseSuccess, ParseFailure, EmptyParseResult}
 
 /*
  * @since   Jul. 16, 2019
  *  version Sep. 23, 2019
  *  version Oct. 28, 2019
- * @version Nov. 15, 2019
+ *  version Nov. 15, 2019
+ * @version Dec.  8, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Lxsv(
@@ -94,6 +96,18 @@ object Lxsv {
         true
     )
 
+  def load(strategy: Xsv.Strategy, in: ResourceHandle): Vector[Lxsv] = {
+    val c = LogicalLines.Config.raw // TODO charset
+    val ll = LogicalLines.load(c, in)
+    ll.lines.map(x => create(x.text))
+  }
+
+  def load(strategy: Xsv.Strategy, in: InputSource): Vector[Lxsv] = {
+    val c = LogicalLines.Config.raw // TODO charset
+    val ll = LogicalLines.load(c, in)
+    ll.lines.map(x => create(x.text))
+  }
+
   case class Parser(
     keyValueSeparatorCandidates: Vector[Char],
     delimiterCandidates: Vector[Char],
@@ -110,7 +124,7 @@ object Lxsv {
     private var _buffer = new StringBuilder()
     private var _key: Symbol = null
     private var _kvs: Vector[(Symbol, LogicalToken)] = Vector.empty
-    private var _arg_count: Int = 0
+    private var _arg_count: Int = 1 // or 0 ?
     private var _is_complex: Boolean = false
 
     def apply(p: CharSequence): ParseResult[Lxsv] = {

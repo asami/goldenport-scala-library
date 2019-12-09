@@ -4,15 +4,17 @@ import scalaz._, Scalaz._
 import scalaz.stream._
 import org.goldenport.RAISE
 import org.goldenport.matrix._
-import org.goldenport.parser._
+import org.goldenport.io.{ResourceHandle, InputSource}
 import org.goldenport.value._
 import org.goldenport.values.NumberRange
+import org.goldenport.parser._
 
 /*
  * @since   Jul. 16, 2019
  *  version Aug. 24, 2019
  *  version Sep. 16, 2019
- * @version Nov. 10, 2019
+ *  version Nov. 10, 2019
+ * @version Dec.  7, 2019
  * @author  ASAMI, Tomoharu
  */
 case class Xsv(
@@ -142,5 +144,17 @@ object Xsv {
       }
     }
     xs./:(Z())(_+_).r
+  }
+
+  def load(s: Strategy, in: ResourceHandle): Xsv = {
+    val c = LogicalLines.Config.raw // TODO charset
+    val ll = LogicalLines.load(c, in)
+    parse(ll)
+  }
+
+  def load(s: Strategy, in: InputSource): Xsv = {
+    val c = LogicalLines.Config.raw // TODO charset
+    val ll = LogicalLines.load(c, in)
+    parse(ll)
   }
 }

@@ -6,7 +6,6 @@ import com.asamioffice.goldenport.text.UString
  * derived from com.asamioffice.text.Strings(Nov. 28, 2010)
  * 
  * @since   Dec.  5, 2011
- *  version Dec.  5, 2011
  *  version Sep. 24, 2012 (move from org.goldenport)
  *  version Dec. 27, 2012
  *  version Feb.  4, 2013
@@ -22,7 +21,8 @@ import com.asamioffice.goldenport.text.UString
  *  version Mar. 21, 2017
  *  version Dec. 10, 2018
  *  version Jun. 24, 2019
- * @version Jul.  7, 2019
+ *  version Jul.  7, 2019
+ * @version Dec.  7, 2019
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -59,12 +59,17 @@ object Strings {
     val multipart_signed = "multipart/signed"
     val multipart_encrypted = "multipart/encrypted"
     val text_css = "text/css"
-    val text_csv = "text/csv"
     val text_html = "text/html"
     val text_plain = "text/plain"
     val text_xml = "text/xml"
     val text_xsl = "text/xsl"
     val text_event_stream = "text/event-stream"
+    val text_csv = "text/csv"
+    val text_tsv = "text/tsv"
+    val text_xsv = "text/xsv"
+    val text_lcsv = "text/lcsv"
+    val text_ltsv = "text/ltsv"
+    val text_lxsv = "text/lxsv"
   }
 
   object httpstatus {

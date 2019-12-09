@@ -2,6 +2,7 @@ package org.goldenport.parser
 
 import scalaz._, Scalaz._
 import org.goldenport.exception.RAISE
+import org.goldenport.io.{InputSource, ResourceHandle}
 
 /*
  * @since   Aug. 20, 2018
@@ -11,7 +12,8 @@ import org.goldenport.exception.RAISE
  *  version Jan.  1, 2019
  *  version Feb. 16, 2019
  *  version May.  2, 2019
- * @version Jun. 30, 2019
+ *  version Jun. 30, 2019
+ * @version Dec.  7, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -69,6 +71,16 @@ object LogicalLines {
       case ParseFailure(_, _) => RAISE.notImplementedYetDefect
       case EmptyParseResult() => RAISE.notImplementedYetDefect
     }
+  }
+
+  def load(config: Config, in: ResourceHandle): LogicalLines = {
+    val s = in.asText
+    parse(config, s)
+  }
+
+  def load(config: Config, in: InputSource): LogicalLines = {
+    val s = in.asText
+    parse(config, s)
   }
 
   case class Config(

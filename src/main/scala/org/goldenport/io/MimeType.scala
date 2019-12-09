@@ -11,7 +11,8 @@ import org.goldenport.util.StringUtils
  *  version Sep. 18, 2018
  *  version Apr. 12, 2019
  *  version Jun. 25, 2019
- * @version Aug. 18, 2019
+ *  version Aug. 18, 2019
+ * @version Dec.  7, 2019
  * @author  ASAMI, Tomoharu
  */
 case class MimeType(name: String) {
@@ -57,12 +58,17 @@ object MimeType {
   val multipart_signed = MimeType(mimetype.multipart_signed)
   val multipart_encrypted = MimeType(mimetype.multipart_encrypted)
   val text_css = MimeType(mimetype.text_css)
-  val text_csv = MimeType(mimetype.text_csv)
   val text_html = MimeType(mimetype.text_html)
   val text_plain = MimeType(mimetype.text_plain)
   val text_xml = MimeType(mimetype.text_xml)
   val text_xsl = MimeType(mimetype.text_xsl)
   val text_event_stream = MimeType(mimetype.text_event_stream)
+  val text_csv = MimeType(mimetype.text_csv)
+  val text_tsv = MimeType(mimetype.text_tsv)
+  val text_xsv = MimeType(mimetype.text_xsv)
+  val text_lcsv = MimeType(mimetype.text_lcsv)
+  val text_ltsv = MimeType(mimetype.text_ltsv)
+  val text_lxsv = MimeType(mimetype.text_lxsv)
 
   val APPLICATION_ATOM_XML = application_atom_xml
   val APPLICATION_ECMASCRIPT = application_ecmascript
@@ -96,12 +102,17 @@ object MimeType {
   val MULTIPART_SIGNED = multipart_signed
   val MULTIPART_ENCRYPTED = multipart_encrypted
   val TEXT_CSS = text_css
-  val TEXT_CSV = text_csv
   val TEXT_HTML = text_html
   val TEXT_PLAIN = text_plain
   val TEXT_XML = text_xml
   val TEXT_XSL = text_xsl
   val TEXT_EVENT_STREAM = text_event_stream
+  val TEXT_CSV = text_csv
+  val TEXT_TSV = text_tsv
+  val TEXT_XSV = text_xsv
+  val TEXT_LCSV = text_lcsv
+  val TEXT_LTSV = text_ltsv
+  val TEXT_LXSV = text_lxsv
 
   val mimetypes = Vector(
     application_atom_xml,
@@ -136,6 +147,11 @@ object MimeType {
     multipart_encrypted,
     text_css,
     text_csv,
+    text_tsv,
+    text_xsv,
+    text_lcsv,
+    text_ltsv,
+    text_lxsv,
     text_html,
     text_plain,
     text_xml,
@@ -175,8 +191,13 @@ object MimeType {
     image_png -> "png",
     image_svg_xml -> "svg",
     image_tiff -> "tiff",
-    text_css -> "css",
     text_csv -> "csv",
+    text_tsv -> "tsv",
+    text_xsv -> "xsv",
+    text_lcsv -> "lcsv",
+    text_ltsv -> "ltsv",
+    text_lxsv -> "lxsv",
+    text_css -> "css",
     text_html -> "html",
     text_plain -> "txt",
     text_xml -> "xml",

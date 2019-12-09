@@ -15,7 +15,8 @@ import org.goldenport.util.TypesafeConfigUtils
 import org.goldenport.util.AnyUtils
 
 /*
- * Migrated from org.goldenport.hocon.HoconUtils.
+ * Migrated from org.goldenport.util.HoconUtils.
+ * 
  * See TypesafeConfigUtils.
  *
  * @since   Nov. 17, 2016
@@ -26,7 +27,8 @@ import org.goldenport.util.AnyUtils
  *  version Oct. 21, 2018
  *  version Nov. 19, 2018
  *  version Mar. 24, 2019
- * @version Apr. 28, 2019
+ *  version Apr. 28, 2019
+ * @version Dec.  5, 2019
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
