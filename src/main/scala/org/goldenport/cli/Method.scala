@@ -2,11 +2,12 @@ package org.goldenport.cli
 
 import org.goldenport.util.AnyRefUtils
 import Environment.AppEnvironment
+import org.goldenport.Strings
 
 /*
  * @since   Feb. 24, 2019
- *  version Feb. 24, 2019
- * @version Mar.  6, 2019
+ *  version Mar.  6, 2019
+ * @version Oct. 15, 2019
  * @author  ASAMI, Tomoharu
  */
 trait Method {
@@ -24,7 +25,13 @@ trait Method {
 
   protected final def to_response(p: String) = StringResponse(p)
 
+  protected final def to_response_lines_string(p: String) = to_response(build_lines_string(p))
+
+  protected final def build_lines(s: String): String = build_lines(Strings.tolines(s))
+
   protected final def build_lines(ps: Seq[String]): String = ps.mkString("", newline, newline)
+
+  protected final def build_lines_string(s: String): String = build_lines_string(Strings.tolines(s))
 
   protected final def build_lines_string(ps: Seq[String]): String = ps.mkString(newline)
 

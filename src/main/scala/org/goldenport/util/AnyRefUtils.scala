@@ -9,7 +9,8 @@ import org.joda.time.LocalTime
  *  version Apr. 29, 2016
  *  version Feb. 27, 2017
  *  version Aug. 29, 2017
- * @version Nov. 13, 2017
+ *  version Nov. 13, 2017
+ * @version Sep. 12, 2019
  * @author  ASAMI, Tomoharu
  */
 object AnyRefUtils {
@@ -23,6 +24,8 @@ object AnyRefUtils {
   def toDouble(x: Any): java.lang.Double = AnyUtils.toDouble(x)
   def toBigInt(x: Any): BigInt = AnyUtils.toBigInt(x)
   def toBigDecimal(x: Any): BigDecimal = AnyUtils.toBigDecimal(x)
+  def toNumber(x: Any): Number = AnyUtils.toNumber(x)
+  def toSpireNumber(x: Any): spire.math.Number = AnyUtils.toSpireNumber(x)
   def toTimestamp(x: Any): Timestamp = AnyUtils.toTimestamp(x)
   def toDate(x: Any): Date = AnyUtils.toDate(x)
   def toLocalTime(x: Any): LocalTime = AnyUtils.toLocalTime(x)

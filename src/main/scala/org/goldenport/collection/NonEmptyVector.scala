@@ -7,7 +7,8 @@ import org.goldenport.util.VectorUtils
  * @since   Dec.  8, 2018
  *  version Feb. 27, 2019
  *  version Apr. 26, 2019
- * @version May.  2, 2019
+ *  version May.  2, 2019
+ * @version Oct. 13, 2019
  * @author  ASAMI, Tomoharu
  */
 case class NonEmptyVector[T](head: T, tail: Vector[T]) {
@@ -69,7 +70,11 @@ object NonEmptyVector {
 
   def apply[T](p: Seq[T]): NonEmptyVector[T] = NonEmptyVector(p.head, p.tail.toVector)
   // def apply[T](p: Vector[T]): NonEmptyVector[T] = NonEmptyVector(p.head, p.tail)
-  def apply[T](p: T, ps: T*): NonEmptyVector[T] = NonEmptyVector(p, ps.toVector)
+  // def apply[T](p: T, ps: T*): NonEmptyVector[T] = NonEmptyVector(p, ps.toVector)
+  def apply[T](p: T): NonEmptyVector[T] = new NonEmptyVector(p, Vector.empty)
+  def apply[T](p: T, ps: Seq[T]): NonEmptyVector[T] = new NonEmptyVector(p, ps.toVector)
+
+  def create[T](p: T, ps: T*): NonEmptyVector[T] = NonEmptyVector(p, ps.toVector)
 
   def createOption[T](p: Seq[T]): Option[NonEmptyVector[T]] =
     p.headOption.map(x => NonEmptyVector(x, p.tail.toVector))

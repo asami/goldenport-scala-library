@@ -5,7 +5,8 @@ import scalaz._, Scalaz._
 /*
  * @since   Aug. 21, 2018
  *  version Oct. 14, 2018
- * @version Nov. 18, 2018
+ *  version Nov. 18, 2018
+ * @version Jul.  7, 2019
  * @author  ASAMI, Tomoharu
  */
 case class ParseMessageSequence(
@@ -26,9 +27,15 @@ object ParseMessageSequence {
     def append(lhs: ParseMessageSequence, rhs: => ParseMessageSequence) = lhs + rhs
   }
 
-  def error(p: String, ps: String*): ParseMessageSequence =
-    ParseMessageSequence((p +: ps.toVector).map(ErrorMessage.apply))
+  def error(p: String): ParseMessageSequence =
+    ParseMessageSequence(Vector(ErrorMessage(p)))
 
-  def warning(p: String, ps: String*): ParseMessageSequence =
-    ParseMessageSequence((p +: ps.toVector).map(WarningMessage.apply))
+  def error(p: String, p2: String, ps: String*): ParseMessageSequence =
+    ParseMessageSequence((p +: p2 +: ps.toVector).map(ErrorMessage.apply))
+
+  def warning(p: String): ParseMessageSequence =
+    ParseMessageSequence(Vector(WarningMessage(p)))
+
+  def warning(p: String, p2: String, ps: String*): ParseMessageSequence =
+    ParseMessageSequence((p +: p2 +: ps.toVector).map(WarningMessage.apply))
 }

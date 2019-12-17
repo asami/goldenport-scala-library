@@ -8,12 +8,16 @@ import org.goldenport.util.VectorUtils
  * @since   Dec.  8, 2018
  *  version Dec. 30, 2018
  *  version Mar. 24, 2019
- * @version May. 10, 2019
+ *  version May. 10, 2019
+ *  version Jul.  7, 2019
+ * @version Oct. 12, 2019
  * @author  ASAMI, Tomoharu
  */
 sealed trait VectorMap[K, +V] extends Map[K, V] {
+  def ++[W >: V](p: VectorMap[K, W]): VectorMap[K, W]
   override def +[W >: V](kv: (K, W)): VectorMap[K, W]
   override def -(key: K): VectorMap[K, V]
+  override def mapValues[W](f: V => W): VectorMap[K, W] = RAISE.notImplementedYetDefect
   override def toVector = vector
   def vector: Vector[(K, V)]
   override def toList: List[(K, V)] = vector.toList
@@ -50,6 +54,7 @@ sealed trait VectorMap[K, +V] extends Map[K, V] {
 case class PlainVectorMap[K, +V](
   vector: Vector[(K, V)]
 ) extends VectorMap[K, V] {
+  def ++[W >: V](p: VectorMap[K, W]): VectorMap[K, W] = PlainVectorMap(vector ++ p.vector)
   def +[W >: V](kv: (K, W)): VectorMap[K, W] =
     PlainVectorMap(VectorUtils.updateMap(vector, kv))
   def -(key: K): VectorMap[K, V] = PlainVectorMap(VectorUtils.removeMap(vector, key))
@@ -61,6 +66,10 @@ case class PlainVectorMap[K, +V](
     update_vector(vector, p)
   )
   def remove(k: K): VectorMap[K, V] = this.-(k)
+
+  override def mapValues[W](f: V => W): VectorMap[K, W] = copy(vector.map {
+    case (k, v) => k -> f(v)
+  })
 }
 object PlainVectorMap {
   private val _empty = PlainVectorMap(Vector.empty)
@@ -71,6 +80,10 @@ case class IndexedVectorMap[K, +V](
   vector: Vector[(K, V)],
   map: Map[K, V]
 ) extends VectorMap[K, V] {
+  def ++[W >: V](p: VectorMap[K, W]): VectorMap[K, W] = IndexedVectorMap(
+    vector ++ p.vector,
+    map ++ p.vector.toMap
+  )
   def +[W >: V](kv: (K, W)): VectorMap[K, W] =
     IndexedVectorMap(
       VectorUtils.updateMap(vector, kv),
@@ -93,6 +106,15 @@ case class IndexedVectorMap[K, +V](
     map ++ p
   )
   def remove(k: K): VectorMap[K, V] = this.-(k)
+
+  override def mapValues[W](f: V => W): VectorMap[K, W] = copy(
+    vector.map {
+      case (k, v) => k -> f(v)
+    },
+    map.map {
+      case (k, v) => k -> f(v)
+    }
+  )
 }
 object IndexedVectorMap {
   private val _empty = IndexedVectorMap(Vector.empty, Map.empty)

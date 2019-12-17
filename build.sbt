@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.1.2"
+version := "2.1.3"
 
 scalaVersion := "2.12.7"
 
@@ -18,7 +18,7 @@ incOptions := incOptions.value.withNameHashing(true)
 
 resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
 
-resolvers += "Asami Maven Repository" at "http://www.asamioffice.com/maven"
+// resolvers += "Asami Maven Repository" at "http://www.asamioffice.com/maven"
 
 resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository"
 
@@ -69,7 +69,9 @@ libraryDependencies += "net.sourceforge.nekohtml" % "nekohtml" % "1.9.22" % "com
 
 libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.10" % "provided" exclude("org.scala-stm", "scala-stm_2.10.0")
 
-libraryDependencies += "org.scalanlp" %% "breeze" % "0.13.2" % "provided"
+libraryDependencies += "org.scalanlp" %% "breeze" % "0.13.2" % "compile"
+
+libraryDependencies += "black.ninia" % "jep" % "3.9.0" % "compile"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
 
@@ -78,4 +80,23 @@ libraryDependencies += "junit" % "junit" % "4.12" % "test"
 // libraryDependencies += "org.goldenport" %% "goldenport-scalatest-lib" % "2.0.0" % "test"
 
 //
-publishTo := Some(Resolver.file("asamioffice", file("target/maven-repository")))
+// publishTo := Some(Resolver.file("asamioffice", file("target/maven-repository")))
+// AutoMkcol.globalSettings
+
+// credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+
+// publishTo <<= version { v: String =>
+//   val backlog = "https://everforth.backlog.jp/dav/APC/maven/"
+//   if (v.trim.endsWith("SNAPSHOT"))
+//     Some("Backlog snapshots" at backlog + "snapshots")
+//   else
+//     Some("Backlog releases" at backlog + "releases")
+// }
+
+val mavenrepo = settingKey[String]("mavenrepo")
+
+mavenrepo := sys.env.getOrElse("PUBLISH_MAVEN_REPO", default = "target/maven-repository")
+
+publishTo <<= mavenrepo { v: String =>
+  Some(Resolver.file("file", file(v)))
+}

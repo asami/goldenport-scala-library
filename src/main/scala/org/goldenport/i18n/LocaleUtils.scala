@@ -5,13 +5,16 @@ import org.goldenport.Strings.totoken
 
 /*
  * @since   Feb. 10, 2017
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Sep. 23, 2019
  * @author  ASAMI, Tomoharu
  */
 object LocaleUtils {
+  def getC[T](ps: Map[Locale, T]): Option[T] = getC(ps.toVector)
   def getEnglish[T](ps: Map[Locale, T]): Option[T] = getEnglish(ps.toVector)
   def getJapanese[T](ps: Map[Locale, T]): Option[T] = getJapanese(ps.toVector)
 
+  def getC[T](ps: Seq[(Locale, T)]): Option[T] = findByLanguage("C", ps)
   def getEnglish[T](ps: Seq[(Locale, T)]): Option[T] = findByLanguage("en", ps)
   def getJapanese[T](ps: Seq[(Locale, T)]): Option[T] = findByLanguage("ja", ps)
 
@@ -38,6 +41,7 @@ object LocaleUtils {
     ps.foldLeft(Z())(_+_).r
   }
 
+  val C = new Locale("C")
   lazy val LANGUAGE_ENGLISH = Locale.ENGLISH.getLanguage
   lazy val LANGUAGE_JPAPNESE = Locale.JAPANESE.getLanguage
 
@@ -59,6 +63,7 @@ object LocaleUtils {
   def getByLanguageCountryVariant(master: Seq[(Locale, String)])(l: String, c: String, v: String): Option[String] =
     master.find(x => x._1.getLanguage == l && x._1.getCountry == c && x._1.getVariant == v).map(_._2) orElse getByLanguageCountry(master)(l, c)
 
+  def isC(locale: Locale): Boolean = locale == C
   def isEnglish(locale: Locale): Boolean = locale.getLanguage == LANGUAGE_ENGLISH
   def isJapanese(locale: Locale): Boolean = locale.getLanguage == LANGUAGE_JPAPNESE
 }

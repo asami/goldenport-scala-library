@@ -12,7 +12,8 @@ import scalaz.stream._
  *  version Nov. 12, 2018
  *  version Jan.  5, 2019
  *  version Feb. 16, 2019
- * @version May.  6, 2019
+ *  version May.  6, 2019
+ * @version Sep. 22, 2019
  * @author  ASAMI, Tomoharu
  */
 trait ParseReaderWriterState[C <: ParseConfig, AST] {
@@ -33,7 +34,10 @@ case class ParseReaderWriterStateClass[C <: ParseConfig, AST](
 //  def action(event: ParseEvent): RWS = ReaderWriterState((c, s) => s.apply(c, event))
 
   def apply(events: Seq[Char]): OUT = {
-    val es = CharEvent.make(events)
+    val es = if (config.isLocation)
+      CharEvent.make(events)
+    else
+      CharEvent.makeWithoutLocation(events)
     // println(s"ParseReaderWriterState#apply $es")
     _parse_events(es)
   }

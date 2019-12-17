@@ -9,7 +9,8 @@ import org.goldenport.util.VectorUtils
  *  version Sep. 22, 2018
  *  version Oct.  9, 2018
  *  version Dec. 31, 2018
- * @version Apr. 21, 2019
+ *  version Apr. 21, 2019
+ * @version Sep. 22, 2019
  * @author  ASAMI, Tomoharu
  */
 trait ParseEvent {
@@ -191,6 +192,10 @@ object CharEvent {
     }
     VectorUtils.sliding3(ps)./:(Z())(_+_).r
   }
+
+  def makeWithoutLocation(p: String): Vector[CharEvent] = makeWithoutLocation(p.toVector)
+
+  def makeWithoutLocation(ps: Seq[Char]): Vector[CharEvent] = ps.map(apply).toVector
 }
 
 case class LogicalLineEvent(

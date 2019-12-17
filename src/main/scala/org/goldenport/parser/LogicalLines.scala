@@ -10,7 +10,8 @@ import org.goldenport.exception.RAISE
  *  version Dec. 31, 2018
  *  version Jan.  1, 2019
  *  version Feb. 16, 2019
- * @version May.  2, 2019
+ *  version May.  2, 2019
+ * @version Jun. 30, 2019
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -321,7 +322,7 @@ object LogicalLines {
     // override protected def close_Brace_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
     override protected def open_Parenthesis_State(config: Config, evt: CharEvent) = SExpressionState(NormalState(evt.location), evt.location)
     // override protected def close_Parenthesis_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
-    override protected def open_Bracket_State(config: Config, evt: CharEvent) = BracketState(NormalState(evt.location), evt.location)
+    override protected def open_Bracket_State(config: Config, evt: CharEvent) = BracketState(NormalState(evt.location), evt)
     // override protected def close_Bracket_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect
   }
 
@@ -378,7 +379,7 @@ object LogicalLines {
     override protected def close_Brace_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect(this, "close_Brace_State")
     override protected def open_Parenthesis_State(config: Config, evt: CharEvent) = SExpressionState(this, evt.location)
     override protected def close_Parenthesis_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect(this, "close_Parenthesis_State")
-    override protected def open_Bracket_State(config: Config, evt: CharEvent) = BracketState(this, evt.location)
+    override protected def open_Bracket_State(config: Config, evt: CharEvent) = BracketState(this, evt)
     override protected def close_Bracket_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect(this, "close_Bracket_State")
   }
   object NormalState {
@@ -530,16 +531,38 @@ object LogicalLines {
   case class BracketState(
     parent: LogicalLinesParseState,
     location: Option[ParseLocation],
+    number: Int,
+    count: Int = 0,
     text: Vector[Char] = Vector.empty
   ) extends AwakeningLogicalLinesParseState {
     override protected def handle_End(config: Config): Transition = RAISE.notImplementedYetDefect(this, "handle_End") // TODO error
-    override protected def character_State(c: Char) = copy(text = text :+ c)
-    override protected def close_Bracket_State(config: Config, evt: CharEvent) =
-      parent.addChild(config, '[' +: text :+ ']')
+    override protected def character_State(c: Char) = copy(text = text :+ c, count = 0)
+    override protected def open_Bracket_State(config: Config, evt: CharEvent) =
+      if (text.isEmpty)
+        this
+      else
+        super.open_Brace_State(config, evt)
+    override protected def close_Bracket_State(config: Config, evt: CharEvent) = {
+      val n = count + 1
+      if (number == n) {
+        val prefix = Vector.fill(number)('[')
+        val postfix = Vector.fill(number)(']')
+        parent.addChild(config, prefix ++ text ++ postfix)
+      } else {
+        copy(count = n)
+      }
+    }
   }
   object BracketState {
-    def apply(parent: LogicalLinesParseState, location: ParseLocation): BracketState =
-      BracketState(parent, Some(location))
+    // def apply(parent: LogicalLinesParseState, location: ParseLocation): BracketState =
+    //   BracketState(parent, Some(location))
+
+    def apply(parent: LogicalLinesParseState, evt: CharEvent): BracketState =
+      (evt.c, evt.next, evt.next2) match {
+        case (c, Some('['), Some('[')) => BracketState(parent, Some(evt.location), 3)
+        case (c, Some('['), _) => BracketState(parent, Some(evt.location), 2)
+        case _ => BracketState(parent, Some(evt.location), 1)
+      }
   }
 
   case class DoubleQuoteState(

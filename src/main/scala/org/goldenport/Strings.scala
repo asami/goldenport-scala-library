@@ -20,7 +20,9 @@ import com.asamioffice.goldenport.text.UString
  *  version Oct. 25, 2015
  *  version Mar. 10, 2016
  *  version Mar. 21, 2017
- * @version Dec. 10, 2018
+ *  version Dec. 10, 2018
+ *  version Jun. 24, 2019
+ * @version Jul.  7, 2019
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -61,6 +63,7 @@ object Strings {
     val text_html = "text/html"
     val text_plain = "text/plain"
     val text_xml = "text/xml"
+    val text_xsl = "text/xsl"
     val text_event_stream = "text/event-stream"
   }
 
@@ -173,6 +176,12 @@ object Strings {
     if (blankp(s)) Nil
     else UString.getTokens(s, ds).toList
   }
+
+  def totokensVector(s: String, ds: String): Vector[String] =
+    if (blankp(s))
+      Vector.empty
+    else
+      UString.getTokens(s, ds).toVector
 
   def tolines(s: String): Vector[String] = {
     UString.getLineList(s).toVector

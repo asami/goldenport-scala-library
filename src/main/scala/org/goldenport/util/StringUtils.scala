@@ -1,6 +1,7 @@
 package org.goldenport.util
 
 import scalaz.NonEmptyList
+import scala.util.Try
 import scala.util.control.NonFatal
 import Character.UnicodeBlock
 import java.net.{URL, URI}
@@ -31,7 +32,10 @@ import org.goldenport.values.{PathName, Urn}
  *  version Aug. 31, 2018
  *  version Oct. 10, 2018
  *  version Feb. 14, 2019
- * @version Mar.  5, 2019
+ *  version Mar.  5, 2019
+ *  version May. 19, 2019
+ *  version Jul. 29, 2019
+ * @version Sep. 15, 2019
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -285,9 +289,9 @@ object StringUtils {
   def isSuffix(s: String, suffix: Set[String]): Boolean =
     suffix.contains(toSuffix(s))
 
-  def toSuffix(s: String): String = UPathString.getSuffix(s)
+  def toSuffix(s: String): String = getSuffix(s).getOrElse("")
 
-  def getSuffix(s: String): Option[String] = Option(UPathString.getSuffix(s))
+  def getSuffix(s: String): Option[String] = Option(UPathString.getSuffix(s)).map(_.toLowerCase)
 
   def toPathnameBody(s: String): String = UPathString.getPathnameBody(s)
 
@@ -496,14 +500,30 @@ object StringUtils {
     else
       p + "/"
 
-  def showConsole(p: String, newline: String, size: Int = 5): String = {
-    val max = size * 80
-    val a = if (p.length > max) p.substring(0, size * 80) else p
-    val b = Strings.tolines(a).take(size).mkString(newline)
-    if (p.length > max)
-      s"$b ... (total: ${p.length})"
+  def print(p: String, newline: String): String = {
+    val a = Strings.tolines(p)
+    val c = a.mkString(newline)
+    c
+  }
+
+  def printConsole(p: String, newline: String, size: Int = 5): String = {
+    val a = Strings.tolines(p)
+    val c = a.take(size).mkString(newline)
+    if (a.length > size)
+      s"$c ... (${a.length}/${p.length})"
     else
-      b
+      c
+  }
+
+  def showConsole(p: String, newline: String, size: Int = 5): String = {
+    val width = 80
+    val a = Strings.tolines(p)
+    val b = a.map(Strings.cutstring(_, width))
+    val c = b.take(size).mkString(newline)
+    if (a.length > size)
+      s"$c ... (${a.length}/${p.length})"
+    else
+      c
   }
 
   /*
@@ -522,6 +542,91 @@ object StringUtils {
   } catch {
     case NonFatal(e) => Right(s)
   }
+
+  def intOption(p: String): Option[Int] =
+    if (p.isEmpty) {
+      None
+    } else {
+      val s = p.trim
+      val c = s(0)
+      if (c == '+' || c == '-' || ('0' <= c && c <= '9')) {
+        try {
+          Some(s.toInt)
+        } catch {
+          case NonFatal(e) => None
+        }
+      } else {
+        None
+      }
+    }
+
+  def longOption(p: String): Option[Long] =
+    if (p.isEmpty) {
+      None
+    } else {
+      val s = p.trim
+      val c = s(0)
+      if (c == '+' || c == '-' || ('0' <= c && c <= '9')) {
+        try {
+          Some(s.toLong)
+        } catch {
+          case NonFatal(e) => None
+        }
+      } else {
+        None
+      }
+    }
+
+  def doubleOption(s: String): Option[Double] =
+    if (s.isEmpty)
+      None
+    else
+      numberOption(s).filter(_is_double).map(_.doubleValue)
+
+  private def _is_double(p: Any) = p match {
+    case _: Byte => true
+    case _: Short => true
+    case _: Int => true
+    case _: Long => true
+    case _: Float => true
+    case _: Double => true
+    case _: BigInt => false
+    case _: BigDecimal => false
+    case _ => false
+  }
+
+  def numberOption(p: String): Option[Number] =
+    if (p.isEmpty) {
+      None
+    } else {
+      val s = p.trim
+      val length = s.length
+      val c = s(0)
+      if (c == '+' || c == '-' || ('0' <= c && c <= '9')) {
+        if (s.contains('.') || s.contains('e') || s.contains('E')) {
+          Try(s.toDouble: Number).toOption.orElse(Try(new java.math.BigDecimal(s)).toOption)
+        } else {
+          if (length > 11)
+            Try(s.toLong: Number).toOption.orElse(Try(new java.math.BigInteger(s)).toOption)
+          else if (length > 9)
+            Try(s.toInt: Number).toOption.orElse(Try(s.toLong: Number).toOption)
+          else
+            Try(s.toInt: Number).toOption
+        }
+      } else if (c == '.') {
+        if (length > 1) {
+          val c1 = s(1)
+          if ('0' <= c1 && c1 <= '9')
+            Try(s.toDouble: Number).toOption.orElse(Try(BigDecimal(s)).toOption)
+          else
+            None
+        } else {
+          None
+        }
+      } else {
+        None
+      }
+    }
 
   /*
    * Display

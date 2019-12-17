@@ -7,7 +7,9 @@ import LogicalTokens._
 
 /*
  * @since   Aug. 19, 2018
- * @version Sep. 20, 2018
+ *  version Sep. 20, 2018
+ *  version Jul. 16, 2019
+ * @version Oct. 12, 2019
  * @author  ASAMI, Tomoharu
  */
 case class XmlParser() extends Parser with LogicalTokens.ComplexTokenizer {
@@ -26,6 +28,9 @@ object XmlParser {
     text: String,
     location: Option[ParseLocation]
   ) extends ExternalLogicalToken {
+    def raw = text
+    def value = dom
+    def clearLocation: LogicalToken = copy(location = None)
     val xml = XML.loadString(text) // Scala XML
     val dom = DomParser.parse(text)
   }

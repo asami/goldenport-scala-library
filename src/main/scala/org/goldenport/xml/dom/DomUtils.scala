@@ -24,7 +24,9 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version May. 13, 2016
  *  version Jun. 14, 2016
  *  version Oct. 12, 2017
- * @version May.  3, 2019
+ *  version May. 27, 2019
+ *  version Jun. 30, 2019
+ * @version Jul. 28, 2019
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -207,6 +209,28 @@ object DomUtils {
     result.getNode
   }
 
+  // class DomBuilder() extends org.xml.sax.ContentHandler {
+  //   def startDocument(): Unit = {}
+  //   def endDocument(): Unit = {}
+  //   def startElement(x$1: String,x$2: String,x$3: String,x$4: org.xml.sax.Attributes): Unit = {
+  //     println(x$1)
+  //     println(x$2)
+  //     println(x$3)
+  //     println(x$4)
+  //   }
+  //   def endElement(x$1: String,x$2: String,x$3: String): Unit = {}
+  //   def startPrefixMapping(x$1: String,x$2: String): Unit = {}
+  //   def endPrefixMapping(x$1: String): Unit = ???
+  //   def characters(x$1: Array[Char],x$2: Int,x$3: Int): Unit = {
+  //     println("characters")
+  //     println(new String(x$1, x$2, x$3))
+  //   }
+  //   def ignorableWhitespace(x$1: Array[Char],x$2: Int,x$3: Int): Unit = {}
+  //   def setDocumentLocator(x$1: org.xml.sax.Locator): Unit = {}
+  //   def skippedEntity(x$1: String): Unit = {}
+  //   def processingInstruction(x$1: String,x$2: String): Unit = {}
+  // }
+
   def transform(stylesheet: String, xml: String): Node = {
     val stylesource = new StreamSource(new StringReader(stylesheet))
     val transformer = TransformerFactory.newInstance().newTransformer(stylesource)
@@ -225,6 +249,7 @@ object DomUtils {
     result.getNode
   }
 
+  // Don't work when the stylesheet is a node.
   def transform(stylesheet: Node, node: Node): Node = {
     val stylesource = new DOMSource(stylesheet)
     val transformer = TransformerFactory.newInstance().newTransformer(stylesource)
@@ -455,6 +480,48 @@ object DomUtils {
   def elementsSteream(node: Node): Stream[Element] =
     elementsIndexedSeq(node).toStream
 
+  def elementsByLocalNameIC(node: Node, localname: String): List[Element] =
+    elementsVectorByLocalNameIC(node, localname).toList
+
+  def elementsByLocalNameIC(node: Node, localname: String, localname2: String, localnames: String*): List[Element] =
+    elementsVectorByLocalNameIC(node, localname, localname2, localnames: _*).toList
+
+  def elementsVectorByLocalNameIC(node: Node, localname: String): Vector[Element] =
+    childrenIndexedSeq(node).collect {
+      case m: Element => m
+    }.filter(x => localname.equalsIgnoreCase(x.getLocalName)).toVector
+
+  def elementsVectorByLocalNameIC(node: Node, localname: String, localname2: String, localnames: String*): Vector[Element] = {
+    val names = (localnames.toVector :+ localname :+ localname2).map(_.toLowerCase)
+    childrenIndexedSeq(node).collect {
+      case m: Element => m
+    }.filter(x =>
+      names.contains(Option(x.getLocalName).map(_.toLowerCase).getOrElse(""))
+    ).toVector
+  }
+
+  def isElementTextMix(p: Node): Boolean = isElementTextMix(childrenIndexedSeq(p))
+
+  def isElementTextMix(ps: Seq[Node]): Boolean = {
+    case class Z(elementcount: Int = 0, textcount: Int = 0) {
+      def r = elementcount > 0 && textcount > 0
+
+      def +(rhs: Node) = rhs match {
+        case m: Text => // including CDATASection
+          if (m.isElementContentWhitespace || Strings.blankp(m.getWholeText))
+            this
+          else
+            copy(textcount = textcount + 1)
+        case m: Element => copy(elementcount = elementcount + 1)
+        case m => this
+      }
+    }
+    if (ps.isEmpty)
+      false
+    else
+      ps./:(Z())(_+_).r
+  }
+
   def copyNode(doc: Document)(src: Node): Node = src match {
     case m: CDATASection => copyCDATASection(doc)(m)
     case m: Comment => copyComment(doc)(m)
@@ -550,6 +617,12 @@ object DomUtils {
         xs.toStream.flatMap(findElementBreadth(p)).headOption
     }
   }
+
+  def getElementByLocalNameIC(node: Node, localname: String): Option[Element] =
+    elementsVectorByLocalNameIC(node, localname).headOption
+
+  def getElementByLocalNameIC(node: Node, localname: String, localname2: String, localnames: String*): Option[Element] =
+    elementsVectorByLocalNameIC(node, localname, localname2, localnames: _*).headOption
 
   def isMatch(p: Element => Boolean)(node: Node): Boolean =
     node match {

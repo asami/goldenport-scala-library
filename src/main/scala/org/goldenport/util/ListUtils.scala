@@ -7,7 +7,8 @@ import scalaz._
  *  version Jun. 29, 2018
  *  version Jul. 16, 2018
  *  version Aug.  5, 2018
- * @version Oct. 30, 2018
+ *  version Oct. 30, 2018
+ * @version Jul. 29, 2019
  * @author  ASAMI, Tomoharu
  */
 object ListUtils {
@@ -32,4 +33,9 @@ object ListUtils {
 
   def buildTupleList[T](options: Seq[(String, Option[T])]): List[(String, T)] =
     SeqUtils.buildTupleList(options)
+
+  def split3[T](p: T => Boolean)(ps: Seq[T]): (List[T], List[T], List[T]) = {
+    val (ls, cs, rs) = VectorUtils.split3(p)(ps)
+    (ls.toList, cs.toList, rs.toList)
+  }
 }
