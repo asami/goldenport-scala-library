@@ -12,11 +12,16 @@ package org.goldenport.recorder
  *  version Dec.  9, 2011
  *  version Jan. 23, 2012
  *  version Nov.  8, 2012
- * @version Dec. 22, 2019
+ *  version Dec. 22, 2019
+ * @version Jan.  4, 2020
  * @author  ASAMI, Tomoharu
  */
 trait Recordable {
-  private var _recorder = NullRecorder
+  private var _recorder: Recorder = NullRecorder
+
+  protected def set_Recorder(p: Recorder) {
+    _recorder = p
+  }
 
   protected final def record_error(ex: Throwable) {
     _recorder.error(ex)
