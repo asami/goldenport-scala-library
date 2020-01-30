@@ -2,6 +2,7 @@ package org.goldenport.io
 
 import scala.util.control.NonFatal
 import java.net.URL
+import java.io.File
 import com.asamioffice.goldenport.io.UURL
 import org.goldenport.util.StringUtils
 
@@ -9,10 +10,13 @@ import org.goldenport.util.StringUtils
  * @since   Jul. 24, 2017
  *  version Aug. 30, 2017
  *  version Oct.  6, 2017
- * @version Dec.  9, 2019
+ *  version Dec.  9, 2019
+ * @version Jan. 26, 2020
  * @author  ASAMI, Tomoharu
  */
 object UrlUtils {
+  val urlSchemes = Set("http", "https", "file", "ftp", "file")
+
   def takeLeafName(url: URL): String =
     StringUtils.pathLastComponent(url.getPath)
 
@@ -53,4 +57,6 @@ object UrlUtils {
     val builder = UriBuilder(p)
     builder.addQuery(query).buildURL
   }
+
+  def getFile(url: URL): Option[File] = Option(UURL.getActiveFile(url))
 }

@@ -3,6 +3,7 @@ package org.goldenport.cli
 import scalaz._, Scalaz._
 import scalaz.concurrent.Task
 import scalaz.stream._
+import java.io.InputStreamReader
 import org.goldenport.RAISE
 import org.goldenport.parser._
 import org.goldenport.parser.LogicalLines
@@ -11,7 +12,8 @@ import org.goldenport.parser.LogicalLines.{InitState, LogicalLinesParseState}
 /*
  * @since   Oct.  4, 2018
  *  version Feb. 14, 2019
- * @version Apr. 21, 2019
+ *  version Apr. 21, 2019
+ * @version Jan. 20, 2020
  * @author  ASAMI, Tomoharu
  */
 class ReadEvalPrintLoop(
@@ -21,10 +23,12 @@ class ReadEvalPrintLoop(
 ) {
   import ReadEvalPrintLoop._
 
+  private val _system_in_reader = new InputStreamReader(System.in, environment.consoleCharset)
+
   // TODO migrate to ParseEvent
   def stdInParseEvents: Process[Task, ParseEvent] =
     Process.repeatEval(Task.delay {
-      Option(System.in.read()).
+      Option(_system_in_reader.read()).
         map(CharEvent.apply).
         getOrElse(EndEvent)
     })

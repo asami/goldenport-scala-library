@@ -16,7 +16,8 @@ import org.goldenport.exception.RAISE
  *  version Jul. 17, 2019
  *  version Sep. 28, 2019
  *  version Oct. 28, 2019
- * @version Nov. 10, 2019
+ *  version Nov. 10, 2019
+ * @version Jan. 30, 2020
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
@@ -1021,7 +1022,8 @@ object LogicalTokens {
   case class UrnOrLxsvState(
     parent: LogicalTokensParseState,
     cs: Vector[Char],
-    location: ParseLocation
+    location: ParseLocation,
+    isLxsv: Option[Boolean] = None
   ) extends ChildLogicalTokensParseState {
     override val use_Tokenizer = true
     override val use_Delimiter = true
@@ -1030,9 +1032,17 @@ object LogicalTokens {
     override val use_Bracket = true
     override val use_Dollar = false
 
-    def tokens(config: Config): LogicalTokens = to_tokens(config, cs.mkString, location)
+    def tokens(config: Config): LogicalTokens = isLxsv.collect {
+      case true => LogicalTokens(LxsvToken(cs.mkString, location))
+    }.getOrElse(to_tokens(config, cs.mkString, location))
 
     protected def flush_Tokens(config: Config): LogicalTokens = tokens(config)
+
+    override def addChildState(config: Config, p: LogicalToken): LogicalTokensParseState =
+      p match {
+        case m: StringToken => copy(cs = cs ++ m.text, isLxsv = Some(true))
+        case m => RAISE.noReachDefect
+      }
 
     // private def _flush(config: Config): UrnOrLxsvState = this
 
@@ -1057,15 +1067,21 @@ object LogicalTokens {
     // override protected def space_State(config: Config, evt: CharEvent) =
     //   SpaceState(this, evt)
 
-    override protected def delimiter_State(config: Config, evt: CharEvent) = {
-      val a = if (cs.isEmpty) {
-        LogicalTokens(DelimiterToken(evt.c, evt.location))
-      } else {
-        tokens(config) + DelimiterToken(evt.c, evt.location)
-      }
-      val l = evt.location
-      copy(cs = Vector.empty, location = l)
-    }
+    override protected def handle_delimiter(config: Config, evt: CharEvent) =
+      if (cs.isEmpty)
+        RAISE.noReachDefect
+      else
+        parent.addChildState(config, tokens(config)).apply(config, evt)
+
+    // override protected def delimiter_State(config: Config, evt: CharEvent) = {
+    //   val a = if (cs.isEmpty) {
+    //     LogicalTokens(DelimiterToken(evt.c, evt.location))
+    //   } else {
+    //     tokens(config) + DelimiterToken(evt.c, evt.location)
+    //   }
+    //   val l = evt.location
+    //   copy(cs = Vector.empty, location = l)
+    // }
 
     override protected def double_Quote_State(config: Config, evt: CharEvent) = {
       if (evt.isMatch("\"\"\""))
@@ -1073,6 +1089,9 @@ object LogicalTokens {
       else
         DoubleQuoteState(this, evt)
     }
+
+    override protected def space_State(config: Config, evt: CharEvent) =
+      SpaceState(parent.addChildState(config, tokens(config)), evt)
 
     override protected def character_State(config: Config, evt: CharEvent) =
       copy(cs = cs :+ evt.c)

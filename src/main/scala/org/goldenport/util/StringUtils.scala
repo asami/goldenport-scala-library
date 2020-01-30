@@ -37,7 +37,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Jul. 29, 2019
  *  version Sep. 15, 2019
  *  version Nov. 28, 2019
- * @version Dec.  5, 2019
+ *  version Dec.  5, 2019
+ * @version Jan. 27, 2020
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -116,6 +117,11 @@ object StringUtils {
 
   val numericalSymbols = Vector(
     '+', '*', '-', '/', '=', '&', '|'
+  )
+
+  val numberSymbols = Vector(
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    '+', '-', '.', ','
   )
 
   // TODO
@@ -200,6 +206,15 @@ object StringUtils {
   def isNumericalSymbol(s: String) = s.forall(isNumericalSymbolChar)
 
   def isNumericalSymbolChar(c: Char) = numericalSymbols.contains(c)
+
+  def isNumber(p: String): Boolean =
+    p.equalsIgnoreCase("true") || p.equalsIgnoreCase("false") || p.forall(isNumberSymbolChar)
+
+  def isNumberWide(p: String): Boolean = isNumber(p) || _is_complicated_number(p)
+
+  private def _is_complicated_number(p: String) = false // TODO 0.0L, +3e5
+
+  def isNumberSymbolChar(c: Char) = numberSymbols.contains(c)
 
   def isI18NIdentifier(s: String) =
     if (s.isEmpty)

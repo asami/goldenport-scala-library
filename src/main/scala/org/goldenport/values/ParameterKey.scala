@@ -5,7 +5,7 @@ import org.goldenport.Strings
 
 /*
  * @since   Jul. 30, 2019
- * @version Jul. 30, 2019
+ * @version Jan. 23, 2020
  * @author  ASAMI, Tomoharu
  */
 case class ParameterKey(
@@ -27,7 +27,7 @@ object ParameterKey {
 
   def parse(p: String): ParameterKey = {
     val i = p.indexOf(ADORNMENT_DELIMITER)
-    if (i == -1) {
+    if (i == -1 || i == 0) {
       val path = p
       val pathlist: List[String] = Strings.totokens(path, PATH_DELIMITER)
       val key = pathlist.head

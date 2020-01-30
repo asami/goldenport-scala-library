@@ -10,7 +10,8 @@ import org.scalatest._
  *  version Oct. 25, 2018
  *  version Feb. 13, 2019
  *  version Apr. 13, 2019
- * @version Nov. 26, 2019
+ *  version Nov. 26, 2019
+ * @version Jan. 20, 2020
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])

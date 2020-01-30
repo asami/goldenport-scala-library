@@ -16,7 +16,8 @@ import org.goldenport.util.DateTimeUtils
  *  version Mar. 10, 2019
  *  version Apr. 13, 2019
  *  version Sep. 24, 2019
- * @version Oct. 27, 2019
+ *  version Oct. 27, 2019
+ * @version Jan. 21, 2020
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -399,7 +400,7 @@ c d)"""
       val s = """name:"value""""
       val r = LogicalTokens.parse(s)
       r should be(LogicalTokens(
-        LxsvToken("""name:"value"""", Some(ParseLocation.start))
+        LxsvToken("""name:value""", Some(ParseLocation.start))
       ))
     }
     // "properties" in {

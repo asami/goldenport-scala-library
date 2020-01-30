@@ -27,7 +27,8 @@ import org.goldenport.extension.Showable
  *  version Dec. 17, 2017
  *  version Sep. 23, 2019
  *  version Oct.  8, 2019
- * @version Nov. 28, 2019
+ *  version Nov. 28, 2019
+ * @version Jan. 18, 2020
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -181,8 +182,8 @@ object AnyUtils {
       case s: String => DateUtils.parse(s)
     }
   }
-  def toDateTime(x: Any): DateTime = ???
-  def toLocalDate(x: Any): LocalDate = ???
+  def toDateTime(x: Any): DateTime = RAISE.notImplementedYetDefect
+  def toLocalDate(x: Any): LocalDate = RAISE.notImplementedYetDefect
   def toLocalTime(x: Any): LocalTime = {
     x match {
       case v: LocalTime => v
@@ -209,5 +210,31 @@ object AnyUtils {
       case m: File => m.toURI
       case s: String => new URI(s)
     }
+  }
+
+  def isNumber(p: Any): Boolean = p match {
+    case _: Boolean => true
+    case _: Byte => true
+    case _: Short => true
+    case _: Int => true
+    case _: Long => true
+    case _: Float => true
+    case _: Double => true
+    case _: BigInt => true
+    case _: BigDecimal => true
+    case _: java.math.BigInteger => true
+    case _: java.math.BigDecimal => true
+    case _: Number => true
+    case _ => false
+  }
+
+  def guessNumber(p: Any): Boolean = p match {
+    case m: String => StringUtils.isNumber(m)
+    case _ => isNumber(p)
+  }
+
+  def guessNumberOrEmpty(p: Any): Boolean = p match {
+    case "" => true
+    case _ => guessNumber(p)
   }
 }
