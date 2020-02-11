@@ -15,7 +15,9 @@ import org.goldenport.exception.RAISE
  *  version Jun. 30, 2019
  *  version Jul. 17, 2019
  *  version Sep. 28, 2019
- * @version Oct. 28, 2019
+ *  version Oct. 28, 2019
+ *  version Nov. 10, 2019
+ * @version Jan. 30, 2020
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
@@ -136,7 +138,7 @@ object LogicalTokens {
     val debug = default.copy(isDebug = true)
     val xsv = default.copy(
       "".toVector,
-      " \t,;".toVector
+      " \t,;&".toVector
     )
     val csv = default.copy(
       "".toVector,
@@ -153,6 +155,10 @@ object LogicalTokens {
     val ssv = default.copy(
       "".toVector,
       " \t".toVector
+    )
+    val urlEncoding = default.copy(
+      "".toVector,
+      "&".toVector
     )
   }
 
@@ -189,6 +195,8 @@ object LogicalTokens {
       RAISE.noReachDefect(s"addChildTransition(${getClass.getSimpleName})")
 
     def addChildEndTransition(config: Config, p: LogicalToken): Transition = RAISE.noReachDefect(s"addChildEndTransition(${getClass.getSimpleName})")
+
+    def addChildEndTransition(config: Config, p: LogicalTokens): Transition = RAISE.noReachDefect(s"addChildEndTransition(${getClass.getSimpleName})")
 
     protected final def handle_event(config: Config, evt: ParseEvent): Transition =
       evt match {
@@ -472,8 +480,11 @@ object LogicalTokens {
     protected final def flush_tokens(config: Config): LogicalTokens =
       flush_Tokens(config)
 
+    protected final def flush_tokens(config: Config, p: LogicalTokens): LogicalTokens =
+      flush_Tokens(config, p)
+
     protected def flush_State(config: Config, p: LogicalTokens): LogicalTokensParseState =
-      parent.addChildState(config, flush_tokens(config))
+      parent.addChildState(config, flush_tokens(config, p))
 
     protected def flush_State(config: Config, p: LogicalToken): LogicalTokensParseState =
       flush_State(config, LogicalTokens(p))
@@ -482,6 +493,9 @@ object LogicalTokens {
       flush_State(config, LogicalTokens.empty)
 
     protected def flush_Tokens(config: Config): LogicalTokens
+
+    protected def flush_Tokens(config: Config, p: LogicalTokens): LogicalTokens =
+      flush_Tokens(config) + p
 
     override def addChildState(config: Config, p: LogicalTokens): LogicalTokensParseState =
       flush_state(config, p)
@@ -492,8 +506,14 @@ object LogicalTokens {
     override def addChildEndTransition(config: Config, p: LogicalToken): Transition =
       flush_state(config, p).apply(config, EndEvent)
 
-    override protected def end_Result(config: Config): ParseResult[LogicalTokens] =
-      ParseSuccess(flush_tokens(config))
+    override def addChildEndTransition(config: Config, p: LogicalTokens): Transition =
+      flush_state(config, p).apply(config, EndEvent)
+
+    // override protected def end_Result(config: Config): ParseResult[LogicalTokens] =
+    //   ParseSuccess(flush_tokens(config))
+
+    override protected def handle_End(config: Config): Transition =
+      parent.addChildEndTransition(config, flush_tokens(config))
   }
 
   // can use terminal character to handle token end.
@@ -1002,8 +1022,9 @@ object LogicalTokens {
   case class UrnOrLxsvState(
     parent: LogicalTokensParseState,
     cs: Vector[Char],
-    location: ParseLocation
-  ) extends LogicalTokensParseState {
+    location: ParseLocation,
+    isLxsv: Option[Boolean] = None
+  ) extends ChildLogicalTokensParseState {
     override val use_Tokenizer = true
     override val use_Delimiter = true
     override val use_Double_Quote = true
@@ -1011,40 +1032,56 @@ object LogicalTokens {
     override val use_Bracket = true
     override val use_Dollar = false
 
-    def tokens(config: Config): LogicalTokens = to_tokens(config, cs.mkString, location)
+    def tokens(config: Config): LogicalTokens = isLxsv.collect {
+      case true => LogicalTokens(LxsvToken(cs.mkString, location))
+    }.getOrElse(to_tokens(config, cs.mkString, location))
 
-    private def _flush(config: Config): UrnOrLxsvState = this
+    protected def flush_Tokens(config: Config): LogicalTokens = tokens(config)
 
-    private def _flush(config: Config, t: LogicalToken): UrnOrLxsvState =
-      copy(cs = cs ++ t.raw)
+    override def addChildState(config: Config, p: LogicalToken): LogicalTokensParseState =
+      p match {
+        case m: StringToken => copy(cs = cs ++ m.text, isLxsv = Some(true))
+        case m => RAISE.noReachDefect
+      }
 
-    private def _flush(config: Config, t: LogicalTokens): UrnOrLxsvState =
-      copy(cs = cs ++ t.raw)
+    // private def _flush(config: Config): UrnOrLxsvState = this
 
-    override def addChildState(config: Config, p: LogicalTokens): LogicalTokensParseState =
-      _flush(config, p)
+    // private def _flush(config: Config, t: LogicalToken): UrnOrLxsvState =
+    //   copy(cs = cs ++ t.raw)
 
-    override def addChildTransition(config: Config, p: LogicalToken, evt: CharEvent): Transition =
-      (ParseMessageSequence.empty, ParseResult.empty, _flush(config, p))
+    // private def _flush(config: Config, t: LogicalTokens): UrnOrLxsvState =
+    //   copy(cs = cs ++ t.raw)
 
-    override def addChildEndTransition(config: Config, p: LogicalToken): Transition =
-      _flush(config, p).apply(config, EndEvent)
+    // override def addChildState(config: Config, p: LogicalTokens): LogicalTokensParseState =
+    //   _flush(config, p)
 
-    override protected def end_Result(config: Config): ParseResult[LogicalTokens] =
-      ParseSuccess(_flush(config).tokens(config))
+    // override def addChildTransition(config: Config, p: LogicalToken, evt: CharEvent): Transition =
+    //   (ParseMessageSequence.empty, ParseResult.empty, _flush(config, p))
+
+    // override def addChildEndTransition(config: Config, p: LogicalToken): Transition =
+    //   _flush(config, p).apply(config, EndEvent)
+
+    // override protected def end_Result(config: Config): ParseResult[LogicalTokens] =
+    //   ParseSuccess(_flush(config).tokens(config))
 
     // override protected def space_State(config: Config, evt: CharEvent) =
     //   SpaceState(this, evt)
 
-    override protected def delimiter_State(config: Config, evt: CharEvent) = {
-      val a = if (cs.isEmpty) {
-        LogicalTokens(DelimiterToken(evt.c, evt.location))
-      } else {
-        tokens(config) + DelimiterToken(evt.c, evt.location)
-      }
-      val l = evt.location
-      copy(cs = Vector.empty, location = l)
-    }
+    override protected def handle_delimiter(config: Config, evt: CharEvent) =
+      if (cs.isEmpty)
+        RAISE.noReachDefect
+      else
+        parent.addChildState(config, tokens(config)).apply(config, evt)
+
+    // override protected def delimiter_State(config: Config, evt: CharEvent) = {
+    //   val a = if (cs.isEmpty) {
+    //     LogicalTokens(DelimiterToken(evt.c, evt.location))
+    //   } else {
+    //     tokens(config) + DelimiterToken(evt.c, evt.location)
+    //   }
+    //   val l = evt.location
+    //   copy(cs = Vector.empty, location = l)
+    // }
 
     override protected def double_Quote_State(config: Config, evt: CharEvent) = {
       if (evt.isMatch("\"\"\""))
@@ -1052,6 +1089,9 @@ object LogicalTokens {
       else
         DoubleQuoteState(this, evt)
     }
+
+    override protected def space_State(config: Config, evt: CharEvent) =
+      SpaceState(parent.addChildState(config, tokens(config)), evt)
 
     override protected def character_State(config: Config, evt: CharEvent) =
       copy(cs = cs :+ evt.c)
@@ -1090,6 +1130,9 @@ object LogicalTokens {
       _flush(config, p).apply(config, evt)
 
     override def addChildEndTransition(config: Config, p: LogicalToken): Transition =
+      _flush(config, p).apply(config, EndEvent)
+
+    override def addChildEndTransition(config: Config, p: LogicalTokens): Transition =
       _flush(config, p).apply(config, EndEvent)
 
     override protected def end_Result(config: Config): ParseResult[LogicalTokens] =

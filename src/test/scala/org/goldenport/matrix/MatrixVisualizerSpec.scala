@@ -7,7 +7,7 @@ import scala.xml._
 
 /*
  * @since   Jun. 22, 2019
- * @version Jun. 22, 2019
+ * @version Nov. 12, 2019
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -19,7 +19,7 @@ class MatrixVisualizerSpec extends WordSpec with Matchers with GivenWhenThen {
           Vector(1, 2, 3, 4),
           Vector(10, 20, 30, 40)
         ))
-        val mv = MatrixVisualizer.border((x: Int) => x.toString)
+        val mv = MatrixVisualizer.border((c: MatrixVisualizer.ColumnDef, x: Int) => x.toString)
         val r = mv.plainText(matrix)
         println(r)
       }

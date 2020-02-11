@@ -18,7 +18,8 @@ import org.goldenport.log.{LogConfig, LogLevel}
  *  version May. 19, 2019
  *  version Aug.  4, 2019
  *  version Sep. 25, 2019
- * @version Oct. 27, 2019
+ *  version Oct. 27, 2019
+ * @version Jan. 20, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Config(
@@ -34,6 +35,7 @@ case class Config(
   def locale: Locale = i18n.locale
   def timezone: TimeZone = i18n.timezone
   def logLevel: Option[LogLevel] = log.level
+  def consoleCharset: Charset = charset // XXX
 
   def withLogLevel(p: LogLevel) = copy(log = log.withLogLevel(p))
 }

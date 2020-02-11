@@ -8,7 +8,8 @@ import org.goldenport.util.VectorUtils
  *  version Feb. 27, 2019
  *  version Apr. 26, 2019
  *  version May.  2, 2019
- * @version Oct. 13, 2019
+ *  version Oct. 13, 2019
+ * @version Nov.  3, 2019
  * @author  ASAMI, Tomoharu
  */
 case class NonEmptyVector[T](head: T, tail: Vector[T]) {
@@ -33,6 +34,8 @@ case class NonEmptyVector[T](head: T, tail: Vector[T]) {
   def +:(p: T): NonEmptyVector[T] = copy(head = p, tail = head +: tail)
   def ++(ps: NonEmptyVector[T]) = copy(tail = (tail :+ ps.head) ++ ps.tail)
   def ++(ps: Seq[T]) = copy(tail = (tail :+ ps.head) ++ ps.tail)
+
+  def exists(f: T => Boolean): Boolean = vector.exists(f)
 
   def map[A](f: T => A): NonEmptyVector[A] =
     NonEmptyVector(vector.map(f))

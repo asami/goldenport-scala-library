@@ -9,7 +9,8 @@ import MatrixVisualizer._
  * @since   Jun. 16, 2019
  *  version Jul.  7, 2019
  *  version Aug. 24, 2019
- * @version Oct. 11, 2019
+ *  version Oct. 11, 2019
+ * @version Nov. 30, 2019
  * @author  ASAMI, Tomoharu
  */
 case class MatrixVisualizer[T](
@@ -20,16 +21,20 @@ case class MatrixVisualizer[T](
   horizontalSeparator: Boolean,
   lineStyle: LineStyle,
   newline: String,
-  textf: T => String
+  textf: (ColumnDef, T) => String,
+  columnDefs: ColumnDefs = ColumnDefs.empty,
+  horizontalSeparatorGap: Option[Int] = Some(5)
 ) {
-  val horizontalSeparatorGap = 3
-
   private def _is_horizontal_separator(i: Int): Boolean =
     horizontalSeparator && _is_gap(i)
 
-  private def _is_gap(i: Int): Boolean = (i % horizontalSeparatorGap) == 0
+  private def _is_gap(i: Int): Boolean = horizontalSeparatorGap.
+    map(i + 1 % _ == 0).
+    getOrElse(false)
 
   def withLineStyle(p: LineStyle) = copy(lineStyle = p)
+
+  def withColumnDefs(p: ColumnDefs) = copy(columnDefs = p)
 
   def buildColumns(p: IMatrix[T]): ColumnInfos = {
     val raw = _build_raw(p)
@@ -52,8 +57,9 @@ case class MatrixVisualizer[T](
   private def _build_raw(p: IMatrix[T]): Rows = {
     val rs = for (y <- 0 until p.height) yield {
       val cs = for (x <- 0 until p.width) yield {
+        val c = columnDefs(x)
         val v = p(x, y)
-        val t = textf(v)
+        val t = textf(c, v)
         Cell(t)
       }
       Row(cs)
@@ -66,9 +72,11 @@ case class MatrixVisualizer[T](
       def r = ColumnInfos(columns.map(ColumnInfo))
 
       def +(rhs: Row) = {
-        val a = columns.zip(rhs.cells.map(_string_width))
+        val a = columns.zip(rhs.cells.map(_string_width)).zipWithIndex
         val b = a map {
-          case (l, r) => l max r
+          case ((l, r), i) => columnDefs.get(i).
+              flatMap(_.width).
+              getOrElse(l max r)
         }
         Z(b)
       }
@@ -457,6 +465,18 @@ object MatrixVisualizer {
     val name = "middle"
   }
 
+  case class ColumnDef(width: Option[Int])
+  object ColumnDef {
+    val empty = ColumnDef(None)
+  }
+  case class ColumnDefs(columns: IndexedSeq[ColumnDef]) {
+    def length = columns.length
+    def apply(i: Int): ColumnDef = get(i).getOrElse(ColumnDef.empty)
+    def get(i: Int): Option[ColumnDef] = columns.lift(i)
+  }
+  object ColumnDefs {
+    val empty = ColumnDefs(Vector.empty)
+  }
   case class ColumnInfo(width: Int)
   case class ColumnInfos(columns: IndexedSeq[ColumnInfo]) {
     def length = columns.length
@@ -511,12 +531,12 @@ object MatrixVisualizer {
     def apply(p: String): Cell = Cell(Vector(p))
   }
 
-  def linearAlgebra[T] = MatrixVisualizer(TopEndBorder, BottomEndBorder, true, true, false, LinearAlgebraStyle, "\n", (_: T).toString)
+  def linearAlgebra[T] = MatrixVisualizer(TopEndBorder, BottomEndBorder, true, true, false, LinearAlgebraStyle, "\n", (_: ColumnDef, v: T) => v.toString)
 
-  def border[T](f: T => String) = MatrixVisualizer(TopEndBorder, BottomEndBorder, true, true, true, AsciiLineStyle, "\n", f)
-  def header[T](f: T => String) = MatrixVisualizer(TopEndBorder, MiddleBorder, true, true, true, AsciiLineStyle, "\n", f)
-  def body[T](f: T => String) = MatrixVisualizer(NoneBorder, NoneBorder, true, true, true, AsciiLineStyle, "\n", f)
-  def bodyStart[T](f: T => String) = MatrixVisualizer(TopEndBorder, NoneBorder, true, true, true, AsciiLineStyle, "\n", f)
-  def bodyEnd[T](f: T => String) = MatrixVisualizer(NoneBorder, BottomEndBorder, true, true, true, AsciiLineStyle, "\n", f)
-  def footer[T](f: T => String) = MatrixVisualizer(MiddleBorder, BottomEndBorder, true, true, true, AsciiLineStyle, "\n", f)
+  def border[T](f: (ColumnDef, T) => String) = MatrixVisualizer(TopEndBorder, BottomEndBorder, true, true, true, AsciiLineStyle, "\n", f)
+  def header[T](f: (ColumnDef, T) => String) = MatrixVisualizer(TopEndBorder, MiddleBorder, true, true, true, AsciiLineStyle, "\n", f)
+  def body[T](f: (ColumnDef, T) => String) = MatrixVisualizer(NoneBorder, NoneBorder, true, true, true, AsciiLineStyle, "\n", f)
+  def bodyStart[T](f: (ColumnDef, T) => String) = MatrixVisualizer(TopEndBorder, NoneBorder, true, true, true, AsciiLineStyle, "\n", f)
+  def bodyEnd[T](f: (ColumnDef, T) => String) = MatrixVisualizer(NoneBorder, BottomEndBorder, true, true, true, AsciiLineStyle, "\n", f)
+  def footer[T](f: (ColumnDef, T) => String) = MatrixVisualizer(MiddleBorder, BottomEndBorder, true, true, true, AsciiLineStyle, "\n", f)
 }

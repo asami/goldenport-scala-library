@@ -26,7 +26,8 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version Oct. 12, 2017
  *  version May. 27, 2019
  *  version Jun. 30, 2019
- * @version Jul. 28, 2019
+ *  version Jul. 28, 2019
+ * @version Nov. 20, 2019
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -522,6 +523,10 @@ object DomUtils {
       ps./:(Z())(_+_).r
   }
 
+  def isTextOnlyChildren(p: Node): Boolean = isTextOnly(childrenIndexedSeq(p))
+
+  def isTextOnly(ps: Seq[Node]): Boolean = ps.forall(_.isInstanceOf[org.w3c.dom.Text])
+
   def copyNode(doc: Document)(src: Node): Node = src match {
     case m: CDATASection => copyCDATASection(doc)(m)
     case m: Comment => copyComment(doc)(m)
@@ -693,6 +698,14 @@ object DomUtils {
     target
   }
 
+  def toFragment(doc: Document)(p: NodeList): DocumentFragment = {
+    val a = doc.createDocumentFragment()
+    for (i <- 0 until p.getLength) {
+      a.appendChild(copyNode(doc)(p.item(i)))
+    }
+    a
+  }
+
   def toSummary(s: String): String =
     if (Strings.blankp(s)) "" else {
       import org.cyberneko.html.parsers.DOMParser
@@ -705,6 +718,14 @@ object DomUtils {
       val text = _distill_text_dom(dom.getDocumentElement)
       Strings.cutstring(text, 200)
     }
+
+  def distillText(p: NodeList): String = {
+    val builder = new StringBuilder
+    for (i <- 0 until p.getLength) {
+      _distill_text(p.item(i), builder)
+    }
+    builder.toString
+  }
 
   private def _distill_text_dom(elem: Element): String = {
     val builder = new StringBuilder
@@ -745,7 +766,6 @@ object DomUtils {
       XmlUtils.nodesToNodeOption(a)
     case m => Some(toXml(p))
   }
-
 
   private def _to_element(p: Element): XElem = {
     val tagname = p.getTagName

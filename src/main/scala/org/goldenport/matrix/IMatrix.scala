@@ -11,13 +11,24 @@ import org.goldenport.matrix.breeze.BreezeMatrix
  *  version Jul. 16, 2019
  *  version Aug. 26, 2019
  *  version Sep. 16, 2019
- * @version Oct. 16, 2019
+ *  version Oct. 16, 2019
+ *  version Nov. 16, 2019
+ * @version Jan. 27, 2020
  * @author  ASAMI, Tomoharu
  */
 trait IMatrix[T] extends Showable {
   def apply(x: Int, y: Int): T
+  def at(x: Int, y: Int): T = apply(x, y)
+  def get(x: Int, y: Int): Option[T] =
+    if (x >= 0 && width > x && y >= 0 && height > y)
+      Some(apply(x, y))
+    else
+      None
   def width: Int
   def height: Int
+  def head: Vector[T] = rowIterator.toVector.head
+  def headOption: Option[Vector[T]] = rowIterator.toVector.headOption
+  def tail: IMatrix[T] = VectorRowColumnMatrix.create(rowIterator.toVector.tail)
   def rowIterator: Iterator[Vector[T]] = new Iterator[Vector[T]] {
     var y = 0
     def hasNext: Boolean = height > y
@@ -27,6 +38,7 @@ trait IMatrix[T] extends Showable {
       xs.toVector
     }
   }
+  lazy val rowVector = rowIterator.toVector
   def columnIterator: Iterator[Vector[T]] = new Iterator[Vector[T]] {
     var x = 0
     def hasNext: Boolean = width > x
@@ -36,8 +48,10 @@ trait IMatrix[T] extends Showable {
       xs.toVector
     }
   }
-  def projection(p: NumberRange): IMatrix[T]
-  def selection(p: NumberRange): IMatrix[T]
+  lazy val columnVector = columnIterator.toVector
+  def select(p: Seq[Int]): IMatrix[T] = VectorColumnRowMatrix.create(this).select(p)
+  def projection(p: NumberRange): IMatrix[T] // TODO rename to select
+  def selection(p: NumberRange): IMatrix[T] // TODO rename to filter
   def toDoubleMatrix: IMatrix[Double]
   def makeDoubleMatrix: IMatrix[Double]
   // 
@@ -58,6 +72,10 @@ trait IMatrix[T] extends Showable {
   def +(rhs: IMatrix[Double])(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix + BreezeMatrix.create(rhs)
   def -(rhs: IMatrix[Double])(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix - BreezeMatrix.create(rhs)
   def *(rhs: IMatrix[Double])(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix * BreezeMatrix.create(rhs)
+  def *(rhs: Vector[Double])(implicit ev: T <:< Double): IMatrix[Double] = {
+    val m = VectorColumnRowMatrix.create(Vector(rhs))
+    *(m)
+  }
   def *(rhs: Double)(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix * rhs
   //
   protected def to_breeze_matrix: BreezeMatrix = BreezeMatrix.create(this.asInstanceOf[IMatrix[Double]])
@@ -198,6 +216,10 @@ case class VectorColumnRowMatrix[T](
   def width: Int = matrix.length
   lazy val height: Int = matrix.map(_.length).max
   override def columnIterator: Iterator[Vector[T]] = matrix.iterator
+  override def select(p: Seq[Int]): IMatrix[T] = {
+    val xs = p./:(Vector.empty[Vector[T]])((z, x) => z :+ matrix(x))
+    copy(matrix = xs)
+  }
   def projection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
   def selection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
   def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
@@ -218,4 +240,7 @@ object VectorColumnRowMatrix {
 
   def create[T](p: Seq[Seq[T]]): VectorColumnRowMatrix[T] =
     new VectorColumnRowMatrix(p.toVector.map(_.toVector))
+
+  def create[T](p: IMatrix[T]): VectorColumnRowMatrix[T] =
+    new VectorColumnRowMatrix(p.columnIterator.toVector)
 }

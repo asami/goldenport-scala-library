@@ -1,16 +1,17 @@
 package org.goldenport.io
 
 import scala.util.control.NonFatal
-import java.net.URI
+import java.net.{URI, URL}
 import com.asamioffice.goldenport.io.UURL
+import org.goldenport.RAISE
 import org.goldenport.util.StringUtils
 
 /*
  * @since   Oct.  6, 2017
- *  version Oct.  6, 2017
  *  version Dec. 20, 2017
  *  version Jan. 14, 2018
- * @version Apr. 26, 2019
+ *  version Apr. 26, 2019
+ * @version Dec.  9, 2019
  * @author  ASAMI, Tomoharu
  */
 case class UriBuilder(
@@ -23,6 +24,7 @@ case class UriBuilder(
 ) {
 //  def getQueryString = query.map(_.map(x => s"${x._1}=${x._2}").mkString("&"))
   def getQueryString = query
+
   def build: URI = new URI(
     scheme getOrElse null,
     authority getOrElse null,
@@ -31,9 +33,29 @@ case class UriBuilder(
     fragment getOrElse null
   )
 
+  def buildURL: URL = {
+    val proto = scheme getOrElse RAISE.illegalStateFault("No protocol")
+    val auth = authority getOrElse RAISE.illegalStateFault("No authority")
+    UrlUtils.build(proto, auth, path, query, fragment)
+  }
+
+  def withPath(p: String) = copy(path = p)
+
+  def withQuery(p: String) = copy(query = Some(p))
+
   def addPath(p: URI): UriBuilder = addPath(p.getPath)
 
   def addPath(p: String): UriBuilder = copy(path = StringUtils.concatPath(path, p))
+
+  def addPathBodyPostfix(p: String): UriBuilder = {
+    val (body, suffix) = StringUtils.pathnameBodySuffix(path)
+    withPath(s"""${body}${p}${suffix.map(x => "." + x).getOrElse("")}""")
+  }
+
+  def addQuery(p: String): UriBuilder = {
+    val q = if (p.startsWith("?")) p.substring(1) else p
+    withQuery(query.map(x => s"$x&$q").getOrElse(q))
+  }
 
   def addQuery(q: Seq[(String, String)]): UriBuilder = {
     val a: String = query.map(b =>
@@ -61,6 +83,15 @@ object UriBuilder {
     UriBuilder(scheme, authority, path, query, fragment)
   }
 
+  def apply(url: URL): UriBuilder = {
+    val proto = url.getProtocol
+    val auth = url.getAuthority
+    val path = url.getPath
+    val q = Option(url.getQuery)
+    val frag = Option(url.getRef)
+    UriBuilder(Some(proto), Some(auth), path, q, frag)
+  }
+ 
   def byPath(path: String): UriBuilder = UriBuilder(
     None,
     None,

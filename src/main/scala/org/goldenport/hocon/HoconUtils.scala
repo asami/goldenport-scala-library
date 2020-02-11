@@ -2,6 +2,7 @@ package org.goldenport.hocon
 
 import scala.language.implicitConversions
 import scalaz._, Scalaz._
+import scala.collection.mutable
 import scala.util.Try
 import scala.util.control.NonFatal
 import scala.concurrent.duration._
@@ -15,7 +16,8 @@ import org.goldenport.util.TypesafeConfigUtils
 import org.goldenport.util.AnyUtils
 
 /*
- * Migrated from org.goldenport.hocon.HoconUtils.
+ * Migrated from org.goldenport.util.HoconUtils.
+ * 
  * See TypesafeConfigUtils.
  *
  * @since   Nov. 17, 2016
@@ -26,7 +28,8 @@ import org.goldenport.util.AnyUtils
  *  version Oct. 21, 2018
  *  version Nov. 19, 2018
  *  version Mar. 24, 2019
- * @version Apr. 28, 2019
+ *  version Apr. 28, 2019
+ * @version Dec. 22, 2019
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -191,14 +194,18 @@ object HoconUtils {
   // def childRichConfigSet(p: Config): Set[(String, RichConfig)] =
   //   childConfigSet(p).mapValues(RichConfig.apply)
 
-  def childConfigMap(p: Config): Map[String, Config] = p.entrySet.asScala.
-    flatMap { x =>
+  // CAUTION: not work
+  def childConfigMap(p: Config): Map[String, Config] = {
+    val a: mutable.Set[java.util.Map.Entry[String, ConfigValue]] = p.entrySet.asScala
+    a.flatMap { x =>
       x.getValue match {
         case m: Config => Some(x.getKey -> m)
         case m => None
       }
     }.toMap
+  }
 
+  // CAUTION: not work
   def childRichConfigMap(p: Config): Map[String, RichConfig] =
     childConfigMap(p).mapValues(RichConfig.apply)
 

@@ -26,7 +26,9 @@ import org.goldenport.extension.Showable
  *  version Nov. 13, 2017
  *  version Dec. 17, 2017
  *  version Sep. 23, 2019
- * @version Oct.  8, 2019
+ *  version Oct.  8, 2019
+ *  version Nov. 28, 2019
+ * @version Jan. 18, 2020
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -53,6 +55,10 @@ object AnyUtils {
     case m: Showable => m.show
     case m => toString(m)
   }
+  def toEmbed(x: Any): String = x match {
+    case m: Showable => m.embed
+    case m => toString(m)
+  }
   def toBoolean(x: Any): Boolean = {
     x match {
       case v: Boolean => v
@@ -67,6 +73,7 @@ object AnyUtils {
   def toByte(x: Any): Byte = {
     x match {
       case v: Byte => v
+      case v: Number => v.byteValue // TODO validation
       case v => toString(v).toByte
     }
   }
@@ -74,6 +81,7 @@ object AnyUtils {
     x match {
       case v: Byte => v
       case v: Short => v
+      case v: Number => v.shortValue // TODO validation
       case v => toString(v).toShort
     }
   }
@@ -82,6 +90,7 @@ object AnyUtils {
       case v: Byte => v
       case v: Short => v
       case v: Int => v
+      case v: Number => v.intValue // TODO validation
       case v => toString(v).toInt
     }
   }
@@ -91,12 +100,14 @@ object AnyUtils {
       case v: Short => v
       case v: Int => v
       case v: Long => v
+      case v: Number => v.longValue // TODO validation
       case v => toString(v).toLong
     }
   }
   def toFloat(x: Any): Float = {
     x match {
       case v: Float => v
+      case v: Number => v.floatValue // TODO validation
       case v => toString(v).toFloat
     }
   }
@@ -104,6 +115,7 @@ object AnyUtils {
     x match {
       case v: Float => v
       case v: Double => v
+      case v: Number => v.doubleValue // TODO validation
       case v => toString(v).toDouble
     }
   }
@@ -114,6 +126,7 @@ object AnyUtils {
       case v: Int => BigInt(v)
       case v: Long => BigInt(v)
       case v: BigInt => v
+//      case v: Number => BigInt(v)
       case v => BigInt(toString(v))
     }
   }
@@ -127,6 +140,7 @@ object AnyUtils {
       case v: Double => BigDecimal(v)
       case v: BigInt => BigDecimal(v)
       case v: BigDecimal => v
+//      case v: Number => BigDecimal(v)
       case v => BigDecimal(toString(v))
     }
   }
@@ -168,8 +182,8 @@ object AnyUtils {
       case s: String => DateUtils.parse(s)
     }
   }
-  def toDateTime(x: Any): DateTime = ???
-  def toLocalDate(x: Any): LocalDate = ???
+  def toDateTime(x: Any): DateTime = RAISE.notImplementedYetDefect
+  def toLocalDate(x: Any): LocalDate = RAISE.notImplementedYetDefect
   def toLocalTime(x: Any): LocalTime = {
     x match {
       case v: LocalTime => v
@@ -196,5 +210,31 @@ object AnyUtils {
       case m: File => m.toURI
       case s: String => new URI(s)
     }
+  }
+
+  def isNumber(p: Any): Boolean = p match {
+    case _: Boolean => true
+    case _: Byte => true
+    case _: Short => true
+    case _: Int => true
+    case _: Long => true
+    case _: Float => true
+    case _: Double => true
+    case _: BigInt => true
+    case _: BigDecimal => true
+    case _: java.math.BigInteger => true
+    case _: java.math.BigDecimal => true
+    case _: Number => true
+    case _ => false
+  }
+
+  def guessNumber(p: Any): Boolean = p match {
+    case m: String => StringUtils.isNumber(m)
+    case _ => isNumber(p)
+  }
+
+  def guessNumberOrEmpty(p: Any): Boolean = p match {
+    case "" => true
+    case _ => guessNumber(p)
   }
 }
