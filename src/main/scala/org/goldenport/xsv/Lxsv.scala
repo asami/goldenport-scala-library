@@ -15,7 +15,8 @@ import org.goldenport.parser.{ParseResult, ParseSuccess, ParseFailure, EmptyPars
  *  version Sep. 23, 2019
  *  version Oct. 28, 2019
  *  version Nov. 15, 2019
- * @version Dec.  8, 2019
+ *  version Dec.  8, 2019
+ * @version Feb. 29, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Lxsv(
@@ -54,7 +55,8 @@ object Lxsv {
   private val _lxsv_candidate_chars = _lxsv_token_chars :+ '"'
   private val _complex_chars = Vector('<', '{', '[')
 
-  def apply(strategy: Xsv.Strategy, p: (Symbol, Any), ps: (Symbol, Any)*): Lxsv = apply(p +: ps)
+  def apply(strategy: Xsv.Strategy, p: (Symbol, Any), ps: (Symbol, Any)*): Lxsv =
+    apply(strategy, p +: ps)
 
   def apply(p: (Symbol, Any), ps: (Symbol, Any)*): Lxsv = apply(p +: ps)
 
@@ -157,6 +159,7 @@ object Lxsv {
         }
         case DOUBLE_QUOTE => c match {
           case '"' => _state = NORMAL
+          case '\\' => _state = ESCAPE_IN_STRING
           case _ => _buffer.append(c)
         }
         case SINGLE_QUOTE => c match {
@@ -169,12 +172,12 @@ object Lxsv {
         }
         case STRING_CANDIDATE => c match {
           case '"' => _state = RAW_STRING_CANDIDATE
-          case '\\' => _state = ESCAPE_IN_STRING_CANDIDATE
+          case '\\' => _state = ESCAPE_IN_STRING
           case _ =>
             _buffer.append(c)
             _state = DOUBLE_QUOTE
         }
-        case ESCAPE_IN_STRING_CANDIDATE =>
+        case ESCAPE_IN_STRING =>
           c match {
             case '"' => _buffer.append(c)
             case 'n' => _buffer.append('\n')
@@ -229,10 +232,12 @@ object Lxsv {
 
     private def _is_delimiter(c: Char) =
       _key_value_separator match {
-        case 0 => false
+        case 0 => _is_delimiter_no_separator(c)
         case '=' => _is_delimiter_in_equal(c)
         case ':' => _is_delimiter_in_colon(c)
       }
+
+    private def _is_delimiter_no_separator(c: Char) = _is_delimiter_in_colon(c)
 
     private def _is_delimiter_in_equal(c: Char) =
       if (_delimiter == 0) {
@@ -347,7 +352,7 @@ object Lxsv {
     val SINGLE_QUOTE = 3
     val RAW_STRING = 4
     val STRING_CANDIDATE = 5
-    val ESCAPE_IN_STRING_CANDIDATE = 6
+    val ESCAPE_IN_STRING = 6
     val RAW_STRING_CANDIDATE = 7
     val RAW_STRING_CLOSE_CANDIDATE = 8
     val RAW_STRING_CLOSE_CANDIDATE2 = 9
