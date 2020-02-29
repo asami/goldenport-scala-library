@@ -1,15 +1,21 @@
 package org.goldenport.cli
 
 import org.goldenport.parser.CommandParser
+import org.goldenport.bag.Bag
+import org.goldenport.realm.Realm
 
 /*
  * @since   Oct.  6, 2018
  *  version Feb. 24, 2019
- * @version Oct. 14, 2019
+ *  version Oct. 14, 2019
+ * @version Feb. 18, 2020
  * @author  ASAMI, Tomoharu
  */
 sealed trait Response {
-  def text: String
+  def text: String = stdout orElse stderr getOrElse ""
+  def stdout: Option[String] = None
+  def stderr: Option[String] = None
+  def output(env: Environment): Unit
 }
 
 case class ErrorResponse(
@@ -17,17 +23,34 @@ case class ErrorResponse(
   message: String,
   detail: Option[Int] = None
 ) extends Response {
-  def text = message
+  override def stdout = Some(message)
+
+  def output(env: Environment): Unit = ???
 }
 
 case object VoidResponse extends Response {
-  val text = ""
+  def output(env: Environment): Unit = {}
 }
 
 case class StringResponse(
   string: String
 ) extends Response {
-  def text = string
+  override def stdout = Some(string)
+  def output(env: Environment): Unit = ???
+}
+
+case class FileResponse(
+  bag: Bag
+) extends Response {
+  override def stdout = Some("[BAG]")
+  def output(env: Environment): Unit = ???
+}
+
+case class FileRealmResponse(
+  realm: Realm
+) extends Response {
+  override def stdout = Some("[REALM]")
+  def output(env: Environment): Unit = ???
 }
 
 object Response {

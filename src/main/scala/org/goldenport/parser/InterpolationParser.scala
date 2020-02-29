@@ -5,7 +5,8 @@ import org.goldenport.util.StringUtils
 /*
  * @since   Sep. 21, 2019
  *  version Sep. 27, 2019
- * @version Oct. 11, 2019
+ *  version Oct. 11, 2019
+ * @version Feb.  2, 2020
  * @author  ASAMI, Tomoharu
  */
 case class InterpolationParser(
@@ -100,7 +101,7 @@ case class InterpolationParser(
     var expression: String = null
     val postfix = new StringBuilder
 
-    def prologue = p.subSequence(0, startpos).toString
+    def prologue = if (startpos == -1) "" else p.subSequence(0, startpos).toString
     def getproperties = if (properties.isEmpty) None else Some(properties.toString)
     def getpostfix = if (postfix.isEmpty) None else Some(postfix.toString)
 

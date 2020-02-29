@@ -16,7 +16,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Apr. 30, 2019
  *  version Jun.  8, 2019
  *  version Aug. 16, 2019
- * @version Sep. 23, 2019
+ *  version Sep. 23, 2019
+ * @version Feb. 18, 2020
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -28,6 +29,7 @@ case class I18NString(
 ) {
   def key: String = en
 
+  // TODO escape '{' and '}' or migrate to I18NTemplate
   def as(locale: Locale): String = get(locale) getOrElse _format(en)
 
   lazy val c = _format(_c)

@@ -4,7 +4,8 @@ package org.goldenport.util
  * @since   Jul. 16, 2018
  *  version Aug. 26, 2018
  *  version Dec. 27, 2018
- * @version Jul. 29, 2019
+ *  version Jul. 29, 2019
+ * @version Jan. 31, 2020
  * @author  ASAMI, Tomoharu
  */
 object VectorUtils {
@@ -35,6 +36,19 @@ object VectorUtils {
         val a = ps.sliding(3, 1).toVector
         a.lastOption.map(x =>
           a :+ Vector(x(1), x(2)) :+ Vector(x(2))
+        ).getOrElse(a)
+    }
+
+  def sliding4[T](ps: Seq[T]): Vector[Seq[T]] =
+    ps.length match {
+      case 0 => Vector.empty
+      case 1 => Vector(Vector(ps(0)))
+      case 2 => Vector(Vector(ps(0), ps(1)), Vector(ps(1)))
+      case 3 => Vector(Vector(ps(0), ps(1), ps(2)), Vector(ps(1), ps(2)), Vector(ps(2)))
+      case _ => 
+        val a = ps.sliding(4, 1).toVector
+        a.lastOption.map(x =>
+          a :+ Vector(x(1), x(2), x(3)) :+ Vector(x(2), x(3)) :+ Vector(x(3))
         ).getOrElse(a)
     }
 

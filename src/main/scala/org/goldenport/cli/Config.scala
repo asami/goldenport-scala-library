@@ -10,6 +10,7 @@ import org.goldenport.i18n.CalendarFormatter
 import org.goldenport.i18n.EmptyResourceBundle
 import org.goldenport.hocon.RichConfig
 import org.goldenport.log.{LogConfig, LogLevel}
+import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperations}
 
 /*
  * @since   Oct.  4, 2018
@@ -19,7 +20,8 @@ import org.goldenport.log.{LogConfig, LogLevel}
  *  version Aug.  4, 2019
  *  version Sep. 25, 2019
  *  version Oct. 27, 2019
- * @version Jan. 20, 2020
+ *  version Jan. 20, 2020
+ * @version Feb. 26, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Config(
@@ -28,6 +30,7 @@ case class Config(
   workDirectory: Option[File],
   projectDirectory: Option[File],
   log: LogConfig,
+  numericalOperations: INumericalOperations,
   properties: RichConfig
 ) {
   def charset: Charset = i18n.charset
@@ -137,6 +140,7 @@ object Config {
       workdir,
       projectdir,
       LogConfig.empty,
+      GoldenportNumericalOperations,
       RichConfig(hocon)
     )
   }

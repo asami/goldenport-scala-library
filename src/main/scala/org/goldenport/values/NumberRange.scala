@@ -8,7 +8,8 @@ import org.goldenport.util.AnyRefUtils
 
 /*
  * @since   Sep. 10, 2019
- * @version Oct. 16, 2019
+ *  version Oct. 16, 2019
+ * @version Feb. 28, 2020
  * @author  ASAMI, Tomoharu
  */
 trait NumberRange extends Showable {
@@ -16,6 +17,7 @@ trait NumberRange extends Showable {
   def show: String = print
   def embed: String = print
   def isValid(index: Int): Boolean
+  def indexes: List[Int]
 }
 
 object NumberRange {
@@ -49,21 +51,26 @@ object NumberRange {
       RepeatRange.parse(p)
     else
       ValueRange.parse(p)
+
+  def createInt(ps: Seq[Int]): NumberRange = EnumRange.createInt(ps)
 }
 
 case object NoneRange extends NumberRange {
   def print: String = "none"
   def isValid(index: Int): Boolean = false
+  def indexes: List[Int] = Nil
 }
 
 case class CompositeRange(ranges: Seq[NumberRange]) extends NumberRange {
   def print: String = ranges.map(_.print).mkString(",")
   def isValid(index: Int): Boolean = ranges.exists(_.isValid(index))
+  def indexes: List[Int] = ranges.toList.flatMap(_.indexes)
 }
 
 case class ValueRange(value: Number) extends NumberRange {
   def print: String = value.toString
   def isValid(index: Int): Boolean = value.intValue == index
+  def indexes: List[Int] = List(value.intValue)
 }
 object ValueRange {
   def parse(p: String): ValueRange = ValueRange(AnyRefUtils.toNumber(p))
@@ -74,6 +81,11 @@ case class EnumRange(ranges: Seq[Number]) extends NumberRange {
 
   def print: String = ranges.mkString(",")
   def isValid(index: Int): Boolean = _ints.contains(index)
+  def indexes: List[Int] = ranges.toList.map(_.intValue)
+}
+object EnumRange {
+  def apply(p: Number, ps: Number*): EnumRange = EnumRange(p +: ps.toVector)
+  def createInt(ps: Seq[Int]): EnumRange = EnumRange(ps.map(_.asInstanceOf[Number]))
 }
 
 case class RepeatRange(
@@ -87,6 +99,8 @@ case class RepeatRange(
   private lazy val _start_int = start.intValue
   private lazy val _end_int = end.intValue
   private lazy val _step_int = step.intValue
+
+  def indexes: List[Int] = _ints.toList
 
   private def _ints: Stream[Int] =
     if (startInclusive)

@@ -2,11 +2,12 @@ package org.goldenport.cli
 
 /*
  * @since   Feb. 18, 2019
- * @version Feb. 24, 2019
+ *  version Feb. 24, 2019
+ * @version Feb. 13, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Services(services: Vector[ServiceClass]) {
-  def makeRequest(command: String, args: List[String]): Option[Request] =
+  def makeRequest(command: String, args: Seq[String]): Option[Request] =
     services.toStream.flatMap(_.makeRequest(command, args)).headOption
 
   def get(req: Request): Option[Operation] = {

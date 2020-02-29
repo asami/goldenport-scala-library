@@ -2,7 +2,8 @@ package org.goldenport.cli
 
 /*
  * @since   Feb. 18, 2019
- * @version Feb. 24, 2019
+ *  version Feb. 24, 2019
+ * @version Feb. 13, 2020
  * @author  ASAMI, Tomoharu
  */
 trait ServiceClass {
@@ -29,7 +30,7 @@ trait ServiceClass {
     r
   }
 
-  def makeRequest(command: String, args: List[String]): Option[Request] =
+  def makeRequest(command: String, args: Seq[String]): Option[Request] =
     specification.makeRequest(command, args)
 
   def accept(req: Request): Option[Operation] =

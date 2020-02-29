@@ -14,7 +14,7 @@ import org.goldenport.io.{InputSource, ResourceHandle}
  *  version May.  2, 2019
  *  version Jun. 30, 2019
  *  version Dec.  7, 2019
- * @version Jan. 21, 2020
+ * @version Jan. 31, 2020
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -601,7 +601,7 @@ object LogicalLines {
       if (text.isEmpty && isRaw == false && evt.c == '"' && evt.next == Some('"')) {
         SkipState(copy(isRaw = true, text = Vector('"', '"')))
       } else if (isRaw) {
-        if (evt.c == '"' && evt.next == Some('"') && evt.next2 == Some('"'))
+        if (evt.c == '"' && evt.next == Some('"') && evt.next2 == Some('"') && evt.next3 != Some('"'))
           SkipState(SkipState(parent.addChild(config, ('"' +: text) ++ "\"\"\"")))
         else
           copy(text = text :+ '"')
