@@ -7,7 +7,8 @@ import org.goldenport.parser.CommandParser
  * @since   Feb. 17, 2019
  *  version Feb. 24, 2019
  *  version Oct. 14, 2019
- * @version Feb. 18, 2020
+ *  version Feb. 18, 2020
+ * @version Mar.  1, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Engine(
@@ -115,6 +116,9 @@ object Engine {
   case class OperationCandidate(operation: OperationClass) extends Candidate {
     def name = operation.name
   }
+
+  def standard(services: Services, operations: Operations): Engine =
+    Engine(Config.default, services, operations)
 
   def terse(services: Services, operations: Operations): Engine =
     Engine(Config.terse, services, operations)

@@ -17,7 +17,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Jun.  8, 2019
  *  version Aug. 16, 2019
  *  version Sep. 23, 2019
- * @version Feb. 18, 2020
+ *  version Feb. 18, 2020
+ * @version Mar. 30, 2020
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -82,6 +83,8 @@ case class I18NString(
       (Locale.ENGLISH -> en) + (Locale.JAPANESE -> ja)
   lazy val localeList: List[(Locale, String)] = localeMap.toList
   lazy val localeVector: Vector[(Locale, String)] = localeMap.toVector
+
+  lazy val values: Vector[String] = localeVector.map(_._2)
 
   private lazy val _keys = localeVector.map(_._2.toLowerCase)
 
