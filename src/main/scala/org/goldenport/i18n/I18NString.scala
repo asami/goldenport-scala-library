@@ -1,7 +1,7 @@
 package org.goldenport.i18n
 
 import scalaz._, Scalaz._
-import java.util.{Locale, ResourceBundle}
+import java.util.Locale
 import java.text.MessageFormat
 import play.api.libs.json._
 import org.goldenport.util.{AnyUtils, AnyRefUtils}
@@ -18,30 +18,25 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Aug. 16, 2019
  *  version Sep. 23, 2019
  *  version Feb. 18, 2020
- * @version Mar. 30, 2020
+ *  version Mar. 30, 2020
+ * @version Apr. 17, 2020
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
-  private[i18n] val _c: String, // special locale for programming language
-  private[i18n] val _en: String,
-  private[i18n] val _ja: String,
-  map: Map[Locale, String],
-  parameters: IndexedSeq[Any]
+  c: String, // special locale for programming language
+  en: String,
+  ja: String,
+  map: Map[Locale, String]
 ) {
   def key: String = en
 
-  // TODO escape '{' and '}' or migrate to I18NTemplate
-  def as(locale: Locale): String = get(locale) getOrElse _format(en)
-
-  lazy val c = _format(_c)
-  lazy val en = _format(_en)
-  lazy val ja = _format(_ja)
+  def as(locale: Locale): String = get(locale) getOrElse en
 
   def get(locale: Locale): Option[String] = {
     val l = Option(locale.getLanguage)
     val country = Option(locale.getCountry)
     val variant = Option(locale.getVariant)
-    val template: Option[String] = l flatMap { lang =>
+    l flatMap { lang =>
       map.get(locale) orElse {
         // See com.asamioffice.goldenport.util.ULocale.match
         map.find(_._1.getLanguage === lang).map(_._2)
@@ -54,33 +49,12 @@ case class I18NString(
           None
       }
     }
-    _format(template)
   }
-
-  private def _format(s: Option[String]): Option[String] = s.map(_format)
-
-  private def _format(s: String): String =
-    MessageFormat.format(s, parameters.map(AnyRefUtils.toAnyRef):_*)
-
-  def get(locale: Locale, bundle: ResourceBundle): Option[String] =
-    get(bundle) orElse get(locale)
-
-  def get(bundle: ResourceBundle): Option[String] =
-    _format(Option(bundle.getString(key)))
 
   def apply(locale: Locale): String = get(locale) getOrElse en
 
-  def apply(locale: Locale, bundle: ResourceBundle): String =
-    get(locale, bundle) getOrElse _format(en)
-
-  // def formatMessage(locale: Locale, bundle: ResourceBundle)(ps: AnyRef*): String = {
-  //   val fmt = apply(locale, bundle)
-  //   MessageFormat.format(fmt, ps:_*)
-  // }
-
   lazy val localeMap: Map[Locale, String] =
-    map.mapValues(_format) +
-      (Locale.ENGLISH -> en) + (Locale.JAPANESE -> ja)
+    map + (Locale.ENGLISH -> en) + (Locale.JAPANESE -> ja)
   lazy val localeList: List[(Locale, String)] = localeMap.toList
   lazy val localeVector: Vector[(Locale, String)] = localeMap.toVector
 
@@ -104,20 +78,18 @@ case class I18NString(
     }
     val locales = rhs.map./:(Z(map))(_+_).r
     I18NString(
-      s"${_c}${delimiter}${rhs._c}",
-      s"${_en}${delimiter}${rhs._en}",
-      s"${_ja}${delimiter}${rhs._ja}",
-      locales,
-      parameters ++ rhs.parameters
+      s"${c}${delimiter}${rhs.c}",
+      s"${en}${delimiter}${rhs.en}",
+      s"${ja}${delimiter}${rhs.ja}",
+      locales
     )
   }
 
   def appendAll(s: String): I18NString = I18NString(
-    _c + s,
-    _en + s,
-    _ja + s,
-    map.mapValues(_ + s),
-    parameters
+    c + s,
+    en + s,
+    ja + s,
+    map.mapValues(_ + s)
   )
 
   def appendDetail(p: I18NString): I18NString = {
@@ -136,11 +108,10 @@ case class I18NString(
       }
     }
     I18NString(
-      s"${_c}: ${p.c}",
-      s"${_en}: ${p.en}",
-      s"${_ja}: ${p.ja}",
-      map./:(Z(p.map))(_+_).r,
-      parameters
+      s"${c}: ${p.c}",
+      s"${en}: ${p.en}",
+      s"${ja}: ${p.ja}",
+      map./:(Z(p.map))(_+_).r
     )
   }
 
@@ -149,21 +120,21 @@ case class I18NString(
   // )
 
   def update(f: String => String): I18NString = I18NString(
-    f(c), f(en), f(ja), map.map(x => (x._1, f(x._2))), parameters
+    f(c), f(en), f(ja), map.map(x => (x._1, f(x._2)))
   )
 
   lazy val toJson: JsObject = {
-    val enmap: Map[String, JsString] = Map(Locale.ENGLISH.getLanguage -> JsString(_en))
-    val jamap: Map[String, JsString] = Map(Locale.JAPANESE.getLanguage -> JsString(_ja))
+    val enmap: Map[String, JsString] = Map(Locale.ENGLISH.getLanguage -> JsString(en))
+    val jamap: Map[String, JsString] = Map(Locale.JAPANESE.getLanguage -> JsString(ja))
     val lmap: Map[String, JsString] = map map {
       case (k, v) => k.toString -> JsString(v)
     }
-    val pmap: Map[String, JsValue] = if (parameters.isEmpty) Map.empty else {
-      Map("parameters" -> JsArray(parameters.map(x => JsString(AnyUtils.toString(x)))))
-    }
-    val a = lmap ++ enmap ++ jamap ++ pmap
+    val a = lmap ++ enmap ++ jamap
     JsObject(a.toVector)
   }
+
+  def toI18NMessage: I18NMessage = I18NMessage(this)
+  def toI18NElement: I18NElement = I18NElement(this)
 
   lazy val toJsonString: String = toJson.toString
 
@@ -173,13 +144,11 @@ case class I18NString(
 object I18NString {
   val empty = I18NString("")
 
-  def apply(en: String, ja: String): I18NString = I18NString(en, en, ja, Map.empty, Vector.empty)
-  def apply(en: String, params: Seq[Any]): I18NString = I18NString(en, en, en, Map.empty, params.toVector)
-  def apply(en: String, ja: String, params: Seq[Any]): I18NString = I18NString(en, en, ja, Map.empty, params.toVector)
-  def apply(en: String): I18NString = I18NString(en, en, en, Map.empty, Vector.empty)
+  def apply(en: String, ja: String): I18NString = I18NString(en, en, ja, Map.empty)
+  def apply(en: String): I18NString = I18NString(en, en, en, Map.empty)
   def apply(ps: Seq[(Locale, String)]): I18NString = {
     case class Z(map: Map[Locale, String] = Map.empty) {
-      def r = I18NString(_c, _en, _ja, map, Vector.empty)
+      def r = I18NString(_c, _en, _ja, map)
       def +(rhs: (Locale, String)) = Z(map + rhs)
       private def _c: String = {
         val xs = ps.toVector
@@ -204,7 +173,7 @@ object I18NString {
       List.empty
     else
       List((locale, s))
-    I18NString(s, s, s, a.toMap, Vector.empty)
+    I18NString(s, s, s, a.toMap)
   }
 
   def parse(p: String): I18NString = {

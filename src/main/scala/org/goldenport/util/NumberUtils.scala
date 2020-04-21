@@ -2,7 +2,7 @@ package org.goldenport.util
 
 /*
  * @since   Mar. 12, 2020
- * @version Apr.  3, 2020
+ * @version Apr. 21, 2020
  * @author  ASAMI, Tomoharu
  */
 object NumberUtils {
@@ -24,6 +24,14 @@ object NumberUtils {
     Some(p.trim.toLong)
   } catch {
     case e: NumberFormatException => None
+  }
+
+  def charToInt(p: Char): Int = {
+    val v = p - '0'
+    if (v > 9)
+      throw new NumberFormatException(p.toString)
+    else
+      v
   }
 }
 

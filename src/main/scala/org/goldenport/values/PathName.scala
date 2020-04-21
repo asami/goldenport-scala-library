@@ -16,7 +16,8 @@ import org.goldenport.util.StringUtils
  *  version Nov.  6, 2017
  *  version Jan. 12, 2018
  *  version Mar. 13, 2018
- * @version Dec. 27, 2018
+ *  version Dec. 27, 2018
+ * @version Apr. 14, 2020
  * @author  ASAMI, Tomoharu
  */
 case class PathName(v: String) {
@@ -44,6 +45,8 @@ case class PathName(v: String) {
     case Nil => None
     case xs => Some(PathName(xs.mkString("/")))
   }
+
+  def get(i: Int): Option[String] = components.lift(i)
 
   def isBase: Boolean = v == "" || v == "/"
   def isAbsolute: Boolean = v.startsWith("/")
