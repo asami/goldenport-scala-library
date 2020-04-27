@@ -21,7 +21,8 @@ package org.goldenport.recorder
  * @since   Oct. 28, 2008
  *  version Oct. 30, 2011
  *  version Jan. 23, 2012
- * @version Dec. 22, 2019
+ *  version Dec. 22, 2019
+ * @version Mar.  3, 2020
  * @author  ASAMI, Tomoharu
  */
 trait Recorder {
@@ -40,15 +41,15 @@ trait Recorder {
    * report
    */
   def error(ex: Throwable)
-  def error(message: String, args: Any*)
-  def error(ex: Throwable, message: String, args: Any*)
+  def error(message: String)
+  def error(ex: Throwable, message: String)
 
   /**
    * message
    * log: warning
    * report
    */
-  def warning(message: String, args: Any*)
+  def warning(message: String)
 
   /**
    * information for console and log
@@ -56,7 +57,7 @@ trait Recorder {
    * message
    * log: info
    */
-  def info(message: String, args: Any*)
+  def info(message: String)
 
   /**
    * log: debug
@@ -83,9 +84,9 @@ trait Recorder {
    * log: info
    * report
    */
-  def message(message: String, args: Any*)
+  def message(message: String)
   // @deprecated
-  def messageC(message: String, args: Any*)
+  def messageC(message: String)
   def message()
 
   /**
@@ -94,23 +95,23 @@ trait Recorder {
    * log: info
    * report
    */
-  def report(message: String, args: Any*)
+  def report(message: String)
 }
 
 trait NullRecorder extends Recorder {
   override def error(ex: Throwable) {
   }
 
-  override def error(message: String, args: Any*) {
+  override def error(message: String) {
   }
 
-  override def error(ex: Throwable, message: String, args: Any*) {
+  override def error(ex: Throwable, message: String) {
   }
 
-  override def warning(message: String, args: Any*) {
+  override def warning(message: String) {
   }
 
-  override def info(message: String, args: Any*) {
+  override def info(message: String) {
   }
 
   override def debug(message: => String) {
@@ -119,16 +120,16 @@ trait NullRecorder extends Recorder {
   override def trace(message: => String) {
   }
 
-  override def messageC(message: String, args: Any*) {
+  override def messageC(message: String) {
   }
 
-  override def message(message: String, args: Any*) {
+  override def message(message: String) {
   }
 
   override def message() {
   }
 
-  override def report(message: String, args: Any*) {
+  override def report(message: String) {
   }
 }
 

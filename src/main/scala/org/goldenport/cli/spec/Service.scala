@@ -5,7 +5,8 @@ import org.goldenport.cli.{Request => CliRequest}
 /*
  * @since   Oct.  6, 2018
  *  version Oct.  8, 2018
- * @version Feb. 24, 2019
+ *  version Feb. 24, 2019
+ * @version Feb. 13, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Service(
@@ -16,7 +17,7 @@ case class Service(
   def accept(req: CliRequest): Boolean =
     req.service.map(_ == name).getOrElse(req.operation == name)
 
-  def makeRequest(command: String, args: List[String]): Option[CliRequest] = {
+  def makeRequest(command: String, args: Seq[String]): Option[CliRequest] = {
     val req = CliRequest(command)
     val op: Option[Operation] = req.service.
       flatMap(s => operations.find(_.name == req.operation)).

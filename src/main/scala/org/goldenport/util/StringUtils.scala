@@ -38,7 +38,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Sep. 15, 2019
  *  version Nov. 28, 2019
  *  version Dec.  5, 2019
- * @version Jan. 27, 2020
+ *  version Jan. 27, 2020
+ * @version Mar. 18, 2020
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -354,6 +355,16 @@ object StringUtils {
   def pathContainer(path: String): String = {
     UPathString.getContainerPathname(path)
   }
+
+  def pathRelative(root: String, path: String): String = {
+    val r = if (root.endsWith("/")) root else s"${root}/"
+    if (path.startsWith(r))
+      path.substring(r.length)
+    else
+      path
+  }
+
+  def pathRelativeBody(root: String, path: String): String = toPathnameBody(pathRelative(root, path))
 
   def className(o: Object): String =  {
     val a1 = o.getClass.getSimpleName

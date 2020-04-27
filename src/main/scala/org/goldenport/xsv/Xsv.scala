@@ -14,7 +14,8 @@ import org.goldenport.parser._
  *  version Aug. 24, 2019
  *  version Sep. 16, 2019
  *  version Nov. 10, 2019
- * @version Dec.  7, 2019
+ *  version Dec.  7, 2019
+ * @version Feb. 26, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Xsv(
@@ -26,8 +27,8 @@ case class Xsv(
   def height: Int = matrix.height
   override def rowIterator: Iterator[Vector[LogicalToken]] = matrix.rowIterator
   override def columnIterator: Iterator[Vector[LogicalToken]] = matrix.columnIterator
-  def projection(p: NumberRange): IMatrix[LogicalToken] = RAISE.notImplementedYetDefect
-  def selection(p: NumberRange): IMatrix[LogicalToken] = RAISE.notImplementedYetDefect
+  def select(p: NumberRange): IMatrix[LogicalToken] = RAISE.notImplementedYetDefect
+  def filter(p: NumberRange): IMatrix[LogicalToken] = RAISE.notImplementedYetDefect
   def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def appendRow(ps: Seq[LogicalToken]): Xsv = copy(matrix = matrix appendRow ps)

@@ -27,7 +27,8 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version May. 27, 2019
  *  version Jun. 30, 2019
  *  version Jul. 28, 2019
- * @version Nov. 20, 2019
+ *  version Nov. 20, 2019
+ * @version Mar.  1, 2020
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -525,7 +526,11 @@ object DomUtils {
 
   def isTextOnlyChildren(p: Node): Boolean = isTextOnly(childrenIndexedSeq(p))
 
-  def isTextOnly(ps: Seq[Node]): Boolean = ps.forall(_.isInstanceOf[org.w3c.dom.Text])
+  def isTextOnlyChildrenOrEmpty(p: Node): Boolean = isTextOnlyOrEmpty(childrenIndexedSeq(p))
+
+  def isTextOnly(ps: Seq[Node]): Boolean = ps.nonEmpty && ps.forall(_.isInstanceOf[org.w3c.dom.Text])
+
+  def isTextOnlyOrEmpty(ps: Seq[Node]): Boolean = ps.forall(_.isInstanceOf[org.w3c.dom.Text])
 
   def copyNode(doc: Document)(src: Node): Node = src match {
     case m: CDATASection => copyCDATASection(doc)(m)

@@ -23,7 +23,8 @@ import LogicalTokens.Config
  *  version Sep. 28, 2019
  *  version Oct. 29, 2019
  *  version Nov. 28, 2019
- * @version Jan. 18, 2020
+ *  version Jan. 18, 2020
+ * @version Feb. 29, 2020
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -543,7 +544,7 @@ object UrnToken extends LogicalTokens.SimpleTokenizer {
 
   private def _is_urn(p: String) = UriToken.isUri(p) && (Strings.totokens(p, ":") match {
     case Nil => false
-    case "urn" :: _ => true
+    case s :: _ => s.equalsIgnoreCase("urn")
     case _ => false
   })
 }

@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.1.4"
+version := "2.1.5"
 
 scalaVersion := "2.12.7"
 
@@ -20,6 +20,8 @@ resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
 
 // resolvers += "Asami Maven Repository" at "http://www.asamioffice.com/maven"
 
+resolvers += "GitHab releases" at "https://raw.github.com/asami/maven-repository/2020/releases"
+
 resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository"
 
 // For WPath and GXml. TODO separate to reduce dependencies.
@@ -33,7 +35,7 @@ libraryDependencies <++= scalaVersion { v =>
     )
 }
 
-libraryDependencies += "org.goldenport" % "goldenport-java-lib" % "0.1.3" % "compile"
+libraryDependencies += "org.goldenport" % "goldenport-java-lib" % "0.1.4" % "compile"
 
 libraryDependencies += "org.goldenport" %% "goldenport-kestrel" % "2.1.0"
 

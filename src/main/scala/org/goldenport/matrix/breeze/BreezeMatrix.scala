@@ -14,7 +14,8 @@ import org.goldenport.values.NumberRange
  *  version Jun. 23, 2019
  *  version Jul. 16, 2019
  *  version Aug. 25, 2019
- * @version Sep. 16, 2019
+ *  version Sep. 16, 2019
+ * @version Feb. 26, 2020
  * @author  ASAMI, Tomoharu
  */
 case class BreezeMatrix(matrix: Matrix[Double]) extends IMatrix[Double] {
@@ -23,8 +24,8 @@ case class BreezeMatrix(matrix: Matrix[Double]) extends IMatrix[Double] {
   def apply(x: Int, y: Int): Double = matrix(y, x)
   def width: Int = matrix.cols
   def height: Int = matrix.rows
-  def projection(p: NumberRange): IMatrix[Double] = RAISE.notImplementedYetDefect
-  def selection(p: NumberRange): IMatrix[Double] = RAISE.notImplementedYetDefect
+  def select(p: NumberRange): IMatrix[Double] = RAISE.notImplementedYetDefect
+  def filter(p: NumberRange): IMatrix[Double] = RAISE.notImplementedYetDefect
   def toDoubleMatrix: IMatrix[Double] = this
   def makeDoubleMatrix: IMatrix[Double] = this
 

@@ -6,10 +6,16 @@ import org.goldenport.parser.CommandParser
 /*
  * @since   Feb. 17, 2019
  *  version Feb. 24, 2019
- * @version Oct. 14, 2019
+ *  version Oct. 14, 2019
+ *  version Feb. 18, 2020
+ * @version Mar.  1, 2020
  * @author  ASAMI, Tomoharu
  */
-case class Engine(services: Services, operations: Operations) {
+case class Engine(
+  config: Engine.Config,
+  services: Services,
+  operations: Operations
+) {
   import Engine._
 
   val commandParser: CommandParser[Candidate] = {
@@ -19,22 +25,47 @@ case class Engine(services: Services, operations: Operations) {
     CommandParser.create(xs)
   }
 
-  def apply(env: Environment, command: String, args: List[String]): Response = {
+  def apply(env: Environment, command: String, args: Seq[String]): Response = {
     val qcommand = _resolve_command(command)
     val op = services.makeRequest(qcommand, args) orElse operations.makeRequest(command, args)
-    op.map(apply(env, _)).
+    val r = op.map(apply(env, _)).
       getOrElse(Response.notFound(command, _get_candidates(command)))
+    _output(env, r)
   }
 
-  def apply(service: String, command: String, args: List[String]): Response = {
+  def apply(service: String, command: String, args: Seq[String]): Response = {
     RAISE.notImplementedYetDefect
   }
 
   def apply(env: Environment, req: Request): Response = {
     // TODO candidates
     val op = services.get(req) orElse operations.get(req)
-    op.map(_.apply(env, req)).
+    val r = op.map(_.apply(env, req)).
       getOrElse(Response.notFound(req.name, _get_candidates(req)))
+    _output(env, r)
+  }
+
+  def apply(env: Environment, args: Seq[String]): Response = {
+    val r = args.toList match {
+      case Nil => ???
+      case x :: xs =>
+        commandParser(x) match {
+          case m: CommandParser.NotFound[Candidate] => ???
+          case m: CommandParser.Found[Candidate] => m.command match {
+            case ServiceCandidate(service) => apply(env, service, xs)
+            case OperationCandidate(operation) => apply(env, operation, xs)
+          }
+          case m: CommandParser.Candidates[Candidate] => ???
+        }
+    }
+    _output(env, r)
+  }
+
+  def apply(env: Environment, service: ServiceClass, args: Seq[String]): Response = ???
+
+  def apply(env: Environment, operation: OperationClass, args: Seq[String]): Response = {
+    val r = operation.execute(env, args)
+    _output(env, r)
   }
 
   private def _resolve_command(name: String): String = {
@@ -53,9 +84,27 @@ case class Engine(services: Services, operations: Operations) {
       case m: CommandParser.Candidates[_] => Some(m.asInstanceOf[CommandParser.Candidates[Candidate]])
       case _ => None
     }
+
+  private def _output(
+    env: Environment,
+    p: Response
+  ): Response = {
+    if (config.isOutput)
+      p.output(env)
+    p
+  }
 }
 
 object Engine {
+  case class Config(
+    isOutput: Boolean = true
+  ) {
+  }
+  object Config {
+    val default = Config()
+    val terse = default.copy(isOutput = false)
+  }
+
   sealed trait Candidate {
     def name: String
   }
@@ -67,4 +116,11 @@ object Engine {
   case class OperationCandidate(operation: OperationClass) extends Candidate {
     def name = operation.name
   }
+
+  def standard(services: Services, operations: Operations): Engine =
+    Engine(Config.default, services, operations)
+
+  def terse(services: Services, operations: Operations): Engine =
+    Engine(Config.terse, services, operations)
+//  def apply(services: Services): Engine = Engine(services, Operations.empty)
 }

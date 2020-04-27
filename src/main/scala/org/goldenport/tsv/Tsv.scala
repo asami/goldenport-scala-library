@@ -9,7 +9,8 @@ import org.goldenport.values.NumberRange
 /*
  * @since   Jul.  7, 2019
  *  version Aug. 24, 2019
- * @version Sep. 16, 2019
+ *  version Sep. 16, 2019
+ * @version Feb. 26, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Tsv(matrix: VectorRowColumnMatrix[String]) extends IMatrix[String] {
@@ -18,8 +19,8 @@ case class Tsv(matrix: VectorRowColumnMatrix[String]) extends IMatrix[String] {
   def height: Int = RAISE.notImplementedYetDefect
   override def rowIterator: Iterator[Vector[String]] = matrix.rowIterator
   override def columnIterator: Iterator[Vector[String]] = matrix.columnIterator
-  def projection(p: NumberRange): IMatrix[String] = RAISE.notImplementedYetDefect
-  def selection(p: NumberRange): IMatrix[String] = RAISE.notImplementedYetDefect
+  def select(p: NumberRange): IMatrix[String] = RAISE.notImplementedYetDefect
+  def filter(p: NumberRange): IMatrix[String] = RAISE.notImplementedYetDefect
   def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def appendRow(ps: Seq[String]): IMatrix[String] = RAISE.unsupportedOperationFault

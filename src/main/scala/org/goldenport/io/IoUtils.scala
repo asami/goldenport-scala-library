@@ -5,6 +5,7 @@ import java.nio.charset.Charset
 import java.net.{URL, URI}
 import scalax.io._
 import com.asamioffice.goldenport.io.{UIO, UURL}
+import org.goldenport.bag.Bag
 
 /*
  * @since   Oct.  9, 2017
@@ -12,7 +13,8 @@ import com.asamioffice.goldenport.io.{UIO, UURL}
  *  version Oct.  8, 2018
  *  version May. 19, 2019
  *  version Jun. 24, 2019
- * @version Dec.  7, 2019
+ *  version Dec.  7, 2019
+ * @version Mar. 18, 2020
  * @author  ASAMI, Tomoharu
  */
 object IoUtils {
@@ -68,4 +70,41 @@ object IoUtils {
 
   def toInputStream(p: String): InputStream = new StringInputStream(p)
   def toInputStream(p: String, charset: Charset): InputStream = new StringInputStream(p, charset)
+
+  def save(file: File, p: String, charset: Charset) {
+    val in = toInputStream(p, charset)
+    val out = new FileOutputStream(file)
+    copyClose(in, out)
+  }
+
+  def save(file: File, url: URL) {
+    val in = url.openStream
+    val out = new FileOutputStream(file)
+    copyClose(in, out)
+  }
+
+  def save(file: File, bag: Bag) {
+    for {
+      out <- resource.managed(new FileOutputStream(file))
+    } {
+      bag.copyTo(out)
+    }
+  }
+
+  def descendants(p: File): Vector[File] = {
+    case class Z(
+      files: Vector[File] = Vector.empty,
+      indirs: Vector[File] = Vector.empty
+    ) {
+      def r = files ++ indirs
+
+      def +(rhs: File) = {
+        if (rhs.isFile)
+          copy(files = files :+ rhs)
+        else
+          copy(indirs = indirs ++ descendants(rhs))
+      }
+    }
+    p.listFiles.toList./:(Z())(_+_).r
+  }
 }

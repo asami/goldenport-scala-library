@@ -13,7 +13,8 @@ import org.goldenport.matrix.breeze.BreezeMatrix
  *  version Sep. 16, 2019
  *  version Oct. 16, 2019
  *  version Nov. 16, 2019
- * @version Jan. 27, 2020
+ *  version Jan. 27, 2020
+ * @version Feb. 26, 2020
  * @author  ASAMI, Tomoharu
  */
 trait IMatrix[T] extends Showable {
@@ -49,9 +50,29 @@ trait IMatrix[T] extends Showable {
     }
   }
   lazy val columnVector = columnIterator.toVector
+  def row(y: Int): Vector[T] = {
+    val xs = for (x <- 0 until width) yield { apply(x, y) }
+    xs.toVector
+  }
+  def column(x: Int): Vector[T] = {
+    val xs = for (y <- 0 until height) yield { apply(x, y) }
+    xs.toVector
+  }
+  def findRow[A](p: Vector[T] => Boolean)(implicit cmp: math.Ordering[A]): Option[Vector[T]] =
+    rowIterator.find(p)
+  def findColumn[A](p: Vector[T] => Boolean)(implicit cmp: math.Ordering[A]): Option[Vector[T]] =
+    columnIterator.find(p)
+  def minRow[A](p: Vector[T] => A)(implicit cmp: math.Ordering[A]): Vector[T] =
+    rowIterator.minBy(p)
+  def minColumn[A](p: Vector[T] => A)(implicit cmp: math.Ordering[A]): Vector[T] =
+    columnIterator.minBy(p)
+  def maxRow[A](p: Vector[T] => A)(implicit cmp: math.Ordering[A]): Vector[T] =
+    rowIterator.maxBy(p)
+  def maxColumn[A](p: Vector[T] => A)(implicit cmp: math.Ordering[A]): Vector[T] =
+    columnIterator.maxBy(p)
   def select(p: Seq[Int]): IMatrix[T] = VectorColumnRowMatrix.create(this).select(p)
-  def projection(p: NumberRange): IMatrix[T] // TODO rename to select
-  def selection(p: NumberRange): IMatrix[T] // TODO rename to filter
+  def select(p: NumberRange): IMatrix[T]
+  def filter(p: NumberRange): IMatrix[T]
   def toDoubleMatrix: IMatrix[Double]
   def makeDoubleMatrix: IMatrix[Double]
   // 
@@ -83,8 +104,8 @@ trait IMatrix[T] extends Showable {
 
 case class ArrayMatrix[T](matrix: Array[T], width: Int, height: Int) extends IMatrix[T] {
   def apply(x: Int, y: Int): T = matrix(y * width + x)
-  def projection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
-  def selection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def select(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def filter(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
   def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
@@ -99,8 +120,9 @@ case class ArrayRowColumnMatrix[T](matrix: Array[Array[T]]) extends IMatrix[T] {
   lazy val width: Int = matrix.map(_.length).max
   def height: Int = matrix.length
   override def rowIterator: Iterator[Vector[T]] = matrix.iterator.map(_.toVector)
-  def projection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
-  def selection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  override def row(y: Int): Vector[T] = matrix(y).toVector
+  def select(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def filter(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
   def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
@@ -115,8 +137,9 @@ case class ArrayColumnRowMatrix[T](matrix: Array[Array[T]]) extends IMatrix[T] {
   def width: Int = matrix.length
   lazy val height: Int = matrix.map(_.length).max
   override def columnIterator: Iterator[Vector[T]] = matrix.iterator.map(_.toVector)
-  def projection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
-  def selection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  override def column(x: Int): Vector[T] = matrix(x).toVector
+  def select(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def filter(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
   def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
@@ -128,8 +151,8 @@ case class ArrayColumnRowMatrix[T](matrix: Array[Array[T]]) extends IMatrix[T] {
 
 case class VectorMatrix[T](matrix: Vector[T], width: Int, height: Int) extends IMatrix[T] {
   def apply(x: Int, y: Int): T = matrix(y * width + x)
-  def projection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
-  def selection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def select(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def filter(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
   def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def appendRow(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
@@ -155,8 +178,9 @@ trait VectorRowColumnMatrixBase[T] extends IMatrix[T] {
   lazy val width: Int = matrix.map(_.length).max
   def height: Int = matrix.length
   override def rowIterator: Iterator[Vector[T]] = matrix.iterator
-  def projection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
-  def selection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  override def row(y: Int): Vector[T] = matrix(y)
+  def select(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def filter(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
   def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
 
@@ -167,7 +191,7 @@ case class VectorRowColumnMatrix[T](
   matrix: Vector[Vector[T]],
   emptyValue: Option[T] = None
 ) extends VectorRowColumnMatrixBase[T] {
-  override def projection(p: NumberRange): IMatrix[T] =
+  override def select(p: NumberRange): IMatrix[T] =
     VectorRowColumnMatrix(MatrixUtils.projectionVector(matrix, p))
 
   override def toDoubleMatrix: IMatrix[Double] =
@@ -216,12 +240,13 @@ case class VectorColumnRowMatrix[T](
   def width: Int = matrix.length
   lazy val height: Int = matrix.map(_.length).max
   override def columnIterator: Iterator[Vector[T]] = matrix.iterator
+  override def column(x: Int): Vector[T] = matrix(x)
   override def select(p: Seq[Int]): IMatrix[T] = {
     val xs = p./:(Vector.empty[Vector[T]])((z, x) => z :+ matrix(x))
     copy(matrix = xs)
   }
-  def projection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
-  def selection(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def select(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
+  def filter(p: NumberRange): IMatrix[T] = RAISE.notImplementedYetDefect
   def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
 

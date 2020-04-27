@@ -6,7 +6,8 @@ import org.goldenport.util.AnyUtils
 
 /*
  * @since   Oct.  5, 2018
- * @version May. 19, 2019
+ *  version May. 19, 2019
+ * @version Feb. 16, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Argument(
@@ -18,5 +19,5 @@ case class Argument(
 }
 
 object Argument {
-  def apply(p: String): Argument = Argument(p, None)
+  def apply(p: Any): Argument = Argument(p, None)
 }

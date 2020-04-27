@@ -10,7 +10,8 @@ import org.goldenport.util.VectorUtils
  *  version Mar. 24, 2019
  *  version May. 10, 2019
  *  version Jul.  7, 2019
- * @version Oct. 12, 2019
+ *  version Oct. 12, 2019
+ * @version Apr.  7, 2020
  * @author  ASAMI, Tomoharu
  */
 sealed trait VectorMap[K, +V] extends Map[K, V] {
@@ -18,6 +19,8 @@ sealed trait VectorMap[K, +V] extends Map[K, V] {
   override def +[W >: V](kv: (K, W)): VectorMap[K, W]
   override def -(key: K): VectorMap[K, V]
   override def mapValues[W](f: V => W): VectorMap[K, W] = RAISE.notImplementedYetDefect
+  override def head: (K, V) = vector.head
+  override def tail: VectorMap[K, V] = create_Map(vector.tail)
   override def toVector = vector
   def vector: Vector[(K, V)]
   override def toList: List[(K, V)] = vector.toList
@@ -34,6 +37,8 @@ sealed trait VectorMap[K, +V] extends Map[K, V] {
   def prepend[W >: V](k: K, v: W): VectorMap[K, W] = prepend(k -> v)
   def prepend[W >: V](p: (K, W)): VectorMap[K, W] = RAISE.notImplementedYetDefect
   def remove(k: K): VectorMap[K, V]
+
+  protected def create_Map[W >:V](ps: Vector[(K, W)]): VectorMap[K, W]
 
   protected def update_vector[W >: V](ps: Vector[(K, W)], x: (K, W)): Vector[(K, W)] =
     VectorUtils.updateMap(ps, x)
@@ -66,6 +71,8 @@ case class PlainVectorMap[K, +V](
     update_vector(vector, p)
   )
   def remove(k: K): VectorMap[K, V] = this.-(k)
+
+  protected def create_Map[W >:V](ps: Vector[(K, W)]): VectorMap[K, W] = PlainVectorMap(ps)
 
   override def mapValues[W](f: V => W): VectorMap[K, W] = copy(vector.map {
     case (k, v) => k -> f(v)
@@ -107,6 +114,9 @@ case class IndexedVectorMap[K, +V](
   )
   def remove(k: K): VectorMap[K, V] = this.-(k)
 
+  protected def create_Map[W >:V](ps: Vector[(K, W)]): VectorMap[K, W] =
+    IndexedVectorMap.apply(ps)
+
   override def mapValues[W](f: V => W): VectorMap[K, W] = copy(
     vector.map {
       case (k, v) => k -> f(v)
@@ -119,6 +129,11 @@ case class IndexedVectorMap[K, +V](
 object IndexedVectorMap {
   private val _empty = IndexedVectorMap(Vector.empty, Map.empty)
   def empty[K, V] = _empty.asInstanceOf[IndexedVectorMap[K, V]]
+
+  def apply[K, V](ps: Vector[(K, V)]): IndexedVectorMap[K, V] = {
+    val m = ps./:(Map.empty[K, V])(_+_)
+    IndexedVectorMap(ps, m)
+  }
 }
 
 object VectorMap {

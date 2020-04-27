@@ -17,7 +17,9 @@ import org.goldenport.exception.RAISE
  *  version Sep. 28, 2019
  *  version Oct. 28, 2019
  *  version Nov. 10, 2019
- * @version Jan. 30, 2020
+ *  version Jan. 30, 2020
+ *  version Feb. 29, 2020
+ * @version Mar.  1, 2020
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
@@ -1194,7 +1196,7 @@ object LogicalTokens {
       c match {
         case ':' =>
           val parent = copy(cs = Vector.empty)
-          UrnOrLxsvState(parent, cs :+ c, evt.location)
+          UrnOrLxsvState(parent, cs :+ c, location)
         case _ => 
           if (cs.isEmpty)
             copy(cs = cs :+ c, location = evt.location)

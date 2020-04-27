@@ -13,13 +13,15 @@ import org.goldenport.xml.XmlUtils.{makeString, parseNodeSeq}
  *  version Nov.  1, 2017
  *  version Jan.  5, 2018
  *  version Jul.  6, 2019
- * @version Sep. 23, 2019
+ *  version Sep. 23, 2019
+ * @version Apr. 17, 2020
  * @author  ASAMI, Tomoharu
  */
 sealed trait I18NElement {
   def apply(locale: Locale): NodeSeq
   def get(locale: Locale): Option[NodeSeq]
   def toI18NString: I18NString
+  def toString(locale: Locale): String = toI18NString.as(locale)
   def toJsonString: String
   def key: String = toI18NString.key
 }
@@ -31,6 +33,8 @@ object I18NElement {
   def apply(en: String): I18NElement = I18NStringI18NElement(I18NString(en))
 
   def apply(en: String, ja: String): I18NElement = I18NStringI18NElement(I18NString(en, ja))
+
+  def apply(p: I18NString): I18NElement = I18NStringI18NElement(p)
 
   def apply(p: NodeSeq): I18NElement = p match {
     case m: NodeSeq => NodeSeqI18NElement(m)
@@ -63,11 +67,10 @@ case class I18NStringI18NElement(v: I18NString) extends I18NElement {
   def toJson = v.toJson
   def toJsonString = v.toJsonString
   lazy val toI18NString = I18NString(
-    makeString(v._c),
-    makeString(v._en),
-    makeString(v._ja),
-    v.map.mapValues(makeString),
-    v.parameters
+    makeString(v.c),
+    makeString(v.en),
+    makeString(v.ja),
+    v.map.mapValues(makeString)
   )
 
   override def toString() = toJsonString

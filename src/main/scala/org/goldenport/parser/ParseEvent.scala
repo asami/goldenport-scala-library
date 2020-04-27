@@ -10,7 +10,8 @@ import org.goldenport.util.VectorUtils
  *  version Oct.  9, 2018
  *  version Dec. 31, 2018
  *  version Apr. 21, 2019
- * @version Sep. 22, 2019
+ *  version Sep. 22, 2019
+ * @version Jan. 31, 2020
  * @author  ASAMI, Tomoharu
  */
 trait ParseEvent {
@@ -117,6 +118,7 @@ case class CharEvent(
   c: Char,
   next: Option[Char],
   next2: Option[Char],
+  next3: Option[Char],
   location: ParseLocation
 ) extends ParseEvent {
   def isMatch(p: String): Boolean = p.length match {
@@ -124,6 +126,7 @@ case class CharEvent(
     case 1 => p(0) == c
     case 2 => p(0) == c && Some(p(1)) == next
     case 3 => p(0) == c && Some(p(1)) == next && Some(p(2)) == next2
+    case 4 => p(0) == c && Some(p(1)) == next && Some(p(2)) == next2 && Some(p(3)) == next3
     case _ => RAISE.noReachDefect
   }
 
@@ -135,11 +138,17 @@ case class CharEvent(
     next = Some(n.c),
     next2 = Some(n2.c)
   )
+
+  def withNexts(n: CharEvent, n2: CharEvent, n3: CharEvent) = copy(
+    next = Some(n.c),
+    next2 = Some(n2.c),
+    next3 = Some(n3.c)
+  )
 }
 object CharEvent {
-  def apply(c: Char): CharEvent = CharEvent(c, None, None, ParseLocation.empty)
+  def apply(c: Char): CharEvent = CharEvent(c, None, None, None, ParseLocation.empty)
 
-  def apply(c: Int): CharEvent = CharEvent(c.toChar, None, None, ParseLocation.empty)
+  def apply(c: Int): CharEvent = CharEvent(c.toChar, None, None, None, ParseLocation.empty)
 
   def make(p: String): Vector[CharEvent] = make(p.toVector)
 
@@ -155,42 +164,43 @@ object CharEvent {
         val c = rhs(0)
         val nextc = rhs.lift(1)
         val next2c = rhs.lift(2)
+        val next3c = rhs.lift(3)
         if (aftercr) {
           if (c == '\n')
-            _next_line(c, nextc, next2c)
+            _next_line(c, nextc, next2c, next3c)
           else if (c == '\r')
-            _next_line(c, nextc, next2c)
+            _next_line(c, nextc, next2c, next3c)
           else
-            _add_after_cr(c, nextc, next2c)
+            _add_after_cr(c, nextc, next2c, next3c)
         } else {
           if (c == '\n')
-            _next_line(c, nextc, next2c)
+            _next_line(c, nextc, next2c, next3c)
           else if (c == '\r')
-            _same_line(c, nextc, next2c)
+            _same_line(c, nextc, next2c, next3c)
           else
-            _same_line(c, nextc, next2c)
+            _same_line(c, nextc, next2c, next3c)
         }
       }
 
-      private def _same_line(c: Char, nextc: Option[Char], next2c: Option[Char]) =
-        _add(c, nextc, next2c, line, offset + 1)
+      private def _same_line(c: Char, nextc: Option[Char], next2c: Option[Char], next3c: Option[Char]) =
+        _add(c, nextc, next2c, next3c, line, offset + 1)
 
-      private def _next_line(c: Char, nextc: Option[Char], next2c: Option[Char]) =
-        _add(c, nextc, next2c, line + 1, 1)
+      private def _next_line(c: Char, nextc: Option[Char], next2c: Option[Char], next3c: Option[Char]) =
+        _add(c, nextc, next2c, next3c, line + 1, 1)
 
-      private def _add(c: Char, nextc: Option[Char], next2c: Option[Char], l: Int, o: Int) = {
-        val evt = CharEvent(c, nextc, next2c, ParseLocation(line, offset))
+      private def _add(c: Char, nextc: Option[Char], next2c: Option[Char], next3c: Option[Char], l: Int, o: Int) = {
+        val evt = CharEvent(c, nextc, next2c, next3c, ParseLocation(line, offset))
         Z(r = r :+ evt, l, o, c == '\r')
       }
 
-      private def _add_after_cr(c: Char, nextc: Option[Char], next2c: Option[Char]) = {
+      private def _add_after_cr(c: Char, nextc: Option[Char], next2c: Option[Char], next3c: Option[Char]) = {
         val l = line + 1
         val o = 1
-        val evt = CharEvent(c, nextc, next2c, ParseLocation(line + 1, o))
+        val evt = CharEvent(c, nextc, next2c, next3c, ParseLocation(line + 1, o))
         Z(r = r :+ evt, l, o + 1, c == '\r')
       }
     }
-    VectorUtils.sliding3(ps)./:(Z())(_+_).r
+    VectorUtils.sliding4(ps)./:(Z())(_+_).r
   }
 
   def makeWithoutLocation(p: String): Vector[CharEvent] = makeWithoutLocation(p.toVector)

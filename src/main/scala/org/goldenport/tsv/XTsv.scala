@@ -11,7 +11,8 @@ import org.goldenport.values.NumberRange
 /*
  * @since   Jul.  7, 2019
  *  version Aug. 24, 2019
- * @version Sep. 16, 2019
+ *  version Sep. 16, 2019
+ * @version Feb. 26, 2020
  * @author  ASAMI, Tomoharu
  */
 case class XTsv(matrix: VectorRowColumnMatrix[XmlOrJsonOrToken]) extends IMatrix[XmlOrJsonOrToken] {
@@ -20,8 +21,8 @@ case class XTsv(matrix: VectorRowColumnMatrix[XmlOrJsonOrToken]) extends IMatrix
   def height: Int = matrix.height
   override def rowIterator: Iterator[Vector[XmlOrJsonOrToken]] = matrix.rowIterator
   override def columnIterator: Iterator[Vector[XmlOrJsonOrToken]] = matrix.columnIterator
-  def projection(p: NumberRange): IMatrix[XmlOrJsonOrToken] = RAISE.notImplementedYetDefect
-  def selection(p: NumberRange): IMatrix[XmlOrJsonOrToken] = RAISE.notImplementedYetDefect
+  def select(p: NumberRange): IMatrix[XmlOrJsonOrToken] = RAISE.notImplementedYetDefect
+  def filter(p: NumberRange): IMatrix[XmlOrJsonOrToken] = RAISE.notImplementedYetDefect
   def toDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def makeDoubleMatrix: IMatrix[Double] = RAISE.notImplementedYetDefect
   def appendRow(ps: Seq[XmlOrJsonOrToken]): IMatrix[XmlOrJsonOrToken] = RAISE.unsupportedOperationFault
