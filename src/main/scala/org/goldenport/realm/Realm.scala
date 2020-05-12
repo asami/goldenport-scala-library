@@ -7,11 +7,13 @@ import org.goldenport.cli
 import org.goldenport.tree._
 import org.goldenport.bag.Bag
 import org.goldenport.io.IoUtils
+import org.goldenport.values.PathName
 
 /*
  * @since   Dec. 12, 2019
  *  version Dec. 15, 2019
- * @version Mar.  1, 2020
+ *  version Mar.  1, 2020
+ * @version May.  4, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
@@ -27,7 +29,7 @@ case class Realm(
   private def _export(dir: File, node: TreeNode[Data])(implicit ctx: Context) {
     for (c <- node.children) {
       if (c.isLeaf) {
-        node.content.export(dir)
+        c.content.export(new File(dir, c.name))
       } else {
         _export(new File(dir, c.name), c)
       }
@@ -70,6 +72,21 @@ object Realm {
 
   class Builder() {
     private val _tree: Tree[Data] = new PlainTree[Data]()
+
+    def set(pathname: PathName, string: String): Builder = {
+      _tree.setContent(pathname, StringData(string))
+      this
+    }
+
+    def set(pathname: PathName, url: URL): Builder = {
+      _tree.setContent(pathname, UrlData(url))
+      this
+    }
+
+    def set(pathname: PathName, bag: Bag): Builder = {
+      _tree.setContent(pathname, BagData(bag))
+      this
+    }
 
     def set(pathname: String, string: String): Builder = {
       _tree.setContent(pathname, StringData(string))

@@ -14,7 +14,8 @@ import org.goldenport.bag.Bag
  *  version May. 19, 2019
  *  version Jun. 24, 2019
  *  version Dec.  7, 2019
- * @version Mar. 18, 2020
+ *  version Mar. 18, 2020
+ * @version May.  4, 2020
  * @author  ASAMI, Tomoharu
  */
 object IoUtils {
@@ -42,7 +43,7 @@ object IoUtils {
   def toText(in: InputStream, encoding: String): String =
     toText(in, Codec(encoding))
   def toText(in: InputStream, charset: Option[Charset]): String =
-    Resource.fromInputStream(in).string(Codec.UTF8)
+    Resource.fromInputStream(in).string(charset.map(Codec(_)) getOrElse Codec.UTF8)
   def toText(in: InputStream, charset: Charset): String =
     Resource.fromInputStream(in).string(Codec(charset))
   def toText(in: InputStream, codec: Codec): String =
@@ -72,23 +73,34 @@ object IoUtils {
   def toInputStream(p: String, charset: Charset): InputStream = new StringInputStream(p, charset)
 
   def save(file: File, p: String, charset: Charset) {
+    ensureParentDirectory(file)
     val in = toInputStream(p, charset)
     val out = new FileOutputStream(file)
     copyClose(in, out)
   }
 
   def save(file: File, url: URL) {
+    ensureParentDirectory(file)
     val in = url.openStream
     val out = new FileOutputStream(file)
     copyClose(in, out)
   }
 
   def save(file: File, bag: Bag) {
+    ensureParentDirectory(file)
     for {
       out <- resource.managed(new FileOutputStream(file))
     } {
       bag.copyTo(out)
     }
+  }
+
+  def ensureParentDirectory(p: File) {
+    Option(p.getParentFile).map(ensureDirectory)
+  }
+
+  def ensureDirectory(p: File) {
+    p.mkdirs
   }
 
   def descendants(p: File): Vector[File] = {

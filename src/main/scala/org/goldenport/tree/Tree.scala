@@ -2,6 +2,7 @@ package org.goldenport.tree
 
 import scala.xml.Node
 import scalaz.{Tree => ZTree}
+import org.goldenport.values.PathName
 
 /*
  * @since   Jul. 27, 2008
@@ -9,7 +10,8 @@ import scalaz.{Tree => ZTree}
  *  version Feb. 21, 2012
  *  version Apr. 30, 2012
  *  version Nov.  2, 2012
- * @version Nov. 18, 2019
+ *  version Nov. 18, 2019
+ * @version May.  4, 2020
  * @author  ASAMI, Tomoharu
  */
 trait Tree[E] {
@@ -22,6 +24,7 @@ trait Tree[E] {
   def getNode(pathname: String): Option[TreeNode_TYPE]
   def getContent(path: String): Option[E]
   def setNode(pathname: String): TreeNode_TYPE
+  def setContent(pathname: PathName, data: E): TreeNode_TYPE
   def setContent(pathname: String, data: E): TreeNode_TYPE
   def copyIn(aSource: Tree[E]): Unit
   def traverse(visitor: TreeVisitor[E])
