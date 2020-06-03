@@ -4,13 +4,14 @@ import scalaz._, Scalaz._
 import java.util.{Locale, ResourceBundle}
 import java.text.MessageFormat
 import play.api.libs.json._
+import org.goldenport.Strings
 import org.goldenport.util.{AnyUtils, AnyRefUtils}
 
 /*
  * Derived from I18NString
  *
  * @since   Apr. 17, 2020
- * @version Apr. 17, 2020
+ * @version Jun.  1, 2020
  * @author  ASAMI, Tomoharu
  */
 case class I18NMessage(
@@ -23,16 +24,16 @@ case class I18NMessage(
   def key: String = en
 
   // TODO escape '{' and '}' or migrate to I18NTemplate
-  def as(locale: Locale): String = get(locale) getOrElse _format(en)
+  def as(locale: Locale): String = get(locale) getOrElse _format(locale, en)
 
-  lazy val c = _format(_c)
-  lazy val en = _format(_en)
-  lazy val ja = _format(_ja)
+  lazy val c = _format(Locale.US, _c) // TODO Locale.C
+  lazy val en = _format(Locale.US, _en)
+  lazy val ja = _format(Locale.JAPAN, _ja)
 
   def get(locale: Locale): Option[String] = {
     val l = Option(locale.getLanguage)
-    val country = Option(locale.getCountry)
-    val variant = Option(locale.getVariant)
+    val country = if (Strings.blankp(locale.getCountry)) None else Some(locale.getCountry)
+    val variant = if (Strings.blankp(locale.getVariant)) None else Some(locale.getVariant)
     val template: Option[String] = l flatMap { lang =>
       map.get(locale) orElse {
         // See com.asamioffice.goldenport.util.ULocale.match
@@ -46,24 +47,28 @@ case class I18NMessage(
           None
       }
     }
-    _format(template)
+    _format(locale, template)
   }
 
-  private def _format(s: Option[String]): Option[String] = s.map(_format)
+  private def _format(l: Locale, s: Option[String]): Option[String] = s.map(_format(l, _))
 
-  private def _format(s: String): String =
-    MessageFormat.format(s, parameters.map(AnyRefUtils.toAnyRef):_*)
+  private def _format(l: Locale, s: String): String =
+    MessageFormat.format(s, _normalized_parameters(l):_*)
+
+  private def _normalized_parameters(l: Locale) = {
+    parameters.map {
+      case m: I18NString => m.as(l)
+      case m => AnyRefUtils.toAnyRef(m)
+    }
+  }
 
   def get(locale: Locale, bundle: ResourceBundle): Option[String] =
-    get(bundle) orElse get(locale)
-
-  def get(bundle: ResourceBundle): Option[String] =
-    _format(Option(bundle.getString(key)))
+    _format(locale, Option(bundle.getString(key))) orElse get(locale)
 
   def apply(locale: Locale): String = get(locale) getOrElse en
 
   def apply(locale: Locale, bundle: ResourceBundle): String =
-    get(locale, bundle) getOrElse _format(en)
+    get(locale, bundle) getOrElse _format(locale, en)
 
   // def formatMessage(locale: Locale, bundle: ResourceBundle)(ps: AnyRef*): String = {
   //   val fmt = apply(locale, bundle)
@@ -71,8 +76,9 @@ case class I18NMessage(
   // }
 
   lazy val localeMap: Map[Locale, String] =
-    map.mapValues(_format) +
-      (Locale.ENGLISH -> en) + (Locale.JAPANESE -> ja)
+    map.map {
+      case (k, v) => k -> _format(k, v)
+    } + (Locale.ENGLISH -> en) + (Locale.JAPANESE -> ja)
   lazy val localeList: List[(Locale, String)] = localeMap.toList
   lazy val localeVector: Vector[(Locale, String)] = localeMap.toVector
 
@@ -163,7 +169,9 @@ case class I18NMessage(
     c,
     en,
     ja,
-    map.mapValues(_format)
+    map.map {
+      case (k, v) => k -> _format(k, v)
+    }
   )
 
   override def toString() = toJsonString

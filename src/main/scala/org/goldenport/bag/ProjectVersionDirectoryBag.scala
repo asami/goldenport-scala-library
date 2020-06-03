@@ -8,7 +8,8 @@ import org.goldenport.util.{StringUtils, ZipExtractor}
 /*
  * @since   Jul. 29, 2017
  *  version Aug. 29, 2017
- * @version Nov.  6, 2017
+ *  version Nov.  6, 2017
+ * @version Jun.  2, 2020
  * @author  ASAMI, Tomoharu
  */
 class ProjectVersionDirectoryBag(
@@ -20,7 +21,15 @@ class ProjectVersionDirectoryBag(
 }
 
 object ProjectVersionDirectoryBag {
-  def createFromZip(baseDirectory: File, url: URL): ProjectVersionDirectoryBag = {
+  def createFromZip(baseDirectory: File, url: URL): ProjectVersionDirectoryBag =
+    createFromZip(baseDirectory, url, None, None)
+
+  def createFromZip(
+    baseDirectory: File,
+    url: URL,
+    user: Option[String],
+    password: Option[String]
+  ): ProjectVersionDirectoryBag = {
     val (appname, version) = takeApplicationVersion(url)
     val dirname = version.fold {
       s"$appname"
@@ -34,7 +43,7 @@ object ProjectVersionDirectoryBag {
     val home = new File(baseDirectory, dirname)
     if (!home.exists) {
       home.mkdirs
-      ZipExtractor.noFileMaxSizeCheck(home, url)
+      ZipExtractor.noFileMaxSizeCheck(home, url, user, password)
     }
     new ProjectVersionDirectoryBag(baseDirectory, home, appname, version)
   }

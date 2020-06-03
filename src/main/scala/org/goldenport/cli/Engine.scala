@@ -8,7 +8,8 @@ import org.goldenport.parser.CommandParser
  *  version Feb. 24, 2019
  *  version Oct. 14, 2019
  *  version Feb. 18, 2020
- * @version Mar.  1, 2020
+ *  version Mar.  1, 2020
+ * @version May. 16, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Engine(
@@ -47,15 +48,15 @@ case class Engine(
 
   def apply(env: Environment, args: Seq[String]): Response = {
     val r = args.toList match {
-      case Nil => ???
+      case Nil => ??? // TODO help
       case x :: xs =>
         commandParser(x) match {
-          case m: CommandParser.NotFound[Candidate] => ???
+          case m: CommandParser.NotFound[Candidate] => Response.notFound(x, _get_candidates(x))
           case m: CommandParser.Found[Candidate] => m.command match {
             case ServiceCandidate(service) => apply(env, service, xs)
             case OperationCandidate(operation) => apply(env, operation, xs)
           }
-          case m: CommandParser.Candidates[Candidate] => ???
+          case m: CommandParser.Candidates[Candidate] => Response.ambiguous(x, m)
         }
     }
     _output(env, r)
@@ -91,18 +92,28 @@ case class Engine(
   ): Response = {
     if (config.isOutput)
       p.output(env)
+    if (config.isStdout)
+      p.stdout.foreach(env.printStdoutLn)
+    if (config.isStderr)
+      p.stderr.foreach(env.printStderrLn)
+    if (config.isExit) {
+      System.exit(0) // TODO
+    }
     p
   }
 }
 
 object Engine {
   case class Config(
-    isOutput: Boolean = true
+    isStdout: Boolean = true,
+    isStderr: Boolean = true,
+    isOutput: Boolean = true,
+    isExit: Boolean = false
   ) {
   }
   object Config {
     val default = Config()
-    val terse = default.copy(isOutput = false)
+    val terse = default.copy(isStdout = false, isStderr = false, isOutput = false)
   }
 
   sealed trait Candidate {

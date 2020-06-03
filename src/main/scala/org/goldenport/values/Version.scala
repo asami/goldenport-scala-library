@@ -4,7 +4,8 @@ package org.goldenport.values
  * @since   Nov. 22, 2016
  *  version Jan. 12, 2017
  *  version Jul. 29, 2017
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Jun.  3, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Version(v: String) extends Ordered[Version] {
@@ -36,6 +37,12 @@ case class Version(v: String) extends Ordered[Version] {
     }
     go(components, rhs.components)
   }
+
+  def isEqual(rhs: Version): Boolean = compare(rhs) == 0
+  def isigher(rhs: Version): Boolean  = compare(rhs) > 0
+  def isLower(rhs: Version): Boolean  = compare(rhs) < 0
+  def isEqualOrHigher(rhs: Version): Boolean  = compare(rhs) >= 0
+  def isEqualOrLower(rhs: Version): Boolean  = compare(rhs) <= 0
 
   def isVolatile: Boolean = components.lastOption.fold(false)(_.isVolatile)
 }

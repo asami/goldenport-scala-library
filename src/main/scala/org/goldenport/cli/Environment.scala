@@ -1,5 +1,7 @@
 package org.goldenport.cli
 
+import java.io._
+import org.goldenport.monitor.Monitor
 import Environment._
 
 /*
@@ -8,10 +10,11 @@ import Environment._
  *  version Mar.  2, 2019
  *  version Jan. 20, 2020
  *  version Mar.  8, 2020
- * @version May.  5, 2020
+ * @version May. 30, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Environment(
+  monitor: Monitor,
   config: Config,
   appEnvironment: AppEnvironment = NoneAppEnvironment
 ) {
@@ -24,7 +27,24 @@ case class Environment(
   def toAppEnvironment[T <: AppEnvironment] = appEnvironment.asInstanceOf[T]
   def outputDirectory = config.outputDirectory
 
+  def isPlatformWindows: Boolean = monitor.isPlatformWindows
+
   def withAppEnvironment(p: AppEnvironment) = copy(appEnvironment = p)
+
+  lazy val stdout: PrintWriter = new PrintWriter(new OutputStreamWriter(System.out, consoleCharset), true)
+  lazy val stderr: PrintWriter = new PrintWriter(new OutputStreamWriter(System.err, consoleCharset), true)
+
+  def printStdoutLn(p: String) {
+    // TODO last ln
+    stdout.println(p)
+    stdout.flush()
+  }
+
+  def printStderrLn(p: String) {
+    // TODO last ln
+    stderr.println(p)
+    stderr.flush()
+  }
 }
 
 object Environment {
@@ -32,12 +52,13 @@ object Environment {
   case object NoneAppEnvironment extends AppEnvironment
 
   def create(appname: String, args: Array[String]): Environment = {
-    val config = Config.build(appname)
-    new Environment(config)
+    val config = Config.build(appname, args)
+    new Environment(Monitor.default, config)
   }
 
   def create(args: Array[String]): Environment = {
-    val config = Config.build()
-    new Environment(config)
+    val monitor = Monitor.create(args)
+    val config = Config.build(args)
+    new Environment(monitor, config)
   }
 }

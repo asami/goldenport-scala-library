@@ -8,7 +8,8 @@ import org.goldenport.Strings
  *  version Oct. 21, 2018
  *  version Feb. 24, 2019
  *  version Mar.  4, 2019
- * @version Feb. 16, 2020
+ *  version Feb. 16, 2020
+ * @version May. 19, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Request(
@@ -29,6 +30,7 @@ case class Request(
   def isVerbose: Boolean = switches.exists(_.name == "v")
   def isInteractive: Boolean = switches.exists(_.name == "i")
 
+  def getPropertyString(name: String): Option[String] = properties.find(_.name == name).map(_.value.asString)
 }
 
 object Request {

@@ -12,7 +12,7 @@ import org.goldenport.bag.{ChunkBag, BufferFileBag}
 /*
  * @since   Oct.  4, 2018
  *  version Oct.  8, 2018
- * @version May.  7, 2020
+ * @version May. 21, 2020
  * @author  ASAMI, Tomoharu
  */
 class ShellCommand(
@@ -67,6 +67,7 @@ object ShellCommand {
     def stderr: ChunkBag = Await.result(stderrFuture, Duration.Inf)
 
     def toText: String = toChunkBag.toText
+
     def toChunkBag: ChunkBag = {
       waitFor match {
         case 0 => stdout
@@ -75,6 +76,10 @@ object ShellCommand {
           throw new IOException(msg)
       }
     }
+
+    def toChunkBag(name: String): ChunkBag = toChunkBag.withFilename(name)
+
+    def toChunkBag(name: Option[String]): ChunkBag = name.map(toChunkBag).getOrElse(toChunkBag)
   }
 
   def create(cmds: String): ShellCommand = new ShellCommand(
