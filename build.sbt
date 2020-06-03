@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.1.6"
+version := "2.1.6.1"
 
 scalaVersion := "2.12.7"
 
@@ -64,6 +64,8 @@ libraryDependencies += "org.typelevel" %% "spire" % "0.14.1"
 libraryDependencies += "commons-jxpath" % "commons-jxpath" % "1.3" % "provided"
 
 libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.25"
+
+libraryDependencies += "commons-codec" % "commons-codec" % "1.10" % "compile"
 
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3" % "provided"
 

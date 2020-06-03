@@ -24,7 +24,8 @@ import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperation
  *  version Jan. 20, 2020
  *  version Feb. 26, 2020
  *  version Mar. 12, 2020
- * @version Apr. 10, 2020
+ *  version Apr. 10, 2020
+ * @version May. 16, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Config(
@@ -60,8 +61,20 @@ object Config {
     _create(hocon)
   }
 
+  def build(args: Array[String]): Config = {
+    val hocon = _build()
+    // TODO args
+    _create(hocon)
+  }
+
   def build(appname: String): Config = {
     val hocon = _build(appname)
+    _create(hocon)
+  }
+
+  def build(appname: String, args: Array[String]): Config = {
+    val hocon = _build(appname)
+    // TODO args
     _create(hocon)
   }
 

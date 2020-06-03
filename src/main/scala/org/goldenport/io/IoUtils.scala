@@ -3,6 +3,8 @@ package org.goldenport.io
 import java.io._
 import java.nio.charset.Charset
 import java.net.{URL, URI}
+// import java.util.Base64
+import org.apache.commons.codec.binary.Base64
 import scalax.io._
 import com.asamioffice.goldenport.io.{UIO, UURL}
 import org.goldenport.bag.Bag
@@ -15,7 +17,9 @@ import org.goldenport.bag.Bag
  *  version Jun. 24, 2019
  *  version Dec.  7, 2019
  *  version Mar. 18, 2020
- * @version May.  4, 2020
+ *  version May.  4, 2020
+ *  version Jun.  2, 2020
+ * @version  6.  3, 2020
  * @author  ASAMI, Tomoharu
  */
 object IoUtils {
@@ -118,5 +122,28 @@ object IoUtils {
       }
     }
     p.listFiles.toList./:(Z())(_+_).r
+  }
+
+  def openInputStream(url: URL): InputStream = openInputStream(url, None, None)
+
+  def openInputStream(url: URL, user: String, password: String): InputStream =
+    _open_inputstream(url, s"$user:$password")
+
+  def openInputStream(url: URL, user: Option[String], password: Option[String]): InputStream =
+    Option(url.getUserInfo).map(x => _open_inputstream(url, x)).getOrElse(
+      user.map(x => _open_inputstream(url, x, password)).getOrElse(url.openStream)
+    )
+
+  private def _open_inputstream(url: URL, user: String, password: Option[String]): InputStream = {
+    val s = password.map(x => s"$user:$x").getOrElse(user)
+    _open_inputstream(url, s)
+  }
+
+  private def _open_inputstream(url: URL, userpassword: String): InputStream = {
+//    val data = Base64.getEncoder().encodeToString(userpassword.getBytes())
+    val data = Base64.encodeBase64String(userpassword.getBytes())
+    val conn = url.openConnection()
+    conn.setRequestProperty("Authorization", s"Basic $data")
+    conn.getInputStream()
   }
 }

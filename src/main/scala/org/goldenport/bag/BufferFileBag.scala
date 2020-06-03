@@ -10,6 +10,10 @@ import java.net.URL
 import scodec.bits.ByteVector
 import com.asamioffice.goldenport.io.UURL
 // import org.goldenport.record.v2.InputFile
+import org.goldenport.RAISE
+import org.goldenport.io.MimeType
+import org.goldenport.extension.IRecord
+import org.goldenport.util.StringUtils
 
 /*
  * @since   Jun.  8, 2014
@@ -20,16 +24,42 @@ import com.asamioffice.goldenport.io.UURL
  *  version Aug. 29, 2017
  *  version Sep. 17, 2018
  *  version Oct.  5, 2018
- * @version Mar. 27, 2019
+ *  version Mar. 27, 2019
+ * @version May. 21, 2020
  * @author  ASAMI, Tomoharu
  */
 class BufferFileBag(
   val bufferSize: Int = 65536,
-  override val getCodec: Option[Codec] = None
-) extends ChunkBag {
+  val nature: Nature = Nature.default
+) extends ChunkBag with Nature.Holder {
   private var _underling: ChunkBag = BufferBag.create(getCodec)
 
   def underling = _underling
+
+  override def withName(p: String): ChunkBag = _create(nature.withName(p))
+
+  override def withSuffix(p: String): ChunkBag = _create(nature.withSuffix(p))
+
+  override def withFilename(p: String): ChunkBag = {
+    val (name, suffix) = StringUtils.pathnameBodySuffix(p)
+    _create(nature.withNameSuffix(name, suffix))
+  }
+
+  override def withMimetype(p: MimeType): ChunkBag = _create(nature.withMimetype(p))
+
+  override def withCodec(p: Codec): ChunkBag = {
+    val r = new BufferFileBag(bufferSize, nature.withCodec(p))
+    r._underling = _underling.withCodec(p)
+    r
+  }
+
+  override def withProperties(p: IRecord): ChunkBag = _create(nature.withProperties(p))
+
+  private def _create(p: Nature): ChunkBag = {
+    val r = new BufferFileBag(bufferSize, p)
+    r._underling = _underling
+    r
+  }
 
   override def isEmpty: Boolean = {
     _underling match {
@@ -141,7 +171,7 @@ class BufferFileBag(
 
 object BufferFileBag {
   def create(codec: Codec): BufferFileBag =
-    new BufferFileBag(getCodec = Some(codec))
+    new BufferFileBag(nature = Nature(codec))
 
   def fromUri(uri: String): BufferFileBag = {
     val url = UURL.getURLFromFileOrURLName(uri)

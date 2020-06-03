@@ -18,10 +18,13 @@ import org.goldenport.util.StringUtils
  *  version Mar. 13, 2018
  *  version Dec. 27, 2018
  *  version Apr. 14, 2020
- * @version May.  4, 2020
+ * @version May. 18, 2020
  * @author  ASAMI, Tomoharu
  */
-case class PathName(v: String) {
+case class PathName(
+  v: String,
+  delimiter: String = "/"
+) {
   override def toString() = v
 
   def isEmpty: Boolean = v.isEmpty
@@ -29,7 +32,7 @@ case class PathName(v: String) {
   def headOption: Option[String] = if (isEmpty) Some(firstComponent) else None
   def tail: PathName = tailOption.get
   def tailOption: Option[PathName] = getChild
-  lazy val components: List[String] = Strings.totokens(v, "/")
+  lazy val components: List[String] = Strings.totokens(v, delimiter)
   lazy val firstComponent: String = components.headOption.getOrElse("")
   lazy val lastConcreteComponent: String = {
     components.reverse.filterNot(_.contains("{")) match { // XXX "{"
@@ -44,13 +47,13 @@ case class PathName(v: String) {
       Some(PathName(components.init))
   lazy val getChild: Option[PathName] = components.tail match {
     case Nil => None
-    case xs => Some(PathName(xs.mkString("/")))
+    case xs => Some(PathName(xs.mkString(delimiter)))
   }
 
   def get(i: Int): Option[String] = components.lift(i)
 
-  def isBase: Boolean = v == "" || v == "/"
-  def isAbsolute: Boolean = v.startsWith("/")
+  def isBase: Boolean = v == "" || v == delimiter
+  def isAbsolute: Boolean = v.startsWith(delimiter)
 
   def isAccept(p: List[String]): Boolean = {
     (p.length == components.length) && {
@@ -78,9 +81,9 @@ case class PathName(v: String) {
       case x :: xs => p :: xs
     }
     if (isAbsolute)
-      PathName(a.mkString("/", "/", ""))
+      PathName(a.mkString(delimiter, delimiter, ""))
     else
-      PathName(a.mkString("/"))
+      PathName(a.mkString(delimiter))
   }
 
   def length = components.length
@@ -93,4 +96,7 @@ object PathName {
 
   def apply(ps: List[String]): PathName = PathName(StringUtils.concatPath(ps))
   def apply(p: String, pp: String, ps: String*): PathName = apply(p :: pp :: ps.toList)
+
+  def create(path: String): PathName = PathName(path)
+  def create(path: String, delimiter: String): PathName = PathName(path, delimiter)
 }
