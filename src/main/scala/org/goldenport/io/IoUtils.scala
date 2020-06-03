@@ -3,7 +3,8 @@ package org.goldenport.io
 import java.io._
 import java.nio.charset.Charset
 import java.net.{URL, URI}
-import java.util.Base64
+// import java.util.Base64
+import org.apache.commons.codec.binary.Base64
 import scalax.io._
 import com.asamioffice.goldenport.io.{UIO, UURL}
 import org.goldenport.bag.Bag
@@ -17,7 +18,8 @@ import org.goldenport.bag.Bag
  *  version Dec.  7, 2019
  *  version Mar. 18, 2020
  *  version May.  4, 2020
- * @version Jun.  2, 2020
+ *  version Jun.  2, 2020
+ * @version  6.  3, 2020
  * @author  ASAMI, Tomoharu
  */
 object IoUtils {
@@ -138,7 +140,8 @@ object IoUtils {
   }
 
   private def _open_inputstream(url: URL, userpassword: String): InputStream = {
-    val data = Base64.getEncoder().encodeToString(userpassword.getBytes())
+//    val data = Base64.getEncoder().encodeToString(userpassword.getBytes())
+    val data = Base64.encodeBase64String(userpassword.getBytes())
     val conn = url.openConnection()
     conn.setRequestProperty("Authorization", s"Basic $data")
     conn.getInputStream()
