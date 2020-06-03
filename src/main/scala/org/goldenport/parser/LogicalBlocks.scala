@@ -12,7 +12,8 @@ import org.goldenport.log.Loggable
  *  version Jan. 26, 2019
  *  version Feb. 24, 2019
  *  version Jun.  9, 2019
- * @version Sep.  8, 2019
+ *  version Sep.  8, 2019
+ * @version Apr. 25, 2020
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -267,6 +268,12 @@ object LogicalBlocks {
     location: Option[ParseLocation]
   ) extends LogicalBlocksParseState {
     def result = blocks
+
+    override def result(config: Config, p: LogicalBlock): LogicalBlocks =
+      parent.result(config, blocks :+ p)
+
+    override def result(config: Config, p: LogicalBlocks): LogicalBlocks =
+      parent.result(config, blocks + p)
 
     override def addChildState(config: Config, p: LogicalBlocks): LogicalBlocksParseState =
       RootState(blocks + LogicalBlocks(LogicalBlock(cs)) + p)

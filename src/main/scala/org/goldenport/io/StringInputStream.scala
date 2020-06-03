@@ -6,7 +6,7 @@ import org.goldenport.Platform
 
 /*
  * @since   Jun. 24, 2019
- * @version Jun. 24, 2019
+ * @version May.  4, 2020
  * @author  ASAMI, Tomoharu
  */
 class StringInputStream(
@@ -15,7 +15,7 @@ class StringInputStream(
 ) extends InputStream {
   import StringInputStream._
 
-  private val _strategy = if (string.length > 8192)
+  private val _strategy = if (string.length > THRESHOLD)
     new StreamStrategy(string, charset)
   else
     new BufferStrategy(string, charset)
@@ -24,6 +24,8 @@ class StringInputStream(
 }
 
 object StringInputStream {
+  val THRESHOLD = 8192
+
   sealed trait Strategy {
     def read(): Int
   }
@@ -33,19 +35,29 @@ object StringInputStream {
     private var _buffer: Array[Byte]  = null
     private var _buffer_index = 0
 
-    def read(): Int = if (string.length < _index) {
+    private def _is_end = string.length <= _index && _buffer == null
+
+    def read(): Int = if (_is_end) {
       -1
     } else {
       if (_buffer == null) {
-        val unicode = string.substring(_index, _index + 1)
+        val nextindex = string.offsetByCodePoints(_index, 1)
+        val unicode = string.substring(_index, nextindex)
+//        println(unicode)
         _buffer = unicode.getBytes(charset)
+//        println(_buffer.size)
         _buffer_index = 0
+        _index = nextindex
       }
       val c = _buffer(_buffer_index)
+//      println(c)
       if (_buffer.length <= _buffer_index + 1) {
         _buffer = null
         _buffer_index = 0
+      } else {
+        _buffer_index += 1
       }
+//      println(_buffer_index)
       c
     }
   }
@@ -54,10 +66,11 @@ object StringInputStream {
     private val _buffer = string.getBytes(charset)
     private var _index = 0
 
-    def read(): Int = if (_buffer.size < _index) {
+    def read(): Int = if (_buffer.size <= _index) {
       -1
     } else {
       val c = _buffer(_index)
+//      println(c)
       _index += 1
       c
     }

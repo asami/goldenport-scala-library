@@ -4,14 +4,15 @@ import scala.concurrent.{Future, Await}
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.JavaConverters._
-import java.io.{File, InputStream}
+import java.io.{File, InputStream, IOException}
 import org.goldenport.Strings
 import org.goldenport.io.{InputSource, StringInputSource}
 import org.goldenport.bag.{ChunkBag, BufferFileBag}
 
 /*
  * @since   Oct.  4, 2018
- * @version Oct.  8, 2018
+ *  version Oct.  8, 2018
+ * @version May.  7, 2020
  * @author  ASAMI, Tomoharu
  */
 class ShellCommand(
@@ -27,7 +28,9 @@ class ShellCommand(
     b.asJava
   }
 
-  def run: ShellCommand.Result = {
+  def run: Boolean = execute.waitFor == 0
+
+  def execute: ShellCommand.Result = {
     val pb = new ProcessBuilder(_commands)
     val env = pb.environment()
     environmentVariables.foreach {
@@ -62,6 +65,16 @@ object ShellCommand {
     def waitFor: Int = process.waitFor
     def stdout: ChunkBag = Await.result(stdoutFuture, Duration.Inf)
     def stderr: ChunkBag = Await.result(stderrFuture, Duration.Inf)
+
+    def toText: String = toChunkBag.toText
+    def toChunkBag: ChunkBag = {
+      waitFor match {
+        case 0 => stdout
+        case n =>
+          val msg = stderr.toText
+          throw new IOException(msg)
+      }
+    }
   }
 
   def create(cmds: String): ShellCommand = new ShellCommand(
@@ -72,7 +85,33 @@ object ShellCommand {
     None
   )
 
-  def run(cmds: String): Boolean = create(cmds).run.waitFor == 0
+  def create(cmds: String, in: InputSource): ShellCommand = new ShellCommand(
+    Strings.totokens(cmds, " "),
+    Map.empty,
+    None,
+    Some(in),
+    None
+  )
+
+  def execute(cmds: String): Result = create(cmds).execute
+
+  def execute(cmds: String, in: InputSource): Result = create(cmds, in).execute
+
+  def execute(cmds: String, in: String): Result = create(cmds, StringInputSource(in)).execute
+
+  def run(cmds: String): Boolean = create(cmds).run
+
+  def runAsString(cmds: String): String = runAsChunkBag(cmds).toText
+
+  def runAsString(cmds: String, in: InputSource): String = runAsChunkBag(cmds, in).toText
+
+  def runAsString(cmds: String, in: String): String = runAsChunkBag(cmds, StringInputSource(in)).toText
+
+  def runAsChunkBag(cmds: String): ChunkBag = execute(cmds).toChunkBag
+
+  def runAsChunkBag(cmds: String, in: InputSource): ChunkBag = execute(cmds, in).toChunkBag
+
+  def runAsChunkBag(cmds: String, in: String): ChunkBag = execute(cmds, StringInputSource(in)).toChunkBag
 
   // def main(args: Array[String]) {
   //   val in = StringInputSource("OK...")

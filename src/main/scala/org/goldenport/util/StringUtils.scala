@@ -7,6 +7,7 @@ import Character.UnicodeBlock
 import java.net.{URL, URI}
 import java.net.URLEncoder
 import com.asamioffice.goldenport.text.{UString, UPathString}
+import org.goldenport.RAISE
 import org.goldenport.Strings
 import org.goldenport.values.{PathName, Urn}
 
@@ -39,7 +40,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Nov. 28, 2019
  *  version Dec.  5, 2019
  *  version Jan. 27, 2020
- * @version Mar. 18, 2020
+ *  version Mar. 18, 2020
+ * @version May.  4, 2020
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -669,6 +671,39 @@ object StringUtils {
       None
     else
       intOption(number).map(x => name -> x)
+  }
+
+  def numberToKanjiCharacterSequence(p: Int): String =
+    if (p == 0) {
+      "零"
+    } else {
+      val sb = new StringBuilder()
+      @annotation.tailrec
+      def go(x: Int): String = {
+        if (x == 0) {
+          sb.toString
+        } else {
+          val v = p / 10
+          val r = p % 10
+          sb.append(toKanjiCharacter(r))
+          go(v)
+        }
+      }
+      go(p)
+    }
+
+  def toKanjiCharacter(p: Int): Character = p match {
+    case 0 => '零'
+    case 1 => '一'
+    case 2 => '二'
+    case 3 => '三'
+    case 4 => '四'
+    case 5 => '五'
+    case 6 => '六'
+    case 7 => '七'
+    case 8 => '八'
+    case 9 => '九'
+    case _ => RAISE.invalidArgumentFault(s"No digit number: $p")
   }
 
   /*

@@ -4,6 +4,7 @@ import scala.xml.Node
 import scalaz.{Tree => ZTree, _}
 import Scalaz._
 import org.goldenport.extension.Showable
+import org.goldenport.values.PathName
 
 /*
  * @since   Aug. 12, 2008
@@ -11,7 +12,8 @@ import org.goldenport.extension.Showable
  *  version Feb. 27, 2012
  *  version May.  6, 2012
  *  version Nov.  2, 2012
- * @version Nov. 18, 2019
+ *  version Nov. 18, 2019
+ * @version May.  4, 2020
  * @author  ASAMI, Tomoharu
  */
 trait TreeBase[E] extends Tree[E] with Showable {
@@ -75,6 +77,12 @@ trait TreeBase[E] extends Tree[E] with Showable {
   }
 
   final def setContent(path: String, content: E): TreeNode_TYPE = {
+    require(path != null)
+    dbc_invariants
+    root_node.setContent(path, content).asInstanceOf[TreeNode_TYPE]
+  }
+
+  final def setContent(path: PathName, content: E): TreeNode_TYPE = {
     require(path != null)
     dbc_invariants
     root_node.setContent(path, content).asInstanceOf[TreeNode_TYPE]

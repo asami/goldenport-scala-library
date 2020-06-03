@@ -20,7 +20,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Sep. 23, 2019
  *  version Feb. 18, 2020
  *  version Mar. 30, 2020
- * @version Apr. 17, 2020
+ *  version Apr. 17, 2020
+ * @version May.  4, 2020
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -65,6 +66,12 @@ case class I18NString(
 
   def containsKey(p: String): Boolean = _keys.contains(p.toLowerCase)
   def containsKey(ps: Seq[String]): Boolean = ps.exists(containsKey)
+
+  def length(locale: Locale): Int = {
+    val s = as(locale)
+    s.codePointCount(0, s.length)
+  }
+  def size(locale: Locale): Int = as(locale).length
 
   def +(rhs: I18NString): I18NString = concat(rhs, "")
   def concat(rhs: I18NString): I18NString = concat(rhs, ";")

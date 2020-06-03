@@ -17,7 +17,8 @@ import org.goldenport.util.StringUtils
  *  version Jan. 12, 2018
  *  version Mar. 13, 2018
  *  version Dec. 27, 2018
- * @version Apr. 14, 2020
+ *  version Apr. 14, 2020
+ * @version May.  4, 2020
  * @author  ASAMI, Tomoharu
  */
 case class PathName(v: String) {
@@ -64,7 +65,11 @@ case class PathName(v: String) {
   def isResource(p: String): Boolean = firstComponent == p
   def isOperation(p: String): Boolean = firstComponent == p
 
-  def +(p: String): PathName = PathName(StringUtils.concatPath(v, p))
+  def +(p: PathName): PathName = :+(p)
+  def :+(p: PathName): PathName = PathName(v, p.v)
+  def +:(p: PathName): PathName = PathName(p.v, v)
+  def +(p: String): PathName = :+(p)
+  def :+(p: String): PathName = PathName(StringUtils.concatPath(v, p))
   def +:(p: String): PathName = PathName(StringUtils.concatPath(p, v))
 
   def replaceFirst(p: String): PathName = {
