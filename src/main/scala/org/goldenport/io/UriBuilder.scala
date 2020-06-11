@@ -4,6 +4,7 @@ import scala.util.control.NonFatal
 import java.net.{URI, URL}
 import com.asamioffice.goldenport.io.UURL
 import org.goldenport.RAISE
+import org.goldenport.Strings
 import org.goldenport.util.StringUtils
 
 /*
@@ -11,7 +12,8 @@ import org.goldenport.util.StringUtils
  *  version Dec. 20, 2017
  *  version Jan. 14, 2018
  *  version Apr. 26, 2019
- * @version Dec.  9, 2019
+ *  version Dec.  9, 2019
+ * @version Jun.  6, 2020
  * @author  ASAMI, Tomoharu
  */
 case class UriBuilder(
@@ -41,7 +43,16 @@ case class UriBuilder(
 
   def withPath(p: String) = copy(path = p)
 
-  def withQuery(p: String) = copy(query = Some(p))
+  def withQuery(p: String): UriBuilder = {
+    val v = if (Strings.blankp(p)) Some(p) else None
+    copy(query = v)
+  }
+
+  def withQuery(p: Option[String]): UriBuilder = copy(query = p)
+
+  def withQuery(p: Map[String, String]): UriBuilder = withQuery(p.toVector)
+
+  def withQuery(p: Seq[(String, String)]): UriBuilder = withQuery(_make_url_query_params(p))
 
   def addPath(p: URI): UriBuilder = addPath(p.getPath)
 
@@ -56,6 +67,8 @@ case class UriBuilder(
     val q = if (p.startsWith("?")) p.substring(1) else p
     withQuery(query.map(x => s"$x&$q").getOrElse(q))
   }
+
+  def addQuery(q: Map[String, String]): UriBuilder = addQuery(q.toVector)
 
   def addQuery(q: Seq[(String, String)]): UriBuilder = {
     val a: String = query.map(b =>
@@ -91,6 +104,8 @@ object UriBuilder {
     val frag = Option(url.getRef)
     UriBuilder(Some(proto), Some(auth), path, q, frag)
   }
+
+  def apply(uri: String): UriBuilder = apply(new URI(uri))
  
   def byPath(path: String): UriBuilder = UriBuilder(
     None,
