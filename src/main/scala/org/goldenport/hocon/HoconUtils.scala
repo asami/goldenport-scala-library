@@ -10,8 +10,10 @@ import scala.collection.JavaConverters._
 import java.util.Locale
 import java.net.{URL, URI}
 import com.typesafe.config._
+import org.goldenport.RAISE
 import org.goldenport.Strings
 import org.goldenport.i18n.{I18NString, I18NElement}
+import org.goldenport.value._
 import org.goldenport.util.TypesafeConfigUtils
 import org.goldenport.util.AnyUtils
 
@@ -29,7 +31,8 @@ import org.goldenport.util.AnyUtils
  *  version Nov. 19, 2018
  *  version Mar. 24, 2019
  *  version Apr. 28, 2019
- * @version Dec. 22, 2019
+ *  version Dec. 22, 2019
+ * @version Jun. 18, 2020
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -76,6 +79,18 @@ object HoconUtils {
 
   def takeI18NElement(config: Config, key: String): I18NElement =
     I18NElement.parse(config.getString(key))
+
+  def takeValue[T <: ValueInstance](valueclass: ValueClass[T], config: Config, key: String): T =
+    getString(config, key).
+      map(x => valueclass.get(x).
+        getOrElse(RAISE.invalidArgumentFault(s"Invalid value name: $key"))).
+      getOrElse(RAISE.invalidArgumentFault(s"Not found: $key"))
+
+  def takeValue[T <: ValueInstance](valueclass: ValueClass[T], config: Config, key: String, default: T): T =
+    getString(config, key).
+      map(x => valueclass.get(x).
+        getOrElse(RAISE.invalidArgumentFault(s"Invalid value name: $key"))).
+      getOrElse(default)
 
   def getObject(config: Config, key: String): Option[ConfigObject] =
     if (config.hasPath(key))
@@ -182,6 +197,11 @@ object HoconUtils {
 
   def getRichConfig(config: Config, key: String): Option[RichConfig] =
     getConfig(config, key).map(RichConfig.apply)
+
+  def getValue[T <: ValueInstance](valueclass: ValueClass[T], config: Config, key: String): Option[T] =
+    getString(config, key).
+      map(x => valueclass.get(x).
+        getOrElse(RAISE.invalidArgumentFault(s"Invalid value name: $key")))
 
   // def childConfigSet(p: Config): Set[(String, Config)] = p.entrySet.asScala.
   //   flatMap { x =>
