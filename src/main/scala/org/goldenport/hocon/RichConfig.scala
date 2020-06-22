@@ -3,13 +3,14 @@ package org.goldenport.hocon
 import scala.language.implicitConversions
 import scalaz._, Scalaz._
 import scala.util.Try
-                    import scala.util.control.NonFatal
+import scala.util.control.NonFatal
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 import java.net.{URL, URI}
 import com.typesafe.config._
 import org.goldenport.Strings
 import org.goldenport.i18n.{I18NString, I18NElement}
+import org.goldenport.value._
 
 /*
  * Migrated from org.goldenport.hocon.HoconUtils.
@@ -23,7 +24,8 @@ import org.goldenport.i18n.{I18NString, I18NElement}
  *  version Oct. 21, 2018
  *  version Nov. 19, 2018
  *  version Mar. 24, 2019
- * @version Apr. 28, 2019
+ *  version Apr. 28, 2019
+ * @version Jun. 18, 2020
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -40,6 +42,8 @@ case class RichConfig(config: Config) extends AnyVal {
   def takeLocale(key: String) = HoconUtils.takeLocale(config, key)
   def takeI18NString(key: String) = HoconUtils.takeI18NString(config, key)
   def takeI18NElement(key: String) = HoconUtils.takeI18NElement(config, key)
+  def takeValue[T <: ValueInstance](valueclass: ValueClass[T], key: String) = HoconUtils.takeValue(valueclass, config, key)
+  def asValue[T <: ValueInstance](valueclass: ValueClass[T], key: String, default: T) = HoconUtils.takeValue(valueclass, config, key, default)
   def getObjectOption(key: String) = HoconUtils.getObject(config, key)
   def getStringOption(key: String) = HoconUtils.getString(config, key)
   def getBooleanOption(key: String) = HoconUtils.getBoolean(config, key)
@@ -57,6 +61,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def getI18NElementOption(key: String) = HoconUtils.getI18NElement(config, key)
   def getConfigOption(key: String) = HoconUtils.getConfig(config, key)
   def getRichConfigOption(key: String) = HoconUtils.getRichConfig(config, key)
+  def getValueOption[T <: ValueInstance](valueclass: ValueClass[T], key: String) = HoconUtils.getValue(valueclass, config, key)
   def childConfigMap: Map[String, Config] = HoconUtils.childConfigMap(config)
   def childRichConfigMap: Map[String, RichConfig] = HoconUtils.childRichConfigMap(config)
   def +(rhs: RichConfig): RichConfig = new RichConfig(rhs.config.withFallback(config))

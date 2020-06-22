@@ -18,7 +18,8 @@ import org.goldenport.util.StringUtils
  *  version Mar. 13, 2018
  *  version Dec. 27, 2018
  *  version Apr. 14, 2020
- * @version May. 18, 2020
+ *  version May. 18, 2020
+ * @version Jun.  6, 2020
  * @author  ASAMI, Tomoharu
  */
 case class PathName(
@@ -29,7 +30,7 @@ case class PathName(
 
   def isEmpty: Boolean = v.isEmpty
   def head: String = firstComponent
-  def headOption: Option[String] = if (isEmpty) Some(firstComponent) else None
+  def headOption: Option[String] = components.headOption
   def tail: PathName = tailOption.get
   def tailOption: Option[PathName] = getChild
   lazy val components: List[String] = Strings.totokens(v, delimiter)
