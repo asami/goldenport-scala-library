@@ -41,7 +41,9 @@ import org.goldenport.values.{PathName, Urn}
  *  version Dec.  5, 2019
  *  version Jan. 27, 2020
  *  version Mar. 18, 2020
- * @version May.  4, 2020
+ *  version May.  4, 2020
+ *  version Jul. 29, 2020
+ * @version Sep.  1, 2020
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -299,11 +301,13 @@ object StringUtils {
   }
 
   def isSuffix(s: String, suffix: String): Boolean = {
-    UPathString.isSuffix(s, suffix)
+    // UPathString.isSuffix(s, suffix)
+    isSuffix(s, Set(suffix))
   }
 
   def isSuffix(s: String, suffix: Seq[String]): Boolean = {
-    UPathString.isSuffix(s, suffix.toArray)
+    // UPathString.isSuffix(s, suffix.toArray)
+    isSuffix(s, suffix.toSet)
   }
 
   def isSuffix(s: String, suffix: Set[String]): Boolean =
