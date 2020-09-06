@@ -7,7 +7,8 @@ import spire.math.Rational
 /*
  * @since   Apr. 12, 2018
  *  version Jun. 29, 2018
- * @version May. 18, 2019
+ *  version May. 18, 2019
+ * @version Sep.  4, 2020
  * @author  ASAMI, Tomoharu
  */
 sealed trait Price {
@@ -76,6 +77,9 @@ object PriceExcludingTax {
   def createByPercent(p: BigDecimal, percent: Int): PriceExcludingTax =
     createByRate(p, percent * Rational(1, 100))
 
+  def createByPercent(p: BigDecimal, percent: Percent): PriceExcludingTax =
+    createByRate(p, percent.rate)
+
   def createByRate(p: BigDecimal, rate: Rational): PriceExcludingTax = 
     PriceExcludingTax(p, p * rate)
 }
@@ -102,6 +106,9 @@ object PriceIncludingTax {
 
   def createByPercent(p: BigDecimal, percent: Int): PriceIncludingTax =
     createByRate(p, calcTaxRateRationalByPercent(percent))
+
+  def createByPercent(p: BigDecimal, percent: Percent): PriceIncludingTax =
+    createByRate(p, percent.rate)
 
   def createByRate(p: BigDecimal, rate: Rational): PriceIncludingTax = {
     val tax = (p / (1 + rate)) * rate

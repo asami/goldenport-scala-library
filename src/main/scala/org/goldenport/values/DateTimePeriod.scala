@@ -10,9 +10,11 @@ import com.github.nscala_time.time.Imports._
 import org.joda.time.DateTimeConstants._
 import spire.math.Interval
 import spire.math.interval._
+import org.goldenport.parser.ParseResult
 import org.goldenport.util.{DateTimeUtils, DateUtils, AnyUtils}
 import org.goldenport.util.SpireUtils.Implicits._
 import org.goldenport.values.Week._
+import org.goldenport.values.IntervalFactory.{BoundsKind, CloseOpen, CloseClose}
 
 /*
  * @since   Oct.  2, 2014
@@ -26,7 +28,8 @@ import org.goldenport.values.Week._
  *  version Jun. 20, 2018
  *  version Jan. 10, 2019
  *  version Aug. 14, 2019
- * @version Sep. 18, 2019
+ *  version Sep. 18, 2019
+ * @version Sep.  5, 2020
  * @author  ASAMI, Tomoharu
  */
 case class DateTimePeriod( // TODO DateTimeInterval (java8 time)
@@ -425,6 +428,17 @@ object DateTimePeriod {
 
   def parseJst(p: String): DateTimePeriod = parse(jodajst, p)
 
+  def parseCloseOpenJst(p: String): DateTimePeriod = parse(CloseOpen, jodajst, p)
+
+  def parse(kind: BoundsKind, tz: DateTimeZone, p: String): DateTimePeriod = parse(kind, DateTime.now, tz, p)
+
+  def parse(
+    kind: BoundsKind,
+    now: DateTime,
+    tz: DateTimeZone,
+    p: String
+  ): DateTimePeriod = Builder(now, tz, kind).fromExpression(p)
+
   /*
    * Caution: Timezone depends running environment.
    */
@@ -432,8 +446,12 @@ object DateTimePeriod {
 
   case class Builder(
     datetime: DateTime,
-    timezoneJoda: DateTimeZone
+    timezoneJoda: DateTimeZone,
+    kind: BoundsKind = CloseClose
   ) {
+    def isStartInclusive: Boolean = kind.isStartInclusive
+    def isEndInclusive: Boolean = kind.isEndInclusive
+
     def currentYear: Int = datetime.year.get
     def currentMonth: Int = datetime.monthOfYear.get
     def currentWeek: Int = datetime.weekOfWeekyear.get
@@ -443,7 +461,7 @@ object DateTimePeriod {
     def create(
       start: Option[String],
       end: Option[String]
-    ): DateTimePeriod = create(start, end, true)
+    ): DateTimePeriod = create(start, end, isEndInclusive)
 
     def create(
       start: Option[String],
@@ -453,7 +471,7 @@ object DateTimePeriod {
       DateTimePeriod(
         start.map(toDateTime),
         end.map(toDateTime),
-        true,
+        isStartInclusive,
         inclusive
       )
     }
@@ -675,11 +693,12 @@ object DateTimePeriod {
         }
       }
 
+      // TODO '#'
       if (s.endsWith("!")) {
         val a = body(false, s.dropRight(1))
         a.copy(isEndInclusive = false)
       } else {
-        body(true, s)
+        body(isStartInclusive, s)
       }
     }
 

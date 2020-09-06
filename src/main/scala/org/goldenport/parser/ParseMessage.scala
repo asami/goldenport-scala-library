@@ -6,7 +6,8 @@ import org.goldenport.i18n.I18NString
 /*
  * @since   Aug. 21, 2018
  *  version Oct. 14, 2018
- * @version Feb.  2, 2019
+ *  version Feb.  2, 2019
+ * @version Sep.  6, 2020
  * @author  ASAMI, Tomoharu
  */
 trait ParseMessage {
@@ -36,6 +37,11 @@ object ErrorMessage {
     I18NString(en, ja),
     location
   )
+
+  def apply(e: Throwable): ErrorMessage = ErrorMessage(
+    I18NString(e.getMessage),
+    None
+  )
 }
 
 case class WarningMessage(
@@ -46,6 +52,11 @@ case class WarningMessage(
 object WarningMessage {
   def apply(msg: String): WarningMessage = WarningMessage(
     I18NString(msg),
+    None
+  )
+
+  def apply(e: Throwable): WarningMessage = WarningMessage(
+    I18NString(e.getMessage),
     None
   )
 }
