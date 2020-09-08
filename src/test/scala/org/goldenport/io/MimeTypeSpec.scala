@@ -7,7 +7,7 @@ import org.goldenport.util.StringUtils
 
 /*
  * @since   Sep.  1, 2020
- * @version Sep.  1, 2020
+ * @version Sep.  8, 2020
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -26,10 +26,10 @@ class MimeTypeSpec extends WordSpec with Matchers with GivenWhenThen {
       MimeType.getBySuffix("ppt").map(_.name) should be(Some("application/vnd.ms-powerpoint"))
     }
     "pptx" in {
-      MimeType.getBySuffix("pptx").map(_.name) should be(Some("application/vnd.openxmlformats-officedocument.officedocument.presentationml.presentation"))
+      MimeType.getBySuffix("pptx").map(_.name) should be(Some("application/vnd.openxmlformats-officedocument.presentationml.presentation"))
     }
     "doc" in {
-      MimeType.getBySuffix("doc").map(_.name) should be(Some("application/vnd.ms-msword"))
+      MimeType.getBySuffix("doc").map(_.name) should be(Some("application/msword"))
     }
     "docx" in {
       MimeType.getBySuffix("docx").map(_.name) should be(Some("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
