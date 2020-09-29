@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "1.2.67"
+version := "1.2.68"
 
 scalaVersion := "2.10.3"
 // crossScalaVersions := Seq("2.9.2", "2.9.1")
@@ -59,7 +59,7 @@ libraryDependencies += "org.scalanlp" %% "breeze" % "0.13.2" % "compile"
 
 libraryDependencies += "black.ninia" % "jep" % "3.9.0" % "compile"
 
-libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.2.6" % "test"
+libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.2.6"
 
 libraryDependencies += "junit" % "junit" % "4.8" % "test"
 
