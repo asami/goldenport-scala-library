@@ -10,10 +10,10 @@ import org.goldenport.exception.SyntaxErrorFaultException
  *  version Dec.  2, 2018
  *  version Feb.  2, 2019
  *  version Jul. 21, 2019
- * @version Sep.  6, 2020
+ * @version Sep. 29, 2020
  * @author  ASAMI, Tomoharu
  */
-sealed trait ParseResult[AST] {
+sealed trait ParseResult[+AST] {
   def map[T](p: AST => T): ParseResult[T] = this.asInstanceOf[ParseResult[T]]
   // ParseResult is not Monad. Just to use 'for' comprehension in Scala syntax suger.
   def flatMap[T](f: AST => ParseResult[T]): ParseResult[T]
@@ -94,6 +94,24 @@ object ParseResult {
     ParseSuccess(p)
   } catch {
     case NonFatal(e) => ParseFailure(e)
+  }
+
+  def execute[AST](msg: => String)(p: => AST): ParseResult[AST] = try {
+    ParseSuccess(p)
+  } catch {
+    case NonFatal(e) => ParseFailure(msg)
+  }
+
+  def execute[AST](msg: Throwable => String)(p: => AST): ParseResult[AST] = try {
+    ParseSuccess(p)
+  } catch {
+    case NonFatal(e) => ParseFailure(msg(e))
+  }
+
+  def executeDebug[AST](msg: => String)(p: => AST): ParseResult[AST] = try {
+    ParseSuccess(p)
+  } catch {
+    case NonFatal(e) => throw e
   }
 
   def empty[AST] = EmptyParseResult[AST]()

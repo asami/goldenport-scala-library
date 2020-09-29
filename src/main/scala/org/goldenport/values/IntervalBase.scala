@@ -9,7 +9,7 @@ import org.goldenport.util.AnyRefUtils
 
 /*
  * @since   Sep.  5, 2020
- * @version Sep.  6, 2020
+ * @version Sep. 29, 2020
  * @author  ASAMI, Tomoharu
  */
 trait IntervalBase[E] extends Showable {
@@ -85,7 +85,7 @@ trait IntervalFactory[T <: IntervalBase[E], E] {
 
   private def _postfix(p: String): ParseResult[Boolean] = p match {
     case MARK_END_OPEN => ParseResult.success(false)
-    case MARK_END_CLOSE => ParseResult.success(false)
+    case MARK_END_CLOSE => ParseResult.success(true)
     case MARK_OPEN => ParseResult.success(false)
     case m => ParseFailure(s"Unknown end postfix: $m")
   }

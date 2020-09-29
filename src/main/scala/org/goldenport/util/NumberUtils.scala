@@ -1,8 +1,12 @@
 package org.goldenport.util
 
+import scala.util.control.NonFatal
+import org.goldenport.parser.ParseResult
+
 /*
  * @since   Mar. 12, 2020
- * @version Apr. 21, 2020
+ *  version Apr. 21, 2020
+ * @version Sep. 29, 2020
  * @author  ASAMI, Tomoharu
  */
 object NumberUtils {
@@ -32,6 +36,20 @@ object NumberUtils {
       throw new NumberFormatException(p.toString)
     else
       v
+  }
+
+  def parse(labelf: String => Option[Number], p: String): ParseResult[Number] = {
+    def msg = s"Invalid label or number: $p"
+    for {
+      a <- ParseResult.executeDebug[Option[Number]](msg)(labelf(p))
+      b <- a.map(ParseResult.success(_)) getOrElse {
+        try {
+          ParseResult.success(AnyUtils.toNumber(p))
+        } catch {
+          case NonFatal(e) => ParseResult.error(msg)
+        }
+      }
+    } yield b
   }
 }
 

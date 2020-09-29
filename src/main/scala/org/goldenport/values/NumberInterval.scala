@@ -13,7 +13,7 @@ import org.goldenport.util.AnyRefUtils
 /*
  * @since   Sep. 12, 2019
  *  version Oct. 16, 2019
- * @version Sep.  6, 2020
+ * @version Sep. 29, 2020
  * @author  ASAMI, Tomoharu
  */
 case class NumberInterval(interval: Interval[spire.math.Number]) extends IntervalBase[spire.math.Number] {
@@ -58,6 +58,22 @@ object NumberInterval extends IntervalFactory[NumberInterval, spire.math.Number]
 
   protected def to_Interval(p: Interval[spire.math.Number]): ParseResult[NumberInterval] =
     ParseResult(NumberInterval(p))
+
+  def closed(low: Int, high: Int): NumberInterval = NumberInterval(Interval.closed(low, high))
+
+  def open(low: Int, high: Int): NumberInterval = NumberInterval(Interval.open(low, high))
+
+  def openLower(low: Int, high: Int): NumberInterval = NumberInterval(Interval.openLower(low, high))
+
+  def openUpper(low: Int, high: Int): NumberInterval = NumberInterval(Interval.openUpper(low, high))
+
+  def above(low: Int): NumberInterval = NumberInterval(Interval.above(low))
+
+  def below(high: Int): NumberInterval = NumberInterval(Interval.below(high))
+
+  def atOrAbove(low: Int): NumberInterval = NumberInterval(Interval.atOrAbove(low))
+
+  def atOrBelow(high: Int): NumberInterval = NumberInterval(Interval.atOrBelow(high))
 }
 
 // object NumberInterval0 {

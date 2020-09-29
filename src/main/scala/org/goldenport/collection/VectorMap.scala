@@ -2,6 +2,7 @@ package org.goldenport.collection
 
 import scalaz._, Scalaz._
 import org.goldenport.RAISE
+import org.goldenport.Strings
 import org.goldenport.util.VectorUtils
 
 /*
@@ -11,7 +12,8 @@ import org.goldenport.util.VectorUtils
  *  version May. 10, 2019
  *  version Jul.  7, 2019
  *  version Oct. 12, 2019
- * @version Apr.  7, 2020
+ *  version Apr.  7, 2020
+ * @version Sep. 10, 2020
  * @author  ASAMI, Tomoharu
  */
 sealed trait VectorMap[K, +V] extends Map[K, V] {
@@ -138,7 +140,7 @@ object IndexedVectorMap {
 
 object VectorMap {
   private val _empty = PlainVectorMap.empty
-  def empty[K, V] = _empty.asInstanceOf[PlainVectorMap[K, V]]
+  def empty[K, V]: VectorMap[K, V] = _empty.asInstanceOf[PlainVectorMap[K, V]]
 
   def apply[K, V](): VectorMap[K, V] = empty
   def apply[K, V](p: (K, V), ps: (K, V)*): VectorMap[K, V] = PlainVectorMap(p +: ps.toVector)
@@ -153,6 +155,15 @@ object VectorMap {
           z.update(b)
         case None => z.update(x)
       })
+    }
+  }
+
+  def parseUriQuery(p: String): VectorMap[String, String] = {
+    Strings.totokens(p, "&")./:(VectorMap.empty[String, String]) { (z, x) =>
+      x.indexOf('=') match {
+        case -1 => if (x.isEmpty) z else z.append(x, "")
+        case n => z.append(x.take(n).trim, x.drop(n + 1))
+      }
     }
   }
 }

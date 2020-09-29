@@ -1,15 +1,19 @@
 package org.goldenport.values
 
+import scalaz._, Scalaz._
 import scala.util.Try
 import org.goldenport.RAISE
 import org.goldenport.Strings
 import org.goldenport.extension.Showable
-import org.goldenport.util.AnyRefUtils
+import org.goldenport.parser._
+import org.goldenport.values.RichNumber.Implicits._
+import org.goldenport.util.{NumberUtils, AnyRefUtils}
 
 /*
  * @since   Sep. 10, 2019
  *  version Oct. 16, 2019
- * @version Feb. 28, 2020
+ *  version Feb. 28, 2020
+ * @version Sep. 28, 2020
  * @author  ASAMI, Tomoharu
  */
 trait NumberRange extends Showable {
@@ -18,6 +22,7 @@ trait NumberRange extends Showable {
   def embed: String = print
   def isValid(index: Int): Boolean
   def indexes: List[Int]
+  def isMatch(p: Number): Boolean
 }
 
 object NumberRange {
@@ -40,7 +45,7 @@ object NumberRange {
 
       def +(rhs: String) = _parse(rhs) match {
         case m: ValueRange => Z(xs :+ m, vs :+ m)
-        case m => Z(vs :+ m)
+        case m => Z(xs :+ m)
       }
     }
     ps./:(Z())(_+_).r
@@ -52,6 +57,39 @@ object NumberRange {
     else
       ValueRange.parse(p)
 
+  def parseLabel(labelf: String => Option[Number], p: String): ParseResult[NumberRange] = {
+    Strings.totokens(p, ",") match {
+      case Nil => ParseResult.success(NoneRange)
+      case x :: Nil => _parse(labelf, x)
+      case xs => _parse(labelf, xs)
+    }
+  }
+
+  private def _parse(labelf: String => Option[Number], ps: List[String]): ParseResult[NumberRange] = {
+    case class Z(xs: Vector[ParseResult[NumberRange]] = Vector.empty, vs: Vector[ParseResult[ValueRange]] = Vector.empty) {
+      def r: ParseResult[NumberRange] = if (xs.length == vs.length)
+        vs.sequence.map(x => EnumRange(x.map(_.value)))
+      else
+        xs.sequence.map(CompositeRange(_))
+
+      def +(rhs: String) = _parse(labelf: String => Option[Number], rhs) match {
+        case m: ParseSuccess[_] => m.ast match {
+          case _: ValueRange => Z(xs :+ m, vs :+ m.asInstanceOf[ParseResult[ValueRange]])
+          case _ => Z(xs :+ m.asInstanceOf[ParseResult[NumberRange]])
+        }
+        case m: ParseFailure[_] => Z(xs :+ m)
+        case m: EmptyParseResult[_] => this
+      }
+    }
+    ps./:(Z())(_+_).r
+  }
+
+  private def _parse(labelf: String => Option[Number], p: String): ParseResult[NumberRange] =
+    if (p.contains("~"))
+      RepeatRange.parse(labelf, p)
+    else
+      ValueRange.parse(labelf, p)
+
   def createInt(ps: Seq[Int]): NumberRange = EnumRange.createInt(ps)
 }
 
@@ -59,21 +97,33 @@ case object NoneRange extends NumberRange {
   def print: String = "none"
   def isValid(index: Int): Boolean = false
   def indexes: List[Int] = Nil
+  def isMatch(p: Number): Boolean = false
 }
 
 case class CompositeRange(ranges: Seq[NumberRange]) extends NumberRange {
   def print: String = ranges.map(_.print).mkString(",")
   def isValid(index: Int): Boolean = ranges.exists(_.isValid(index))
   def indexes: List[Int] = ranges.toList.flatMap(_.indexes)
+  def isMatch(p: Number): Boolean = ranges.exists(_.isMatch(p))
+}
+object CompositeRange {
+  def apply(p: NumberRange, ps: NumberRange*): CompositeRange =
+    CompositeRange(p +: ps)
 }
 
 case class ValueRange(value: Number) extends NumberRange {
   def print: String = value.toString
   def isValid(index: Int): Boolean = value.intValue == index
   def indexes: List[Int] = List(value.intValue)
+  def isMatch(p: Number): Boolean = p == value
 }
 object ValueRange {
   def parse(p: String): ValueRange = ValueRange(AnyRefUtils.toNumber(p))
+
+  def parse(labelf: String => Option[Number], p: String): ParseResult[ValueRange] =
+    for {
+      a <- NumberUtils.parse(labelf, p)
+    } yield ValueRange(a)
 }
 
 case class EnumRange(ranges: Seq[Number]) extends NumberRange {
@@ -82,6 +132,7 @@ case class EnumRange(ranges: Seq[Number]) extends NumberRange {
   def print: String = ranges.mkString(",")
   def isValid(index: Int): Boolean = _ints.contains(index)
   def indexes: List[Int] = ranges.toList.map(_.intValue)
+  def isMatch(p: Number): Boolean = ranges.contains(p)
 }
 object EnumRange {
   def apply(p: Number, ps: Number*): EnumRange = EnumRange(p +: ps.toVector)
@@ -132,6 +183,40 @@ case class RepeatRange(
 
   def isValid(index: Int): Boolean =
     _ints.contains(index)
+
+  def isMatch(p: Number): Boolean = {
+    @annotation.tailrec
+    def go(n: Number): Boolean = {
+      if (p == n)
+        true
+      if (_is_out(n))
+        false
+      else
+        go(_next(n))
+    }
+    if (startInclusive)
+      go(start)
+    else
+      go(_next(start))
+  }
+
+  private def _next(p: Number): Number = stepOperation match {
+    case RepeatRange.PlusStep => p + step
+    case RepeatRange.MinusStep => p - step
+  }
+
+  private def _is_out(p: Number): Boolean = stepOperation match {
+    case RepeatRange.PlusStep =>
+      if (endInclusive)
+        end < p
+      else
+        end <= p
+    case RepeatRange.MinusStep =>
+      if (startInclusive)
+        p < start
+      else
+        p <= start
+  }
 }
 object RepeatRange {
   sealed trait StepOperation {
@@ -145,6 +230,11 @@ object RepeatRange {
   }
 
   private val _regex = """([^~^!]+)(!)?~([^+^-^!]+)(!)?([+-])?(.+)?""".r
+
+  def apply(
+    start: Number,
+    end: Number
+  ): RepeatRange = apply(start, end, true, true)
 
   def apply(
     start: Number,
@@ -175,5 +265,21 @@ object RepeatRange {
       case m => RAISE.invalidArgumentFault(s"Invalid operation: $m")
     }.getOrElse(PlusStep)
     RepeatRange(start, end, step, op, sinc, einc)
+  }
+
+  def parse(labelf: String => Option[Number], p: String): ParseResult[RepeatRange] = {
+    val _regex(start, sinc, end, einc, pm, step) = p
+    for {
+      s <- NumberUtils.parse(labelf, start)
+      e <- NumberUtils.parse(labelf, end)
+      sp <- Option(step).map(NumberUtils.parse(labelf, _)).sequence
+    } yield _parse(
+      s,
+      Option(sinc).isEmpty,
+      e,
+      Option(einc).isEmpty,
+      Option(pm),
+      sp
+    )
   }
 }
