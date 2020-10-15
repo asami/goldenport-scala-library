@@ -14,7 +14,8 @@ import org.goldenport.values.PathName
  *  version Dec. 15, 2019
  *  version Mar.  1, 2020
  *  version May.  4, 2020
- * @version Jul. 13, 2020
+ *  version Jul. 13, 2020
+ * @version Oct. 11, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
@@ -143,5 +144,8 @@ object Realm {
   }
 
   case class View(root: TreeNode[Realm.Data]) {
+  }
+  object View {
+    val empty = View(TreeNode.empty())
   }
 }

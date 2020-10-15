@@ -25,7 +25,8 @@ import LogicalTokens.Config
  *  version Nov. 28, 2019
  *  version Jan. 18, 2020
  *  version Feb. 29, 2020
- * @version Sep.  6, 2020
+ *  version Sep.  6, 2020
+ * @version Oct. 12, 2020
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -268,10 +269,10 @@ object RangeToken extends LogicalTokens.SimpleTokenizer {
     RangeToken(p, Some(location), p.print)
 
   def apply(config: Config, s: String, location: Option[ParseLocation]): RangeToken =
-    RangeToken(NumberRange.parse(s), location, s)
+    RangeToken(NumberRange.create(s), location, s)
 
   def apply(config: Config, s: String, location: ParseLocation): RangeToken =
-    RangeToken(NumberRange.parse(s), Some(location), s)
+    RangeToken(NumberRange.create(s), Some(location), s)
 
   override protected def accept_Token(config: Config, s: String, location: ParseLocation) =
     if (s.contains('~') || s.contains(','))

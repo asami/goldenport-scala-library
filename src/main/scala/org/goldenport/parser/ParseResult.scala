@@ -10,7 +10,8 @@ import org.goldenport.exception.SyntaxErrorFaultException
  *  version Dec.  2, 2018
  *  version Feb.  2, 2019
  *  version Jul. 21, 2019
- * @version Sep. 29, 2020
+ *  version Sep. 29, 2020
+ * @version Oct. 14, 2020
  * @author  ASAMI, Tomoharu
  */
 sealed trait ParseResult[+AST] {
@@ -124,4 +125,7 @@ object ParseResult {
     ParseFailure(en, ja, location)
 
   def error[AST](e: Throwable): ParseFailure[AST] = ParseFailure(e)
+
+  def orMissing[AST](msg: String, p: Option[AST]): ParseResult[AST] =
+    p.map(success).getOrElse(error(msg))
 }

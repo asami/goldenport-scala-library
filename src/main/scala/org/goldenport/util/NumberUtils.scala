@@ -6,7 +6,8 @@ import org.goldenport.parser.ParseResult
 /*
  * @since   Mar. 12, 2020
  *  version Apr. 21, 2020
- * @version Sep. 29, 2020
+ *  version Sep. 29, 2020
+ * @version Oct. 12, 2020
  * @author  ASAMI, Tomoharu
  */
 object NumberUtils {
@@ -36,6 +37,12 @@ object NumberUtils {
       throw new NumberFormatException(p.toString)
     else
       v
+  }
+
+  def parse(p: String): ParseResult[Number] = try {
+    ParseResult.success(AnyUtils.toNumber(p))
+  } catch {
+    case NonFatal(e) => ParseResult.error(s"Invalid number: $p")
   }
 
   def parse(labelf: String => Option[Number], p: String): ParseResult[Number] = {

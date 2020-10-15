@@ -9,7 +9,8 @@ import org.goldenport.util.AnyRefUtils
 
 /*
  * @since   Sep.  5, 2020
- * @version Sep. 29, 2020
+ *  version Sep. 29, 2020
+ * @version Oct. 12, 2020
  * @author  ASAMI, Tomoharu
  */
 trait IntervalBase[E] extends Showable {
@@ -67,28 +68,28 @@ trait IntervalFactory[T <: IntervalBase[E], E] {
   private def _regex(p: String): ParseResult[RegexResult] = {
     val regex(prefix, start, spostfix, end, postfix) = p
     for {
-      sinc <- Option(prefix).map(_prefix).orElse(Option(spostfix).map(_start_postfix)).sequence
-      einc <- Option(postfix).map(_postfix).sequence
+      sinc <- Option(prefix).map(parsePrefix).orElse(Option(spostfix).map(parseStartPostfix)).sequence
+      einc <- Option(postfix).map(parsePostfix).sequence
     } yield RegexResult(Option(start), Option(end), sinc, einc)
   }
 
-  private def _prefix(p: String): ParseResult[Boolean] = p match {
-    case MARK_START_OPEN => ParseResult.success(false)
-    case MARK_START_CLOSE => ParseResult.success(true)
-    case m => ParseFailure(s"Unknown start prefix: $m")
-  }
+  // private def _prefix(p: String): ParseResult[Boolean] = p match {
+  //   case MARK_START_OPEN => ParseResult.success(false)
+  //   case MARK_START_CLOSE => ParseResult.success(true)
+  //   case m => ParseFailure(s"Unknown start prefix: $m")
+  // }
 
-  private def _start_postfix(p: String): ParseResult[Boolean] = p match {
-    case MARK_OPEN => ParseResult.success(false)
-    case m => ParseFailure(s"Unknown start postfix: $m")
-  }
+  // private def _start_postfix(p: String): ParseResult[Boolean] = p match {
+  //   case MARK_OPEN => ParseResult.success(false)
+  //   case m => ParseFailure(s"Unknown start postfix: $m")
+  // }
 
-  private def _postfix(p: String): ParseResult[Boolean] = p match {
-    case MARK_END_OPEN => ParseResult.success(false)
-    case MARK_END_CLOSE => ParseResult.success(true)
-    case MARK_OPEN => ParseResult.success(false)
-    case m => ParseFailure(s"Unknown end postfix: $m")
-  }
+  // private def _postfix(p: String): ParseResult[Boolean] = p match {
+  //   case MARK_END_OPEN => ParseResult.success(false)
+  //   case MARK_END_CLOSE => ParseResult.success(true)
+  //   case MARK_OPEN => ParseResult.success(false)
+  //   case m => ParseFailure(s"Unknown end postfix: $m")
+  // }
 
   // private def _is_close(p: String): ParseResult[Boolean] = p match {
   //   case MARK_OPEN => ParseResult(false)
@@ -151,4 +152,22 @@ object IntervalFactory {
     startinclude: Option[Boolean],
     endinclude: Option[Boolean]
   )
+
+  def parsePrefix(p: String): ParseResult[Boolean] = p match {
+    case MARK_START_OPEN => ParseResult.success(false)
+    case MARK_START_CLOSE => ParseResult.success(true)
+    case m => ParseFailure(s"Unknown start prefix: $m")
+  }
+
+  def parseStartPostfix(p: String): ParseResult[Boolean] = p match {
+    case MARK_OPEN => ParseResult.success(false)
+    case m => ParseFailure(s"Unknown start postfix: $m")
+  }
+
+  def parsePostfix(p: String): ParseResult[Boolean] = p match {
+    case MARK_END_OPEN => ParseResult.success(false)
+    case MARK_END_CLOSE => ParseResult.success(true)
+    case MARK_OPEN => ParseResult.success(false)
+    case m => ParseFailure(s"Unknown end postfix: $m")
+  }
 }

@@ -8,7 +8,8 @@ import spire.math.Rational
  * @since   Apr. 12, 2018
  *  version Jun. 29, 2018
  *  version May. 18, 2019
- * @version Sep.  4, 2020
+ *  version Sep.  4, 2020
+ * @version Oct. 15, 2020
  * @author  ASAMI, Tomoharu
  */
 sealed trait Price {
@@ -19,6 +20,8 @@ sealed trait Price {
   def taxRational: Rational
   def mathContext: MathContext
   lazy val tax = taxRational.toBigDecimal(mathContext)
+
+  def -(p: BigDecimal): Price
 
   // def toMap: Map[String, BigDecimal] = Map.empty // TODO
     // protected def to_record(p: Price): Record = {
