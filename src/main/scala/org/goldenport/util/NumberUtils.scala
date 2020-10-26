@@ -1,16 +1,19 @@
 package org.goldenport.util
 
 import scala.util.control.NonFatal
+import org.goldenport.Strings
 import org.goldenport.parser.ParseResult
 
 /*
  * @since   Mar. 12, 2020
  *  version Apr. 21, 2020
  *  version Sep. 29, 2020
- * @version Oct. 12, 2020
+ * @version Oct. 20, 2020
  * @author  ASAMI, Tomoharu
  */
 object NumberUtils {
+  def getBoolean(p: Option[String]): Option[Boolean] = p.flatMap(getBoolean)
+
   def getBoolean(p: String): Option[Boolean] = p.trim.toLowerCase match {
     case "1" => Some(true)
     case "0" => Some(false)
@@ -19,14 +22,68 @@ object NumberUtils {
     case _ => None
   }
 
-  def getInt(p: String): Option[Int] = try {
-    Some(p.trim.toInt)
+  def getByte(p: Option[String]): Option[Byte] = p.flatMap(getByte)
+
+  def getByte(p: String): Option[Byte] = try {
+    if (Strings.blankp(p))
+      None
+    else
+      Some(p.trim.toByte)
   } catch {
     case e: NumberFormatException => None
   }
 
+  def getShort(p: Option[String]): Option[Short] = p.flatMap(getShort)
+
+  def getShort(p: String): Option[Short] = try {
+    if (Strings.blankp(p))
+      None
+    else
+      Some(p.trim.toShort)
+  } catch {
+    case e: NumberFormatException => None
+  }
+
+  def getInt(p: Option[String]): Option[Int] = p.flatMap(getInt)
+
+  def getInt(p: String): Option[Int] = try {
+    if (Strings.blankp(p))
+      None
+    else
+      Some(p.trim.toInt)
+  } catch {
+    case e: NumberFormatException => None
+  }
+
+  def getLong(p: Option[String]): Option[Long] = p.flatMap(getLong)
+
   def getLong(p: String): Option[Long] = try {
-    Some(p.trim.toLong)
+    if (Strings.blankp(p))
+      None
+    else
+      Some(p.trim.toLong)
+  } catch {
+    case e: NumberFormatException => None
+  }
+
+  def getFloat(p: Option[String]): Option[Float] = p.flatMap(getFloat)
+
+  def getFloat(p: String): Option[Float] = try {
+    if (Strings.blankp(p))
+      None
+    else
+      Some(p.trim.toFloat)
+  } catch {
+    case e: NumberFormatException => None
+  }
+
+  def getDouble(p: Option[String]): Option[Double] = p.flatMap(getDouble)
+
+  def getDouble(p: String): Option[Double] = try {
+    if (Strings.blankp(p))
+      None
+    else
+      Some(p.trim.toDouble)
   } catch {
     case e: NumberFormatException => None
   }
