@@ -12,7 +12,8 @@ import org.goldenport.Strings
  * @since   Nov. 18, 2017
  *  version Nov. 24, 2017
  *  version Dec. 13, 2017
- * @version Feb. 14, 2018
+ *  version Feb. 14, 2018
+ * @version Oct. 12, 2020
  * @author  ASAMI, Tomoharu
  */
 case class VCard(
@@ -63,7 +64,9 @@ case class VAddress(
   country: Option[String],
   code: Option[String],
   region: Option[String], // state or province
+  regionCode: Option[Int],
   locality: Option[String], // city
+  localityCode: Option[Int],
   street: Option[String],
   ext: Option[String],
   pobox: Option[String],
@@ -73,7 +76,6 @@ case class VAddress(
 )
 
 case class VTel(
-
   value: String
 )
 

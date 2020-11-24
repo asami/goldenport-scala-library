@@ -13,13 +13,19 @@ import org.goldenport.values.PathName
  * @since   Dec. 12, 2019
  *  version Dec. 15, 2019
  *  version Mar.  1, 2020
- * @version May.  4, 2020
+ *  version May.  4, 2020
+ *  version Jul. 13, 2020
+ * @version Oct. 11, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
   private val _tree: Tree[Realm.Data]
 ) {
   import Realm._
+
+  def get(pathname: String): Option[Data] = _tree.getContent(pathname)
+
+  def traverse(p: TreeVisitor[Realm.Data]):  Unit = _tree.traverse(p)
 
   def export(ctx: Context) {
     val dir = ctx.outputDirectory
@@ -35,9 +41,13 @@ case class Realm(
       }
     }
   }
+
+  def merge(pathname: String, view: Realm): Realm = ???
 }
 
 object Realm {
+  def createEmpty() = Realm(new PlainTree())
+
   sealed trait Data {
     def export(file: File)(implicit ctx: Context): Unit
   }
@@ -55,6 +65,27 @@ object Realm {
   case class BagData(bag: Bag) extends Data {
     def export(file: File)(implicit ctx: Context): Unit =
       IoUtils.save(file, bag)
+  }
+
+  trait ApplicationData extends Data {
+  }
+
+  trait StringApplicationData extends ApplicationData {
+    def marshall: String
+
+    def export(file: File)(implicit ctx: Context): Unit = {
+      val string = marshall
+      IoUtils.save(file, string, ctx.charset)
+    }
+  }
+
+  trait BinaryApplicationData extends ApplicationData {
+    def marshall: Bag
+
+    def export(file: File)(implicit ctx: Context): Unit = {
+      val bag: Bag = marshall
+      IoUtils.save(file, bag)
+    }
   }
 
   case class Config(cliConfig: cli.Config) {
@@ -107,5 +138,14 @@ object Realm {
   }
   object Builder {
     def apply(): Builder = new Builder()
+  }
+
+  trait Visitor extends TreeVisitor[Realm.Data] {
+  }
+
+  case class View(root: TreeNode[Realm.Data]) {
+  }
+  object View {
+    val empty = View(TreeNode.empty())
   }
 }

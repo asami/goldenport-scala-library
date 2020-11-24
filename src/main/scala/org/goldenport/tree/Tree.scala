@@ -11,7 +11,8 @@ import org.goldenport.values.PathName
  *  version Apr. 30, 2012
  *  version Nov.  2, 2012
  *  version Nov. 18, 2019
- * @version May.  4, 2020
+ *  version May.  4, 2020
+ * @version Oct. 17, 2020
  * @author  ASAMI, Tomoharu
  */
 trait Tree[E] {
@@ -45,4 +46,8 @@ trait Tree[E] {
   def toXml: Node
   def toPrettyXml: String
   def ztree: ZTree[TreeNode[E]]
+}
+
+object Tree {
+  def create[T](): Tree[T] = new PlainTree[T]()
 }

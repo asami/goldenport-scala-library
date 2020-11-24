@@ -22,7 +22,8 @@ import com.asamioffice.goldenport.text.UString
  *  version Dec. 10, 2018
  *  version Jun. 24, 2019
  *  version Jul.  7, 2019
- * @version Dec.  7, 2019
+ *  version Dec.  7, 2019
+ * @version Sep.  8, 2020
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -41,6 +42,11 @@ object Strings {
     val application_zip = "application/zip"
     val application_x_gzip = "application/x-gzip"
     val application_excel = "application/vnd.ms-excel"
+    val application_excelx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    val application_powerpoint = "application/vnd.ms-powerpoint"
+    val application_powerpointx = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    val application_word = "application/msword"
+    val application_wordx = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     val image_gif = "image/gif"
     val image_jpeg = "image/jpeg"
     val image_pjpeg = "image/pjpeg"

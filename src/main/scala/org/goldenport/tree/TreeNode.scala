@@ -3,13 +3,15 @@ package org.goldenport.tree
 import scala.xml.Node
 import scalaz._
 import Scalaz._
+import org.goldenport.realm.Realm
 import org.goldenport.values.PathName
 
 /*
  * @since   Jul. 27, 2008
  *  version Apr. 17, 2011
  *  version Feb. 22, 2012
- * @version Nov. 18, 2019
+ *  version Nov. 18, 2019
+ * @version Oct. 11, 2020
  * @author  ASAMI, Tomoharu
  */
 trait TreeNode[E] {
@@ -74,6 +76,11 @@ trait TreeNode[E] {
     }
     pb.toString
   }
+}
+
+object TreeNode {
+  lazy val _empty = new PlainTreeNode()
+  def empty[T <: Realm.Data](): TreeNode[T] = _empty.asInstanceOf[TreeNode[T]]
 }
 
 // class TreeNodeShow[E] extends Show[TreeNode[E]] {

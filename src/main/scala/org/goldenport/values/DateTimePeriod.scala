@@ -10,9 +10,12 @@ import com.github.nscala_time.time.Imports._
 import org.joda.time.DateTimeConstants._
 import spire.math.Interval
 import spire.math.interval._
+import org.goldenport.RAISE
+import org.goldenport.parser.ParseResult
 import org.goldenport.util.{DateTimeUtils, DateUtils, AnyUtils}
 import org.goldenport.util.SpireUtils.Implicits._
 import org.goldenport.values.Week._
+import org.goldenport.values.IntervalFactory.{BoundsKind, CloseOpen, CloseClose}
 
 /*
  * @since   Oct.  2, 2014
@@ -26,7 +29,8 @@ import org.goldenport.values.Week._
  *  version Jun. 20, 2018
  *  version Jan. 10, 2019
  *  version Aug. 14, 2019
- * @version Sep. 18, 2019
+ *  version Sep. 18, 2019
+ * @version Sep. 10, 2020
  * @author  ASAMI, Tomoharu
  */
 case class DateTimePeriod( // TODO DateTimeInterval (java8 time)
@@ -49,6 +53,8 @@ case class DateTimePeriod( // TODO DateTimeInterval (java8 time)
   def isValid(p: DateTime): Boolean = isValid(p.getMillis)
 
   def isValid(timestamp: Timestamp): Boolean = isValid(timestamp.getTime)
+
+  def isAvaiableNow(): Boolean = isValid(DateTime.now)
 
   // Assumes GMT
   def isValid(date: Date): Boolean = {
@@ -376,6 +382,12 @@ object DateTimePeriod {
     def zero = empty
   }
 
+  val MARK_OPEN = IntervalFactory.MARK_OPEN.head
+  val MARK_START_OPEN = IntervalFactory.MARK_START_OPEN.head
+  val MARK_START_CLOSE = IntervalFactory.MARK_START_CLOSE.head
+  val MARK_END_OPEN = IntervalFactory.MARK_END_OPEN.head
+  val MARK_END_CLOSE = IntervalFactory.MARK_END_CLOSE.head
+
   val Compute = """([^-]+)_([+-])(\d+)""".r
   val Year = """(\d+)""".r
   val YearMonth = """(\d+)-(\d+)""".r
@@ -425,6 +437,17 @@ object DateTimePeriod {
 
   def parseJst(p: String): DateTimePeriod = parse(jodajst, p)
 
+  def parseCloseOpenJst(p: String): DateTimePeriod = parse(CloseOpen, jodajst, p)
+
+  def parse(kind: BoundsKind, tz: DateTimeZone, p: String): DateTimePeriod = parse(kind, DateTime.now, tz, p)
+
+  def parse(
+    kind: BoundsKind,
+    now: DateTime,
+    tz: DateTimeZone,
+    p: String
+  ): DateTimePeriod = Builder(now, tz, kind).fromExpression(p)
+
   /*
    * Caution: Timezone depends running environment.
    */
@@ -432,8 +455,12 @@ object DateTimePeriod {
 
   case class Builder(
     datetime: DateTime,
-    timezoneJoda: DateTimeZone
+    timezoneJoda: DateTimeZone,
+    kind: BoundsKind = CloseClose
   ) {
+    def isStartInclusive: Boolean = kind.isStartInclusive
+    def isEndInclusive: Boolean = kind.isEndInclusive
+
     def currentYear: Int = datetime.year.get
     def currentMonth: Int = datetime.monthOfYear.get
     def currentWeek: Int = datetime.weekOfWeekyear.get
@@ -443,7 +470,7 @@ object DateTimePeriod {
     def create(
       start: Option[String],
       end: Option[String]
-    ): DateTimePeriod = create(start, end, true)
+    ): DateTimePeriod = create(start, end, isEndInclusive)
 
     def create(
       start: Option[String],
@@ -453,7 +480,7 @@ object DateTimePeriod {
       DateTimePeriod(
         start.map(toDateTime),
         end.map(toDateTime),
-        true,
+        isStartInclusive,
         inclusive
       )
     }
@@ -643,7 +670,7 @@ object DateTimePeriod {
         case _ => throw new IllegalArgumentException(s"Invalid period: $s, $n")
       }
 
-      def body(inclusivep: Boolean, sb: String): DateTimePeriod = {
+      def body(inclusivep: Boolean, sb: String, si: Boolean, ei: Boolean): DateTimePeriod = {
         if (!sb.contains("~")) {
           sb match {
             case Compute(x, "+", n) => plus_one(x, n.toInt)
@@ -671,15 +698,25 @@ object DateTimePeriod {
               case _ => plain_start(end)
             }
           }
-          DateTimePeriod(s1, e1)
+          DateTimePeriod(s1, e1, si, ei)
         }
       }
 
-      if (s.endsWith("!")) {
-        val a = body(false, s.dropRight(1))
-        a.copy(isEndInclusive = false)
+      if (s.isEmpty) {
+        RAISE.invalidArgumentFault("Empty datetime")
       } else {
-        body(true, s)
+        val (a, isstartinclusive) = s.head match {
+          case MARK_START_OPEN => (s.tail, false)
+          case MARK_START_CLOSE => (s.tail, true)
+          case _ => (s, isStartInclusive)
+        }
+        val (b, isendinclusive) = a.last match {
+          case MARK_START_OPEN => (a.init, false)
+          case MARK_START_CLOSE => (a.init, true)
+          case MARK_OPEN => (a.init, false)
+          case _ => (a, isEndInclusive)
+        }
+        body(false, b, isstartinclusive, isendinclusive)
       }
     }
 

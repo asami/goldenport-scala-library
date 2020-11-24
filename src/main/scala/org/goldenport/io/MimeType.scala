@@ -12,7 +12,8 @@ import org.goldenport.util.StringUtils
  *  version Apr. 12, 2019
  *  version Jun. 25, 2019
  *  version Aug. 18, 2019
- * @version Dec.  7, 2019
+ *  version Dec.  7, 2019
+ * @version Sep.  1, 2020
  * @author  ASAMI, Tomoharu
  */
 case class MimeType(name: String) {
@@ -40,6 +41,11 @@ object MimeType {
   val application_zip = MimeType(mimetype.application_zip)
   val application_x_gzip = MimeType(mimetype.application_x_gzip)
   val application_excel = MimeType(mimetype.application_excel)
+  val application_excelx = MimeType(mimetype.application_excelx)
+  val application_powerpoint = MimeType(mimetype.application_powerpoint)
+  val application_powerpointx = MimeType(mimetype.application_powerpointx)
+  val application_word = MimeType(mimetype.application_word)
+  val application_wordx = MimeType(mimetype.application_wordx)
   val image_gif = MimeType(mimetype.image_gif)
   val image_jpeg = MimeType(mimetype.image_jpeg)
   val image_pjpeg = MimeType(mimetype.image_pjpeg)
@@ -84,6 +90,11 @@ object MimeType {
   val APPLICATION_ZIP = application_zip
   val APPLICATION_X_GZIP = application_x_gzip
   val APPLICATION_EXCEL = application_excel
+  val APPLICATION_EXCELX = application_excelx
+  val APPLICATION_POWERPOINT = application_powerpoint
+  val APPLICATION_POWERPOINTX = application_powerpointx
+  val APPLICATION_WORD = application_word
+  val APPLICATION_WORDX = application_wordx
   val IMAGE_GIF = image_gif
   val IMAGE_JPEG = image_jpeg
   val IMAGE_PJPEG = image_pjpeg
@@ -128,6 +139,12 @@ object MimeType {
     application_xml_dtd,
     application_zip,
     application_x_gzip,
+    application_excel,
+    application_excelx,
+    application_powerpoint,
+    application_powerpointx,
+    application_word,
+    application_wordx,
     image_gif,
     image_jpeg,
     image_pjpeg,
@@ -185,7 +202,12 @@ object MimeType {
     application_postscript -> "ps",
     application_zip -> "zip",
     application_x_gzip -> "gzip",
-    application_excel -> "xlsx",
+    application_excel -> "xls",
+    application_excelx -> "xlsx",
+    application_powerpoint -> "ppt",
+    application_powerpointx -> "pptx",
+    application_word -> "doc",
+    application_wordx -> "docx",
     image_gif -> "gif",
     image_jpeg -> "jpeg",
     image_png -> "png",
@@ -206,9 +228,7 @@ object MimeType {
 
   lazy val suffixMimeMap = mimeSuffixMap.map {
     case (m, s) => s -> m
-  } ++ Map(
-    "xls" -> application_excel
-  )
+  }
 
   def isText(p: MimeType): Boolean = isText(p.name)
   def isText(p: String): Boolean = p.startsWith("text/") || textMimeTypes.exists(_.name == p)
