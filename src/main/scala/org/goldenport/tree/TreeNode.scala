@@ -11,7 +11,8 @@ import org.goldenport.values.PathName
  *  version Apr. 17, 2011
  *  version Feb. 22, 2012
  *  version Nov. 18, 2019
- * @version Oct. 11, 2020
+ *  version Oct. 11, 2020
+ * @version Nov. 15, 2020
  * @author  ASAMI, Tomoharu
  */
 trait TreeNode[E] {
@@ -41,6 +42,7 @@ trait TreeNode[E] {
   def addChild(): TreeNode_TYPE
   def addChild(child: TreeNode[E]): TreeNode_TYPE
   def addChildren(parent: TreeNode[E]): Unit
+  def addChildren(ps: Seq[TreeNode[E]]): Unit
   def addContent(content: E): TreeNode_TYPE
   def removeChild(child: TreeNode[E])
   def getNode(pathname: String): Option[TreeNode_TYPE]
@@ -81,6 +83,8 @@ trait TreeNode[E] {
 object TreeNode {
   lazy val _empty = new PlainTreeNode()
   def empty[T <: Realm.Data](): TreeNode[T] = _empty.asInstanceOf[TreeNode[T]]
+
+//  def cloneNode[T](p: TreeNode[T]): TreeNode[T] = ???
 }
 
 // class TreeNodeShow[E] extends Show[TreeNode[E]] {

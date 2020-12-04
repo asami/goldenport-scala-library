@@ -3,6 +3,7 @@ package org.goldenport.parser
 import scalaz._, Scalaz._  
 import scalaz.concurrent.Task
 import scalaz.stream._
+import org.goldenport.RAISE
   
 /*
  * @since   Aug. 21, 2018
@@ -13,7 +14,8 @@ import scalaz.stream._
  *  version Jan.  5, 2019
  *  version Feb. 16, 2019
  *  version May.  6, 2019
- * @version Sep. 22, 2019
+ *  version Sep. 22, 2019
+ * @version Nov. 29, 2020
  * @author  ASAMI, Tomoharu
  */
 trait ParseReaderWriterState[C <: ParseConfig, AST] {
@@ -48,9 +50,11 @@ case class ParseReaderWriterStateClass[C <: ParseConfig, AST](
   }
 
   private def _parse_events(events: Seq[ParseEvent]): OUT = {
-    val x = Process.emitAll(StartEvent +: events :+ EndEvent).toSource.
+    val es = StartEvent +: events :+ EndEvent
+    val x = Process.emitAll(es).toSource.
       pipe(_fsm(init))
     val a = x.runLog.run
+    // println(s"ParseReaderWriterState#_parse_events: $a")
     val warns = ParseMessageSequence.empty // TODO
     val r = a.toVector
     val newstate = init // TODO
@@ -60,9 +64,14 @@ case class ParseReaderWriterStateClass[C <: ParseConfig, AST](
   private def _fsm(state: S): Process1[ParseEvent, AST] =
     Process.receive1 { evt: ParseEvent =>
       val (msg, r, newstate) = state.apply(config, evt)
+      // println(s"ParseReaderWriterState#_fsm[$evt]: $r")
       r match {
         case m: EmptyParseResult[AST] => _fsm(newstate)
-        case ParseSuccess(x, warns) => Process.emit(x) fby _fsm(newstate)
+        case ParseSuccess(x, warns) =>
+          if (x == null)
+            RAISE.noReachDefect(s"ParseReaderWriterState#_fsm[$evt]: $r")
+          else
+            Process.emit(x) fby _fsm(newstate)
         case ParseFailure(errs, warns) => throw ParseSyntaxErrorException(errs, warns)
       }
     }

@@ -9,10 +9,12 @@ import spire.math.Rational
  *  version Jun. 29, 2018
  *  version May. 18, 2019
  *  version Sep.  4, 2020
- * @version Oct. 26, 2020
+ *  version Oct. 26, 2020
+ * @version Nov.  1, 2020
  * @author  ASAMI, Tomoharu
  */
 sealed trait Price {
+  def isZero: Boolean
   def displayPrice: BigDecimal
   def isTaxExclusive: Boolean
   def priceIncludingTax: BigDecimal
@@ -85,6 +87,7 @@ case class PriceExcludingTax(
   taxRational: Rational,
   mathContext: MathContext = MathContext.DECIMAL32
 ) extends Price {
+  def isZero = price == 0
   def displayPrice = price
   def isTaxExclusive = true
   def priceIncludingTax = price + tax
@@ -117,6 +120,7 @@ case class PriceIncludingTax(
   taxRational: Rational,
   mathContext: MathContext = MathContext.DECIMAL32
 ) extends Price {
+  def isZero = price == 0
   def displayPrice = price
   def isTaxExclusive = false
   def priceIncludingTax = price
@@ -149,6 +153,7 @@ object PriceIncludingTax {
 
 case class PriceNoTax(price: BigDecimal) extends Price {
   val mathContext: MathContext = MathContext.DECIMAL32
+  def isZero = price == 0
   def displayPrice = price
   def isTaxExclusive = false
   def priceIncludingTax = price

@@ -11,7 +11,8 @@ import org.goldenport.values.PathName
  * @since   Aug. 13, 2008
  *  version Sep. 19, 2011
  *  version Feb. 22, 2012
- * @version Nov. 18, 2019
+ *  version Nov. 18, 2019
+ * @version Nov. 14, 2020
  * @author  ASAMI, Tomoharu
  */
 trait TreeNodeStructureBase[E] extends TreeNode[E] {
@@ -85,6 +86,10 @@ trait TreeNodeStructureBase[E] extends TreeNode[E] {
     set_child(child)
     set_Child(child)
     child.asInstanceOf[TreeNode_TYPE]
+  }
+
+  override def addChildren(ps: Seq[TreeNode[E]]) {
+    ps.foreach(addChild)
   }
 
   override def addChildren(parent: TreeNode[E]) {

@@ -10,7 +10,8 @@ import Environment._
  *  version Mar.  2, 2019
  *  version Jan. 20, 2020
  *  version Mar.  8, 2020
- * @version May. 30, 2020
+ *  version May. 30, 2020
+ * @version Nov. 23, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Environment(
@@ -50,6 +51,8 @@ case class Environment(
 object Environment {
   trait AppEnvironment
   case object NoneAppEnvironment extends AppEnvironment
+
+  def create(): Environment = create(Array())
 
   def create(appname: String, args: Array[String]): Environment = {
     val config = Config.build(appname, args)
