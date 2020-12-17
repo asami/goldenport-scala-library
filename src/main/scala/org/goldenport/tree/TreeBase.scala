@@ -3,7 +3,6 @@ package org.goldenport.tree
 import scala.xml.Node
 import scalaz.{Tree => ZTree, _}
 import Scalaz._
-import org.goldenport.extension.Showable
 import org.goldenport.values.PathName
 
 /*
@@ -13,17 +12,13 @@ import org.goldenport.values.PathName
  *  version May.  6, 2012
  *  version Nov.  2, 2012
  *  version Nov. 18, 2019
- * @version May.  4, 2020
+ *  version May.  4, 2020
+ * @version Nov. 14, 2020
  * @author  ASAMI, Tomoharu
  */
-trait TreeBase[E] extends Tree[E] with Showable {
+trait TreeBase[E] extends Tree[E] {
   private var root_node: TreeNode_TYPE = _
   private var is_modified: Boolean = false
-
-  def print: String = ???
-  def display: String = ???
-  def show: String = ???
-  def embed: String = ???
 
   protected def dbc_invariants {
     assert (root_node != null, "Tree not opened")

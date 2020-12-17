@@ -9,10 +9,13 @@ import spire.math.Rational
  *  version Jun. 29, 2018
  *  version May. 18, 2019
  *  version Sep.  4, 2020
- * @version Oct. 26, 2020
+ *  version Oct. 26, 2020
+ *  version Nov.  1, 2020
+ * @version Dec.  4, 2020
  * @author  ASAMI, Tomoharu
  */
 sealed trait Price {
+  def isZero: Boolean
   def displayPrice: BigDecimal
   def isTaxExclusive: Boolean
   def priceIncludingTax: BigDecimal
@@ -21,7 +24,7 @@ sealed trait Price {
   def mathContext: MathContext
   lazy val tax = taxRational.toBigDecimal(mathContext)
 
-  def -(p: BigDecimal): Price
+  // def -(p: BigDecimal): Price
 
   // def toMap: Map[String, BigDecimal] = Map.empty // TODO
     // protected def to_record(p: Price): Record = {
@@ -59,6 +62,26 @@ object Price {
     }
   }
 
+  def minus(lhs: Price, rhs: Price): Price = {
+    lhs match {
+      case m: PriceExcludingTax => rhs match {
+        case mm: PriceExcludingTax => m - mm
+        case mm: PriceIncludingTax => m - mm.toExcludingTax
+        case mm: PriceNoTax => m - mm.toExcludingTax
+      }
+      case m: PriceIncludingTax => rhs match {
+        case mm: PriceExcludingTax => m - mm.toIncludingTax
+        case mm: PriceIncludingTax => m - mm
+        case mm: PriceNoTax => m - mm.toIncludingTax
+      }
+      case m: PriceNoTax => rhs match {
+        case mm: PriceExcludingTax => m.toExcludingTax - mm
+        case mm: PriceIncludingTax => m.toIncludingTax - mm
+        case mm: PriceNoTax => m - mm
+      }
+    }
+  }
+
   implicit object PriceExcludingTaxMonoid extends Monoid[PriceExcludingTax] {
     def zero = PriceExcludingTax.ZERO
     def append(l: PriceExcludingTax, r: => PriceExcludingTax): PriceExcludingTax = l + r
@@ -85,6 +108,7 @@ case class PriceExcludingTax(
   taxRational: Rational,
   mathContext: MathContext = MathContext.DECIMAL32
 ) extends Price {
+  def isZero = price == 0
   def displayPrice = price
   def isTaxExclusive = true
   def priceIncludingTax = price + tax
@@ -96,8 +120,8 @@ case class PriceExcludingTax(
   def -(rhs: PriceExcludingTax): PriceExcludingTax =
     PriceExcludingTax(price - rhs.price, tax - rhs.tax)
 
-  def +(rhs: BigDecimal): PriceExcludingTax = copy(price + rhs)
-  def -(rhs: BigDecimal): PriceExcludingTax = copy(price - rhs)
+  // def +(rhs: BigDecimal): PriceExcludingTax = copy(price + rhs)
+  // def -(rhs: BigDecimal): PriceExcludingTax = copy(price - rhs)
 }
 object PriceExcludingTax {
   val ZERO = PriceExcludingTax(BigDecimal(0), 0)
@@ -117,17 +141,22 @@ case class PriceIncludingTax(
   taxRational: Rational,
   mathContext: MathContext = MathContext.DECIMAL32
 ) extends Price {
+  def isZero = price == 0
   def displayPrice = price
   def isTaxExclusive = false
   def priceIncludingTax = price
   def priceExcludingTax = price - tax
   def toExcludingTax: PriceExcludingTax = PriceExcludingTax(price - tax, tax)
 
-  def +(rhs: PriceIncludingTax): PriceIncludingTax = copy(price + rhs.price)
-  def -(rhs: PriceNoTax): PriceIncludingTax = copy(price - rhs.price)
+  def +(rhs: PriceIncludingTax): PriceIncludingTax = 
+    PriceIncludingTax(price + rhs.price, tax + rhs.tax)
+  def -(rhs: PriceIncludingTax): PriceIncludingTax = 
+    PriceIncludingTax(price - rhs.price, tax - rhs.tax)
+  def -(rhs: PriceNoTax): PriceIncludingTax =
+    PriceIncludingTax(price - rhs.price, tax - rhs.tax)
 
-  def +(rhs: BigDecimal): PriceIncludingTax = copy(price + rhs)
-  def -(rhs: BigDecimal): PriceIncludingTax = copy(price - rhs)
+  // def +(rhs: BigDecimal): PriceIncludingTax = copy(price + rhs)
+  // def -(rhs: BigDecimal): PriceIncludingTax = copy(price - rhs)
 }
 object PriceIncludingTax {
   val ZERO = PriceIncludingTax(BigDecimal(0), 0)
@@ -149,6 +178,7 @@ object PriceIncludingTax {
 
 case class PriceNoTax(price: BigDecimal) extends Price {
   val mathContext: MathContext = MathContext.DECIMAL32
+  def isZero = price == 0
   def displayPrice = price
   def isTaxExclusive = false
   def priceIncludingTax = price

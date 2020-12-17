@@ -28,7 +28,8 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version Jun. 30, 2019
  *  version Jul. 28, 2019
  *  version Nov. 20, 2019
- * @version Mar.  1, 2020
+ *  version Mar.  1, 2020
+ * @version Nov. 29, 2020
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -810,4 +811,29 @@ object DomUtils {
 //       }
 //     }
 
+  def append(node: Node, child: Node, children: Node*): Node =
+    append(node, child +: children)
+
+  def append(node: Node, children: Seq[Node]): Node = {
+//    println(s"DomUtils#append in: ${showDom(node)}")
+    for (c <- children) {
+      c match {
+        case m: DocumentFragment =>
+//          println(s"DomUtils#append fragment: ${childrenIndexedSeq(m)}")
+          appendChildren(node, m)
+//          println(s"DomUtils#append fragment after: ${childrenIndexedSeq(node)}")
+        case m =>
+//          println(s"DomUtils#append not fragment: $m[${m.getClass.getName}]")
+//          println(s"DomUtils#append not fragment in : ${childrenIndexedSeq(m)}")
+//          println(s"DomUtils#append not fragment before: ${childrenIndexedSeq(node)}")
+          node.appendChild(m)
+//          println(s"DomUtils#append not fragment after: ${childrenIndexedSeq(node)}")
+      }
+    }
+//    println(s"DomUtils#append out: ${showDom(node)}")
+    node
+  }
+
+  def appendChildren(node: Node, children: Node): Node =
+    append(node, childrenIndexedSeq(children))
 }

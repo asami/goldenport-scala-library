@@ -3,11 +3,13 @@ package org.goldenport.realm
 import java.io.File
 import java.nio.charset.Charset
 import java.net.URL
+import org.goldenport.RAISE
 import org.goldenport.cli
 import org.goldenport.tree._
 import org.goldenport.bag.Bag
 import org.goldenport.io.IoUtils
 import org.goldenport.values.PathName
+import org.goldenport.extension.Showable
 
 /*
  * @since   Dec. 12, 2019
@@ -15,17 +17,25 @@ import org.goldenport.values.PathName
  *  version Mar.  1, 2020
  *  version May.  4, 2020
  *  version Jul. 13, 2020
- * @version Oct. 11, 2020
+ *  version Oct. 11, 2020
+ * @version Nov. 15, 2020
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
   private val _tree: Tree[Realm.Data]
-) {
+) extends Showable {
   import Realm._
+
+  def print: String = RAISE.notImplementedYetDefect
+  def display: String = RAISE.notImplementedYetDefect
+  def show: String = _tree.show
+  def embed: String = RAISE.notImplementedYetDefect
 
   def get(pathname: String): Option[Data] = _tree.getContent(pathname)
 
-  def traverse(p: TreeVisitor[Realm.Data]):  Unit = _tree.traverse(p)
+  def traverse(p: TreeVisitor[Realm.Data]): Unit = _tree.traverse(p)
+
+  def transform(p: RealmTransformer): Realm = Realm(_tree.transform(p))
 
   def export(ctx: Context) {
     val dir = ctx.outputDirectory
@@ -42,11 +52,13 @@ case class Realm(
     }
   }
 
-  def merge(pathname: String, view: Realm): Realm = ???
+  def merge(pathname: String, view: Realm): Realm = Realm(Tree.mergeClone(this._tree, pathname, view._tree))
+
+  def +(p: Realm): Realm = Realm(Tree.mergeClone(this._tree, p._tree))
 }
 
 object Realm {
-  def createEmpty() = Realm(new PlainTree())
+  def create() = Realm(new PlainTree())
 
   sealed trait Data {
     def export(file: File)(implicit ctx: Context): Unit
@@ -65,6 +77,14 @@ object Realm {
   case class BagData(bag: Bag) extends Data {
     def export(file: File)(implicit ctx: Context): Unit =
       IoUtils.save(file, bag)
+  }
+
+  case class ObjectData(o: Object) extends Data {
+    def export(file: File)(implicit ctx: Context): Unit = RAISE.unsupportedOperationFault
+  }
+
+  case object EmptyData extends Data {
+    def export(file: File)(implicit ctx: Context): Unit = {}
   }
 
   trait ApplicationData extends Data {
@@ -134,7 +154,13 @@ object Realm {
       this
     }
 
-    def build: Realm = Realm(_tree)
+    def setObject(pathname: String, o: Object): Builder = {
+      _tree.setContent(pathname, ObjectData(o))
+      this
+    }
+
+
+    def build(): Realm = Realm(_tree)
   }
   object Builder {
     def apply(): Builder = new Builder()
