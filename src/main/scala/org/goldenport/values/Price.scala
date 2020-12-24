@@ -3,6 +3,7 @@ package org.goldenport.values
 import scalaz._, Scalaz._
 import java.math.MathContext
 import spire.math.Rational
+import org.goldenport.RAISE
 
 /*
  * @since   Apr. 12, 2018
@@ -11,7 +12,7 @@ import spire.math.Rational
  *  version Sep.  4, 2020
  *  version Oct. 26, 2020
  *  version Nov.  1, 2020
- * @version Dec.  4, 2020
+ * @version Dec. 20, 2020
  * @author  ASAMI, Tomoharu
  */
 sealed trait Price {
@@ -63,6 +64,35 @@ object Price {
   }
 
   def minus(lhs: Price, rhs: Price): Price = {
+    lhs match {
+      case m: PriceExcludingTax => rhs match {
+        case mm: PriceExcludingTax => m - mm
+        case mm: PriceIncludingTax => m - mm.toExcludingTax
+        case mm: PriceNoTax => RAISE.noReachDefect("PriceExcludingTax minus PriceNoTax")
+      }
+      case m: PriceIncludingTax => rhs match {
+        case mm: PriceExcludingTax => m - mm.toIncludingTax
+        case mm: PriceIncludingTax => m - mm
+        case mm: PriceNoTax => RAISE.noReachDefect("PriceIncludingTax minus PriceNoTax")
+      }
+      case m: PriceNoTax => rhs match {
+        case mm: PriceExcludingTax => RAISE.noReachDefect("PriceNoTax minus PriceExcludingTax")
+        case mm: PriceIncludingTax => RAISE.noReachDefect("PriceNoTax minus PriceExcludingTax")
+        case mm: PriceNoTax => m - mm
+      }
+    }
+  }
+
+  def minusImplicit(percent: Percent)(lhs: Price, rhs: Price): Price = {
+    def normalize(p: Price) = p match {
+      case mm: PriceExcludingTax => mm
+      case mm: PriceIncludingTax => mm
+      case mm: PriceNoTax => PriceIncludingTax.createByPercent(mm.price, percent)
+    }
+    minus(normalize(lhs), normalize(rhs))
+  }
+
+  def minusForce(lhs: Price, rhs: Price): Price = {
     lhs match {
       case m: PriceExcludingTax => rhs match {
         case mm: PriceExcludingTax => m - mm
