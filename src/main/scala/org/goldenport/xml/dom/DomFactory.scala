@@ -8,7 +8,8 @@ import org.goldenport.xml.dom.DomUtils.NS_HTML
 
 /*
  * @since   Nov.  8, 2020
- * @version Nov. 29, 2020
+ *  version Nov. 29, 2020
+ * @version Dec. 27, 2020
  * @author  ASAMI, Tomoharu
  */
 class DomFactory(
@@ -60,6 +61,18 @@ class DomFactory(
   def element(name: String, node: Node): Element = {
     val r = element(name)
     append(r, node)
+    r
+  }
+
+  def element(name: String, nodes: Seq[Node]): Element = {
+    val r = element(name)
+    append(r, nodes)
+    r
+  }
+
+  def element(name: String, s: String): Element = {
+    val r = element(name)
+    append(r, text(s))
     r
   }
 

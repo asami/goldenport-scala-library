@@ -7,6 +7,7 @@ import java.util.UUID
 import com.asamioffice.goldenport.xml.XmlAttributeBuffer
 import org.goldenport.Strings
 import org.goldenport.values.PathName
+import org.goldenport.values.CompactUuid
 
 /**
  * @since   Aug. 13, 2008
@@ -14,7 +15,7 @@ import org.goldenport.values.PathName
  *  version Feb. 22, 2012
  *  version Nov. 18, 2019
  *  version Nov. 14, 2020
- * @version Dec. 20, 2020
+ * @version Dec. 26, 2020
  * @author  ASAMI, Tomoharu
  */
 trait TreeNodeStructureBase[E] extends TreeNode[E] {
@@ -81,8 +82,12 @@ trait TreeNodeStructureBase[E] extends TreeNode[E] {
   }
 
   override def addChild(): TreeNode_TYPE = {
-    addChild(new_Node(null))
+    addChild(_make_anon_node())
   }
+
+  private def _make_anon_node(): TreeNode_TYPE = new_Node(_make_node_name)
+
+  private def _make_node_name() = CompactUuid.generateString()
 
   override def addChild(child: TreeNode[E]): TreeNode_TYPE = {
     set_child(child)
