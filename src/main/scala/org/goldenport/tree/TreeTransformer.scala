@@ -4,7 +4,8 @@ import org.goldenport.RAISE
 
 /*
  * @since   Nov. 14, 2020
- * @version Nov. 15, 2020
+ *  version Nov. 15, 2020
+ * @version Jan.  1, 2021
  * @author  ASAMI, Tomoharu
  */
 trait TreeTransformer[A, B] {
@@ -31,6 +32,9 @@ trait TreeTransformer[A, B] {
       val xs = p.children.flatMap(make_tree_node)
       val c = make_content(p.content)
       create_tree_node(name, c, xs)
+    }.orElse {
+      val xs = p.children.flatMap(make_tree_node)
+      Some(create_tree_node(p.name, p.content.asInstanceOf[B], xs))
     }
 
   protected def make_content(p: A): B = make_Content(p) getOrElse rule.mapContent(p)
@@ -48,12 +52,17 @@ object TreeTransformer {
     def default[E] = _default.asInstanceOf[Context[E]]
   }
 
-  case class Rule[A, B]() {
-    def getTargetName(p: TreeNode[A]): Option[String] = Some(p.name) // TODO
-    def mapContent(p: A): B = p.asInstanceOf[B] // TODO
+  trait Rule[A, B] {
+    def getTargetName(p: TreeNode[A]): Option[String]
+    def mapContent(p: A): B
   }
   object Rule {
-    private val _default = Rule()
+    case class AsIs[A, B]() extends Rule[A, B] {
+      def getTargetName(p: TreeNode[A]): Option[String] = Some(p.name)
+      def mapContent(p: A): B = p.asInstanceOf[B]
+    }
+
+    private val _default = AsIs()
     def default[A, B] = _default.asInstanceOf[Rule[A, B]]
   }
 }

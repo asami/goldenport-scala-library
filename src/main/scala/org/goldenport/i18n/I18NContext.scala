@@ -13,7 +13,8 @@ import org.goldenport.util.AnyUtils
 /*
  * @since   Aug.  4, 2019
  *  version Sep. 30, 2019
- * @version Oct. 18, 2019
+ *  version Oct. 18, 2019
+ * @version Jan.  2, 2021
  * @author  ASAMI, Tomoharu
  */
 case class I18NContext(
@@ -23,6 +24,7 @@ case class I18NContext(
   timezone: TimeZone,
   currency: Currency,
   calendarFormatters: CalendarFormatter.Factory,
+  stringFormatter: StringFormatter,
   resourceBundle: ResourceBundle
 ) {
   lazy val datetimezone = DateTimeZone.forTimeZone(timezone)
@@ -169,6 +171,7 @@ object I18NContext {
     val timezone = TimeZone.getDefault()
     val currency = Currency.getInstance(locale)
     val calenderformatters = CalendarFormatter.Factory.default
+    val stringformatter = StringFormatter.default
     val bundle = EmptyResourceBundle
     I18NContext(
       charset,
@@ -177,6 +180,7 @@ object I18NContext {
       timezone,
       currency,
       calenderformatters,
+      stringformatter,
       bundle
     )
   }
@@ -188,6 +192,7 @@ object I18NContext {
     val timezone = TimeZone.getDefault()
     val currency = Currency.getInstance(locale)
     val calenderformatters = CalendarFormatter.Factory.default
+    val stringformatter = StringFormatter.default
     val bundle = EmptyResourceBundle
     I18NContext(
       charset,
@@ -196,6 +201,7 @@ object I18NContext {
       timezone,
       currency,
       calenderformatters,
+      stringformatter,
       bundle
     )
   }
@@ -212,6 +218,7 @@ object I18NContext {
     timezone,
     Currency.getInstance(locale),
     CalendarFormatter.Factory.default,
+    StringFormatter.default,
     default.resourceBundle
   )
 

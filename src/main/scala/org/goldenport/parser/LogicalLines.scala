@@ -3,6 +3,8 @@ package org.goldenport.parser
 import scalaz._, Scalaz._
 import org.goldenport.exception.RAISE
 import org.goldenport.io.{InputSource, ResourceHandle}
+import org.goldenport.i18n.I18NContext
+import org.goldenport.util.StringUtils
 
 /*
  * @since   Aug. 20, 2018
@@ -14,7 +16,8 @@ import org.goldenport.io.{InputSource, ResourceHandle}
  *  version May.  2, 2019
  *  version Jun. 30, 2019
  *  version Dec.  7, 2019
- * @version Jan. 31, 2020
+ *  version Jan. 31, 2020
+ * @version Jan.  3, 2021
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -85,20 +88,30 @@ object LogicalLines {
   }
 
   case class Config(
-    useDoubleQuote: Boolean = true,
-    useSingleQuote: Boolean = true,
-    useAngleBracket: Boolean = true, // XML
-    useBrace: Boolean = true, // JSON
-    useParenthesis: Boolean = true, // S-Expression
-    useBracket: Boolean = true, // script
+    i18nContext: I18NContext = I18NContext.default,
+    useDoubleQuote: Boolean = false,
+    useSingleQuote: Boolean = false,
+    useAngleBracket: Boolean = false, // XML
+    useBrace: Boolean = false, // JSON
+    useParenthesis: Boolean = false, // S-Expression
+    useBracket: Boolean = false, // script
+    useMultiline: Boolean = false, // SmartDox
     isLocation: Boolean = true
   ) extends ParseConfig {
     def withoutLocation = copy(isLocation = false)
+    def isWordSeparating(prev: Char, next: Char): Boolean = i18nContext.stringFormatter.isWordSeparating(prev, next)
+    def wordSeparatingSpace: Char = ' '
+    def isInList(c: Char): Boolean = {
+      val candidates = Vector('-')
+      candidates.contains(c) || StringUtils.isAsciiNumberChar(c)
+    }
   }
   object Config {
-    val default = Config()
-    val raw = Config(false, false, false, false, false, false)
-    val lisp = default.copy(useSingleQuote = false)
+    val raw = Config()
+    val script = Config(I18NContext.default, true, true, true, true, true, true)
+    val lisp = script.copy(useSingleQuote = false)
+    val multiline = raw.copy(useMultiline = true)
+    val default = raw
   }
 
   trait LogicalLinesParseState extends ParseReaderWriterState[Config, LogicalLines] {
@@ -108,8 +121,15 @@ object LogicalLines {
     protected def use_brace(config: Config) = config.useBrace
     protected def use_parenthesis(config: Config) = config.useParenthesis
     protected def use_bracket(config: Config) = config.useBracket
+    protected def use_multiline(config: Config) = config.useMultiline
+    protected def is_word_separating(config: Config, prev: Option[Char], next: Char) =
+      prev.map(config.isWordSeparating(_, next)).getOrElse(false)
+    protected def word_separating_space(config: Config) = config.wordSeparatingSpace
+    protected def is_in_list(config: Config, c: Char) = config.isInList(c)
 
     def location: Option[ParseLocation]
+
+    def getLastChar: Option[Char]
 
     def apply(config: Config, evt: ParseEvent): Transition = {
 //      println(s"in($this): $evt")
@@ -142,7 +162,9 @@ object LogicalLines {
           case ')' if use_parenthesis(config) => handle_close_parenthesis(config, m)
           case '[' if use_bracket(config) => handle_open_bracket(config, m)
           case ']' if use_bracket(config) => handle_close_bracket(config, m)
+          case '\n' if use_multiline(config) => handle_newline_multiline(config, m)
           case '\n' => handle_newline(config, m)
+          case '\r' if use_multiline(config) => handle_carrige_return_multiline(config, m)
           case '\r' => handle_carrige_return(config, m)
           case c => handle_character(config, m)
         }
@@ -278,6 +300,22 @@ object LogicalLines {
     protected def newline_State(config: Config, evt: CharEvent): LogicalLinesParseState =
       line_End_State(config, LineEndEvent(evt.location))
 
+    protected final def handle_newline_multiline(config: Config, evt: CharEvent): Transition =
+      handle_Newline_Multiline(config, evt)
+
+    protected def handle_Newline_Multiline(config: Config, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, newline_State_Multiline(config, evt))
+
+    protected def newline_State_Multiline(config: Config, evt: CharEvent): LogicalLinesParseState =
+      evt.next match {
+        case Some('\n') => line_End_State(config, LineEndEvent(evt.location))
+        case Some('\r') => line_End_State(config, LineEndEvent(evt.location))
+        case Some(c) if is_in_list(config, c) => line_End_State(config, LineEndEvent(evt.location))
+        case Some(c) if is_word_separating(config, getLastChar, c) => character_State(word_separating_space(config))
+        case Some(c) => this
+        case None => line_End_State(config, LineEndEvent(evt.location))
+      }
+
     protected final def handle_carrige_return(config: Config, evt: CharEvent): Transition =
       handle_Carrige_Return(config, evt)
 
@@ -291,6 +329,27 @@ object LogicalLines {
         )
         case _ => line_End_State(config, LineEndEvent(evt.location))
       }
+
+    protected final def handle_carrige_return_multiline(config: Config, evt: CharEvent): Transition =
+      handle_Carrige_Return_Multiline(config, evt)
+
+    protected def handle_Carrige_Return_Multiline(config: Config, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, carrige_Return_State_Mutiline(config, evt))
+
+    protected def carrige_Return_State_Mutiline(config: Config, evt: CharEvent): LogicalLinesParseState =
+      evt.next match {
+        case Some('\n') => SkipState(line_End_State(config, LineEndEvent(evt.location)))
+        case Some('\r') => line_End_State(config, LineEndEvent(evt.location))
+        case Some(c) if is_word_separating(config, getLastChar, c) => character_State(word_separating_space(config))
+        case Some(c) => this
+        case None => line_End_State(config, LineEndEvent(evt.location))
+      }
+      // evt.next match {
+      //   case Some('\n') => SkipState(
+      //     line_End_State(config, LineEndEvent(evt.location))
+      //   )
+      //   case _ => line_End_State(config, LineEndEvent(evt.location))
+      // }
 
     protected final def handle_character(config: Config, evt: CharEvent): Transition =
       handle_Character(config, evt)
@@ -321,6 +380,7 @@ object LogicalLines {
 
   case object InitState extends LogicalLinesParseState {
     val location = None
+    def getLastChar = None
     override protected def end_Result(config: Config) = ParseSuccess(LogicalLines.empty)
     override protected def line_End_State(config: Config, evt: LineEndEvent): LogicalLinesParseState =
       NormalState("", evt.location)
@@ -341,12 +401,14 @@ object LogicalLines {
 
   case object EndState extends LogicalLinesParseState {
     val location = None
+    def getLastChar = None
     override def apply(config: Config, evt: ParseEvent): Transition =
       (ParseMessageSequence.empty, ParseResult.empty, this)
   }
 
   case class SkipState(next: Transition) extends LogicalLinesParseState {
     val location = None
+    def getLastChar = None
     override def apply(config: Config, evt: ParseEvent): Transition = next
   }
   object SkipState {
@@ -360,6 +422,7 @@ object LogicalLines {
     location: Option[ParseLocation],
     result: LogicalLines
   ) extends LogicalLinesParseState {
+    def getLastChar = cs.lastOption
     override def addChild(config: Config, ps: Vector[Char]) = copy(cs = cs ++ ps)
     override def addChildEndTransition(config: Config, ps: Vector[Char]): Transition =
       copy(cs = cs ++ ps)(config, EndEvent)
@@ -381,9 +444,11 @@ object LogicalLines {
       NormalState(Vector.empty, Some(evt.location), result :+ cs.mkString)
     override protected def character_State(config: Config, evt: CharEvent) =
       if (location.isDefined)
-        copy(cs = cs :+ evt.c)
+        character_State(evt.c)
       else
         copy(cs = cs :+ evt.c, location = Some(evt.location))
+    override protected def character_State(c: Char): LogicalLinesParseState =
+      copy(cs = cs :+ c)
     override protected def double_Quote_State(config: Config, evt: CharEvent) = DoubleQuoteState(this, evt.location)
     override protected def single_Quote_State(config: Config, evt: CharEvent) = SingleQuoteState(this, evt.location)
     override protected def open_Angle_Bracket_State(config: Config, evt: CharEvent) = XmlOpenState(this, Some(evt.location))
@@ -408,6 +473,7 @@ object LogicalLines {
     text: Vector[Char],
     location: Option[ParseLocation]
   ) extends AwakeningLogicalLinesParseState {
+    def getLastChar = text.lastOption
     override def addChild(config: Config, ps: Vector[Char]) = copy(text = text ++ ps)
 
     override protected def open_Parenthesis_State(config: Config, evt: CharEvent) =
@@ -431,6 +497,7 @@ object LogicalLines {
     text: Vector[Char],
     location: Option[ParseLocation]
   ) extends AwakeningLogicalLinesParseState {
+    def getLastChar = text.lastOption
     override def addChild(config: Config, ps: Vector[Char]) = copy(text = text ++ ps)
 
     override protected def open_Brace_State(config: Config, evt: CharEvent) =
@@ -453,6 +520,7 @@ object LogicalLines {
     location: Option[ParseLocation],
     tag: Vector[Char] = Vector.empty
   ) extends AwakeningLogicalLinesParseState {
+    def getLastChar = tag.lastOption
     lazy val tagName = tag.takeWhile(_not_delimiterp).mkString
     lazy val tagString = s"<${tag.mkString}>"
 
@@ -493,6 +561,7 @@ object LogicalLines {
     location: Option[ParseLocation],
     tag: Vector[Char] = Vector.empty
   ) extends AwakeningLogicalLinesParseState {
+    def getLastChar = tag.lastOption
     lazy val tagName = tag.mkString
     lazy val tagString = s"</${tagName}>"
 
@@ -519,6 +588,7 @@ object LogicalLines {
     text: Vector[Char],
     location: Option[ParseLocation]
   ) extends AwakeningLogicalLinesParseState {
+    def getLastChar = text.lastOption
     lazy val textString = text.mkString
 
     override protected def end_Result(config: Config): ParseResult[LogicalLines] =
@@ -548,6 +618,7 @@ object LogicalLines {
     count: Int = 0,
     text: Vector[Char] = Vector.empty
   ) extends AwakeningLogicalLinesParseState {
+    def getLastChar = text.lastOption
     override protected def handle_End(config: Config): Transition = RAISE.notImplementedYetDefect(this, "handle_End") // TODO error
     override protected def character_State(c: Char) = copy(text = text :+ c, count = 0)
     override protected def open_Bracket_State(config: Config, evt: CharEvent) =
@@ -589,6 +660,9 @@ object LogicalLines {
     override protected def use_brace(config: Config) = false
     override protected def use_parenthesis(config: Config) = false
     override protected def use_bracket(config: Config) = false
+    override protected def use_multiline(config: Config) = false
+
+    def getLastChar = text.lastOption
 
     override protected def handle_End(config: Config): Transition =
       parent.addChildEndTransition(
@@ -614,8 +688,6 @@ object LogicalLines {
       DoubleQuoteState(parent, Some(location))
   }
 
-  
-
   case class SingleQuoteState(
     parent: LogicalLinesParseState,
     text: Vector[Char],
@@ -626,6 +698,9 @@ object LogicalLines {
     override protected def use_brace(config: Config) = false
     override protected def use_parenthesis(config: Config) = false
     override protected def use_bracket(config: Config) = false
+    override protected def use_multiline(config: Config) = false
+
+    def getLastChar = text.lastOption
 
     override protected def end_Result(config: Config): ParseResult[LogicalLines] =
       ParseResult.error("Unpredictable end in a single quote string.", "シングルクオートの文字列中で最後になりました。", location)

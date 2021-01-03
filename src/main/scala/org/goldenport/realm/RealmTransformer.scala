@@ -5,7 +5,7 @@ import org.goldenport.tree._
 
 /*
  * @since   Nov. 15, 2020
- * @version Nov. 15, 2020
+ * @version Jan.  1, 2021
  * @author  ASAMI, Tomoharu
  */
 trait RealmTransformer extends TreeTransformer[Realm.Data, Realm.Data] {
@@ -13,6 +13,10 @@ trait RealmTransformer extends TreeTransformer[Realm.Data, Realm.Data] {
 }
 
 object RealmTransformer {
+  trait Rule extends TreeTransformer.Rule[Realm.Data, Realm.Data] {
+    
+  }
+
   object Context {
     def default = TreeTransformer.Context.default[Realm.Data]
   }
