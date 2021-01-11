@@ -17,7 +17,7 @@ import org.goldenport.util.StringUtils
  *  version Jun. 30, 2019
  *  version Dec.  7, 2019
  *  version Jan. 31, 2020
- * @version Jan.  3, 2021
+ * @version Jan. 11, 2021
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -93,8 +93,8 @@ object LogicalLines {
     useSingleQuote: Boolean = false,
     useAngleBracket: Boolean = false, // XML
     useBrace: Boolean = false, // JSON
-    useParenthesis: Boolean = false, // S-Expression
-    useBracket: Boolean = false, // script
+    useParenthesis: Boolean = false, // S-Expression (Lisp)
+    useBracket: Boolean = false,
     useMultiline: Boolean = false, // SmartDox
     isLocation: Boolean = true
   ) extends ParseConfig {
@@ -110,8 +110,9 @@ object LogicalLines {
     val raw = Config()
     val script = Config(I18NContext.default, true, true, true, true, true, true)
     val lisp = script.copy(useSingleQuote = false)
-    val multiline = raw.copy(useMultiline = true)
-    val default = raw
+    val easytext = raw.copy(useMultiline = true)
+    val easyhtml = easytext.copy(useAngleBracket = true)
+    val default = script
   }
 
   trait LogicalLinesParseState extends ParseReaderWriterState[Config, LogicalLines] {
@@ -130,6 +131,7 @@ object LogicalLines {
     def location: Option[ParseLocation]
 
     def getLastChar: Option[Char]
+    def isEmpty: Boolean = getLastChar.isEmpty
 
     def apply(config: Config, evt: ParseEvent): Transition = {
 //      println(s"in($this): $evt")
@@ -307,6 +309,12 @@ object LogicalLines {
       (ParseMessageSequence.empty, ParseResult.empty, newline_State_Multiline(config, evt))
 
     protected def newline_State_Multiline(config: Config, evt: CharEvent): LogicalLinesParseState =
+      if (isEmpty)
+        line_End_State(config, LineEndEvent(evt.location))
+      else
+        _newline_state_multiline(config, evt)
+
+    private def _newline_state_multiline(config: Config, evt: CharEvent): LogicalLinesParseState =
       evt.next match {
         case Some('\n') => line_End_State(config, LineEndEvent(evt.location))
         case Some('\r') => line_End_State(config, LineEndEvent(evt.location))
@@ -476,6 +484,9 @@ object LogicalLines {
     def getLastChar = text.lastOption
     override def addChild(config: Config, ps: Vector[Char]) = copy(text = text ++ ps)
 
+    override protected def end_Result(config: Config): ParseResult[LogicalLines] =
+      ParseFailure(s"Parenthesis is not closed: ${text.mkString}", location)
+
     override protected def open_Parenthesis_State(config: Config, evt: CharEvent) =
       copy(count = count + 1, text = text :+ evt.c)
     override protected def close_Parenthesis_State(config: Config, evt: CharEvent) = {
@@ -500,6 +511,9 @@ object LogicalLines {
     def getLastChar = text.lastOption
     override def addChild(config: Config, ps: Vector[Char]) = copy(text = text ++ ps)
 
+    override protected def end_Result(config: Config): ParseResult[LogicalLines] =
+      ParseFailure(s"Json is not completed: ${text.mkString}", location)
+
     override protected def open_Brace_State(config: Config, evt: CharEvent) =
       copy(count = count + 1, text = text :+ evt.c)
     override protected def close_Brace_State(config: Config, evt: CharEvent) = {
@@ -523,6 +537,9 @@ object LogicalLines {
     def getLastChar = tag.lastOption
     lazy val tagName = tag.takeWhile(_not_delimiterp).mkString
     lazy val tagString = s"<${tag.mkString}>"
+
+    override protected def end_Result(config: Config): ParseResult[LogicalLines] =
+      ParseFailure(s"Xml is not completed: ${tag.mkString}", location)
 
     private def _not_delimiterp(p: Char) = !_delimiterp(p)
 
@@ -592,7 +609,7 @@ object LogicalLines {
     lazy val textString = text.mkString
 
     override protected def end_Result(config: Config): ParseResult[LogicalLines] =
-      RAISE.notImplementedYetDefect(this, textString)
+      ParseFailure(s"Xml is not completed: ${text.mkString}", location)
 
     override def addChild(config: Config, ps: Vector[Char]) = copy(text = text ++ ps)
 
@@ -619,7 +636,10 @@ object LogicalLines {
     text: Vector[Char] = Vector.empty
   ) extends AwakeningLogicalLinesParseState {
     def getLastChar = text.lastOption
-    override protected def handle_End(config: Config): Transition = RAISE.notImplementedYetDefect(this, "handle_End") // TODO error
+
+    override protected def end_Result(config: Config): ParseResult[LogicalLines] =
+      ParseFailure(s"Bracket is not closed: ${text.mkString}", location)
+
     override protected def character_State(c: Char) = copy(text = text :+ c, count = 0)
     override protected def open_Bracket_State(config: Config, evt: CharEvent) =
       if (text.isEmpty)

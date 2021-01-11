@@ -14,7 +14,7 @@ import org.goldenport.log.Loggable
  *  version Jun.  9, 2019
  *  version Sep.  8, 2019
  *  version Apr. 25, 2020
- * @version Jan.  3, 2021
+ * @version Jan. 11, 2021
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -111,7 +111,8 @@ object LogicalBlocks {
     val raw = Config(false, true, false, LogicalLines.Config.raw, verbatimDefault)
     val debug = Config(true, true, false, LogicalLines.Config.raw, verbatimDefault)
     val noLocation = Config(false, false, false, LogicalLines.Config.raw, verbatimDefault)
-    val multiline = Config(false, true, false, LogicalLines.Config.multiline, verbatimEmpty)
+    val easytext = Config(false, true, false, LogicalLines.Config.easytext, verbatimEmpty)
+    val easyhtml = easytext.copy(linesConfig = LogicalLines.Config.easyhtml)
     // script
     val expression = Config(false, false, true, LogicalLines.Config.script, verbatimEmpty)
     val script = Config(false, true, true, LogicalLines.Config.script, verbatimEmpty)
