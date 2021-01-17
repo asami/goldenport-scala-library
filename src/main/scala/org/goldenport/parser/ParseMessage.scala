@@ -11,7 +11,7 @@ import org.goldenport.cli.Environment
  *  version Oct. 14, 2018
  *  version Feb.  2, 2019
  *  version Sep.  6, 2020
- * @version Jan. 11, 2021
+ * @version Jan. 16, 2021
  * @author  ASAMI, Tomoharu
  */
 trait ParseMessage {
@@ -42,6 +42,16 @@ case class ErrorMessage(
   def complementLocation(file: File): ErrorMessage = complementLocation(file.toURI)
 }
 object ErrorMessage {
+  def apply(location: ParseLocation, msg: String): ErrorMessage = ErrorMessage(
+    I18NString(msg),
+    Some(location)
+  )
+
+  def apply(location: Option[ParseLocation], msg: String): ErrorMessage = ErrorMessage(
+    I18NString(msg),
+    location
+  )
+
   def apply(msg: String): ErrorMessage = ErrorMessage(
     I18NString(msg),
     None
@@ -75,6 +85,16 @@ case class WarningMessage(
   def complementLocation(file: File): WarningMessage = complementLocation(file.toURI)
 }
 object WarningMessage {
+  def apply(location: ParseLocation, msg: String): WarningMessage = WarningMessage(
+    I18NString(msg),
+    Some(location)
+  )
+
+  def apply(location: Option[ParseLocation], msg: String): WarningMessage = WarningMessage(
+    I18NString(msg),
+    location
+  )
+
   def apply(msg: String): WarningMessage = WarningMessage(
     I18NString(msg),
     None

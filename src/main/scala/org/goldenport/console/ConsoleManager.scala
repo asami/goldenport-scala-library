@@ -8,7 +8,7 @@ import org.goldenport.cli.Environment
  * Derived from ConsoleMessager since Aug. 27, 2005
  * 
  * @since   Jan. 10, 2021
- * @version Jan. 10, 2021
+ * @version Jan. 16, 2021
  * @author  ASAMI, Tomoharu
  */
 class ConsoleManager(
@@ -35,7 +35,8 @@ class ConsoleManager(
   def prompt(p: String): Unit = _device.prompt(_normalize_prompt(p))
 
   def message(p: Message): Unit = p match {
-    case StandardMessage(msg) => println(msg)
+    case PlainMessage(msg) => println(msg)
+    case DecoratedMessage(msg, deco) => println(deco(msg))
     case ErrorMessage(msg) => errorln(msg)
     case WarningMessage(msg) => warningln(msg)
     case Prompt(msg) => prompt(msg)

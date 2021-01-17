@@ -18,7 +18,8 @@ import org.goldenport.util.DateTimeUtils
  *  version Sep. 24, 2019
  *  version Oct. 27, 2019
  *  version Jan. 21, 2020
- * @version Feb. 29, 2020
+ *  version Feb. 29, 2020
+ * @version Jan. 17, 2021
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -32,20 +33,8 @@ class LogicalTokensSpec extends WordSpec with Matchers with GivenWhenThen {
           NumberToken(1, ParseLocation.start)
         ))
       }
-      "url" in {
-        val s = "http://www.yahoo.com"
-        val r = LogicalTokens.parse(s)
-        r should be(LogicalTokens(
-          UrlToken("http://www.yahoo.com", ParseLocation.start)
-        ))
-      }
-      "urn" in {
-        val s = "URN:ISBN:4-8399-0454-5"
-        val r = LogicalTokens.parse(s)
-        r should be(LogicalTokens(
-          UrnToken("URN:ISBN:4-8399-0454-5", ParseLocation.start)
-        ))
-      }
+    }
+    "datetime" which {
       "datetime" in {
         val s = "2018-09-09T10:11:12+09:00"
         val r = LogicalTokens.parse(s)
@@ -72,6 +61,22 @@ class LogicalTokensSpec extends WordSpec with Matchers with GivenWhenThen {
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
           LocalTimeToken(LocalTime.parse(s), ParseLocation.start)
+        ))
+      }
+    }
+    "value" which {
+      "url" in {
+        val s = "http://www.yahoo.com"
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          UrlToken("http://www.yahoo.com", ParseLocation.start)
+        ))
+      }
+      "urn" in {
+        val s = "URN:ISBN:4-8399-0454-5"
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          UrnToken("URN:ISBN:4-8399-0454-5", ParseLocation.start)
         ))
       }
     }
@@ -400,6 +405,32 @@ c d)"""
           AtomToken("d", ParseLocation(2, 5)),
           DelimiterToken(")", ParseLocation(2, 6))
         ))
+      }
+    }
+  }
+  "comment" should {
+    "c style comment" which {
+      "typical" in {
+        val s = "/* abc */"
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(CommentToken(" abc ", ParseLocation.start)))
+      }
+      "no space" in {
+        val s = "/*abc*/"
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(PathToken("/*abc*/", ParseLocation.start)))
+      }
+    }
+    "c++ style comment" which {
+      "typical" in {
+        val s = "// abc"
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(CommentToken(" abc", ParseLocation.start)))
+      }
+      "no space" in {
+        val s = "//abc"
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(PathToken("//abc", ParseLocation.start)))
       }
     }
   }

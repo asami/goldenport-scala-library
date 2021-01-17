@@ -26,7 +26,8 @@ import LogicalTokens.Config
  *  version Jan. 18, 2020
  *  version Feb. 29, 2020
  *  version Sep.  6, 2020
- * @version Oct. 12, 2020
+ *  version Oct. 12, 2020
+ * @version Jan. 17, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -113,6 +114,20 @@ object DelimiterToken {
 
   def apply(text: String, location: ParseLocation): DelimiterToken =
     DelimiterToken(text, Some(location))
+}
+
+case class CommentToken(
+  comment: String,
+  location: Option[ParseLocation]
+) extends LogicalToken {
+  def raw = comment
+  def value = comment
+  override def print = comment
+  def clearLocation: LogicalToken = copy(location = None)
+}
+object CommentToken {
+  def apply(text: String, location: ParseLocation): CommentToken =
+    CommentToken(text, Some(location))
 }
 
 case class SingleQuoteToken(

@@ -12,7 +12,7 @@ import org.scalatest._
  *  version Apr. 13, 2019
  *  version Nov. 26, 2019
  *  version Jan. 20, 2020
- * @version Jan.  9, 2021
+ * @version Jan. 17, 2021
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -73,13 +73,13 @@ b" c"""))
         r should be(LogicalLines.start("\"\"\"a \"x \"\"\""))
       }
     }
-    "lisp" should {
+    "lisp" which {
       val conf = LogicalLines.Config.lisp
-      def parse(p: String) = LogicalLines.parse(config, p)
+      def parselisp(p: String) = LogicalLines.parse(conf, p)
 
       "single quote" in {
         val s = """'a"""
-        val r = LogicalLines.parse(s)
+        val r = parselisp(s)
         r should be(LogicalLines.start("""'a"""))
       }
     }

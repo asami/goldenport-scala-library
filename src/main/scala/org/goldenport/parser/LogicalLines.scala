@@ -17,7 +17,7 @@ import org.goldenport.util.StringUtils
  *  version Jun. 30, 2019
  *  version Dec.  7, 2019
  *  version Jan. 31, 2020
- * @version Jan. 11, 2021
+ * @version Jan. 16, 2021
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -146,7 +146,7 @@ object LogicalLines {
       config: Config,
       msgs: ParseMessageSequence,
       ps: Vector[Char]
-    ): Transition = addChildEndTransition(config, ps)
+    ): Transition = RAISE.noReachDefect(s"addChildEndTransition(${getClass.getSimpleName})")
 
     protected final def handle_event(config: Config, evt: ParseEvent): Transition =
       evt match {
@@ -484,8 +484,20 @@ object LogicalLines {
     def getLastChar = text.lastOption
     override def addChild(config: Config, ps: Vector[Char]) = copy(text = text ++ ps)
 
+    override def addChildEndTransition(
+      config: Config,
+      msgs: ParseMessageSequence,
+      ps: Vector[Char]
+    ): Transition = {
+      val s = (text ++ ps).mkString
+      (msgs, _end_result(s), end_State(config))
+    }
+
     override protected def end_Result(config: Config): ParseResult[LogicalLines] =
-      ParseFailure(s"Parenthesis is not closed: ${text.mkString}", location)
+      _end_result(text.mkString)
+
+    private def _end_result(p: String): ParseResult[LogicalLines] =
+      ParseFailure(s"Parenthesis is not closed: ${p}", location)
 
     override protected def open_Parenthesis_State(config: Config, evt: CharEvent) =
       copy(count = count + 1, text = text :+ evt.c)
@@ -684,12 +696,14 @@ object LogicalLines {
 
     def getLastChar = text.lastOption
 
-    override protected def handle_End(config: Config): Transition =
+    override protected def handle_End(config: Config): Transition = {
+      val cs = '"' +: text :+ '"'
       parent.addChildEndTransition(
         config,
-        ParseMessageSequence.warning("In '\"', reach to unexpected end."),
-        '"' +: text :+ '"'
+        ParseMessageSequence.warning(location, s"""In '"', reach to unexpected end: ${cs.mkString}"""),
+        cs
       )
+    }
     override protected def character_State(c: Char) = copy(text = text :+ c)
     override protected def double_Quote_State(config: Config, evt: CharEvent) =
       if (text.isEmpty && isRaw == false && evt.c == '"' && evt.next == Some('"')) {

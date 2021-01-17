@@ -15,7 +15,8 @@ import org.goldenport.RAISE
  *  version Feb. 16, 2019
  *  version May.  6, 2019
  *  version Sep. 22, 2019
- * @version Nov. 29, 2020
+ *  version Nov. 29, 2020
+ * @version Jan. 16, 2021
  * @author  ASAMI, Tomoharu
  */
 trait ParseReaderWriterState[C <: ParseConfig, AST] {
@@ -71,8 +72,11 @@ case class ParseReaderWriterStateClass[C <: ParseConfig, AST](
           if (x == null)
             RAISE.noReachDefect(s"ParseReaderWriterState#_fsm[$evt]: $r")
           else
-            Process.emit(x) fby _fsm(newstate)
-        case ParseFailure(errs, warns) => throw ParseSyntaxErrorException(errs, warns)
+            Process.emit(x) fby _fsm(newstate) // TODO warns
+        case ParseFailure(es, ws) =>
+          val errs = es ++ msg.errors
+          val warns = ws ++ msg.warnings
+          throw ParseSyntaxErrorException(errs, warns)
       }
     }
 
