@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "1.2.76"
+version := "1.2.77"
 
 scalaVersion := "2.10.3"
 // crossScalaVersions := Seq("2.9.2", "2.9.1")
@@ -13,7 +13,8 @@ scalacOptions += "-unchecked"
 
 scalacOptions += "-feature"
 
-resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
+// scalaz-stream
+// resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
 
 // resolvers += "Asami Maven Repository" at "http://www.asamioffice.com/maven"
 
