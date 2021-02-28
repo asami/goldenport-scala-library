@@ -11,7 +11,8 @@ import org.goldenport.util.VectorUtils
  *  version Dec. 31, 2018
  *  version Apr. 21, 2019
  *  version Sep. 22, 2019
- * @version Jan. 31, 2020
+ *  version Jan. 31, 2020
+ * @version Jan. 22, 2021
  * @author  ASAMI, Tomoharu
  */
 trait ParseEvent {
@@ -205,7 +206,21 @@ object CharEvent {
 
   def makeWithoutLocation(p: String): Vector[CharEvent] = makeWithoutLocation(p.toVector)
 
-  def makeWithoutLocation(ps: Seq[Char]): Vector[CharEvent] = ps.map(apply).toVector
+  def makeWithoutLocation(ps: Seq[Char]): Vector[CharEvent] = {
+    case class Z(
+      r: Vector[CharEvent] = Vector.empty
+    ) {
+      def +(rhs: Seq[Char]) = {
+        val c = rhs(0)
+        val nextc = rhs.lift(1)
+        val next2c = rhs.lift(2)
+        val next3c = rhs.lift(3)
+        val evt = CharEvent(c, nextc, next2c, next3c, ParseLocation.empty)
+        Z(r :+ evt)
+      }
+    }
+    VectorUtils.sliding4(ps)./:(Z())(_+_).r
+  }
 }
 
 case class LogicalLineEvent(

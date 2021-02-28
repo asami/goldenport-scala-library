@@ -8,7 +8,8 @@ import org.goldenport.i18n.I18NElement
  *  version Oct. 27, 2018
  *  version Jan. 20, 2019
  *  version Feb.  9, 2019
- * @version May. 19, 2019
+ *  version May. 19, 2019
+ * @version Feb. 15, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalBlock {
@@ -21,20 +22,26 @@ object LogicalBlock {
   val empty = LogicalParagraph(LogicalLines.empty)
 
   trait VerbatimMarkClass {
+    def isMatch(p: String): Boolean
     def get(p: LogicalLine): Option[VerbatimMark]
+    def get(p: String): Option[VerbatimMark]
   }
   trait VerbatimMark {
+    def isDone(p: String): Boolean
     def isDone(p: LogicalLine): Boolean
   }
   object RawBackquoteMarkClass extends VerbatimMarkClass {
-    def isMatch(p: LogicalLine) = p.text == "```" || p.text.startsWith("``` ")
+    def isMatch(p: String): Boolean = p == "```" || p.startsWith("``` ")
+    def isMatch(p: LogicalLine): Boolean = isMatch(p.text)
     def get(p: LogicalLine): Option[VerbatimMark] =
-      if (isMatch(p))
+      if (isMatch(p.text))
         Some(RawBackquoteMark(p))
       else
         None
+    def get(p: String): Option[VerbatimMark] = get(LogicalLine(p))
   }
   case class RawBackquoteMark(line: LogicalLine) extends VerbatimMark {
+    def isDone(p: String): Boolean = isDone(LogicalLine(p))
     def isDone(p: LogicalLine): Boolean = RawBackquoteMarkClass.isMatch(p)
   }
 
@@ -63,6 +70,8 @@ case class LogicalSection(
   location: Option[ParseLocation] = None
 ) extends LogicalBlock {
   def isEmpty = false
+  def keyForModel: String = title.keyForModel
+  def nameForModel: String = title.nameForModel
 
   def lines: LogicalLines = blocks.lines
 

@@ -14,7 +14,8 @@ import org.goldenport.xml.XmlUtils.{makeString, parseNodeSeq}
  *  version Jan.  5, 2018
  *  version Jul.  6, 2019
  *  version Sep. 23, 2019
- * @version Apr. 17, 2020
+ *  version Apr. 17, 2020
+ * @version Feb. 15, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait I18NElement {
@@ -23,7 +24,8 @@ sealed trait I18NElement {
   def toI18NString: I18NString
   def toString(locale: Locale): String = toI18NString.as(locale)
   def toJsonString: String
-  def key: String = toI18NString.key
+  def keyForModel: String = toI18NString.keyForModel
+  def nameForModel: String = toI18NString.nameForModel
 }
 
 object I18NElement {

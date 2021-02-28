@@ -14,7 +14,8 @@ import org.goldenport.exception.SyntaxErrorFaultException
  *  version Jul. 21, 2019
  *  version Sep. 29, 2020
  *  version Oct. 14, 2020
- * @version Jan. 10, 2021
+ *  version Jan. 30, 2021
+ * @version Feb.  2, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait ParseResult[+AST] {
@@ -94,6 +95,8 @@ object ParseFailure {
     ParseFailure(Vector(ErrorMessage(en, ja, location)), Vector.empty)
 
   def apply[AST](e: Throwable): ParseFailure[AST] = ParseFailure(Vector(ErrorMessage(e)), Vector.empty)
+
+  def create[AST](msgs: NonEmptyList[String]): ParseFailure[AST] = ParseFailure(msgs.toList.toVector.map(ErrorMessage.apply), Vector.empty)
 }
 
 object ParseResult {
@@ -105,7 +108,11 @@ object ParseResult {
         case mm: ParseFailure[_] => mm.append(m.errors, m.warnings).asInstanceOf[ParseFailure[B]]
         case mm: EmptyParseResult[_] => m.asInstanceOf[EmptyParseResult[B]]
       }
-      case m: EmptyParseResult[_] => m.asInstanceOf[EmptyParseResult[B]]
+      case m: EmptyParseResult[_] => fa match {
+        case mm: ParseSuccess[_] => mm.asInstanceOf[ParseSuccess[B]]
+        case mm: ParseFailure[_] => mm.asInstanceOf[ParseFailure[B]]
+        case mm: EmptyParseResult[_] => mm.asInstanceOf[EmptyParseResult[B]]
+      }
     }
     def point[A](a: => A): ParseResult[A] = ParseSuccess(a)
   }
@@ -135,6 +142,17 @@ object ParseResult {
     case NonFatal(e) => throw e
   }
 
+  def create[AST](p: ValidationNel[String, AST]): ParseResult[AST] = p match {
+    case Success(a) => ParseResult.success(a)
+    case Failure(e) => ParseResult.error(e)
+  }
+
+  def parse[AST](p: => ParseResult[AST]): ParseResult[AST] = try {
+    p
+  } catch {
+    case NonFatal(e) => ParseFailure(e)
+  }
+
   def empty[AST] = EmptyParseResult[AST]()
 
   def success[AST](p: AST): ParseSuccess[AST] = ParseSuccess(p)
@@ -145,6 +163,8 @@ object ParseResult {
     ParseFailure(en, ja, location)
 
   def error[AST](e: Throwable): ParseFailure[AST] = ParseFailure(e)
+
+  def error[AST](msgs: NonEmptyList[String]): ParseFailure[AST] = ParseFailure.create[AST](msgs)
 
   def orMissing[AST](msg: String, p: Option[AST]): ParseResult[AST] =
     p.map(success).getOrElse(error(msg))

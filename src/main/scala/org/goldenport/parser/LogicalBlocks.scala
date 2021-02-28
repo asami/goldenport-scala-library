@@ -14,7 +14,8 @@ import org.goldenport.log.Loggable
  *  version Jun.  9, 2019
  *  version Sep.  8, 2019
  *  version Apr. 25, 2020
- * @version Jan. 11, 2021
+ *  version Jan. 11, 2021
+ * @version Feb. 13, 2021
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -94,7 +95,8 @@ object LogicalBlocks {
       verbatims.toStream.flatMap(_.get(p)).headOption
 
     def addVerbatims(p: Seq[LogicalBlock.VerbatimMarkClass]): Config = copy(
-      verbatims = verbatims ++ p
+      verbatims = verbatims ++ p,
+      linesConfig = linesConfig.addVerbatims(p)
     )
 
     def forLisp: Config = copy(linesConfig = LogicalLines.Config.lisp)
@@ -105,13 +107,13 @@ object LogicalBlocks {
   }
   object Config {
     val verbatimDefault = Vector(LogicalBlock.RawBackquoteMarkClass)
-    val verbatimEmpty = Vector(LogicalBlock.RawBackquoteMarkClass)
+    val verbatimEmpty = Vector.empty
 
     // document
-    val raw = Config(false, true, false, LogicalLines.Config.raw, verbatimDefault)
-    val debug = Config(true, true, false, LogicalLines.Config.raw, verbatimDefault)
-    val noLocation = Config(false, false, false, LogicalLines.Config.raw, verbatimDefault)
-    val easytext = Config(false, true, false, LogicalLines.Config.easytext, verbatimEmpty)
+    val raw = Config(false, true, false, LogicalLines.Config.raw, verbatimEmpty)
+    val debug = Config(true, true, false, LogicalLines.Config.raw, verbatimEmpty)
+    val noLocation = Config(false, false, false, LogicalLines.Config.raw, verbatimEmpty)
+    val easytext = Config(false, true, false, LogicalLines.Config.easytext, verbatimDefault)
     val easyhtml = easytext.copy(linesConfig = LogicalLines.Config.easyhtml)
     // script
     val expression = Config(false, false, true, LogicalLines.Config.script, verbatimEmpty)
@@ -274,24 +276,28 @@ object LogicalBlocks {
     blocks: LogicalBlocks,
     location: Option[ParseLocation]
   ) extends LogicalBlocksParseState {
-    def result = blocks
+    def result = {
+      val x = if (cs.isEmpty) LogicalBlocks.empty else LogicalBlocks(LogicalBlock(cs))
+      blocks + x
+    }
 
     override def result(config: Config, p: LogicalBlock): LogicalBlocks =
-      parent.result(config, blocks :+ p)
+      parent.result(config, result :+ p)
 
     override def result(config: Config, p: LogicalBlocks): LogicalBlocks =
-      parent.result(config, blocks + p)
+      parent.result(config, result + p)
 
     override def addChildState(config: Config, p: LogicalBlocks): LogicalBlocksParseState =
-      RootState(blocks + LogicalBlocks(LogicalBlock(cs)) + p)
+      copy(blocks = result + p, cs = Vector.empty)
 
-    override protected def end_Result(config: Config): ParseResult[LogicalBlocks] =
+    override protected def end_Result(config: Config): ParseResult[LogicalBlocks] = {
       ParseSuccess(
         parent.addChildState(
           config,
-          blocks + LogicalBlocks(LogicalBlock(cs))
+          result
         ).result
       )
+    }
 
     override def line_State(config: Config, evt: LogicalLineEvent) =
       evt.getSectionTitle.map { title =>
@@ -437,6 +443,9 @@ object LogicalBlocks {
     lines: Vector[LogicalLine] = Vector.empty
   ) extends LogicalBlocksParseState {
     def result = LogicalBlocks(LogicalVerbatim(mark, LogicalLines(lines), location))
+
+    override def end_Result(config: Config): ParseResult[LogicalBlocks] =
+      ParseSuccess(result)
 
     override def line_State(config: Config, evt: LogicalLineEvent) =
       if (mark.isDone(evt.line))

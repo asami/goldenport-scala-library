@@ -5,13 +5,15 @@ import scala.collection.mutable
 
 /*
  * @since   Nov. 13, 2017
- * @version Nov. 14, 2017
+ * @version Feb. 25, 2021
  * @author  ASAMI, Tomoharu
  */
 class TraceContext() {
   private val _root = new Root()
   private val _trace = mutable.ArrayBuffer.empty[Trace]
   private var _stack: List[Invoke] = Nil
+
+  def toHandle: TraceHandle = TraceHandle(this)
 
   def execute[T](label: String, enter: String)(body: => Result[T]): T = {
     val t = new Invoke(label, enter)
@@ -36,6 +38,18 @@ class TraceContext() {
       _trace.dropRight(1)
       None
     }
+  }
+
+  def enter(label: String, input: String): Unit = {
+    val t = new Invoke(label, input)
+    trace(t)
+    _stack = t :: _stack
+  }
+
+  def leave(label: String, output: String): Unit = {
+    val t = _stack.head.asInstanceOf[Invoke]
+    t.leave(output)
+    _stack = _stack.tail
   }
 
   def log(p: String): Unit = trace(Log(p))
@@ -65,6 +79,8 @@ class TraceContext() {
 }
 
 object TraceContext {
+  val empty = new TraceContext()
+  def create(): TraceContext = new TraceContext()
 }
 
 case class Result[T](r: T, leaveMessage: String) {

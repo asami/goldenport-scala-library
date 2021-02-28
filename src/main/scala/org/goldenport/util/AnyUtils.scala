@@ -28,7 +28,8 @@ import org.goldenport.extension.Showable
  *  version Sep. 23, 2019
  *  version Oct.  8, 2019
  *  version Nov. 28, 2019
- * @version Jan. 18, 2020
+ *  version Jan. 18, 2020
+ * @version Jan. 23, 2021
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -40,6 +41,7 @@ object AnyUtils {
       case m: Seq[_] => m.map(toString(_)).mkString(",")
       case m: Array[_] => m.map(toString(_)).mkString(",")
       case m: Showable => m.print
+      case m: MonthDay => f"${m.getMonthOfYear}%02d-${m.getDayOfMonth}%02d"
       case _ => x.toString
     }
   }
@@ -166,6 +168,7 @@ object AnyUtils {
     case m: Long => spire.math.Number(m)
     case m: Float => spire.math.Number(m)
     case m: Double => spire.math.Number(m)
+    case m: Number => spire.math.Number(toBigDecimal(m))
     case m: String => spire.math.Number(m)
   }
   def toTimestamp(x: Any): Timestamp = {

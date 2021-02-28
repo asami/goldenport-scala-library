@@ -1,12 +1,16 @@
 package org.goldenport.recorder
 
+import java.io.File
+
 /*
  * @since   Mar.  3, 2020
- * @version Mar.  3, 2020
+ * @version Feb.  8, 2021
  * @author  ASAMI, Tomoharu
  */
 trait ForwardRecorder extends Recorder {
   protected def forward_Recorder: Recorder
+
+  def setReportFile(p: File): Unit = forward_Recorder.setReportFile(p)
 
   /**
    * message

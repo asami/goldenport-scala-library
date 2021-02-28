@@ -3,6 +3,7 @@ package org.goldenport.parser
 import scalaz._, Scalaz._
 import scala.util.control.NonFatal
 import org.goldenport.exception.RAISE
+import org.goldenport.context.DateTimeContext
 
 /*
  * @since   Aug. 28, 2018
@@ -20,7 +21,7 @@ import org.goldenport.exception.RAISE
  *  version Jan. 30, 2020
  *  version Feb. 29, 2020
  *  version Mar.  1, 2020
- * @version Jan. 17, 2021
+ * @version Jan. 30, 2021
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
@@ -65,8 +66,10 @@ object LogicalTokens {
 
   def parse(p: String): LogicalTokens = parse(Config.default, p)
 
-  def parse(config: Config, p: String): LogicalTokens = {
-    val parser = ParseReaderWriterStateClass[Config, LogicalTokens](config, NormalState.init)
+  def parse(config: Config, p: String): LogicalTokens = parse(Context.create(config), p)
+
+  def parse(context: Context, p: String): LogicalTokens = {
+    val parser = ParseReaderWriterStateClass[Context, LogicalTokens](context, NormalState.init)
     val (messages, result, state) = parser.apply(p)
     result match {
       case ParseSuccess(tokens, _) => tokens.concatenate
@@ -85,12 +88,12 @@ object LogicalTokens {
   }
 
   trait SimpleTokenizer extends Tokenizer {
-    def accept(config: Config, p: String, location: ParseLocation): Option[LogicalTokens] = accept_Token(config, p, location).map(LogicalTokens(_))
-    protected def accept_Token(config: Config, p: String, location: ParseLocation): Option[LogicalToken] = None
+    def accept(context: Context, p: String, location: ParseLocation): Option[LogicalTokens] = accept_Token(context, p, location).map(LogicalTokens(_))
+    protected def accept_Token(context: Context, p: String, location: ParseLocation): Option[LogicalToken] = None
   }
 
   trait ComplexTokenizer extends Tokenizer {
-    def accept(config: Config, parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState]
+    def accept(context: Context, parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState]
   }
 
   case class Config(
@@ -119,10 +122,10 @@ object LogicalTokens {
 
     def isCppComment(evt: CharEvent): Boolean = evt.c == '/' && evt.next == Some('/') && _first_char_for_comment(evt.next2)
 
-    def handle(parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState] =
-      _complex_tokenizers.flatMap(_.accept(this, parent, evt)).headOption
+    def handle(context: Context, parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState] =
+      _complex_tokenizers.flatMap(_.accept(context, parent, evt)).headOption
 
-    def getTokens(config: Config, p: String, l: ParseLocation): Option[LogicalTokens] = _simple_tokenizers.flatMap(_.accept(config, p, l)).headOption
+    def getTokens(context: Context, p: String, l: ParseLocation): Option[LogicalTokens] = _simple_tokenizers.flatMap(_.accept(context, p, l)).headOption
 
     private def _first_char_for_comment(p: Option[Char]): Boolean =
       p.fold(true)(spaces.contains)
@@ -137,9 +140,10 @@ object LogicalTokens {
       true,
       Vector(
         NumberToken,
-        LocalDateToken, LocalDateTimeToken, LocalTimeToken, DateTimeToken, MonthDayToken,
+        ComplexToken, RationalToken,
         IntervalToken, RangeToken,
-        DateTimeIntervalToken,
+        LocalDateToken, LocalDateTimeToken, LocalTimeToken, DateTimeToken, MonthDayToken,
+        DateTimeIntervalToken, LocalDateTimeIntervalToken,
         LxsvToken, XsvToken,
         UrlToken, UrnToken, UriToken,
         PathToken, ExpressionToken
@@ -178,7 +182,28 @@ object LogicalTokens {
     )
   }
 
-  trait LogicalTokensParseState extends ParseReaderWriterState[Config, LogicalTokens] {
+  case class Context(
+    config: Config,
+    dateTimeContext: DateTimeContext
+  ) extends ForwardParseConfig {
+    def useSingleQuoteToken: Boolean = config.useSingleQuoteToken
+    def isDebug = config.isDebug
+    def isSpace(c: Char): Boolean = config.isSpace(c)
+    def isDelimiter(c: Char): Boolean = config.isDelimiter(c)
+    def isComment(evt: CharEvent): Boolean = config.isComment(evt)
+    def isCComment(evt: CharEvent): Boolean = config.isCComment(evt)
+    def isCppComment(evt: CharEvent): Boolean = config.isCppComment(evt)
+    def handle(context: Context, parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState] =
+      config.handle(context, parent, evt)
+    def getTokens(context: Context, p: String, l: ParseLocation): Option[LogicalTokens] =
+      config.getTokens(context, p, l)
+  }
+  object Context {
+    def create(): Context = create(Config.default)
+    def create(config: Config): Context = Context(config, DateTimeContext.now)
+  }
+
+  trait LogicalTokensParseState extends ParseReaderWriterState[Context, LogicalTokens] {
     protected def use_Tokenizer = true
     protected def use_Delimiter = true
     protected def use_Double_Quote = true
@@ -187,52 +212,52 @@ object LogicalTokens {
     protected def use_Dollar = true
     protected def use_Comment = true
 
-    def apply(config: Config, evt: ParseEvent): Transition = {
-      if (config.isDebug)
+    def apply(context: Context, evt: ParseEvent): Transition = {
+      if (context.isDebug)
         println(s"IN ($this): $evt")
-      val r = handle_event(config, evt)
-      if (config.isDebug)
+      val r = handle_event(context, evt)
+      if (context.isDebug)
         println(s"OUT ($this): $r")
       r
     }
 
-    def addChildState(config: Config, p: Vector[Char]): LogicalTokensParseState =
+    def addChildState(context: Context, p: Vector[Char]): LogicalTokensParseState =
       RAISE.noReachDefect(s"addChildState(${getClass.getSimpleName})")
 
-    def addChildState(config: Config, p: LogicalToken): LogicalTokensParseState =
-      addChildState(config, LogicalTokens(p))
+    def addChildState(context: Context, p: LogicalToken): LogicalTokensParseState =
+      addChildState(context, LogicalTokens(p))
 
-    def addChildState(config: Config, p: LogicalTokens): LogicalTokensParseState =
+    def addChildState(context: Context, p: LogicalTokens): LogicalTokensParseState =
       RAISE.noReachDefect(s"addChildState(${getClass.getSimpleName})")
 
-    def addChildTransition(config: Config, p: LogicalTokens): Transition =
+    def addChildTransition(context: Context, p: LogicalTokens): Transition =
       RAISE.noReachDefect(s"addChildTransition(${getClass.getSimpleName})")
 
-    def addChildTransition(config: Config, p: LogicalToken, evt: ParseEvent): Transition =
+    def addChildTransition(context: Context, p: LogicalToken, evt: ParseEvent): Transition =
       RAISE.noReachDefect(s"addChildTransition(${getClass.getSimpleName})")
 
-    def addChildEndTransition(config: Config, p: LogicalToken): Transition = RAISE.noReachDefect(s"addChildEndTransition(${getClass.getSimpleName})")
+    def addChildEndTransition(context: Context, p: LogicalToken): Transition = RAISE.noReachDefect(s"addChildEndTransition(${getClass.getSimpleName})")
 
-    def addChildEndTransition(config: Config, p: LogicalTokens): Transition = RAISE.noReachDefect(s"addChildEndTransition(${getClass.getSimpleName})")
+    def addChildEndTransition(context: Context, p: LogicalTokens): Transition = RAISE.noReachDefect(s"addChildEndTransition(${getClass.getSimpleName})")
 
-    protected final def handle_event(config: Config, evt: ParseEvent): Transition =
+    protected final def handle_event(context: Context, evt: ParseEvent): Transition =
       evt match {
-        case StartEvent => handle_start(config)
-        case EndEvent => handle_end(config)
-        case m: LineEndEvent => handle_line_end(config, m)
-        case m: CharEvent => handle_tokenizer(config, m) getOrElse {
+        case StartEvent => handle_start(context)
+        case EndEvent => handle_end(context)
+        case m: LineEndEvent => handle_line_end(context, m)
+        case m: CharEvent => handle_tokenizer(context, m) getOrElse {
           m.c match {
-            case '"' if use_Double_Quote => handle_double_quote(config, m)
-            case '\'' if use_Single_Quote => handle_single_quote(config, m)
-            case '[' if use_Bracket => handle_open_bracket(config, m)
-            case ']' if use_Bracket => handle_close_bracket(config, m)
-            case '$' if use_Dollar => handle_dollar(config, m)
-            case '/' if use_Comment && config.isCComment(m) => handle_c_comment(config, m)
-            case '/' if use_Comment && config.isCppComment(m) => handle_cpp_comment(config, m)
-            case c if config.isSpace(c) => handle_space(config, m)
-            case c if use_Delimiter && config.isDelimiter(c) => handle_delimiter(config, m)
-            case c if use_Comment && config.isComment(m) => handle_comment(config, m) // TODO handle not " ;" (e.g. "id:1;name:taro")
-            case _ => handle_character(config, m)
+            case '"' if use_Double_Quote => handle_double_quote(context, m)
+            case '\'' if use_Single_Quote => handle_single_quote(context, m)
+            case '[' if use_Bracket => handle_open_bracket(context, m)
+            case ']' if use_Bracket => handle_close_bracket(context, m)
+            case '$' if use_Dollar => handle_dollar(context, m)
+            case '/' if use_Comment && context.isCComment(m) => handle_c_comment(context, m)
+            case '/' if use_Comment && context.isCppComment(m) => handle_cpp_comment(context, m)
+            case c if context.isSpace(c) => handle_space(context, m)
+            case c if use_Delimiter && context.isDelimiter(c) => handle_delimiter(context, m)
+            case c if use_Comment && context.isComment(m) => handle_comment(context, m) // TODO handle not " ;" (e.g. "id:1;name:taro")
+            case _ => handle_character(context, m)
           }
         }
         // case m: CharEvent => m.c match {
@@ -250,151 +275,151 @@ object LogicalTokens {
         // }
       }
 
-    protected final def handle_tokenizer(config: Config, evt: CharEvent): Option[Transition] =
+    protected final def handle_tokenizer(context: Context, evt: CharEvent): Option[Transition] =
       if (use_Tokenizer)
-        config.handle(this, evt).map(x =>
+        context.handle(context, this, evt).map(x =>
           // (ParseMessageSequence.empty, end_Result(config), x)
           (ParseMessageSequence.empty, ParseResult.empty, x)
         )
       else
         None
 
-    protected final def handle_start(config: Config): Transition =
-      handle_Start(config)
+    protected final def handle_start(context: Context): Transition =
+      handle_Start(context)
 
-    protected def handle_Start(config: Config): Transition =
-      (ParseMessageSequence.empty, start_Result(config), start_State(config))
+    protected def handle_Start(context: Context): Transition =
+      (ParseMessageSequence.empty, start_Result(context), start_State(context))
 
-    protected def start_Result(config: Config): ParseResult[LogicalTokens] = 
+    protected def start_Result(context: Context): ParseResult[LogicalTokens] = 
       ParseSuccess(LogicalTokens.empty)
 
-    protected def start_State(config: Config): LogicalTokensParseState = this
+    protected def start_State(context: Context): LogicalTokensParseState = this
 
-    protected final def handle_end(config: Config): Transition =
-      handle_End(config)
+    protected final def handle_end(context: Context): Transition =
+      handle_End(context)
 
-    protected def handle_End(config: Config): Transition =
-      (ParseMessageSequence.empty, end_Result(config), end_State(config))
+    protected def handle_End(context: Context): Transition =
+      (ParseMessageSequence.empty, end_Result(context), end_State(context))
 
-    protected def end_Result(config: Config): ParseResult[LogicalTokens] =
+    protected def end_Result(context: Context): ParseResult[LogicalTokens] =
       ParseSuccess(LogicalTokens.empty)
 
-    protected def end_State(config: Config): LogicalTokensParseState = EndState
+    protected def end_State(context: Context): LogicalTokensParseState = EndState
 
-    protected final def handle_line_end(config: Config, evt: LineEndEvent): Transition =
-      handle_Line_End(config, evt)
+    protected final def handle_line_end(context: Context, evt: LineEndEvent): Transition =
+      handle_Line_End(context, evt)
 
-    protected def handle_Line_End(config: Config, evt: LineEndEvent): Transition =
-      (ParseMessageSequence.empty, ParseResult.empty, line_End_State(config, evt))
+    protected def handle_Line_End(context: Context, evt: LineEndEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, line_End_State(context, evt))
 
-    protected def line_End_State(config: Config, evt: LineEndEvent): LogicalTokensParseState = RAISE.notImplementedYetDefect(s"line_End_State(${getClass.getSimpleName})")
+    protected def line_End_State(context: Context, evt: LineEndEvent): LogicalTokensParseState = RAISE.notImplementedYetDefect(s"line_End_State(${getClass.getSimpleName})")
 
-    protected def handle_space(config: Config, evt: CharEvent): Transition =
-      handle_Space(config, evt)
+    protected def handle_space(context: Context, evt: CharEvent): Transition =
+      handle_Space(context, evt)
 
-    protected def handle_Space(config: Config, evt: CharEvent): Transition =
-      (ParseMessageSequence.empty, ParseResult.empty, space_State(config, evt))
+    protected def handle_Space(context: Context, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, space_State(context, evt))
 
-    protected def space_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      character_State(config, evt)
+    protected def space_State(context: Context, evt: CharEvent): LogicalTokensParseState =
+      character_State(context, evt)
 
-    protected def handle_delimiter(config: Config, evt: CharEvent): Transition =
-      handle_Delimiter(config, evt)
+    protected def handle_delimiter(context: Context, evt: CharEvent): Transition =
+      handle_Delimiter(context, evt)
 
-    protected def handle_Delimiter(config: Config, evt: CharEvent): Transition =
-      (ParseMessageSequence.empty, ParseResult.empty, delimiter_State(config, evt))
+    protected def handle_Delimiter(context: Context, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, delimiter_State(context, evt))
 
-    protected def delimiter_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      character_State(config, evt)
+    protected def delimiter_State(context: Context, evt: CharEvent): LogicalTokensParseState =
+      character_State(context, evt)
 
-    protected def handle_comment(config: Config, evt: CharEvent): Transition =
-      handle_Comment(config, evt)
+    protected def handle_comment(context: Context, evt: CharEvent): Transition =
+      handle_Comment(context, evt)
 
-    protected def handle_Comment(config: Config, evt: CharEvent): Transition =
-      (ParseMessageSequence.empty, ParseResult.empty, comment_State(config, evt))
+    protected def handle_Comment(context: Context, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, comment_State(context, evt))
 
-    protected def comment_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    protected def comment_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       EndState
 
-    protected def handle_c_comment(config: Config, evt: CharEvent): Transition =
-      handle_C_Comment(config, evt)
+    protected def handle_c_comment(context: Context, evt: CharEvent): Transition =
+      handle_C_Comment(context, evt)
 
-    protected def handle_C_Comment(config: Config, evt: CharEvent): Transition =
-      (ParseMessageSequence.empty, ParseResult.empty, comment_C_State(config, evt))
+    protected def handle_C_Comment(context: Context, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, comment_C_State(context, evt))
 
-    protected def comment_C_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    protected def comment_C_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       RAISE.notImplementedYetDefect(s"comment_C_State(${getClass.getSimpleName})")
 
-    protected def handle_cpp_comment(config: Config, evt: CharEvent): Transition =
-      handle_Cpp_Comment(config, evt)
+    protected def handle_cpp_comment(context: Context, evt: CharEvent): Transition =
+      handle_Cpp_Comment(context, evt)
 
-    protected def handle_Cpp_Comment(config: Config, evt: CharEvent): Transition =
-      (ParseMessageSequence.empty, ParseResult.empty, comment_Cpp_State(config, evt))
+    protected def handle_Cpp_Comment(context: Context, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, comment_Cpp_State(context, evt))
 
-    protected def comment_Cpp_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    protected def comment_Cpp_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       RAISE.notImplementedYetDefect(s"comment_Cpp_State(${getClass.getSimpleName})")
 
-    protected final def handle_double_quote(config: Config, evt: CharEvent): Transition =
-      handle_Double_Quote(config, evt)
+    protected final def handle_double_quote(context: Context, evt: CharEvent): Transition =
+      handle_Double_Quote(context, evt)
 
-    protected def handle_Double_Quote(config: Config, evt: CharEvent): Transition =
-      (ParseMessageSequence.empty, ParseResult.empty, double_Quote_State(config, evt))
+    protected def handle_Double_Quote(context: Context, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, double_Quote_State(context, evt))
 
-    protected def double_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      character_State(config, evt)
+    protected def double_Quote_State(context: Context, evt: CharEvent): LogicalTokensParseState =
+      character_State(context, evt)
 
-    protected final def handle_single_quote(config: Config, evt: CharEvent): Transition =
-      handle_Single_Quote(config, evt)
+    protected final def handle_single_quote(context: Context, evt: CharEvent): Transition =
+      handle_Single_Quote(context, evt)
 
-    protected def handle_Single_Quote(config: Config, evt: CharEvent): Transition =
-      (ParseMessageSequence.empty, ParseResult.empty, single_Quote_State(config, evt))
+    protected def handle_Single_Quote(context: Context, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, single_Quote_State(context, evt))
 
-    protected def single_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      character_State(config, evt)
+    protected def single_Quote_State(context: Context, evt: CharEvent): LogicalTokensParseState =
+      character_State(context, evt)
 
-    protected final def handle_open_bracket(config: Config, evt: CharEvent): Transition =
-      handle_Open_Bracket(config, evt)
+    protected final def handle_open_bracket(context: Context, evt: CharEvent): Transition =
+      handle_Open_Bracket(context, evt)
 
-    protected def handle_Open_Bracket(config: Config, evt: CharEvent): Transition =
-      (ParseMessageSequence.empty, ParseResult.empty, open_Bracket_State(config, evt))
+    protected def handle_Open_Bracket(context: Context, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, open_Bracket_State(context, evt))
 
-    protected def open_Bracket_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      character_State(config, evt)
+    protected def open_Bracket_State(context: Context, evt: CharEvent): LogicalTokensParseState =
+      character_State(context, evt)
 
-    protected final def handle_close_bracket(config: Config, evt: CharEvent): Transition =
-      handle_Close_Bracket(config, evt)
+    protected final def handle_close_bracket(context: Context, evt: CharEvent): Transition =
+      handle_Close_Bracket(context, evt)
 
-    protected def handle_Close_Bracket(config: Config, evt: CharEvent): Transition =
-      (ParseMessageSequence.empty, ParseResult.empty, close_Bracket_State(config, evt))
+    protected def handle_Close_Bracket(context: Context, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, close_Bracket_State(context, evt))
 
-    protected def close_Bracket_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      character_State(config, evt)
+    protected def close_Bracket_State(context: Context, evt: CharEvent): LogicalTokensParseState =
+      character_State(context, evt)
 
-    protected final def handle_dollar(config: Config, evt: CharEvent): Transition =
-      handle_Dollar(config, evt)
+    protected final def handle_dollar(context: Context, evt: CharEvent): Transition =
+      handle_Dollar(context, evt)
 
-    protected def handle_Dollar(config: Config, evt: CharEvent): Transition =
-      (ParseMessageSequence.empty, ParseResult.empty, dollar_State(config, evt))
+    protected def handle_Dollar(context: Context, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, dollar_State(context, evt))
 
-    protected def dollar_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      character_State(config, evt)
+    protected def dollar_State(context: Context, evt: CharEvent): LogicalTokensParseState =
+      character_State(context, evt)
 
-    protected final def handle_character(config: Config, evt: CharEvent): Transition =
-      handle_Character(config, evt)
+    protected final def handle_character(context: Context, evt: CharEvent): Transition =
+      handle_Character(context, evt)
 
-    protected def handle_Character(config: Config, evt: CharEvent): Transition =
-      (ParseMessageSequence.empty, ParseResult.empty, character_State(config, evt))
+    protected def handle_Character(context: Context, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, character_State(context, evt))
 
-    protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       character_State(evt.c)
 
     protected def character_State(c: Char): LogicalTokensParseState =
       RAISE.notImplementedYetDefect(s"character_State(${getClass.getSimpleName}): $c[${c.toInt}]")
     //
-    protected final def to_tokens(config: Config, p: Vector[Char], l: ParseLocation): LogicalTokens = to_tokens(config, p.mkString, l)
+    protected final def to_tokens(context: Context, p: Vector[Char], l: ParseLocation): LogicalTokens = to_tokens(context, p.mkString, l)
 
-    protected final def to_tokens(config: Config, p: String, l: ParseLocation): LogicalTokens =
-      config.getTokens(config, p, l) getOrElse LogicalTokens(AtomToken(p, l))
+    protected final def to_tokens(context: Context, p: String, l: ParseLocation): LogicalTokens =
+      context.getTokens(context, p, l) getOrElse LogicalTokens(AtomToken(p, l))
 
     // XXX
     // protected final def handle_open_angle_bracket(config: Config, evt: CharEvent): Transition =
@@ -505,52 +530,52 @@ object LogicalTokens {
   trait ChildLogicalTokensParseState extends LogicalTokensParseState {
     def parent: LogicalTokensParseState
 
-    protected final def flush_state(config: Config, p: LogicalTokens): LogicalTokensParseState =
-      flush_State(config, p)
+    protected final def flush_state(context: Context, p: LogicalTokens): LogicalTokensParseState =
+      flush_State(context, p)
 
-    protected final def flush_state(config: Config, p: LogicalToken): LogicalTokensParseState =
-      flush_State(config, p)
+    protected final def flush_state(context: Context, p: LogicalToken): LogicalTokensParseState =
+      flush_State(context, p)
 
-    protected final def flush_state(config: Config): LogicalTokensParseState =
-      flush_State(config)
+    protected final def flush_state(context: Context): LogicalTokensParseState =
+      flush_State(context)
 
-    protected final def flush_tokens(config: Config): LogicalTokens =
-      flush_Tokens(config)
+    protected final def flush_tokens(context: Context): LogicalTokens =
+      flush_Tokens(context)
 
-    protected final def flush_tokens(config: Config, p: LogicalTokens): LogicalTokens =
-      flush_Tokens(config, p)
+    protected final def flush_tokens(context: Context, p: LogicalTokens): LogicalTokens =
+      flush_Tokens(context, p)
 
-    protected def flush_State(config: Config, p: LogicalTokens): LogicalTokensParseState =
-      parent.addChildState(config, flush_tokens(config, p))
+    protected def flush_State(context: Context, p: LogicalTokens): LogicalTokensParseState =
+      parent.addChildState(context, flush_tokens(context, p))
 
-    protected def flush_State(config: Config, p: LogicalToken): LogicalTokensParseState =
-      flush_State(config, LogicalTokens(p))
+    protected def flush_State(context: Context, p: LogicalToken): LogicalTokensParseState =
+      flush_State(context, LogicalTokens(p))
 
-    protected def flush_State(config: Config): LogicalTokensParseState =
-      flush_State(config, LogicalTokens.empty)
+    protected def flush_State(context: Context): LogicalTokensParseState =
+      flush_State(context, LogicalTokens.empty)
 
-    protected def flush_Tokens(config: Config): LogicalTokens
+    protected def flush_Tokens(context: Context): LogicalTokens
 
-    protected def flush_Tokens(config: Config, p: LogicalTokens): LogicalTokens =
-      flush_Tokens(config) + p
+    protected def flush_Tokens(context: Context, p: LogicalTokens): LogicalTokens =
+      flush_Tokens(context) + p
 
-    override def addChildState(config: Config, p: LogicalTokens): LogicalTokensParseState =
-      flush_state(config, p)
+    override def addChildState(context: Context, p: LogicalTokens): LogicalTokensParseState =
+      flush_state(context, p)
 
-    override def addChildTransition(config: Config, p: LogicalToken, evt: ParseEvent): Transition =
-      flush_state(config, p).apply(config, evt)
+    override def addChildTransition(context: Context, p: LogicalToken, evt: ParseEvent): Transition =
+      flush_state(context, p).apply(context, evt)
 
-    override def addChildEndTransition(config: Config, p: LogicalToken): Transition =
-      flush_state(config, p).apply(config, EndEvent)
+    override def addChildEndTransition(context: Context, p: LogicalToken): Transition =
+      flush_state(context, p).apply(context, EndEvent)
 
-    override def addChildEndTransition(config: Config, p: LogicalTokens): Transition =
-      flush_state(config, p).apply(config, EndEvent)
+    override def addChildEndTransition(context: Context, p: LogicalTokens): Transition =
+      flush_state(context, p).apply(context, EndEvent)
 
-    // override protected def end_Result(config: Config): ParseResult[LogicalTokens] =
+    // override protected def end_Result(context: Context): ParseResult[LogicalTokens] =
     //   ParseSuccess(flush_tokens(config))
 
-    override protected def handle_End(config: Config): Transition =
-      parent.addChildEndTransition(config, flush_tokens(config))
+    override protected def handle_End(context: Context): Transition =
+      parent.addChildEndTransition(context, flush_tokens(context))
   }
 
   // can use terminal character to handle token end.
@@ -574,31 +599,31 @@ object LogicalTokens {
     override val use_Bracket = false
     // override val use_Dollar = false ???
 
-    override protected def space_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      flush_state(config)
+    override protected def space_State(context: Context, evt: CharEvent): LogicalTokensParseState =
+      flush_state(context)
 
-    override protected def delimiter_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      flush_state(config, DelimiterToken(evt.c, evt.location))
+    override protected def delimiter_State(context: Context, evt: CharEvent): LogicalTokensParseState =
+      flush_state(context, DelimiterToken(evt.c, evt.location))
   }
 
   trait StringLiteralLogicalTokensParseState extends LogicalTokensParseState {
-    override protected def double_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def double_Quote_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       if (evt.next == Some('"') && evt.next2 == Some('"'))
         SkipState(SkipState(RawStringState(this, evt)))
       else
         DoubleQuoteState(this, evt)
 
-    override protected def single_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def single_Quote_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       SingleQuoteState(this, evt)
   }
 
   case object EndState extends LogicalTokensParseState {
-    override def apply(config: Config, evt: ParseEvent): Transition =
+    override def apply(context: Context, evt: ParseEvent): Transition =
       (ParseMessageSequence.empty, ParseResult.empty, this)
   }
 
   case class SkipState(next: Transition) extends LogicalTokensParseState {
-    override def apply(config: Config, evt: ParseEvent): Transition = next
+    override def apply(context: Context, evt: ParseEvent): Transition = next
   }
   object SkipState {
     def apply(p: LogicalTokensParseState): SkipState = SkipState(
@@ -611,25 +636,25 @@ object LogicalTokens {
     spaces: Vector[Char],
     location: Option[ParseLocation]
   ) extends RawLogicalTokensParseState {
-    override def addChildState(config: Config, p: LogicalTokens): LogicalTokensParseState =
-      parent.addChildState(config, SpaceToken(spaces.mkString, None) +: p)
+    override def addChildState(context: Context, p: LogicalTokens): LogicalTokensParseState =
+      parent.addChildState(context, SpaceToken(spaces.mkString, None) +: p)
 
-    override protected def handle_End(config: Config): Transition =
-      parent.addChildEndTransition(config, SpaceToken(spaces.mkString, location))
+    override protected def handle_End(context: Context): Transition =
+      parent.addChildEndTransition(context, SpaceToken(spaces.mkString, location))
 
-    override protected def handle_Double_Quote(config: Config, evt: CharEvent): Transition =
-      handle_character(config, evt)
+    override protected def handle_Double_Quote(context: Context, evt: CharEvent): Transition =
+      handle_character(context, evt)
 
-    override protected def handle_Single_Quote(config: Config, evt: CharEvent): Transition =
-      handle_character(config, evt)
+    override protected def handle_Single_Quote(context: Context, evt: CharEvent): Transition =
+      handle_character(context, evt)
 
-    override protected def handle_Character(config: Config, evt: CharEvent): Transition =
-      if (config.isSpace(evt.c))
-        (ParseMessageSequence.empty, ParseResult.empty, space_State(config, evt))
+    override protected def handle_Character(context: Context, evt: CharEvent): Transition =
+      if (context.isSpace(evt.c))
+        (ParseMessageSequence.empty, ParseResult.empty, space_State(context, evt))
       else
-        parent.addChildTransition(config, SpaceToken(spaces.mkString, location), evt)
+        parent.addChildTransition(context, SpaceToken(spaces.mkString, location), evt)
 
-    override protected def space_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def space_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       copy(spaces = spaces :+ evt.c)
   }
 
@@ -654,13 +679,13 @@ object LogicalTokens {
 
     protected def to_Token(): CommentToken
 
-    protected def flush_Tokens(config: Config): LogicalTokens = RAISE.noReachDefect
+    protected def flush_Tokens(context: Context): LogicalTokens = RAISE.noReachDefect
 
-    override protected def handle_End(config: Config): Transition =
-      parent.addChildEndTransition(config, to_Token())
+    override protected def handle_End(context: Context): Transition =
+      parent.addChildEndTransition(context, to_Token())
 
-    override protected def handle_Line_End(config: Config, evt: LineEndEvent): Transition =
-      parent.addChildTransition(config, to_Token(), evt)
+    override protected def handle_Line_End(context: Context, evt: LineEndEvent): Transition =
+      parent.addChildTransition(context, to_Token(), evt)
   }
 
   case class CCommentState(
@@ -670,9 +695,9 @@ object LogicalTokens {
   ) extends CommentStateBase {
     protected def to_Token() = CommentToken(comment.mkString, location)
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState = {
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState = {
       if (evt.c == '*' && evt.next == Some('/'))
-        SkipState(parent.addChildState(config, to_Token()))
+        SkipState(parent.addChildState(context, to_Token()))
       else
         copy(comment = comment :+ evt.c)
     }
@@ -685,13 +710,13 @@ object LogicalTokens {
   ) extends CommentStateBase {
     protected def to_Token() = CommentToken(comment.mkString, location)
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState = {
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState = {
       if (evt.c == '\n')
-        parent.addChildState(config, to_Token())
+        parent.addChildState(context, to_Token())
       else if (evt.c == '\r' && evt.next == Some('\n'))
-        SkipState(parent.addChildState(config, to_Token()))
+        SkipState(parent.addChildState(context, to_Token()))
       else if (evt.c == '\r')
-        parent.addChildState(config, to_Token())
+        parent.addChildState(context, to_Token())
       else
         copy(comment = comment :+ evt.c)
     }
@@ -710,15 +735,15 @@ object LogicalTokens {
     override protected def use_Dollar = false
     override protected def use_Comment = false
 
-    override def addChildState(config: Config, p: Vector[Char]): LogicalTokensParseState =
+    override def addChildState(context: Context, p: Vector[Char]): LogicalTokensParseState =
       copy(text = text ++ p)
 
-    override protected def double_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState = {
+    override protected def double_Quote_State(context: Context, evt: CharEvent): LogicalTokensParseState = {
       // println(s"DoubleQuote#double_Quote_State: $evt")
-      parent.addChildState(config, DoubleStringToken(text.mkString, location, prefix))
+      parent.addChildState(context, DoubleStringToken(text.mkString, location, prefix))
     }
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState = {
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState = {
       // println(s"DoubleQuoteState#double_Quote_State: $evt")
       if (evt.c == '\\')
         StringQuoteEscapeState(this)
@@ -736,16 +761,16 @@ object LogicalTokens {
   case class StringQuoteEscapeState(
     parent: LogicalTokensParseState
   ) extends LogicalTokensParseState {
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       evt.c match {
-        case '\\' => parent.addChildState(config, Vector('\\'))
-        case '"' => parent.addChildState(config, Vector('"'))
-        case '\'' => parent.addChildState(config, Vector('\''))
-        case 't' => parent.addChildState(config, Vector('\t'))
-        case 'f' => parent.addChildState(config, Vector('\f'))
-        case 'n' => parent.addChildState(config, Vector('\n'))
-        case 'r' => parent.addChildState(config, Vector('\r'))
-        case c => parent.addChildState(config, Vector(c))
+        case '\\' => parent.addChildState(context, Vector('\\'))
+        case '"' => parent.addChildState(context, Vector('"'))
+        case '\'' => parent.addChildState(context, Vector('\''))
+        case 't' => parent.addChildState(context, Vector('\t'))
+        case 'f' => parent.addChildState(context, Vector('\f'))
+        case 'n' => parent.addChildState(context, Vector('\n'))
+        case 'r' => parent.addChildState(context, Vector('\r'))
+        case c => parent.addChildState(context, Vector(c))
       }
   }
 
@@ -762,13 +787,13 @@ object LogicalTokens {
     override protected def use_Dollar = false
     override protected def use_Comment = false
 
-    override def addChildState(config: Config, p: Vector[Char]): LogicalTokensParseState =
+    override def addChildState(context: Context, p: Vector[Char]): LogicalTokensParseState =
       copy(text = text ++ p)
 
-    override protected def single_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      parent.addChildState(config, SingleStringToken(text.mkString, location))
+    override protected def single_Quote_State(context: Context, evt: CharEvent): LogicalTokensParseState =
+      parent.addChildState(context, SingleStringToken(text.mkString, location))
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       if (evt.c == '\\')
         StringQuoteEscapeState(this)
       else
@@ -795,10 +820,10 @@ object LogicalTokens {
     override protected def use_Dollar = false
     override protected def use_Comment = false
 
-    override protected def line_End_State(config: Config, evt: LineEndEvent): LogicalTokensParseState =
-      parent.addChildState(config, RawStringToken(text.mkString, location, prefix))
+    override protected def line_End_State(context: Context, evt: LineEndEvent): LogicalTokensParseState =
+      parent.addChildState(context, RawStringToken(text.mkString, location, prefix))
 
-    override protected def double_Quote_State(config: Config, evt: CharEvent): LogicalTokensParseState = {
+    override protected def double_Quote_State(context: Context, evt: CharEvent): LogicalTokensParseState = {
       // println(s"RawStringState#double_Quote_State: $evt")
       if (evt.c == '"' && evt.next == Some('"') && evt.next2 == Some('"')) {
         if (inClosing)
@@ -807,7 +832,7 @@ object LogicalTokens {
           copy(inClosing = true)
       } else if (evt.c == '"' && evt.next == Some('"')) {
         if (inClosing)
-          SkipState(parent.addChildState(config, RawStringToken(text.mkString, location, prefix)))
+          SkipState(parent.addChildState(context, RawStringToken(text.mkString, location, prefix)))
         else
           copy(text = text :+ evt.c)
       } else {
@@ -815,7 +840,7 @@ object LogicalTokens {
       }
     }
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState = {
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState = {
       // println(s"RawStringState#character_State: $evt")
       copy(text = text :+ evt.c)
     }
@@ -843,10 +868,10 @@ object LogicalTokens {
     private def _bracket_token = BracketToken(text.mkString, location, prefix)
     private def _path_token(s: String) = PathToken(s"${s}[${text.mkString}]", location)
 
-    override protected def close_Bracket_State(config: Config, evt: CharEvent): LogicalTokensParseState =
-      parent.addChildState(config, _token)
+    override protected def close_Bracket_State(context: Context, evt: CharEvent): LogicalTokensParseState =
+      parent.addChildState(context, _token)
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       copy(text = text :+ evt.c)
   }
   object BracketState {
@@ -862,13 +887,13 @@ object LogicalTokens {
     location: Option[ParseLocation],
     prefix: Option[String]
   ) extends LogicalTokensParseState {
-    override protected def close_Bracket_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def close_Bracket_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       if (evt.isMatch("]]"))
-        SkipState(parent.addChildState(config, DoubleBracketToken(text.mkString, location, prefix)))
+        SkipState(parent.addChildState(context, DoubleBracketToken(text.mkString, location, prefix)))
       else
         copy(text = text :+ evt.c)
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       copy(text = text :+ evt.c)
   }
   object DoubleBracketState {
@@ -884,13 +909,13 @@ object LogicalTokens {
     location: Option[ParseLocation],
     prefix: Option[String]
   ) extends LogicalTokensParseState {
-    override protected def close_Bracket_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def close_Bracket_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       if (evt.isMatch("]]]"))
-        SkipState(SkipState(parent.addChildState(config, RawBracketToken(text.mkString, location, prefix))))
+        SkipState(SkipState(parent.addChildState(context, RawBracketToken(text.mkString, location, prefix))))
       else
         copy(text = text :+ evt.c)
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       copy(text = text :+ evt.c)
   }
   object RawBracketState {
@@ -906,7 +931,7 @@ object LogicalTokens {
     location: Option[ParseLocation],
     prefix: Option[String]
   ) extends RawLogicalTokensParseState {
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState = 
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState = 
       if (evt.c == '{')
         ScriptState(parent, Vector.empty, location, prefix)
       else if (evt.c == '[')
@@ -928,14 +953,14 @@ object LogicalTokens {
     prefix: Option[String],
     properties: Option[String] = None
   ) extends WithoutTerminalLogicalTokensParseState {
-    // protected def flush_State(config: Config, p: LogicalTokens): LogicalTokensParseState = {
+    // protected def flush_State(context: Context, p: LogicalTokens): LogicalTokensParseState = {
     //   parent.addChildState(config, flush_tokens(config))
     // }
 
-    protected def flush_Tokens(config: Config): LogicalTokens =
+    protected def flush_Tokens(context: Context): LogicalTokens =
       LogicalTokens(ScriptToken(text.mkString, location, prefix, properties))
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       if (evt.c == '%')
         ScriptPostfixState(parent, text.mkString, location, prefix, properties)
       else
@@ -955,14 +980,14 @@ object LogicalTokens {
     prefix: Option[String],
     properties: Option[String] = None
   ) extends WithTerminalLogicalTokensParseState {
-    // protected def flush_State(config: Config, p: LogicalTokens): LogicalTokensParseState = {
+    // protected def flush_State(context: Context, p: LogicalTokens): LogicalTokensParseState = {
     //   parent.addChildState(config, flush_tokens(config))
     // }
 
-    // protected def flush_Tokens(config: Config): LogicalTokens =
+    // protected def flush_Tokens(context: Context): LogicalTokens =
     //   LogicalTokens(ScriptToken(text.mkString, location))
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState = 
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState = 
       if (evt.isMatch("{{"))
         SkipState(ExtraScriptState(parent, Vector.empty, location, prefix, properties))
       else
@@ -984,7 +1009,7 @@ object LogicalTokens {
     postfix: Option[String] = None,
     count: Int = 1
   ) extends WithTerminalLogicalTokensParseState {
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState = {
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState = {
       val c = evt.c
       // println(s"LongScriptState $c, $count")
       c match {
@@ -995,7 +1020,7 @@ object LogicalTokens {
               evt.next.collect {
                 case '%' => SkipState(ScriptPostfixState(parent, text.mkString, location, prefix, properties))
               }.getOrElse(
-                parent.addChildState(config, ScriptToken(text.mkString, location, prefix, properties))
+                parent.addChildState(context, ScriptToken(text.mkString, location, prefix, properties))
               )
             case n => copy(count = n, text = text :+ c)
           }
@@ -1026,9 +1051,9 @@ object LogicalTokens {
     prefix: Option[String],
     properties: Option[String]
   ) extends WithTerminalLogicalTokensParseState {
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       if (evt.isMatch("}}}"))
-        SkipState(SkipState(parent.addChildState(config, ScriptToken(text.mkString, location, prefix, properties))))
+        SkipState(SkipState(parent.addChildState(context, ScriptToken(text.mkString, location, prefix, properties))))
       else
         copy(text = text :+ evt.c)
   }
@@ -1048,7 +1073,7 @@ object LogicalTokens {
   ) extends WithTerminalLogicalTokensParseState {
     private def _get_properties = if (properties.isEmpty) None else Some(properties.mkString)
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       if (evt.c == ']') // XXX skip "{"
         SkipState(ScriptState(parent, text, location, prefix, _get_properties))
       else
@@ -1062,7 +1087,7 @@ object LogicalTokens {
     prefix: Option[String],
     properties: Option[String]
   ) extends WithTerminalLogicalTokensParseState {
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       if (evt.c == '{')
         ScriptLongPostfixState(parent, text, location, prefix, properties)
       else
@@ -1080,13 +1105,13 @@ object LogicalTokens {
   ) extends WithTerminalLogicalTokensParseState {
     private def _get_postfix = if (postfix.isEmpty) None else Some(postfix.mkString)
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState = {
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState = {
       val c = evt.c
       c match {
         case '{' => copy(count = count + 1, postfix = postfix :+ c)
         case '}' =>
           count - 1 match {
-            case 0 => parent.addChildState(config, ScriptToken(text, location, prefix, properties, _get_postfix))
+            case 0 => parent.addChildState(context, ScriptToken(text, location, prefix, properties, _get_postfix))
             case n => copy(count = n, text = text :+ c)
           }
         case _ => copy(postfix = postfix :+ c)
@@ -1105,10 +1130,10 @@ object LogicalTokens {
   ) extends WithoutTerminalLogicalTokensParseState {
     private def _get_postfix = if (postfix.isEmpty) None else Some(postfix.mkString)
 
-    protected def flush_Tokens(config: Config): LogicalTokens =
+    protected def flush_Tokens(context: Context): LogicalTokens =
       LogicalTokens(ScriptToken(text.mkString, location, prefix, properties, _get_postfix))
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       copy(postfix = postfix :+ evt.c)
   }
 
@@ -1125,13 +1150,13 @@ object LogicalTokens {
     override val use_Bracket = true
     override val use_Dollar = false
 
-    def tokens(config: Config): LogicalTokens = isLxsv.collect {
+    def tokens(context: Context): LogicalTokens = isLxsv.collect {
       case true => LogicalTokens(LxsvToken(cs.mkString, location))
-    }.getOrElse(to_tokens(config, cs.mkString, location))
+    }.getOrElse(to_tokens(context, cs.mkString, location))
 
-    protected def flush_Tokens(config: Config): LogicalTokens = tokens(config)
+    protected def flush_Tokens(context: Context): LogicalTokens = tokens(context)
 
-    override def addChildState(config: Config, p: LogicalToken): LogicalTokensParseState =
+    override def addChildState(context: Context, p: LogicalToken): LogicalTokensParseState =
       p match {
         case m: StringToken => copy(cs = cs ++ m.text, isLxsv = Some(true))
         case m => RAISE.noReachDefect
@@ -1160,11 +1185,11 @@ object LogicalTokens {
     // override protected def space_State(config: Config, evt: CharEvent) =
     //   SpaceState(this, evt)
 
-    override protected def handle_delimiter(config: Config, evt: CharEvent) =
+    override protected def handle_delimiter(context: Context, evt: CharEvent) =
       if (cs.isEmpty)
         RAISE.noReachDefect
       else
-        parent.addChildState(config, tokens(config)).apply(config, evt)
+        parent.addChildState(context, tokens(context)).apply(context, evt)
 
     // override protected def delimiter_State(config: Config, evt: CharEvent) = {
     //   val a = if (cs.isEmpty) {
@@ -1176,17 +1201,17 @@ object LogicalTokens {
     //   copy(cs = Vector.empty, location = l)
     // }
 
-    override protected def double_Quote_State(config: Config, evt: CharEvent) = {
+    override protected def double_Quote_State(context: Context, evt: CharEvent) = {
       if (evt.isMatch("\"\"\""))
         SkipState(SkipState(RawStringState(this, evt)))
       else
         DoubleQuoteState(this, evt)
     }
 
-    override protected def space_State(config: Config, evt: CharEvent) =
-      SpaceState(parent.addChildState(config, tokens(config)), evt)
+    override protected def space_State(context: Context, evt: CharEvent) =
+      SpaceState(parent.addChildState(context, tokens(context)), evt)
 
-    override protected def character_State(config: Config, evt: CharEvent) =
+    override protected def character_State(context: Context, evt: CharEvent) =
       copy(cs = cs :+ evt.c)
   }
 
@@ -1195,73 +1220,73 @@ object LogicalTokens {
     tokens: LogicalTokens,
     location: ParseLocation
   ) extends StringLiteralLogicalTokensParseState {
-    private def _flush(config: Config): NormalState = {
+    private def _flush(context: Context): NormalState = {
       if (cs.isEmpty)
         this
       else
-        copy(cs = Vector.empty, tokens = tokens + to_tokens(config, cs.mkString, location))
+        copy(cs = Vector.empty, tokens = tokens + to_tokens(context, cs.mkString, location))
     }
 
-    private def _flush(config: Config, t: LogicalToken): NormalState = {
+    private def _flush(context: Context, t: LogicalToken): NormalState = {
       if (cs.isEmpty)
         copy(tokens = tokens + t)
       else
-        copy(cs = Vector.empty, tokens = tokens + to_tokens(config, cs.mkString, location) + t)
+        copy(cs = Vector.empty, tokens = tokens + to_tokens(context, cs.mkString, location) + t)
     }
 
-    private def _flush(config: Config, t: LogicalTokens): NormalState = {
+    private def _flush(context: Context, t: LogicalTokens): NormalState = {
       if (cs.isEmpty)
         copy(tokens = tokens + t)
       else
-        copy(cs = Vector.empty, tokens = tokens + to_tokens(config, cs.mkString, location) + t)
+        copy(cs = Vector.empty, tokens = tokens + to_tokens(context, cs.mkString, location) + t)
     }
 
-    override def addChildState(config: Config, p: LogicalTokens): LogicalTokensParseState =
-      _flush(config, p)
+    override def addChildState(context: Context, p: LogicalTokens): LogicalTokensParseState =
+      _flush(context, p)
 
-    override def addChildTransition(config: Config, p: LogicalToken, evt: ParseEvent): Transition =
-      _flush(config, p).apply(config, evt)
+    override def addChildTransition(context: Context, p: LogicalToken, evt: ParseEvent): Transition =
+      _flush(context, p).apply(context, evt)
 
-    override def addChildEndTransition(config: Config, p: LogicalToken): Transition =
-      _flush(config, p).apply(config, EndEvent)
+    override def addChildEndTransition(context: Context, p: LogicalToken): Transition =
+      _flush(context, p).apply(context, EndEvent)
 
-    override def addChildEndTransition(config: Config, p: LogicalTokens): Transition =
-      _flush(config, p).apply(config, EndEvent)
+    override def addChildEndTransition(context: Context, p: LogicalTokens): Transition =
+      _flush(context, p).apply(context, EndEvent)
 
-    override protected def end_Result(config: Config): ParseResult[LogicalTokens] =
-      ParseSuccess(_flush(config).tokens)
+    override protected def end_Result(context: Context): ParseResult[LogicalTokens] =
+      ParseSuccess(_flush(context).tokens)
 
-    override protected def space_State(config: Config, evt: CharEvent) =
+    override protected def space_State(context: Context, evt: CharEvent) =
       SpaceState(this, evt)
 
-    override protected def delimiter_State(config: Config, evt: CharEvent) = {
+    override protected def delimiter_State(context: Context, evt: CharEvent) = {
       val a = if (cs.isEmpty) {
         LogicalTokens(DelimiterToken(evt.c, evt.location))
       } else {
-        val b = to_tokens(config, cs.mkString, location)
+        val b = to_tokens(context, cs.mkString, location)
         b + DelimiterToken(evt.c, evt.location)
       }
       val l = evt.location
       copy(Vector.empty, tokens + a, l)
     }
 
-    override protected def comment_C_State(config: Config, evt: CharEvent) =
+    override protected def comment_C_State(context: Context, evt: CharEvent) =
       if (cs.isEmpty) {
         SkipState(CCommentState(this, Some(evt.location)))
       } else {
-        val newparent = copy(cs = Vector.empty, tokens = tokens + to_tokens(config, cs.mkString, location))
+        val newparent = copy(cs = Vector.empty, tokens = tokens + to_tokens(context, cs.mkString, location))
         SkipState(CCommentState(newparent, Some(evt.location)))
       }
 
-    override protected def comment_Cpp_State(config: Config, evt: CharEvent) =
+    override protected def comment_Cpp_State(context: Context, evt: CharEvent) =
       if (cs.isEmpty) {
         SkipState(CppCommentState(this, Some(evt.location)))
       } else {
-        val newparent = copy(cs = Vector.empty, tokens = tokens + to_tokens(config, cs.mkString, location))
+        val newparent = copy(cs = Vector.empty, tokens = tokens + to_tokens(context, cs.mkString, location))
         SkipState(CppCommentState(newparent, Some(evt.location)))
       }
 
-    override protected def double_Quote_State(config: Config, evt: CharEvent) = {
+    override protected def double_Quote_State(context: Context, evt: CharEvent) = {
       // println(s"NormalState#double_Quote_State: $evt")
       // println(s"""NormalState#double_Quote_State - ${evt.isMatch("\"\"\"")}""")
       val prefix = if (cs.isEmpty) None else Some(cs.mkString)
@@ -1272,16 +1297,16 @@ object LogicalTokens {
         DoubleQuoteState(newparent, evt, prefix)
     }
 
-    override protected def single_Quote_State(config: Config, evt: CharEvent) =
-      if (config.useSingleQuoteToken) {
-        _flush(config, SingleQuoteToken(evt.location.toOption))
+    override protected def single_Quote_State(context: Context, evt: CharEvent) =
+      if (context.useSingleQuoteToken) {
+        _flush(context, SingleQuoteToken(evt.location.toOption))
       } else {
         val prefix = cs.mkString
         val newparent = copy(cs = Vector.empty)
         SingleQuoteState(newparent, evt, prefix)
       }
 
-    override protected def open_Bracket_State(config: Config, evt: CharEvent) = {
+    override protected def open_Bracket_State(context: Context, evt: CharEvent) = {
       val prefix = if (cs.isEmpty) None else Some(cs.mkString)
       val newparent = copy(cs = Vector.empty)
       if (evt.isMatch("[[["))
@@ -1292,13 +1317,13 @@ object LogicalTokens {
         BracketState(newparent, evt, prefix)
     }
 
-    override protected def dollar_State(config: Config, evt: CharEvent) = {
+    override protected def dollar_State(context: Context, evt: CharEvent) = {
       val prefix = if (cs.isEmpty) None else Some(cs.mkString)
       val newparent = copy(cs = Vector.empty)
       DollarState(newparent, evt, prefix)
     }
 
-    override protected def character_State(config: Config, evt: CharEvent) = {
+    override protected def character_State(context: Context, evt: CharEvent) = {
       val c = evt.c
       c match {
         case ':' =>
@@ -1317,7 +1342,7 @@ object LogicalTokens {
   }
 
   case class PartialParserStartState() extends LogicalTokensParseState {
-    override def addChildState(config: Config, p: LogicalTokens): LogicalTokensParseState = {
+    override def addChildState(context: Context, p: LogicalTokens): LogicalTokensParseState = {
       PartialParserEndState(p.makeToken)
     }
   }
@@ -1329,11 +1354,11 @@ object LogicalTokens {
   }
 
   case class PartialParserStateMachine(
-    config: Config,
+    context: Context,
     state: LogicalTokensParseState
   ) {
     def apply(c: Char): \/[PartialParserStateMachine, LogicalToken] = {
-      val (m, r, s) = state.apply(config, CharEvent(c))
+      val (m, r, s) = state.apply(context, CharEvent(c))
       s match {
         case m: PartialParserEndState => \/-(m.token)
         case _ => -\/(copy(state = s))
@@ -1343,16 +1368,16 @@ object LogicalTokens {
     def getResult: Option[(LogicalToken, CharSequence)] = RAISE.notImplementedYetDefect
   }
   object PartialParserStateMachine {
-    def apply(config: Config): PartialParserStateMachine = PartialParserStateMachine(
-      config,
+    def apply(context: Context): PartialParserStateMachine = PartialParserStateMachine(
+      context,
       PartialParserStartState()
     )
   }
 
-  def parseHead(ps: CharSequence): (LogicalToken, CharSequence) = parseHead(Config.default, ps)
+  def parseHead(ps: CharSequence): (LogicalToken, CharSequence) = parseHead(Context.create(), ps)
 
-  def parseHead(config: Config, ps: CharSequence): (LogicalToken, CharSequence) = {
-    var sm = PartialParserStateMachine(config)
+  def parseHead(context: Context, ps: CharSequence): (LogicalToken, CharSequence) = {
+    var sm = PartialParserStateMachine(context)
 
     for (i <- 0 until ps.length) {
 //      sm = sm.apply(ps.charAt(i))

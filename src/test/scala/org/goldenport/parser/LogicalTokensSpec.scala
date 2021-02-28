@@ -19,7 +19,7 @@ import org.goldenport.util.DateTimeUtils
  *  version Oct. 27, 2019
  *  version Jan. 21, 2020
  *  version Feb. 29, 2020
- * @version Jan. 17, 2021
+ * @version Jan. 22, 2021
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -31,6 +31,24 @@ class LogicalTokensSpec extends WordSpec with Matchers with GivenWhenThen {
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
           NumberToken(1, ParseLocation.start)
+        ))
+      }
+    }
+    "complex" which {
+      "plain" in {
+        val s = "1+5i"
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          ComplexToken(1.0, 5.0, ParseLocation.start)
+        ))
+      }
+    }
+    "rational" which {
+      "plain" in {
+        val s = "2/5"
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          RationalToken(2, 5, ParseLocation.start)
         ))
       }
     }
@@ -61,6 +79,13 @@ class LogicalTokensSpec extends WordSpec with Matchers with GivenWhenThen {
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
           LocalTimeToken(LocalTime.parse(s), ParseLocation.start)
+        ))
+      }
+      "monthday" in {
+        val s = "1-22"
+        val r = LogicalTokens.parse(s)
+        r should be(LogicalTokens(
+          MonthDayToken(1, 22, ParseLocation.start)
         ))
       }
     }

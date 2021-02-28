@@ -16,7 +16,8 @@ import org.goldenport.parser.{ParseResult, ParseSuccess, ParseFailure, EmptyPars
  *  version Oct. 28, 2019
  *  version Nov. 15, 2019
  *  version Dec.  8, 2019
- * @version Feb. 29, 2020
+fig.default *  version Feb. 29, 2020
+fig.default * @version Jan. 23, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Lxsv(
@@ -117,7 +118,7 @@ object Lxsv {
   ) {
     import Parser._
 
-    private val _config = LogicalTokens.Config.default
+    private val _context = LogicalTokens.Context.create()
 
     private var _key_value_separator: Char = 0
     private var _delimiter: Char = 0
@@ -308,7 +309,7 @@ object Lxsv {
 
     private def _start_partial(c: Char): Unit = {
       _state = PARTIAL
-      LogicalTokens.PartialParserStateMachine(_config).apply(c) match {
+      LogicalTokens.PartialParserStateMachine(_context).apply(c) match {
         case \/-(t) => RAISE.noReachDefect
         case -\/(sm) => _psm = sm
       }

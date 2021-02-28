@@ -7,7 +7,7 @@ import org.goldenport.parser.ParseResultMatchers
 
 /*
  * @since   Sep. 29, 2020
- * @version Sep. 29, 2020
+ * @version Jan. 23, 2021
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -15,6 +15,10 @@ class NumberIntervalSpec extends WordSpec with Matchers with GivenWhenThen with 
   "NumberInterval" should {
     "default-default" in {
       val r = NumberInterval.parse("100~200")
+      r should parse_object(NumberInterval.closed(100, 200))
+    }
+    "default-open" in {
+      val r = NumberInterval.parse("100~200)")
       r should parse_object(NumberInterval.openUpper(100, 200))
     }
     "default-close" in {

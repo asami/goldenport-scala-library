@@ -2,6 +2,7 @@ package org.goldenport.cli
 
 import java.io._
 import org.goldenport.monitor.Monitor
+import org.goldenport.context._
 import Environment._
 
 /*
@@ -12,7 +13,7 @@ import Environment._
  *  version Mar.  8, 2020
  *  version May. 30, 2020
  *  version Nov. 23, 2020
- * @version Jan. 11, 2021
+ * @version Jan. 24, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Environment(
@@ -33,6 +34,9 @@ case class Environment(
   def toAppEnvironment[T <: AppEnvironment] = appEnvironment.asInstanceOf[T]
 
   def isPlatformWindows: Boolean = monitor.isPlatformWindows
+
+  def formatContext: FormatContext = FormatContext.default // config.formatContext
+  val dateTimeContext: DateTimeContext = DateTimeContext.now() // config.dateTimeContext
 
   def withAppEnvironment(p: AppEnvironment) = copy(appEnvironment = p)
 
@@ -67,5 +71,14 @@ object Environment {
     val monitor = Monitor.create(args)
     val config = Config.build(args)
     new Environment(monitor, config)
+  }
+
+  trait EnvironmentExecutionContextBase extends ExecutionContextBase {
+    def environment: Environment
+
+    protected def forward_Recorder = environment.recorder
+
+    def formatContext = environment.formatContext
+    def dateTimeContext = environment.dateTimeContext // TODO base
   }
 }

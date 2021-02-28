@@ -3,18 +3,33 @@ package org.goldenport.trace
 import scalaz._, Scalaz._
 import scala.collection.mutable
 import org.goldenport.exception.RAISE
+import org.goldenport.extension.Showable
 
 /*
  * @since   Nov. 13, 2017
- * @version Nov. 14, 2017
+ * @version Feb. 25, 2021
  * @author  ASAMI, Tomoharu
  */
-sealed trait Trace {
+sealed trait Trace extends Showable {
+  def print = toString
+  def display = print
+  def show = print
+  def embed = print
   val timestamp = System.currentTimeMillis
   lazy val timestampkey = timestamp.toString.takeRight(5)
   def endTimestamp: Option[Long] = None
   def asTree: Tree[Trace]
   def asTreeSplit(start: Long): Tree[String]
+}
+
+object Trace {
+  val empty = Empty
+}
+
+case object Empty extends Trace {
+  override def toString() = s"[${timestampkey}]/"
+  def asTree: Tree[Trace] = RAISE.noReachDefect
+  def asTreeSplit(start: Long): Tree[String] = RAISE.noReachDefect
 }
 
 case class Root() extends Trace {
@@ -44,6 +59,11 @@ class Invoke(label: String, enterMessage: String) extends Trace {
 
   def leave(p: Result[_]): Unit = {
     _leave = Some(p.leaveMessage)
+    _leave_timestamp = Some(System.currentTimeMillis)
+  }
+
+  def leave(p: String): Unit = {
+    _leave = Some(p)
     _leave_timestamp = Some(System.currentTimeMillis)
   }
 

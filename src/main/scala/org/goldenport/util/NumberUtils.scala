@@ -8,7 +8,9 @@ import org.goldenport.parser.ParseResult
  * @since   Mar. 12, 2020
  *  version Apr. 21, 2020
  *  version Sep. 29, 2020
- * @version Oct. 20, 2020
+ *  version Oct. 20, 2020
+ *  version Jan. 19, 2021
+ * @version Feb. 14, 2021
  * @author  ASAMI, Tomoharu
  */
 object NumberUtils {
@@ -114,6 +116,54 @@ object NumberUtils {
         }
       }
     } yield b
+  }
+
+  def parseInt(p: Option[String]): ParseResult[Int] =
+    p.map(parseInt).getOrElse(ParseResult.empty)
+
+  def parseInt(p: Option[String], default: Int): ParseResult[Int] =
+    p.map(parseInt).getOrElse(ParseResult.success(default))
+
+  def parseInt(p: String): ParseResult[Int] = try {
+    if (Strings.blankp(p))
+      ParseResult.empty
+    else
+      ParseResult.success(p.trim.toInt)
+  } catch {
+    case e: NumberFormatException => ParseResult.error("Not int: $p")
+  }
+
+  def parseInt(p: String, default: Int): ParseResult[Int] = try {
+    if (Strings.blankp(p))
+      ParseResult.success(default)
+    else
+      ParseResult.success(p.trim.toInt)
+  } catch {
+    case e: NumberFormatException => ParseResult.error("Not int: $p")
+  }
+
+  def parseLong(p: Option[String]): ParseResult[Long] =
+    p.map(parseLong).getOrElse(ParseResult.empty)
+
+  def parseLong(p: String): ParseResult[Long] = try {
+    if (Strings.blankp(p))
+      ParseResult.empty
+    else
+      ParseResult.success(p.trim.toLong)
+  } catch {
+    case e: NumberFormatException => ParseResult.error("Not long: $p")
+  }
+
+  def parseDouble(p: Option[String]): ParseResult[Double] =
+    p.map(parseDouble).getOrElse(ParseResult.empty)
+
+  def parseDouble(p: String): ParseResult[Double] = try {
+    if (Strings.blankp(p))
+      ParseResult.empty
+    else
+      ParseResult.success(p.trim.toLong)
+  } catch {
+    case e: NumberFormatException => ParseResult.error("Not double: $p")
   }
 }
 

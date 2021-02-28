@@ -7,7 +7,8 @@ import org.goldenport.i18n.I18NElement
 
 /*
  * @since   Sep. 22, 2018
- * @version Feb.  2, 2019
+ *  version Feb.  2, 2019
+ * @version Feb. 13, 2021
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLine(
@@ -24,12 +25,34 @@ object LogicalLine {
   val sectionOutlineMarks = Vector('*', '#')
   val sectionUnderlineMarks = Vector('=', '-')
 
+  val empty = LogicalLine("")
+
   def apply(
     text: String,
     location: ParseLocation
   ): LogicalLine = LogicalLine(text, Some(location))
 
   def start(text: String) = LogicalLine(text, ParseLocation.start)
+
+  case class Builder(
+    cs: Vector[Char] = Vector.empty,
+    location: Option[ParseLocation] = None
+  ) {
+    def lastOption: Option[Char] = cs.headOption
+    def getCurrentLine: Option[String] = if (cs.isEmpty) None else Some(cs.mkString)
+    def currentLine: String = cs.mkString
+
+    def add(evt: CharEvent): Builder =
+      if (location.isDefined)
+        copy(cs = cs :+ evt.c)
+      else
+        copy(location = Some(evt.location), cs = cs :+ evt.c)
+
+    def build(): Option[LogicalLine] = getCurrentLine.map(x => LogicalLine(x, location))
+  }
+  object Builder {
+    def apply(p: String, location: Option[ParseLocation]): Builder = Builder(p.toVector, location)
+  }
 
   // ** TITLE
   case class SectionTitle(mark: String, level: Int, title: String) {

@@ -10,12 +10,13 @@ import org.goldenport.parser._
  * @since   Jan.  1, 2019
  *  version Feb.  9, 2019
  *  version Mar. 10, 2019
- * @version Apr. 13, 2019
+ *  version Apr. 13, 2019
+ * @version Feb. 13, 2021
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
 class TryoutSpec extends WordSpec with Matchers with GivenWhenThen {
-  "token" should {
+  // "token" should {
     // "json" which {
     //   "number value" in {
     //     val s = """{"a":1}"""
@@ -25,5 +26,49 @@ class TryoutSpec extends WordSpec with Matchers with GivenWhenThen {
     //     ))
     //   }
     // }
+    // }
+  "LogicalBlocks" should {
+    "easytext" which {
+      val config = LogicalBlocks.Config.easytext
+      def parse(p: String): LogicalBlocks = LogicalBlocks.parse(config, p)
+
+      "src" in {
+        val s = """
+```
+a
+```
+"""
+        val r = parse(s)
+        r should be (LogicalBlocks(
+          Vector(
+            LogicalParagraph(LogicalLines(LogicalLine.empty)),
+            LogicalVerbatim(
+              LogicalBlock.RawBackquoteMark(LogicalLine("```", ParseLocation.start)),
+              LogicalLines("a", ParseLocation(3, 1)),
+              Some(ParseLocation.start)
+            )
+            // ),
+            // LogicalParagraph(LogicalLines(LogicalLine("")))
+          )
+        ))
+      }
+//       "begin_src" in {
+//               val s = """
+// #+begin_src console
+// a
+// #+end_src
+// """
+//         val r = parse(s)
+//         r should be (LogicalBlocks(
+//           Vector(
+//             LogicalVerbatim(
+//               LogicalBlock.RawBackquoteMark(LogicalLine("```", ParseLocation.start)),
+//               LogicalLines("a"),
+//               None
+//             )
+//           )
+//         ))
+//       }
+    }
   }
 }

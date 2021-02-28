@@ -1,24 +1,17 @@
 package org.goldenport.util
 
-import scala.concurrent.duration._
-import org.joda.time.{Duration => JodaDuration}
+import org.joda.time._
 import org.goldenport.parser._
 
 /*
- * @since   Oct. 22, 2020
+ * @since   Feb. 14, 2021
  * @version Feb. 14, 2021
  * @author  ASAMI, Tomoharu
  */
-object DurationUtils {
-  private val _regex = """D((\d+)Y)?((\d+)M)?((\d+)D)?(T((\d+)H)?((\d+)M)?((\d+)S)?)?""".r
+object PeriodUtils {
+  private val _regex = """P((\d+)Y)?((\d+)M)?((\d+)D)?(T((\d+)H)?((\d+)M)?((\d+)S)?)?""".r
 
-  def isIn[T](base: Long, duration: Duration, f: T => Long)(p: T): Boolean =
-    if (duration.isFinite)
-      f(p) >= base - duration.toMillis
-    else
-      true
-
-  def parseJoda(p: String): ParseResult[JodaDuration] = ParseResult.parse(
+  def parse(p: String): ParseResult[Period] = ParseResult.parse(
     _regex.findFirstMatchIn(p).map(m =>
       if (m.group(0) != p) {
         ParseResult.error(s"Not period: $p")
@@ -30,12 +23,12 @@ object DurationUtils {
           hour <- _to_int(m.group(9))
           minute <- _to_int(m.group(11))
           second <- _to_int(m.group(13))
-        } yield new JodaDuration(year, month, day, hour, minute, second, 0)
+        } yield new Period(year, month, day, hour, minute, second, 0)
       }
     ).getOrElse(ParseResult.error(s"Not period: $p"))
   )
 
   private def _to_int(p: String) = NumberUtils.parseInt(p, 0)
 
-  def hour(h: Int): JodaDuration = JodaDuration.standardHours(h)
+  def yearMonthDay(y: Int, m: Int, d: Int): Period = new Period(y, m, 0, d, 0, 0, 0)
 }

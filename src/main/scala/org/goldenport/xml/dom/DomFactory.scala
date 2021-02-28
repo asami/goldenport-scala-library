@@ -4,12 +4,14 @@ import scala.util.control.NonFatal
 import org.w3c.dom._
 import javax.xml.parsers._
 import org.goldenport.Strings
+import org.goldenport.xml.{XmlAttributes, XmlAttribute}
 import org.goldenport.xml.dom.DomUtils.NS_HTML
 
 /*
  * @since   Nov.  8, 2020
  *  version Nov. 29, 2020
- * @version Dec. 27, 2020
+ *  version Dec. 27, 2020
+ * @version Feb.  4, 2021
  * @author  ASAMI, Tomoharu
  */
 class DomFactory(
@@ -30,6 +32,14 @@ class DomFactory(
     } catch {
       case NonFatal(e) => throw new DomElementException(name, e)
     }
+  }
+
+  def element(name: String, attrs: XmlAttributes): Element = {
+    val r = element(name)
+    for (a <- attrs.attributes) {
+      r.setAttribute(a.qName, a.value)
+    }
+    r
   }
 
   def element(name: String, attrs: Iterable[(String, String)]): Element = {
@@ -91,6 +101,12 @@ class DomFactory(
 
   def append(node: Node, children: Seq[Node]): Node =
     DomUtils.append(node, children)
+
+  def appendAttributes(node: Node, attrs: XmlAttributes): Node =
+    ???
+
+  def overwriteAttributes(node: Node, attrs: XmlAttributes): Node =
+    ???
 }
 
 object DomFactory {

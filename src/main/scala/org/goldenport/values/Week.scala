@@ -6,7 +6,8 @@ import Week._
 
 /*
  * @since   Jun. 17, 2015
- * @version Jan.  9, 2019
+ *  version Jan.  9, 2019
+ * @version Jan. 21, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Week(
@@ -96,6 +97,14 @@ object Week {
 
   def fromDateTime(
     dt: DateTime,
+    basedayofweek: DayOfWeek = Sunday,
+    weekswitch: WeekSwitchStrategy = MiddleDaySwitch
+  ): Week = {
+    fromLocalDate(dt.toLocalDate, basedayofweek, weekswitch)
+  }
+
+  def fromLocalDateTime(
+    dt: LocalDateTime,
     basedayofweek: DayOfWeek = Sunday,
     weekswitch: WeekSwitchStrategy = MiddleDaySwitch
   ): Week = {
