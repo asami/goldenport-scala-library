@@ -44,10 +44,13 @@ class ReadEvalPrintLoop(
   }
 
   private def _sink: Sink[Task, MessageSequence] = {
-    scalaz.stream.io.channel((o: MessageSequence) => Task.delay {
+    _channel((o: MessageSequence) => Task.delay {
       console.message(o)
     })
   }
+
+  // scalaz.stream.io.channel
+  private def _channel[F[_], A, B](f: A => F[B]): Channel[F, A, B] = Process.constant(f)
 
   private def _logical_line(state: LogicalLinesParseState): Process1[ParseEvent, ReplEvent] =
     Process.receive1 { evt: ParseEvent =>

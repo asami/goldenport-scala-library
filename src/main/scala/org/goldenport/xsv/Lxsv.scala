@@ -16,7 +16,8 @@ import org.goldenport.parser.{ParseResult, ParseSuccess, ParseFailure, EmptyPars
  *  version Oct. 28, 2019
  *  version Nov. 15, 2019
  *  version Dec.  8, 2019
- * @version Feb. 29, 2020
+ *  version Feb. 29, 2020
+ * @version Mar.  4, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Lxsv(
@@ -286,7 +287,7 @@ object Lxsv {
         if (_buffer.isEmpty)
           p
         else
-          StringToken(_buffer ++ p.raw)
+          StringToken(_buffer.append(p.raw))
       if (_key == null) {
         _kvs = _kvs :+ (Symbol(s"_${_arg_count}") -> t) // TODO buffer
         _arg_count += 1
