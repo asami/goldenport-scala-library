@@ -2,9 +2,9 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.1.10"
+version := "2.1.11"
 
-scalaVersion := "2.12.7"
+scalaVersion := "2.12.13"
 
 // crossScalaVersions := Seq("2.11.6", "2.10.5")
 
@@ -15,6 +15,8 @@ scalacOptions += "-unchecked"
 scalacOptions += "-feature"
 
 incOptions := incOptions.value.withNameHashing(true)
+
+javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 
 resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
 
@@ -37,7 +39,7 @@ libraryDependencies <++= scalaVersion { v =>
 
 libraryDependencies += "org.goldenport" % "goldenport-java-lib" % "0.1.4" % "compile"
 
-libraryDependencies += "org.goldenport" %% "goldenport-kestrel" % "2.1.0"
+libraryDependencies += "org.goldenport" %% "goldenport-kestrel" % "2.1.1"
 
 // Defines important library dependencies
 
