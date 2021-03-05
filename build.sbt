@@ -22,7 +22,9 @@ resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
 
 // resolvers += "Asami Maven Repository" at "http://www.asamioffice.com/maven"
 
-resolvers += "GitHab releases" at "https://raw.github.com/asami/maven-repository/2020/releases"
+resolvers += "GitHab releases 2020" at "https://raw.github.com/asami/maven-repository/2020/releases"
+
+resolvers += "GitHab releases" at "https://raw.github.com/asami/maven-repository/2021-scala2.12/releases"
 
 resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository"
 
