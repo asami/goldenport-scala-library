@@ -29,7 +29,8 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version Jul. 28, 2019
  *  version Nov. 20, 2019
  *  version Mar.  1, 2020
- * @version Nov. 29, 2020
+ *  version Nov. 29, 2020
+ * @version Jan.  1, 2021
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -409,6 +410,12 @@ object DomUtils {
     transformer.setOutputProperty(OutputKeys.INDENT, "no")
     transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8")
     transformer.transform(new DOMSource(node), new StreamResult(out))
+  }
+
+  def toHtmlPrettyText(node: Node): String = {
+    val buf = new StringWriter()
+    printHtmlPretty(node, buf)
+    buf.toString
   }
 
   def printHtmlPretty(node: Node, out: Writer) {

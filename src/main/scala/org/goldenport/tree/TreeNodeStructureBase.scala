@@ -3,16 +3,19 @@ package org.goldenport.tree
 import scala.xml._
 import scala.collection.mutable.ArrayBuffer
 import java.util.Locale
-import com.asamioffice.goldenport.xml.XmlAttributeBuffer
 import java.util.UUID
+import com.asamioffice.goldenport.xml.XmlAttributeBuffer
+import org.goldenport.Strings
 import org.goldenport.values.PathName
+import org.goldenport.values.CompactUuid
 
 /**
  * @since   Aug. 13, 2008
  *  version Sep. 19, 2011
  *  version Feb. 22, 2012
  *  version Nov. 18, 2019
- * @version Nov. 14, 2020
+ *  version Nov. 14, 2020
+ * @version Dec. 26, 2020
  * @author  ASAMI, Tomoharu
  */
 trait TreeNodeStructureBase[E] extends TreeNode[E] {
@@ -79,8 +82,12 @@ trait TreeNodeStructureBase[E] extends TreeNode[E] {
   }
 
   override def addChild(): TreeNode_TYPE = {
-    addChild(new_Node(null))
+    addChild(_make_anon_node())
   }
+
+  private def _make_anon_node(): TreeNode_TYPE = new_Node(_make_node_name)
+
+  private def _make_node_name() = CompactUuid.generateString()
 
   override def addChild(child: TreeNode[E]): TreeNode_TYPE = {
     set_child(child)
@@ -104,7 +111,8 @@ trait TreeNodeStructureBase[E] extends TreeNode[E] {
 
   protected final def set_child(child: TreeNode[E]): TreeNode_TYPE = {
     fill_children()
-    require(getChild(child.name).isEmpty, "TreeNodeStructureBase: not empty = " + pathname + ", "  + child.name)
+    require(Strings.notblankp(child.name), "TreeNodeStructureBase: empty name = " + pathname)
+    require(getChild(child.name).isEmpty, "TreeNodeStructureBase: duplication = " + pathname + ", "  + child.name)
     child.setModified()
     child.parent = this.asInstanceOf[child.TreeNode_TYPE]
     child.facade = node_facade;

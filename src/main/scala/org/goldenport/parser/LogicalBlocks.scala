@@ -13,7 +13,8 @@ import org.goldenport.log.Loggable
  *  version Feb. 24, 2019
  *  version Jun.  9, 2019
  *  version Sep.  8, 2019
- * @version Apr. 25, 2020
+ *  version Apr. 25, 2020
+ * @version Jan. 11, 2021
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -61,9 +62,9 @@ object LogicalBlocks {
 
   def parse(config: Config, in: String): LogicalBlocks = {
     val c = if (config.isLocation)
-      LogicalLines.Config.raw
+      config.linesConfig
     else
-      LogicalLines.Config.raw.withoutLocation
+      config.linesConfig.withoutLocation
     parse(config, LogicalLines.parse(c, in))
   }
 
@@ -86,7 +87,7 @@ object LogicalBlocks {
     isDebug: Boolean,
     isLocation: Boolean,
     isScript: Boolean, // not document
-    lineConfig: LogicalLines.Config,
+    linesConfig: LogicalLines.Config,
     verbatims: Vector[LogicalBlock.VerbatimMarkClass]
   ) extends ParseConfig {
     def getVerbatimMark(p: LogicalLine): Option[LogicalBlock.VerbatimMark] =
@@ -96,7 +97,9 @@ object LogicalBlocks {
       verbatims = verbatims ++ p
     )
 
-    def forLisp: Config = copy(lineConfig = LogicalLines.Config.lisp)
+    def forLisp: Config = copy(linesConfig = LogicalLines.Config.lisp)
+
+    def withLinesConfig(p: LogicalLines.Config) = copy(linesConfig = p)
 
     def withoutLocation: Config = copy(isLocation = false)
   }
@@ -105,12 +108,16 @@ object LogicalBlocks {
     val verbatimEmpty = Vector(LogicalBlock.RawBackquoteMarkClass)
 
     // document
-    val default = Config(false, true, false, LogicalLines.Config.default, verbatimDefault)
-    val debug = Config(true, true, false, LogicalLines.Config.default, verbatimDefault)
-    val noLocation = Config(false, false, false, LogicalLines.Config.default, verbatimDefault)
+    val raw = Config(false, true, false, LogicalLines.Config.raw, verbatimDefault)
+    val debug = Config(true, true, false, LogicalLines.Config.raw, verbatimDefault)
+    val noLocation = Config(false, false, false, LogicalLines.Config.raw, verbatimDefault)
+    val easytext = Config(false, true, false, LogicalLines.Config.easytext, verbatimEmpty)
+    val easyhtml = easytext.copy(linesConfig = LogicalLines.Config.easyhtml)
     // script
-    val expression = Config(false, false, true, LogicalLines.Config.default, verbatimEmpty)
-    val script = Config(false, true, true, LogicalLines.Config.default, verbatimEmpty)
+    val expression = Config(false, false, true, LogicalLines.Config.script, verbatimEmpty)
+    val script = Config(false, true, true, LogicalLines.Config.script, verbatimEmpty)
+
+    val default = raw
   }
 
   trait LogicalBlocksParseState extends ParseReaderWriterState[Config, LogicalBlocks] with Loggable {
@@ -299,7 +306,8 @@ object LogicalBlocks {
         )
       }.getOrElse {
         if (evt.isEmptyLine)
-          NeutralState(parent, blocks :+ LogicalBlock(cs))
+          // NeutralState(parent, blocks :+ LogicalBlock(cs))
+          parent.addChildState(config, blocks :+ LogicalBlock(cs))
         else
           copy(cs = cs :+ evt.line)
       }
@@ -381,6 +389,7 @@ object LogicalBlocks {
           RAISE.noReachDefect
         }
       case m: RootState => m.addChildState(config, _close :+ s)
+      case m: InputState => m.addChildState(config, _close :+ s)
       case m => RAISE.noReachDefect(s"LogicalBlocks#up $m")
     }
 

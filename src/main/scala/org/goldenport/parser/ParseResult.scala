@@ -2,6 +2,8 @@ package org.goldenport.parser
 
 import scalaz._, Scalaz._  
 import scala.util.control.NonFatal
+import java.net.{URI, URL}
+import java.io.File
 import org.goldenport.exception.SyntaxErrorFaultException
   
 /*
@@ -11,7 +13,8 @@ import org.goldenport.exception.SyntaxErrorFaultException
  *  version Feb.  2, 2019
  *  version Jul. 21, 2019
  *  version Sep. 29, 2020
- * @version Oct. 14, 2020
+ *  version Oct. 14, 2020
+ * @version Jan. 10, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait ParseResult[+AST] {
@@ -58,10 +61,25 @@ case class ParseFailure[AST](
 ) extends ParseResult[AST] {
   def flatMap[T](f: AST => ParseResult[T]): ParseResult[T] = this.asInstanceOf[ParseResult[T]]
   def toOption: Option[AST] = None
+
   def append(es: Seq[ErrorMessage], ws: Seq[WarningMessage]): ParseResult[AST] =
     copy(errors = errors ++ es, warnings = warnings ++ ws)
   def prepend(es: Seq[ErrorMessage], ws: Seq[WarningMessage]): ParseResult[AST] =
     copy(errors = es.toVector ++ errors, warnings = ws.toVector ++ warnings)
+
+  def withLocation(p: URI): ParseFailure[AST] = copy(
+    errors = errors.map(_.withLocation(p)),
+    warnings = warnings.map(_.withLocation(p))
+  )
+  def withLocation(p: URL): ParseFailure[AST] = withLocation(p.toURI)
+  def withLocation(p: File): ParseFailure[AST] = withLocation(p.toURI)
+
+  def complementLocation(p: URI): ParseFailure[AST] = copy(
+    errors = errors.map(_.complementLocation(p)),
+    warnings = warnings.map(_.complementLocation(p))
+  )
+  def complementLocation(p: URL): ParseFailure[AST] = complementLocation(p.toURI)
+  def complementLocation(p: File): ParseFailure[AST] = complementLocation(p.toURI)
 
   def message = errors.map(_.msg.en).mkString(";")
 
@@ -69,6 +87,8 @@ case class ParseFailure[AST](
 }
 object ParseFailure {
   def apply[AST](msg: String): ParseFailure[AST] = apply(msg, msg, None)
+
+  def apply[AST](msg: String, location: Option[ParseLocation]): ParseFailure[AST] = apply(msg, msg, location)
 
   def apply[AST](en: String, ja: String, location: Option[ParseLocation]): ParseFailure[AST] =
     ParseFailure(Vector(ErrorMessage(en, ja, location)), Vector.empty)

@@ -8,6 +8,7 @@ import com.typesafe.config.{Config => HoconConfig, ConfigFactory}
 import org.goldenport.i18n.I18NContext
 import org.goldenport.i18n.CalendarFormatter
 import org.goldenport.i18n.EmptyResourceBundle
+import org.goldenport.i18n.StringFormatter
 import org.goldenport.hocon.RichConfig
 import org.goldenport.log.{LogConfig, LogLevel}
 import org.goldenport.recorder.{Recorder, StandardRecorder}
@@ -25,7 +26,8 @@ import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperation
  *  version Feb. 26, 2020
  *  version Mar. 12, 2020
  *  version Apr. 10, 2020
- * @version May. 16, 2020
+ *  version May. 16, 2020
+ * @version Jan.  2, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Config(
@@ -142,6 +144,7 @@ object Config {
     val timezone = TimeZone.getDefault()
     val currency = Currency.getInstance(locale)
     val calenderformatters = CalendarFormatter.Factory.default
+    val stringformatter = StringFormatter.default
     val bundle = EmptyResourceBundle
     val homedir = Option(System.getProperty("user.home")).map(x => new File(x))
     val workdir = Option(System.getProperty("user.dir")).map(x => new File(x))
@@ -154,6 +157,7 @@ object Config {
         timezone,
         currency,
         calenderformatters,
+        stringformatter,
         bundle
       ),
       homedir,

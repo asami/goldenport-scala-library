@@ -43,7 +43,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Mar. 18, 2020
  *  version May.  4, 2020
  *  version Jul. 29, 2020
- * @version Sep.  1, 2020
+ *  version Sep.  1, 2020
+ * @version Jan.  9, 2021
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -566,6 +567,20 @@ object StringUtils {
     else
       c
   }
+
+  def normalizeConsoleMessage(newline: String)(p: String): String =
+    p.replace("\r\n", newline).replace("\r", newline).replace("\n", newline)
+
+  def normalizeConsoleMessageWithTrailingNewline(newline: String)(p: String): String = {
+    val a = normalizeConsoleMessageWithoutTrailingNewline(newline)(p)
+    if (a.isEmpty)
+      a
+    else
+      s"$a$newline"
+  }
+
+  def normalizeConsoleMessageWithoutTrailingNewline(newline: String)(p: String): String =
+    dropRightNewlines(normalizeConsoleMessage(newline)(p))
 
   /*
    * List

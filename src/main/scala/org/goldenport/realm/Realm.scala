@@ -18,7 +18,8 @@ import org.goldenport.extension.Showable
  *  version May.  4, 2020
  *  version Jul. 13, 2020
  *  version Oct. 11, 2020
- * @version Nov. 15, 2020
+ *  version Nov. 15, 2020
+ * @version Jan.  4, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
@@ -80,7 +81,7 @@ object Realm {
   }
 
   case class ObjectData(o: Object) extends Data {
-    def export(file: File)(implicit ctx: Context): Unit = RAISE.unsupportedOperationFault
+    def export(file: File)(implicit ctx: Context): Unit = RAISE.unsupportedOperationFault(s"${o}")
   }
 
   case object EmptyData extends Data {

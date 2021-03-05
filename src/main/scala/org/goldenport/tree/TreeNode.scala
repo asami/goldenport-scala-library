@@ -5,6 +5,7 @@ import scalaz._
 import Scalaz._
 import org.goldenport.realm.Realm
 import org.goldenport.values.PathName
+import org.goldenport.util.StringUtils
 
 /*
  * @since   Jul. 27, 2008
@@ -12,7 +13,8 @@ import org.goldenport.values.PathName
  *  version Feb. 22, 2012
  *  version Nov. 18, 2019
  *  version Oct. 11, 2020
- * @version Nov. 15, 2020
+ *  version Nov. 15, 2020
+ * @version Jan.  1, 2021
  * @author  ASAMI, Tomoharu
  */
 trait TreeNode[E] {
@@ -78,6 +80,9 @@ trait TreeNode[E] {
     }
     pb.toString
   }
+
+  def getNameSuffix: Option[String] = StringUtils.getSuffix(name)
+  def nameBody: String = StringUtils.toPathnameBody(name)
 }
 
 object TreeNode {

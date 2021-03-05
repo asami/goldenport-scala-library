@@ -11,7 +11,8 @@ import Environment._
  *  version Jan. 20, 2020
  *  version Mar.  8, 2020
  *  version May. 30, 2020
- * @version Nov. 23, 2020
+ *  version Nov. 23, 2020
+ * @version Jan. 11, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Environment(
@@ -25,8 +26,11 @@ case class Environment(
   def locale = config.locale
   def timezone = config.timezone
   def consoleCharset = config.consoleCharset
-  def toAppEnvironment[T <: AppEnvironment] = appEnvironment.asInstanceOf[T]
+  def homeDirectory: File = config.homeDirectory getOrElse monitor.userHome
+  def workDirectory: File = config.workDirectory getOrElse monitor.userDir
+  def getProjectDirectory: Option[File] = config.projectDirectory
   def outputDirectory = config.outputDirectory
+  def toAppEnvironment[T <: AppEnvironment] = appEnvironment.asInstanceOf[T]
 
   def isPlatformWindows: Boolean = monitor.isPlatformWindows
 
