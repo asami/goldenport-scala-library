@@ -18,7 +18,9 @@ import org.goldenport.util.StringUtils
  *  version Dec.  7, 2019
  *  version Jan. 31, 2020
  *  version Jan. 16, 2021
- * @version Feb.  7, 2021
+ *  version Feb.  7, 2021
+ *  version Mar.  2, 2021
+ * @version Apr.  3, 2021
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -32,7 +34,8 @@ case class LogicalLines(
   def +:(p: LogicalLine) = LogicalLines(p +: lines)
   def +:(p: String) = LogicalLines(LogicalLine(p) +: lines)
 
-  def text = lines.map(_.text + "\n").mkString
+  lazy val lineVector = lines.map(_.text)
+  lazy val text = lines.map(_.text + "\n").mkString
 }
 
 object LogicalLines {
@@ -528,13 +531,13 @@ object LogicalLines {
     override protected def double_Quote_State(config: Config, evt: CharEvent) = DoubleQuoteState(this, evt.location)
     override protected def single_Quote_State(config: Config, evt: CharEvent) = SingleQuoteState(this, evt.location)
     override protected def open_Angle_Bracket_State(config: Config, evt: CharEvent) = XmlOpenState(this, Some(evt.location))
-    override protected def close_Angle_Bracket_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect(this, "close_Angle_Bracket_State")
+//    override protected def close_Angle_Bracket_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect(this, "close_Angle_Bracket_State")
     override protected def open_Brace_State(config: Config, evt: CharEvent) = JsonState(this, evt.location)
-    override protected def close_Brace_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect(this, "close_Brace_State")
+//    override protected def close_Brace_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect(this, "close_Brace_State")
     override protected def open_Parenthesis_State(config: Config, evt: CharEvent) = SExpressionState(this, evt.location)
-    override protected def close_Parenthesis_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect(this, "close_Parenthesis_State")
+//    override protected def close_Parenthesis_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect(this, "close_Parenthesis_State")
     override protected def open_Bracket_State(config: Config, evt: CharEvent) = BracketState(this, evt)
-    override protected def close_Bracket_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect(this, "close_Bracket_State")
+//    override protected def close_Bracket_State(config: Config, evt: CharEvent) = RAISE.notImplementedYetDefect(this, "close_Bracket_State")
 
     override protected def newline_Verbatim_State(config: Config, evt: CharEvent): LogicalLinesParseState =
       _verbatim_state(config, evt)

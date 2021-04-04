@@ -4,16 +4,16 @@ import org.goldenport.extension.Showable
 
 /*
  * @since   Feb. 25, 2021
- * @version Feb. 25, 2021
+ * @version Mar. 28, 2021
  * @author  ASAMI, Tomoharu
  */
 case class TraceHandle(ctx: TraceContext) extends Showable {
-  def print = toString
-  def display = print
-  def show = print
-  def embed = print
+  def print = ctx.print
+  def display = ctx.display
+  def show = ctx.show
+  def embed = ctx.embed
 }
 
 object TraceHandle {
-  val empty = TraceContext.empty.toHandle
+  def create() = TraceContext.create().toHandle
 }

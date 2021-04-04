@@ -19,7 +19,8 @@ import org.goldenport.util.StringUtils
  *  version Dec. 27, 2018
  *  version Apr. 14, 2020
  *  version May. 18, 2020
- * @version Jun.  6, 2020
+ *  version Jun.  6, 2020
+ * @version Mar. 15, 2021
  * @author  ASAMI, Tomoharu
  */
 case class PathName(
@@ -41,6 +42,8 @@ case class PathName(
       case x :: _ => x
     }
   }
+  lazy val leaf: String = getChild.map(_.v) getOrElse ""
+  lazy val body: String = getParent.map(_.v) getOrElse ""
   lazy val getParent: Option[PathName] =
     if (isBase)
       None
@@ -66,6 +69,7 @@ case class PathName(
 
   private def _is_pattern(s: String) = s.contains("{")
 
+  // for HTTP
   def isResource(p: String): Boolean = firstComponent == p
   def isOperation(p: String): Boolean = firstComponent == p
 
@@ -73,8 +77,13 @@ case class PathName(
   def :+(p: PathName): PathName = PathName(v, p.v)
   def +:(p: PathName): PathName = PathName(p.v, v)
   def +(p: String): PathName = :+(p)
-  def :+(p: String): PathName = PathName(StringUtils.concatPath(v, p))
-  def +:(p: String): PathName = PathName(StringUtils.concatPath(p, v))
+  def :+(p: String): PathName = PathName(_concat_path(v, p))
+  def +:(p: String): PathName = PathName(_concat_path(p, v))
+
+  private def _concat_path(lhs: String, rhs: String) = delimiter match {
+    case "/" => StringUtils.concatPath(lhs, rhs)
+    case _ => s"${lhs}${delimiter}${rhs}"
+  }
 
   def replaceFirst(p: String): PathName = {
     val a = components match {
@@ -88,7 +97,6 @@ case class PathName(
   }
 
   def length = components.length
-  def body = StringUtils.toPathnameBody(v)
   def getSuffix: Option[String] = StringUtils.getSuffix(v)
 }
 

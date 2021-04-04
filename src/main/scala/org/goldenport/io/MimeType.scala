@@ -14,7 +14,8 @@ import org.goldenport.util.StringUtils
  *  version Aug. 18, 2019
  *  version Dec.  7, 2019
  *  version Sep.  1, 2020
- * @version Feb.  8, 2021
+ *  version Feb.  8, 2021
+ * @version Mar.  6, 2021
  * @author  ASAMI, Tomoharu
  */
 case class MimeType(name: String) {
@@ -230,7 +231,9 @@ object MimeType {
 
   lazy val suffixMimeMap = mimeSuffixMap.map {
     case (m, s) => s -> m
-  }
+  } ++ Map(
+    "htm" -> text_html
+  )
 
   def isText(p: MimeType): Boolean = isText(p.name)
   def isText(p: String): Boolean = p.startsWith("text/") || textMimeTypes.exists(_.name == p)

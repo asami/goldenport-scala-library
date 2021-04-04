@@ -34,7 +34,8 @@ import LogicalTokens.Context
  *  version Sep.  6, 2020
  *  version Oct. 12, 2020
  *  version Jan. 30, 2021
- * @version Feb. 14, 2021
+ *  version Feb. 14, 2021
+ * @version Mar. 24, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -267,8 +268,8 @@ object ComplexToken extends LogicalTokens.SimpleTokenizer {
     regex.findFirstMatchIn(s).flatMap { m =>
       val whole = m.group(0)
       if (s == whole) {
-        val real = RegexUtils.parseDouble(m, 1, 2, 3)
-        val imaginary = RegexUtils.parseDouble(m, 4, 5, 6)
+        val real = RegexUtils.parseDouble(m, 1)
+        val imaginary = RegexUtils.parseDouble(m, 4)
         val r = real match {
           case ParseFailure(es, ws) => imaginary match {
             case ParseFailure(es2, ws2) => ParseFailure(es ++ es2, ws ++ ws2)
@@ -295,7 +296,7 @@ object ComplexToken extends LogicalTokens.SimpleTokenizer {
       } else {
         None
       }
-  }
+    }
 }
 case class RationalToken(
   n: spire.math.Rational,
@@ -716,6 +717,14 @@ object UrlToken extends LogicalTokens.SimpleTokenizer {
 
   override protected def accept_Token(context: Context, p: String, location: ParseLocation) =
     Try(apply(p, location)).toOption
+
+  private val _url_schemes = Vector("http", "https", "file")
+
+  def isUrl(p: String): Boolean = Strings.totokens(p, ":") match {
+    case Nil => false
+    case x :: Nil => false
+    case x :: _ => _url_schemes.contains(x)
+  }
 }
 
 case class UrnToken(
@@ -734,12 +743,12 @@ object UrnToken extends LogicalTokens.SimpleTokenizer {
     UrnToken(Urn(s), Some(location))
 
   override protected def accept_Token(context: Context, p: String, location: ParseLocation) =
-    if (_is_urn(p))
+    if (isUrn(p))
       Try(apply(p, location)).toOption
     else
       None
 
-  private def _is_urn(p: String) = UriToken.isUri(p) && (Strings.totokens(p, ":") match {
+  def isUrn(p: String) = UriToken.isUri(p) && (Strings.totokens(p, ":") match {
     case Nil => false
     case s :: _ => s.equalsIgnoreCase("urn")
     case _ => false

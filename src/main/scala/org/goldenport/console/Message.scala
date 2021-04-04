@@ -2,10 +2,12 @@ package org.goldenport.console
 
 /*
  * @since   Jan. 10, 2021
- * @version Jan. 17, 2021
+ *  version Jan. 17, 2021
+ * @version Mar.  8, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Message {
+  def text: String
 }
 
 object Message {
@@ -126,19 +128,24 @@ object Message {
 }
 
 case class Prompt(prompt: String) extends Message {
+  def text = prompt
 }
 
 case class PlainMessage(message: String) extends Message {
+  def text = message
 }
 
 case class DecoratedMessage(message: String, decoration: Message.Decoration) extends Message {
+  def text = message
   def withUnderline(p: Boolean = true) = copy(decoration = decoration.withUnderline(p))
   def withBlink(p: Boolean = true) = copy(decoration = decoration.withBlink(p))
   def withBold(p: Boolean = true) = copy(decoration = decoration.withBold(p))
 }
 
 case class ErrorMessage(message: String) extends Message {
+  def text = message
 }
 
 case class WarningMessage(message: String) extends Message {
+  def text = message
 }

@@ -5,15 +5,18 @@ import org.goldenport.util.ExceptionUtils
 
 /*
  * @since   Feb. 20, 2021
- * @version Feb. 21, 2021
+ *  version Feb. 21, 2021
+ * @version Mar. 26, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StatusCode(
   main: Int,
-  detail: Option[Int] = None,
-  application: Option[Int] = None,
-  message: Option[I18NString] = None
+  detail: Option[DetailCode] = None,
+  application: Option[Int] = None, // FURTHER CONSIDERATION
+  message: Option[I18NString] = None, // FURTHER CONSIDERATION
+  externalService: Option[StatusCode] = None // FURTHER CONSIDERATION
 ) {
+  def withDetail(p: DetailCode) = copy(detail = Some(p))
 }
 
 object StatusCode {

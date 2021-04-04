@@ -10,7 +10,8 @@ import org.goldenport.parser.ParseResult
  *  version Sep. 29, 2020
  *  version Oct. 20, 2020
  *  version Jan. 19, 2021
- * @version Feb. 14, 2021
+ *  version Feb. 14, 2021
+ * @version Mar. 24, 2021
  * @author  ASAMI, Tomoharu
  */
 object NumberUtils {
@@ -161,9 +162,9 @@ object NumberUtils {
     if (Strings.blankp(p))
       ParseResult.empty
     else
-      ParseResult.success(p.trim.toLong)
+      ParseResult.success(p.trim.toDouble)
   } catch {
-    case e: NumberFormatException => ParseResult.error("Not double: $p")
+    case e: NumberFormatException => ParseResult.error(s"Not double: $p")
   }
 }
 

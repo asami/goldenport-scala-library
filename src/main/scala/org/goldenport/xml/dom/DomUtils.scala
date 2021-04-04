@@ -30,7 +30,8 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version Nov. 20, 2019
  *  version Mar.  1, 2020
  *  version Nov. 29, 2020
- * @version Jan.  1, 2021
+ *  version Jan.  1, 2021
+ * @version Apr.  3, 2021
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -298,6 +299,18 @@ object DomUtils {
 
   def toText(node: Node): String = toString(node)
 
+  def toPrettyText(node: Node): String = {
+    val buf = new StringWriter()
+    printDocumentPretty(node, buf)
+    buf.toString
+  }
+
+  def toPrettyFragmentText(node: Node): String = {
+    val buf = new StringWriter()
+    printDocumentFragmentPretty(node, buf)
+    buf.toString
+  }
+
   def toString(node: Node): String = {
     val buf = new StringWriter()
     printDocument(node, buf)
@@ -318,6 +331,17 @@ object DomUtils {
     val tf = TransformerFactory.newInstance()
     val transformer = tf.newTransformer()
     transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no")
+    transformer.setOutputProperty(OutputKeys.METHOD, "xml")
+    transformer.setOutputProperty(OutputKeys.INDENT, "yes")
+    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8")
+    transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4")
+    transformer.transform(new DOMSource(node), new StreamResult(out))
+  }
+
+  def printDocumentFragmentPretty(node: Node, out: Writer) {
+    val tf = TransformerFactory.newInstance()
+    val transformer = tf.newTransformer()
+    transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
     transformer.setOutputProperty(OutputKeys.METHOD, "xml")
     transformer.setOutputProperty(OutputKeys.INDENT, "yes")
     transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8")

@@ -13,7 +13,8 @@ import Environment._
  *  version Mar.  8, 2020
  *  version May. 30, 2020
  *  version Nov. 23, 2020
- * @version Jan. 24, 2021
+ *  version Jan. 24, 2021
+ * @version Mar. 27, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Environment(
@@ -78,6 +79,7 @@ object Environment {
 
     protected def forward_Recorder = environment.recorder
 
+    def locale = environment.locale
     def formatContext = environment.formatContext
     def dateTimeContext = environment.dateTimeContext // TODO base
   }

@@ -2,16 +2,32 @@ package org.goldenport.trace
 
 import scalaz._, Scalaz._
 import scala.collection.mutable
+import org.goldenport.extension.Showable
+import org.goldenport.context.Fault
+import org.goldenport.parser.ParseFailure
 
 /*
  * @since   Nov. 13, 2017
- * @version Feb. 25, 2021
+ *  version Feb. 25, 2021
+ * @version Mar. 28, 2021
  * @author  ASAMI, Tomoharu
  */
-class TraceContext() {
+class TraceContext() extends Showable {
   private val _root = new Root()
   private val _trace = mutable.ArrayBuffer.empty[Trace]
   private var _stack: List[Invoke] = Nil
+
+  def print = {
+    // val printer = new TraceContext.Printer()
+    // printer.make(_root)
+    // printer.print
+    showTree
+  }
+  def display = print
+  def show = print
+  def embed = print
+
+  def isEmpty: Boolean = _root.isEmpty && _trace.isEmpty && _stack == Nil
 
   def toHandle: TraceHandle = TraceHandle(this)
 
@@ -58,12 +74,22 @@ class TraceContext() {
     map(_.trace(p)).
     getOrElse(_trace += p)
 
+  def trace(ps: Seq[Trace]): Unit = _stack.headOption.
+    map(_.trace(ps)).
+    getOrElse(_trace ++= ps)
+
+  def fault(p: Fault): Unit = trace(FaultTrace(p))
+
+  def fault(ps: Seq[Fault]): Unit = trace(ps.map(FaultTrace))
+
+//  def argumentFault(p: ParseFailure[_]): Unit = ???
+
   def asTree: Tree[Trace] = Tree.node(_root, _trace.toStream.map(_.asTree))
-  def asTreeSplit: Tree[String] = {
+  def asTreeSplint: Tree[String] = {
     val start = _root.timestamp
     val end = _trace.lastOption.flatMap(_.endTimestamp)
     val a = end.fold(s"$start")(x => s"$start(${x - start})")
-    Tree.node(a, _trace.toStream.map(_.asTreeSplit(start)))
+    Tree.node(a, _trace.toStream.map(_.asTreeSplint(start)))
   }
 
   def showTree: String = {
@@ -72,15 +98,30 @@ class TraceContext() {
     asTree.drawTree
   }
 
-  def showTreeSplit: String = {
+  def showTreeSplint: String = {
     // TODO remove double-quotes from showing string.
-    asTreeSplit.drawTree
+    asTreeSplint.drawTree
   }
+
+  def toTrace: Trace = _root.set(_trace)
 }
 
 object TraceContext {
-  val empty = new TraceContext()
   def create(): TraceContext = new TraceContext()
+
+  // class Printer(
+  //   val indentwidth: Int = 2
+  // ) {
+  //   private var _depth = 0
+  //   private val _buffer = new StringBuilder()
+
+  //   def make(p: Trace) {
+  //     _buffer(p.print)
+  //     p.
+  //   }
+
+  //   def print: String = _buffer.toString()
+  // }
 }
 
 case class Result[T](r: T, leaveMessage: String) {

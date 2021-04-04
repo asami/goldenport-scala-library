@@ -1,63 +1,97 @@
 package org.goldenport.util
 
+import scalaz._, Scalaz._
 import scala.util.matching.Regex
 import scala.util.matching.Regex.Match
 import org.goldenport.parser._
 
 /*
  * @since   Jan. 19, 2021
- * @version Jan. 19, 2021
+ * @version Mar. 24, 2021
  * @author  ASAMI, Tomoharu
  */
 object RegexUtils {
-  def getString(regex: Regex, s: String, i: Int, is: Int*): Option[String] =
-    regex.findFirstMatchIn(s).flatMap(getString(_, i +: is))
+  def getString(regex: Regex, s: String, i: Int): Option[String] =
+    regex.findFirstMatchIn(s).flatMap(getString(_, i))
 
-  def getString(p: Match, i: Int, is: Int*): Option[String] = getString(p, i +: is)
+  def getString(p: Match, i: Int): Option[String] = Option(p.group(i))
 
-  def getString(p: Match, is: Seq[Int]): Option[String] = {
-    val a = is.map(i => Option(p.group(i)).getOrElse("")).mkString
+  def getStrings(p: Match, i: Int, is: Int*): Option[List[Option[String]]] = getStrings(p, i +: is)
+
+  def getStrings(p: Match, is: Seq[Int]): Option[List[Option[String]]] = {
+    val a = is.map(i => Option(p.group(i)))
     if (a.isEmpty)
       None
     else
-      Some(a)
+      Some(a.toList)
   }
 
-  def getInt(regex: Regex, s: String, i: Int, is: Int*): Option[Int] =
-    regex.findFirstMatchIn(s).flatMap(getInt(_, i +: is))
+  def getInt(regex: Regex, s: String, i: Int): Option[Int] =
+    regex.findFirstMatchIn(s).flatMap(getInt(_, i))
 
-  def getInt(p: Match, i: Int, is: Int*): Option[Int] = getInt(p, i +: is)
+  def getInt(p: Match, i: Int): Option[Int] = getString(p, i).flatMap(NumberUtils.getInt)
 
-  def getInt(p: Match, is: Seq[Int]): Option[Int] = getString(p, is).flatMap(NumberUtils.getInt)
+  def getInts(regex: Regex, s: String, i: Int, is: Int*): Option[List[Option[Int]]] =
+    regex.findFirstMatchIn(s).flatMap(getInts(_, i +: is))
 
-  def getLong(regex: Regex, s: String, i: Int, is: Int*): Option[Long] =
-    regex.findFirstMatchIn(s).flatMap(getLong(_, i +: is))
+  def getInts(p: Match, i: Int, is: Int*): Option[List[Option[Int]]] = getInts(p, i +: is)
 
-  def getLong(p: Match, i: Int, is: Int*): Option[Long] = getLong(p, i +: is)
+  def getInts(p: Match, is: Seq[Int]): Option[List[Option[Int]]] = getStrings(p, is).map(_.map(NumberUtils.getInt))
 
-  def getLong(p: Match, is: Seq[Int]): Option[Long] = getString(p, is).flatMap(NumberUtils.getLong)
+  def getLong(regex: Regex, s: String, i: Int): Option[Long] =
+    regex.findFirstMatchIn(s).flatMap(getLong(_, i))
 
-  def getFloat(regex: Regex, s: String, i: Int, is: Int*): Option[Float] =
-    regex.findFirstMatchIn(s).flatMap(getFloat(_, i +: is))
+  def getLong(p: Match, i: Int): Option[Long] = getString(p, i).flatMap(NumberUtils.getLong)
 
-  def getFloat(p: Match, i: Int, is: Int*): Option[Float] = getFloat(p, i +: is)
+  def getLongs(regex: Regex, s: String, i: Int, is: Int*): Option[List[Option[Long]]] =
+    regex.findFirstMatchIn(s).flatMap(getLongs(_, i +: is))
 
-  def getFloat(p: Match, is: Seq[Int]): Option[Float] = getString(p, is).flatMap(NumberUtils.getFloat)
+  def getLongs(p: Match, i: Int, is: Int*): Option[List[Option[Long]]] = getLongs(p, i +: is)
 
-  def getDouble(regex: Regex, s: String, i: Int, is: Int*): Option[Double] =
-    regex.findFirstMatchIn(s).flatMap(getDouble(_, i +: is))
+  def getLongs(p: Match, is: Seq[Int]): Option[List[Option[Long]]] = getStrings(p, is).map(_.map(NumberUtils.getLong))
 
-  def getDouble(p: Match, i: Int, is: Int*): Option[Double] = getDouble(p, i +: is)
+  def getFloat(regex: Regex, s: String, i: Int): Option[Float] =
+    regex.findFirstMatchIn(s).flatMap(getFloat(_, i))
 
-  def getDouble(p: Match, is: Seq[Int]): Option[Double] = getString(p, is).flatMap(NumberUtils.getDouble)
+  def getFloat(p: Match, i: Int): Option[Float] = getString(p, i).flatMap(NumberUtils.getFloat)
 
-  def parseDouble(regex: Regex, s: String, i: Int, is: Int*): ParseResult[Double] =
+  def getFloats(regex: Regex, s: String, i: Int, is: Int*): Option[List[Option[Float]]] =
+    regex.findFirstMatchIn(s).flatMap(getFloats(_, i +: is))
+
+  def getFloats(p: Match, i: Int, is: Int*): Option[List[Option[Float]]] = getFloats(p, i +: is)
+
+  def getFloats(p: Match, is: Seq[Int]): Option[List[Option[Float]]] = getStrings(p, is).map(_.map(NumberUtils.getFloat))
+
+  def getDouble(regex: Regex, s: String, i: Int): Option[Double] =
+    regex.findFirstMatchIn(s).flatMap(getDouble(_, i))
+
+  def getDouble(p: Match, i: Int): Option[Double] = getString(p, i).flatMap(NumberUtils.getDouble)
+
+  def getDoubles(regex: Regex, s: String, i: Int, is: Int*): Option[List[Option[Double]]] =
+    regex.findFirstMatchIn(s).flatMap(getDoubles(_, i +: is))
+
+  def getDoubles(p: Match, i: Int, is: Int*): Option[List[Option[Double]]] = getDoubles(p, i +: is)
+
+  def getDoubles(p: Match, is: Seq[Int]): Option[List[Option[Double]]] = getStrings(p, is).map(_.map(NumberUtils.getDouble))
+
+  def parseDouble(regex: Regex, s: String, i: Int): ParseResult[Double] = regex.findFirstMatchIn(s) match {
+    case Some(s) => parseDouble(s, i)
+    case None => EmptyParseResult()
+  }
+
+  def parseDouble(p: Match, i: Int): ParseResult[Double] = NumberUtils.parseDouble(getString(p, i))
+
+  def parseDoubles(regex: Regex, s: String, i: Int, is: Int*): ParseResult[List[Option[Double]]] =
     regex.findFirstMatchIn(s) match {
-      case Some(s) => parseDouble(s, i +: is)
+      case Some(s) => parseDoubles(s, i +: is)
       case None => EmptyParseResult()
     }
 
-  def parseDouble(p: Match, i: Int, is: Int*): ParseResult[Double] = parseDouble(p, i +: is)
+  def parseDoubles(p: Match, i: Int, is: Int*): ParseResult[List[Option[Double]]] = parseDoubles(p, i +: is)
 
-  def parseDouble(p: Match, is: Seq[Int]): ParseResult[Double] = NumberUtils.parseDouble(getString(p, is))
+  def parseDoubles(p: Match, is: Seq[Int]): ParseResult[List[Option[Double]]] =
+    getStrings(p, is) match {
+      case Some(s) => s.traverse(_.traverse(NumberUtils.parseDouble))
+      case None => ParseResult.error("No match")
+    }
 }

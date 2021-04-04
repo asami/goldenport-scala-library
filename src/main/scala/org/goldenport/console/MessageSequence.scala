@@ -5,12 +5,13 @@ import org.goldenport.Strings
 
 /*
  * @since   Jan. 10, 2021
- * @version Jan. 10, 2021
+ * @version Mar. 28, 2021
  * @author  ASAMI, Tomoharu
  */
 case class MessageSequence(
   messages: Vector[Message]
 ) {
+  def isEmpty: Boolean = messages.isEmpty
   def +(p: MessageSequence): MessageSequence = MessageSequence(messages ++ p.messages)
   def :+(p: Message): MessageSequence = copy(messages :+ p)
 }

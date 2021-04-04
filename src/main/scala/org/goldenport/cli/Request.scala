@@ -1,5 +1,6 @@
 package org.goldenport.cli
 
+import java.net.URL
 import org.goldenport.RAISE
 import org.goldenport.Strings
 
@@ -9,7 +10,8 @@ import org.goldenport.Strings
  *  version Feb. 24, 2019
  *  version Mar.  4, 2019
  *  version Feb. 16, 2020
- * @version May. 19, 2020
+ *  version May. 19, 2020
+ * @version Apr.  4, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Request(
@@ -31,6 +33,8 @@ case class Request(
   def isInteractive: Boolean = switches.exists(_.name == "i")
 
   def getPropertyString(name: String): Option[String] = properties.find(_.name == name).map(_.value.asString)
+
+  def arg1Url: URL = arguments.headOption.map(_.asUrl).getOrElse(RAISE.invalidArgumentFault("Missing argument"))
 }
 
 object Request {

@@ -10,7 +10,8 @@ import MatrixVisualizer._
  *  version Jul.  7, 2019
  *  version Aug. 24, 2019
  *  version Oct. 11, 2019
- * @version Nov. 30, 2019
+ *  version Nov. 30, 2019
+ * @version Mar.  8, 2021
  * @author  ASAMI, Tomoharu
  */
 case class MatrixVisualizer[T](
@@ -23,7 +24,8 @@ case class MatrixVisualizer[T](
   newline: String,
   textf: (ColumnDef, T) => String,
   columnDefs: ColumnDefs = ColumnDefs.empty,
-  horizontalSeparatorGap: Option[Int] = Some(5)
+  horizontalSeparatorGap: Option[Int] = Some(5),
+  isCompact: Boolean = false
 ) {
   private def _is_horizontal_separator(i: Int): Boolean =
     horizontalSeparator && _is_gap(i)
@@ -36,9 +38,19 @@ case class MatrixVisualizer[T](
 
   def withColumnDefs(p: ColumnDefs) = copy(columnDefs = p)
 
+  def withCompact(p: Boolean) = copy(isCompact = p)
+
   def buildColumns(p: IMatrix[T]): ColumnInfos = {
     val raw = _build_raw(p)
     _build_columns(raw)
+  }
+
+  def buildColumnsCompact(width: Int, p: IMatrix[T]): ColumnInfos = {
+    val r = buildColumns(p)
+    if (r.width <= width)
+      r
+    else
+      _compact(width, r)
   }
 
   def plainText(p: IMatrix[T]): String = {
@@ -84,6 +96,74 @@ case class MatrixVisualizer[T](
       private def _string_width(p: Cell): Int = p.lines.toVector.foldMap(stringWidth)
     }
     p.rows./:(Z())(_+_).r
+  }
+
+  private def _compact(width: Int, p: ColumnInfos) = {
+    val avgwidth = ((width - 2) / p.length) - 1
+
+    sealed trait Slot {
+      def column: ColumnInfo
+      def isUnresolved: Boolean
+    }
+    case class Resolved(column: ColumnInfo, width: Int) extends Slot {
+      val isUnresolved = false
+    }
+    case class Unresolved(column: ColumnInfo) extends Slot {
+      val isUnresolved = true
+    }
+
+    case class Z(xs: Vector[Slot] = Vector.empty, remainder: Int = width - 1) {
+      def r = if (remainder <= 0)
+        _asis
+      else
+        _compact
+
+      private def _asis = xs.map {
+        case Resolved(c, w) => c.withWidth(w)
+        case Unresolved(c) => c
+      }
+
+      private def _compact = {
+        val undefinedcount = xs.count(_.isUnresolved)
+        val basewidth = {
+          val a = remainder / undefinedcount
+          if (remainder - ((a + 1) * undefinedcount) >= 0)
+            a
+          else
+            a - 1
+        }
+        val fraction = width - ((basewidth + 1) * undefinedcount)
+        case class ZZ(r: Vector[ColumnInfo] = Vector.empty, fraction: Int = fraction) {
+          def +(rhs: Slot) = rhs match {
+            case Resolved(c, w) => copy(r = r :+ c.withWidth(w))
+            case Unresolved(c) =>
+              if (fraction > 0) {
+                val w = basewidth + 1
+                copy(r = r :+ c.withWidth(w), fraction = fraction - 1)
+              } else {
+                copy(r = r :+ c.withWidth(basewidth))
+              }
+
+          }
+        }
+        xs./:(ZZ())(_+_).r
+      }
+
+      def +(rhs: ColumnInfo) =
+        if (rhs.width <= avgwidth)
+          resolved(rhs, rhs.width)
+        else
+          unresolved(rhs)
+
+      def unresolved(p: ColumnInfo) = copy(xs = xs :+ Unresolved(p))
+
+      def resolved(p: ColumnInfo, width: Int) = copy(
+        xs = xs :+ Resolved(p, width),
+        remainder = remainder - (p.width + 1)
+      )
+    }
+    val r = p.columns./:(Z())(_+_).r
+    ColumnInfos(r)
   }
 
   private def _make(columns: ColumnInfos, rows: Rows): Rows = {
@@ -181,9 +261,10 @@ case class MatrixVisualizer[T](
   private def _draw_row(sb: StringBuilder, columns: ColumnInfos, row: Row) {
     val matrix = row.matrix
     _draw_row_line(sb, columns, matrix, 0)
-    for (y <- 1 until matrix.height) {
-      _draw_row_line(sb, columns, matrix, 1)
-    }
+    if (!isCompact)
+      for (y <- 1 until matrix.height) {
+        _draw_row_line(sb, columns, matrix, 1)
+      }
   }
 
   private def _draw_row_line(
@@ -465,7 +546,10 @@ object MatrixVisualizer {
     val name = "middle"
   }
 
-  case class ColumnDef(width: Option[Int])
+  case class ColumnDef(width: Option[Int]) {
+    def withWidth(p: Int) = copy(width = Some(p))
+    def withoutWidth() = copy(width = None)
+  }
   object ColumnDef {
     val empty = ColumnDef(None)
   }
@@ -477,9 +561,12 @@ object MatrixVisualizer {
   object ColumnDefs {
     val empty = ColumnDefs(Vector.empty)
   }
-  case class ColumnInfo(width: Int)
+  case class ColumnInfo(width: Int) {
+    def withWidth(p: Int) = copy(width = p)
+  }
   case class ColumnInfos(columns: IndexedSeq[ColumnInfo]) {
     def length = columns.length
+    def width = 1 + columns.map(x => x.width + 1).sum
     def apply(i: Int): ColumnInfo = columns(i)
   }
   case class Rows(rows: IndexedSeq[Row]) {
@@ -539,4 +626,62 @@ object MatrixVisualizer {
   def bodyStart[T](f: (ColumnDef, T) => String) = MatrixVisualizer(TopEndBorder, NoneBorder, true, true, true, AsciiLineStyle, "\n", f)
   def bodyEnd[T](f: (ColumnDef, T) => String) = MatrixVisualizer(NoneBorder, BottomEndBorder, true, true, true, AsciiLineStyle, "\n", f)
   def footer[T](f: (ColumnDef, T) => String) = MatrixVisualizer(MiddleBorder, BottomEndBorder, true, true, true, AsciiLineStyle, "\n", f)
+
+  // def compact(width: Int, p: ColumnDefs): ColumnDefs = compact2(width, p)
+
+  // def compact1(width: Int, p: ColumnDefs): ColumnDefs = {
+  //   RAISE.notImplementedYetDefect
+  // }
+
+  // def compact2(width: Int, p: ColumnDefs): ColumnDefs = {
+  //   val linewidth = 2
+  //   val avgwidth = _half_up((width / p.length) - 2)
+
+  //   case class Z(xs: Vector[ColumnDef] = Vector.empty, count: Int = linewidth) {
+  //     def r = {
+  //       val remainder = width - count
+  //       if (remainder <= 0) {
+  //         xs.map(x => if (x.width.isDefined) x else x.withWidth(avgwidth))
+  //       } else {
+  //         val undefinedcount = xs.count(_.width.isDefined == false)
+  //         val basewidth = remainder / undefinedcount
+  //         val fraction = remainder % undefinedcount
+  //         case class ZZ(r: Vector[ColumnDef] = Vector.empty, i: Int = fraction) {
+  //           def +(rhs: ColumnDef) =
+  //             if (rhs.width.isDefined) {
+  //               copy(r = r :+ rhs)
+  //             } else {
+  //               if (i > 0) {
+  //                 val w = basewidth + linewidth
+  //                 copy(r = r :+ rhs.withWidth(w), i = i - linewidth)
+  //               } else {
+  //                 copy(r = r :+ rhs.withWidth(basewidth))
+  //               }
+  //             }
+  //         }
+  //         xs./:(ZZ())(_+_).r
+  //       }
+  //     }
+
+  //     def +(rhs: ColumnDef) = {
+  //       def _withwidth(w: Int) =
+  //         if (w <= avgwidth)
+  //           _set(w)
+  //         else
+  //           _count(avgwidth)
+
+  //       def _withoutwidth() = _count(avgwidth)
+
+  //       def _set(w: Int) = copy(xs = xs :+ rhs.withWidth(w), count = count + w + linewidth)
+
+  //       def _count(w: Int) = copy(xs = xs :+ rhs.withoutWidth(), count = count + w + linewidth)
+
+  //       rhs.width.map(_withwidth).getOrElse(_withoutwidth)
+  //     }
+  //   }
+  //   val r = p.columns./:(Z())(_+_).r
+  //   ColumnDefs(r)
+  // }
+
+  // private def _half_up(p: Int) = if (p % 2 == 0) p else p - 1
 }

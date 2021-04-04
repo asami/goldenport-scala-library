@@ -5,10 +5,11 @@ import org.goldenport.recorder.ForwardRecorder
 
 /*
  * @since   Feb. 21, 2021
- * @version Feb. 21, 2021
+ *  version Feb. 21, 2021
+ * @version Mar.  8, 2021
  * @author  ASAMI, Tomoharu
  */
-sealed trait Effect {
+sealed trait Effect extends Incident {
 }
 
 case class Effects(
