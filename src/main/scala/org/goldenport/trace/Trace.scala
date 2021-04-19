@@ -10,15 +10,16 @@ import org.goldenport.extension.IRecord
 /*
  * @since   Nov. 13, 2017
  *  version Feb. 25, 2021
- * @version Mar. 28, 2021
+ *  version Mar. 28, 2021
+ * @version Apr.  6, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Trace extends Showable {
   def kind: String
   def print = toString
   def display = print
-  def show = print
-  def embed = print
+  def show = display
+  def embed = show
   val timestamp = System.currentTimeMillis
   lazy val timestampkey = timestamp.toString.takeRight(5)
   def endTimestamp: Option[Long] = None
@@ -50,7 +51,7 @@ object Trace {
     }
 
     private def _print(depth: Int, p: Trace) {
-      _buffer.append(Vector.fill(depth + indentWidth)(' ').mkString)
+      _buffer.append(Vector.fill(depth * indentWidth)(' ').mkString)
       _buffer.append(f(p))
       _buffer.append(_newline)
       p match {
@@ -106,6 +107,7 @@ class Root() extends Container {
   private var _children: List[Trace] = Nil
   def children = _children
   override def toString() = s"[${timestampkey}]/"
+  override def display = "/"
 
   def set(ps: Seq[Trace]): Root = {
     _children = ps.toList
@@ -137,6 +139,7 @@ class Invoke(label: String, enterMessage: String) extends Container {
   def children = _trace.toList
 
   override def toString() = s"[${timestampkey}${lapkey}]INVOKE:${label} ${enterMessage} => ${leaveMessage}"
+  override def display = s"INVOKE${lapkey}[$label] ${enterMessage} => ${leaveMessage}"
 
   def leave(p: Result[_]): Unit = {
     _leave = Some(p.leaveMessage)
@@ -147,6 +150,9 @@ class Invoke(label: String, enterMessage: String) extends Container {
     _leave = Some(p)
     _leave_timestamp = Some(System.currentTimeMillis)
   }
+
+  def effect(p: Effect): Unit = trace(EffectTrace(p))
+  def effect(ps: Seq[Effect]): Unit = trace(ps.map(EffectTrace))
 
   def fault(p: Fault): Unit = trace(FaultTrace(p))
   def fault(ps: Seq[Fault]): Unit = trace(ps.map(FaultTrace))
@@ -163,6 +169,39 @@ class Invoke(label: String, enterMessage: String) extends Container {
   }
 
   protected def trace_Container_Properties: IRecord = IRecord.empty
+}
+
+case class EffectTrace(effect: Effect) extends Trace {
+  val kind = "effect"
+}
+
+class FutureTrace() extends Container {
+  val kind = "future"
+  private var _effect: Option[Effect.FutureEffect] = None
+  private var _children: Seq[Trace] = Nil
+
+  def effect = _effect.get
+  def children = _children.toList
+
+  def setEffect(p: Effect.FutureEffect): FutureTrace = {
+    _effect = Some(p)
+    this
+  }
+
+  def setChildren(p: Seq[Trace]): FutureTrace = {
+    _children = p
+    this
+  }
+
+  protected def trace_Container_Properties: IRecord = IRecord.empty
+}
+object FutureTrace {
+  // def create(p: Effect.FutureEffect): FutureTrace = {
+  //   val t = new FutureTrace()
+  //   val e = Effect.FutureEffect.create(t)
+  //   t.futureEffect = Some(e)
+  //   t
+  // }
 }
 
 case class FaultTrace(fault: Fault) extends Trace {

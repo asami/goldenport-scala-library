@@ -1,15 +1,61 @@
 package org.goldenport.context
 
-import org.goldenport.config.Config
-import org.goldenport.recorder.ForwardRecorder
+import java.net.URI
+import org.goldenport.value._
+import org.goldenport.trace.FutureTrace
 
 /*
  * @since   Feb. 21, 2021
- *  version Feb. 21, 2021
- * @version Mar.  8, 2021
+ *  version Mar.  8, 2021
+ * @version Apr.  6, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Effect extends Incident {
+}
+
+object Effect {
+  sealed trait Crud extends NamedValueInstance {
+  }
+  object Crud extends EnumerationClass[Crud] {
+    val elements = Vector(Create, Read, Update, Delete)
+
+    case object Create extends Crud {
+      val name = "create"
+    }
+    case object Read extends Crud {
+      val name = "read"
+    }
+    case object Update extends Crud {
+      val name = "update"
+    }
+    case object Delete extends Crud {
+      val name = "delete"
+    }
+  }
+
+  sealed trait Io extends Effect {
+  }
+  object Io extends {
+    sealed trait Storage extends Io {
+    }
+    object Storage {
+      case class File(crud: Crud, uri: URI) extends Storage {
+      }
+      object File {
+        import Crud._
+        def create(p: URI) = File(Create, p)
+        def read(p: URI) = File(Read, p)
+        def update(p: URI) = File(Update, p)
+        def delete(p: URI) = File(Delete, p)
+      }
+    }
+  }
+
+  class FutureEffect(val container: FutureTrace) extends Effect {
+  }
+  object FutureEffect {
+    def create(p: FutureTrace): FutureEffect = new FutureEffect(p)
+  }
 }
 
 case class Effects(

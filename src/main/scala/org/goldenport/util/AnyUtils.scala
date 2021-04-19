@@ -29,7 +29,8 @@ import org.goldenport.extension.Showable
  *  version Oct.  8, 2019
  *  version Nov. 28, 2019
  *  version Jan. 18, 2020
- * @version Jan. 23, 2021
+ *  version Jan. 23, 2021
+ * @version Apr. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -38,8 +39,8 @@ object AnyUtils {
       case v: Timestamp => DateTimeUtils.toIsoDateTimeStringJst(v)
       case v: Symbol => v.name
       case m: NodeSeq => m.toString
-      case m: Seq[_] => m.map(toString(_)).mkString(",")
-      case m: Array[_] => m.map(toString(_)).mkString(",")
+      case m: Seq[_] => m.map(toEmbed(_)).mkString(",")
+      case m: Array[_] => m.map(toEmbed(_)).mkString(",")
       case m: Showable => m.print
       case m: MonthDay => f"${m.getMonthOfYear}%02d-${m.getDayOfMonth}%02d"
       case _ => x.toString

@@ -10,7 +10,8 @@ import Fault._
 /*
  * @since   Feb. 21, 2021
  *  version Feb. 22, 2021
- * @version Mar. 27, 2021
+ *  version Mar. 27, 2021
+ * @version Apr. 10, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -31,7 +32,7 @@ object Fault {
 }
 
 sealed trait ArgumentFault extends Fault {
-  def reaction = Reaction.clientInput
+  def reaction = Reaction.ClientInput
 }
 
 case class InvalidArgumentFault(

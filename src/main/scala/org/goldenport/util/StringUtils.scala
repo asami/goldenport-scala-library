@@ -44,7 +44,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version May.  4, 2020
  *  version Jul. 29, 2020
  *  version Sep.  1, 2020
- * @version Jan.  9, 2021
+ *  version Jan.  9, 2021
+ * @version Apr. 10, 2021
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -560,6 +561,16 @@ object StringUtils {
   def showConsole(p: String, newline: String, size: Int = 5): String = {
     val width = 80
     val a = Strings.tolines(p)
+    if (a.length == 1)
+      _show_console_one_line(a(0), newline, size, width)
+    else
+      _show_console_lines(p, a, newline, size, width)
+  }
+
+  private def _show_console_one_line(p: String, newline: String, size: Int, width: Int) =
+    Strings.cutstring(p, width * 5 - 10)
+
+  private def _show_console_lines(p: String, a: Vector[String], newline: String, size: Int, width: Int) = {
     val b = a.map(Strings.cutstring(_, width))
     val c = b.take(size).mkString(newline)
     if (a.length > size)

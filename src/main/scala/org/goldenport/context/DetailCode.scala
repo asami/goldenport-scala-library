@@ -6,7 +6,8 @@ import org.goldenport.util.StringUtils
 
 /*
  * @since   Mar. 12, 2021
- * @version Mar. 27, 2021
+ *  version Mar. 27, 2021
+ * @version Apr. 10, 2021
  * @author  ASAMI, Tomoharu
  */
 case class DetailCode(
@@ -300,7 +301,8 @@ object DetailCode {
       def name: String = "recover"
     }
 
-    val clientInput = Reaction(Client, Input)
+    val ClientInput = Reaction(Client, Input)
+    val SystemDefect = Reaction(SystemDeveloper, Recover)
   }
 
   sealed trait ApplicationCode {
@@ -319,7 +321,8 @@ object DetailCode {
     }
   }
 
-  def argument = DetailCode(ArgumentValueError, ArgumentSite, Invalid, Reaction.clientInput)
+  val Argument = DetailCode(ArgumentValueError, ArgumentSite, Invalid, Reaction.ClientInput)
+  val NoReach = DetailCode(ServiceError, OperationSite, LogicDefect, Reaction.SystemDefect)
 
   def apply(category: Category, site: Site, incident: Incident, reaction: Reaction): DetailCode =
     DetailCode(category, site, incident, None, reaction)

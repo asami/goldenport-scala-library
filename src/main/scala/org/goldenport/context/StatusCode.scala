@@ -6,7 +6,8 @@ import org.goldenport.util.ExceptionUtils
 /*
  * @since   Feb. 20, 2021
  *  version Feb. 21, 2021
- * @version Mar. 26, 2021
+ *  version Mar. 26, 2021
+ * @version Apr. 10, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StatusCode(
@@ -64,6 +65,7 @@ object StatusCode {
    * Main and Detail
    */
   final val IllegalArugument = BadRequest // TODO
+  final val NoReach = InternalServerError.withDetail(DetailCode.NoReach)
 
   /*
    * Function

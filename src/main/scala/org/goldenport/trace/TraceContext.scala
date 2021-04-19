@@ -3,13 +3,16 @@ package org.goldenport.trace
 import scalaz._, Scalaz._
 import scala.collection.mutable
 import org.goldenport.extension.Showable
+import org.goldenport.context.Effect
 import org.goldenport.context.Fault
 import org.goldenport.parser.ParseFailure
+import org.goldenport.util.AnyUtils
 
 /*
  * @since   Nov. 13, 2017
  *  version Feb. 25, 2021
- * @version Mar. 28, 2021
+ *  version Mar. 28, 2021
+ * @version Apr. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 class TraceContext() extends Showable {
@@ -27,12 +30,14 @@ class TraceContext() extends Showable {
   def show = print
   def embed = print
 
+  private def _show(p: Any) = AnyUtils.toShow(p)
+
   def isEmpty: Boolean = _root.isEmpty && _trace.isEmpty && _stack == Nil
 
   def toHandle: TraceHandle = TraceHandle(this)
 
-  def execute[T](label: String, enter: String)(body: => Result[T]): T = {
-    val t = new Invoke(label, enter)
+  def execute[T](label: String, enter: Any)(body: => Result[T]): T = {
+    val t = new Invoke(label, _show(enter))
     trace(t)
     _stack = t :: _stack
     val r = body
@@ -41,8 +46,8 @@ class TraceContext() extends Showable {
     r.r
   }
 
-  def executeOption[T](label: String, enter: String)(body: => Option[Result[T]]): Option[T] = {
-    val t = new Invoke(label, enter)
+  def executeOption[T](label: String, enter: Any)(body: => Option[Result[T]]): Option[T] = {
+    val t = new Invoke(label, _show(enter))
     trace(t)
     _stack = t :: _stack
     body.map { x =>
@@ -56,15 +61,15 @@ class TraceContext() extends Showable {
     }
   }
 
-  def enter(label: String, input: String): Unit = {
-    val t = new Invoke(label, input)
+  def enter(label: String, input: Any): Unit = {
+    val t = new Invoke(label, _show(input))
     trace(t)
     _stack = t :: _stack
   }
 
-  def leave(label: String, output: String): Unit = {
+  def leave(label: String, output: Any): Unit = {
     val t = _stack.head.asInstanceOf[Invoke]
-    t.leave(output)
+    t.leave(_show(output))
     _stack = _stack.tail
   }
 
@@ -78,11 +83,31 @@ class TraceContext() extends Showable {
     map(_.trace(ps)).
     getOrElse(_trace ++= ps)
 
+  def effect(p: Effect): Unit = trace(EffectTrace(p))
+
+  def effect(ps: Seq[Effect]): Unit = trace(ps.map(EffectTrace))
+
+  def createFuture(): Effect.FutureEffect = {
+    val t = new FutureTrace()
+    val e = Effect.FutureEffect.create(t)
+    t.setEffect(e)
+    trace(t)
+    e
+  }
+
   def fault(p: Fault): Unit = trace(FaultTrace(p))
 
   def fault(ps: Seq[Fault]): Unit = trace(ps.map(FaultTrace))
 
 //  def argumentFault(p: ParseFailure[_]): Unit = ???
+
+  def result[T](r: T, message: Any): Result[T] = Result(r, _to_message(message))
+
+  private def _to_message(p: Any): String = p match {
+    case None => "VOID"
+    case Some(s) => _to_message(s)
+    case m => _show(m)
+  }
 
   def asTree: Tree[Trace] = Tree.node(_root, _trace.toStream.map(_.asTree))
   def asTreeSplint: Tree[String] = {
@@ -127,6 +152,6 @@ object TraceContext {
 case class Result[T](r: T, leaveMessage: String) {
 }
 object Result {
-  def apply[T](r: T, leaveMessage: Option[String]): Result[T] =
-    Result(r, leaveMessage getOrElse "VOID")
+  // def apply[T](r: T, leaveMessage: Option[String]): Result[T] =
+  //   Result(r, leaveMessage getOrElse "VOID")
 }
