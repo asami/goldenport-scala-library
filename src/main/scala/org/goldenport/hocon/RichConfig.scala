@@ -25,7 +25,8 @@ import org.goldenport.value._
  *  version Nov. 19, 2018
  *  version Mar. 24, 2019
  *  version Apr. 28, 2019
- * @version Jun. 18, 2020
+ *  version Jun. 18, 2020
+ * @version Apr. 24, 2021
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -68,7 +69,7 @@ case class RichConfig(config: Config) extends AnyVal {
 }
 
 object RichConfig {
-  val empty = RichConfig(ConfigFactory.empty())
+  def empty() = RichConfig(ConfigFactory.empty())
 
   implicit object RichConfigMonoid extends Monoid[RichConfig] {
     def zero = empty

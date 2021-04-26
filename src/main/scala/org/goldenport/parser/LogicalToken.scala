@@ -35,7 +35,8 @@ import LogicalTokens.Context
  *  version Oct. 12, 2020
  *  version Jan. 30, 2021
  *  version Feb. 14, 2021
- * @version Mar. 24, 2021
+ *  version Mar. 24, 2021
+ * @version Apr. 21, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -588,26 +589,29 @@ object PeriodToken extends LogicalTokens.SimpleTokenizer {
 }
 case class DurationToken(
   duration: Duration,
+  raw: String,
   location: Option[ParseLocation]
 ) extends LiteralToken {
-  def raw = duration.toString // TODO
   def value = duration
   def clearLocation: LogicalToken = copy(location = None)
 }
 object DurationToken extends LogicalTokens.SimpleTokenizer {
   def apply(p: Duration, location: ParseLocation): DurationToken =
-    DurationToken(p, Some(location))
+    DurationToken(p, p.toString, Some(location))
+
+  def apply(p: Duration, s: String, location: ParseLocation): DurationToken =
+    DurationToken(p, s, Some(location))
 
   def apply(context: Context, s: String, location: Option[ParseLocation]): DurationToken =
-    DurationToken(Duration.parse(s), location)
+    DurationToken(Duration.parse(s), s, location)
 
   def apply(context: Context, s: String, location: ParseLocation): DurationToken =
-    DurationToken(Duration.parse(s), Some(location))
+    DurationToken(Duration.parse(s), s, Some(location))
 
   // private val _regex = """D((\d+)Y)?((\d+)M)?((\d+)D)?(T((\d+)H)?((\d+)M)?((\d+)S)?)?""".r
 
   override protected def accept_Token(context: Context, s: String, location: ParseLocation) =
-    DurationUtils.parseJoda(s).toOption.map(DurationToken(_, location))
+    DurationUtils.parseJoda(s).toOption.map(DurationToken(_, s, location))
 // try {
 //     _regex.findFirstMatchIn(s).flatMap { m =>
 //       if (m.group(0) != s) {
@@ -629,7 +633,7 @@ object DurationToken extends LogicalTokens.SimpleTokenizer {
   private def _to_int(p: String) = Option(p).map(_.toInt).getOrElse(0)
 
   def hour(h: Int, location: ParseLocation): DurationToken =
-    DurationToken(new Duration(h, 0, 0, 0), location)
+    DurationToken(Duration.standardHours(h), s"DT${h}H", location)
 }
 case class DateTimeIntervalToken(
   interval: DateTimePeriod,

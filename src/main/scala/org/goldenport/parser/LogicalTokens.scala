@@ -21,7 +21,8 @@ import org.goldenport.context.DateTimeContext
  *  version Jan. 30, 2020
  *  version Feb. 29, 2020
  *  version Mar.  1, 2020
- * @version Jan. 30, 2021
+ *  version Jan. 30, 2021
+ * @version Apr. 21, 2021
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
@@ -144,6 +145,7 @@ object LogicalTokens {
         IntervalToken, RangeToken,
         LocalDateToken, LocalDateTimeToken, LocalTimeToken, DateTimeToken, MonthDayToken,
         DateTimeIntervalToken, LocalDateTimeIntervalToken,
+        PeriodToken, DurationToken,
         LxsvToken, XsvToken,
         UrlToken, UrnToken, UriToken,
         PathToken, ExpressionToken

@@ -5,7 +5,8 @@ import org.joda.time._
 /*
  * @since   Apr. 12, 2018
  *  version Apr. 21, 2018
- * @version Jan. 21, 2021
+ *  version Jan. 21, 2021
+ * @version Apr. 22, 2021
  * @author  ASAMI, Tomoharu
  */
 object SpireUtils {
@@ -23,5 +24,15 @@ object SpireUtils {
       def compare(l: LocalTime, r: LocalTime) = l.getMillisOfDay.compare(r.getMillisOfDay)
     }
   }
+
+  def toJavaNumber(p: spire.math.Number): Number =
+    if (p.canBeInt)
+      p.intValue
+    else if (p.canBeLong)
+      p.longValue
+    else if (p.withinDouble)
+      p.doubleValue
+    else
+      p.toBigDecimal.bigDecimal
 }
 

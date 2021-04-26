@@ -6,12 +6,13 @@ import org.goldenport.exception.RAISE
 import org.goldenport.context._
 import org.goldenport.extension.Showable
 import org.goldenport.extension.IRecord
+import org.goldenport.util.AnyUtils
 
 /*
  * @since   Nov. 13, 2017
  *  version Feb. 25, 2021
  *  version Mar. 28, 2021
- * @version Apr.  6, 2021
+ * @version Apr. 25, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Trace extends Showable {
@@ -31,7 +32,7 @@ sealed trait Trace extends Showable {
     "kind" -> kind
   ) + trace_Properties
 
-  protected def trace_Properties: IRecord = IRecord.empty
+  protected def trace_Properties: IRecord
 }
 object Trace {
   val empty = Empty
@@ -45,6 +46,14 @@ object Trace {
       _buffer.append(_newline)
       p match {
         case m: Container => m.children.foreach(_print(1, _))
+        case m => // do nothing
+      }
+      _buffer.toString()
+    }
+
+    def printChildren(p: Trace): String = {
+      p match {
+        case m: Container => m.children.foreach(_print(0, _))
         case m => // do nothing
       }
       _buffer.toString()
@@ -66,9 +75,19 @@ object Trace {
       printer.print(p)
     }
 
+    def printChildren(p: Trace): String = {
+      val printer = new Printer(_.print)
+      printer.printChildren(p)
+    }
+
     def display(p: Trace): String = {
       val printer = new Printer(_.display)
       printer.print(p)
+    }
+
+    def displayChildren(p: Trace): String = {
+      val printer = new Printer(_.display)
+      printer.printChildren(p)
     }
 
     def show(p: Trace): String = {
@@ -76,9 +95,19 @@ object Trace {
       printer.print(p)
     }
 
+    def showChildren(p: Trace): String = {
+      val printer = new Printer(_.show)
+      printer.printChildren(p)
+    }
+
     def embed(p: Trace): String = {
       val printer = new Printer(_.embed)
       printer.print(p)
+    }
+
+    def embedChildren(p: Trace): String = {
+      val printer = new Printer(_.embed)
+      printer.printChildren(p)
     }
   }
 }
@@ -89,9 +118,9 @@ sealed trait Container extends Trace {
 
   override protected final def trace_Properties: IRecord = {
     val t = children.nonEmpty option children.map(_.properties)
-    IRecord.dataOption(
+    trace_Container_Properties + IRecord.dataOption(
       "trace" -> t
-    ) + trace_Container_Properties
+    )
   }
 
   protected def trace_Container_Properties: IRecord
@@ -100,6 +129,7 @@ sealed trait Container extends Trace {
 case object Empty extends Trace {
   val kind = "empty"
   override def toString() = s"[${timestampkey}]/"
+  protected def trace_Properties: IRecord = IRecord.empty
 }
 
 class Root() extends Container {
@@ -117,14 +147,18 @@ class Root() extends Container {
   protected def trace_Container_Properties: IRecord = IRecord.empty
 }
 
-case class Log(label: String) extends Trace {
+case class Log(message: String) extends Trace {
   val kind = "log"
-  override def toString() = s"[${timestampkey}]LOG:${label}"
+  override def toString() = s"[${timestampkey}]LOG:${message}"
+  override def display = s"LOG:$message"
   override def asTree: Tree[Trace] = Tree.leaf(this)
   override def asTreeSplint(start: Long): Tree[String] = {
     val splint = timestamp - start
-    Tree.leaf(s"[${splint}]LOG:${label}")
+    Tree.leaf(s"[${splint}]LOG:${message}")
   }
+  protected def trace_Properties: IRecord = IRecord.data(
+    "message" -> message
+  )
 }
 
 class Invoke(label: String, enterMessage: String) extends Container {
@@ -140,6 +174,15 @@ class Invoke(label: String, enterMessage: String) extends Container {
 
   override def toString() = s"[${timestampkey}${lapkey}]INVOKE:${label} ${enterMessage} => ${leaveMessage}"
   override def display = s"INVOKE${lapkey}[$label] ${enterMessage} => ${leaveMessage}"
+
+  protected def trace_Container_Properties: IRecord = IRecord.data(
+    "timestamp" -> AnyUtils.toString(timestamp),
+    "label" -> label,
+    "enter" -> enterMessage,
+    "leave" -> leaveMessage
+  ) + IRecord.data(
+    "lap" -> lap
+  )
 
   def leave(p: Result[_]): Unit = {
     _leave = Some(p.leaveMessage)
@@ -167,12 +210,14 @@ class Invoke(label: String, enterMessage: String) extends Container {
     val splint = timestamp - start
     Tree.node(s"[${splint}${lapkey}]INVOKE:${label} ${enterMessage} => ${leaveMessage}", _trace.toStream.map(_.asTreeSplint(start)))
   }
-
-  protected def trace_Container_Properties: IRecord = IRecord.empty
 }
 
 case class EffectTrace(effect: Effect) extends Trace {
   val kind = "effect"
+
+  protected def trace_Properties: IRecord = IRecord.data(
+    kind -> effect.properties
+  )
 }
 
 class FutureTrace() extends Container {
@@ -193,7 +238,9 @@ class FutureTrace() extends Container {
     this
   }
 
-  protected def trace_Container_Properties: IRecord = IRecord.empty
+  protected def trace_Container_Properties: IRecord = IRecord.dataOption(
+    "future" -> _effect.map(_.properties)
+  )
 }
 object FutureTrace {
   // def create(p: Effect.FutureEffect): FutureTrace = {
@@ -206,4 +253,6 @@ object FutureTrace {
 
 case class FaultTrace(fault: Fault) extends Trace {
   val kind = "fault"
+
+  protected def trace_Properties: IRecord = ???
 }

@@ -9,7 +9,8 @@ import org.goldenport.parser.CommandParser
  *  version Oct. 14, 2019
  *  version Feb. 18, 2020
  *  version Mar.  1, 2020
- * @version May. 16, 2020
+ *  version May. 16, 2020
+ * @version Apr. 25, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Engine(
@@ -48,7 +49,7 @@ case class Engine(
 
   def apply(env: Environment, args: Seq[String]): Response = {
     val r = args.toList match {
-      case Nil => ??? // TODO help
+      case Nil => RAISE.notImplementedYetDefect // TODO help
       case x :: xs =>
         commandParser(x) match {
           case m: CommandParser.NotFound[Candidate] => Response.notFound(x, _get_candidates(x))
@@ -62,7 +63,8 @@ case class Engine(
     _output(env, r)
   }
 
-  def apply(env: Environment, service: ServiceClass, args: Seq[String]): Response = ???
+  def apply(env: Environment, service: ServiceClass, args: Seq[String]): Response =
+    RAISE.notImplementedYetDefect
 
   def apply(env: Environment, operation: OperationClass, args: Seq[String]): Response = {
     val r = operation.execute(env, args)

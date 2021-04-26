@@ -3,14 +3,16 @@ package org.goldenport.context
 import java.net.URI
 import org.goldenport.value._
 import org.goldenport.trace.FutureTrace
+import org.goldenport.extension.IRecord
 
 /*
  * @since   Feb. 21, 2021
  *  version Mar.  8, 2021
- * @version Apr.  6, 2021
+ * @version Apr. 21, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Effect extends Incident {
+  def properties: IRecord
 }
 
 object Effect {
@@ -40,6 +42,12 @@ object Effect {
     }
     object Storage {
       case class File(crud: Crud, uri: URI) extends Storage {
+        def properties: IRecord = IRecord.data(
+          "kind" -> "io",
+          "sub-kind" -> "strage",
+          "sub-sub-kind" -> "file",
+          "crud" -> crud.name
+        )
       }
       object File {
         import Crud._
@@ -52,6 +60,9 @@ object Effect {
   }
 
   class FutureEffect(val container: FutureTrace) extends Effect {
+    def properties: IRecord = IRecord.data(
+      "kind" -> "future"
+    )
   }
   object FutureEffect {
     def create(p: FutureTrace): FutureEffect = new FutureEffect(p)

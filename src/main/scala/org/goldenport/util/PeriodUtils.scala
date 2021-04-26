@@ -5,7 +5,7 @@ import org.goldenport.parser._
 
 /*
  * @since   Feb. 14, 2021
- * @version Feb. 14, 2021
+ * @version Apr. 21, 2021
  * @author  ASAMI, Tomoharu
  */
 object PeriodUtils {
@@ -23,7 +23,7 @@ object PeriodUtils {
           hour <- _to_int(m.group(9))
           minute <- _to_int(m.group(11))
           second <- _to_int(m.group(13))
-        } yield new Period(year, month, day, hour, minute, second, 0)
+        } yield new Period(year, month, 0, day, hour, minute, second, 0)
       }
     ).getOrElse(ParseResult.error(s"Not period: $p"))
   )

@@ -40,6 +40,10 @@ object IRecord {
     def get(key: Symbol): Option[Any] = map.get(key)
     def get(key: String): Option[Any] = map.get(Symbol(key))
     def +(rhs: IRecord): IRecord = MapRecord(map ++ rhs.toMapS)
+    override def toMapS = map
+    override def toMap = map.map {
+      case (k, v) => k.name -> v
+    }
   }
 
   case class VectorMapRecord(map: VectorMap[Symbol, Any]) extends IRecord {
@@ -53,6 +57,10 @@ object IRecord {
     def get(key: Symbol): Option[Any] = map.get(key)
     def get(key: String): Option[Any] = map.get(Symbol(key))
     def +(rhs: IRecord): IRecord = MapRecord(map ++ rhs.toMapS)
+    override def toMapS = map
+    override def toMap = map.map {
+      case (k, v) => k.name -> v
+    }
   }
 
   def createS(ps: Seq[(Symbol, Any)]): IRecord = VectorMapRecord(VectorMap(ps))
