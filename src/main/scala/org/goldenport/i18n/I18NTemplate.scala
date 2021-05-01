@@ -8,7 +8,8 @@ import java.util.Locale
  *  version Aug. 28, 2017
  *  version Sep. 23, 2019
  *  version Apr. 17, 2020
- * @version Mar. 27, 2021
+ *  version Mar. 27, 2021
+ * @version Apr. 29, 2021
  * @author  ASAMI, Tomoharu
  */
 case class I18NTemplate(
@@ -24,6 +25,8 @@ case class I18NTemplate(
 }
 
 object I18NTemplate {
+  def apply(p: I18NMessage): I18NTemplate = apply(p.toI18NString)
+
   def apply(p: I18NString): I18NTemplate = I18NTemplate(p.c, p.en, p.ja, p.map)
 
   def apply(c: String): I18NTemplate = I18NTemplate(c, c, c, Map.empty)

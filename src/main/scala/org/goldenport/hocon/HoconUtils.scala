@@ -14,6 +14,7 @@ import org.goldenport.RAISE
 import org.goldenport.Strings
 import org.goldenport.i18n.{I18NString, I18NElement}
 import org.goldenport.value._
+import org.goldenport.collection.VectorMap
 import org.goldenport.util.TypesafeConfigUtils
 import org.goldenport.util.AnyUtils
 
@@ -32,7 +33,9 @@ import org.goldenport.util.AnyUtils
  *  version Mar. 24, 2019
  *  version Apr. 28, 2019
  *  version Dec. 22, 2019
- * @version Jun. 18, 2020
+ *  version Jun. 18, 2020
+value._ *  version Apr. 30, 2021
+value._ * @version May.  1, 2021
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -216,9 +219,10 @@ object HoconUtils {
 
   // CAUTION: not work
   def childConfigMap(p: Config): Map[String, Config] = {
-    val a: mutable.Set[java.util.Map.Entry[String, ConfigValue]] = p.entrySet.asScala
+    val a: mutable.Set[java.util.Map.Entry[String, ConfigValue]] = p.root().entrySet.asScala
     a.flatMap { x =>
       x.getValue match {
+        case m: ConfigObject => Some(x.getKey -> m.toConfig)
         case m: Config => Some(x.getKey -> m)
         case m => None
       }
@@ -245,4 +249,19 @@ object HoconUtils {
 
   def getInt(p: ConfigValue, key: String): Option[Int] = 
     getValue(p, key).map(x => AnyUtils.toInt(x.unwrapped))
+
+  case class VectorMapBuilder[T](f: Config => Option[T]) {
+    def build(p: Config): Map[String, T] = {
+      val a: mutable.Set[java.util.Map.Entry[String, ConfigValue]] = p.root().entrySet.asScala
+      val b = a.flatMap { x =>
+        val y = x.getValue match {
+          case m: ConfigObject => f(m.toConfig)
+          case m: Config => f(m)
+          case m => None
+        }
+        y.map(z => x.getKey -> z)
+      }
+      VectorMap(b.toVector)
+    }
+  }
 }

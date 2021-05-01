@@ -11,7 +11,7 @@ import org.goldenport.util.ExceptionUtils
  * @since   Feb. 21, 2021
  *  version Feb. 25, 2021
  *  version Mar. 26, 2021
- * @version Apr. 10, 2021
+ * @version Apr. 29, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -100,6 +100,13 @@ object Conclusion {
   def argumentFault(ps: Seq[ArgumentFault]): Conclusion = {
     val detail = DetailCode.Argument
     val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(ps)
+    Conclusion(status, faults)
+  }
+
+  def resultFault(ps: Seq[ResultFault]): Conclusion = {
+    val detail = DetailCode.Result
+    val status = ??? // StatusCode.BadRequest.withDetail(detail) // TODO
     val faults = Faults(ps)
     Conclusion(status, faults)
   }

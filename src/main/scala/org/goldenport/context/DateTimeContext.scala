@@ -4,8 +4,11 @@ import org.joda.time._
 import org.goldenport.util.DateTimeUtils
 
 /*
+ * See org.goldenport.util.DateTimeContext
+ * 
  * @since   Jan. 22, 2021
- * @version Feb. 28, 2021
+ *  version Feb. 28, 2021
+ * @version Apr. 26, 2021
  * @author  ASAMI, Tomoharu
  */
 case class DateTimeContext(

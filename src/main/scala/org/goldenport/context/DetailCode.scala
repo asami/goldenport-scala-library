@@ -7,7 +7,7 @@ import org.goldenport.util.StringUtils
 /*
  * @since   Mar. 12, 2021
  *  version Mar. 27, 2021
- * @version Apr. 10, 2021
+ * @version Apr. 29, 2021
  * @author  ASAMI, Tomoharu
  */
 case class DetailCode(
@@ -48,9 +48,13 @@ object DetailCode {
     def code: Int = 1
     def name: String = "argumentvalue"
   }
-  case object ArgumentSiteError extends ArgumentError {
+  case object ArgumentReferenceError extends ArgumentError {
     def code: Int = 2
-    def name: String = "argumentsite"
+    def name: String = "argumentreference"
+  }
+  case object ResultError extends ErrorCategory {
+    def code: Int = 3
+    def name: String = "result"
   }
   case object StateError extends ErrorCategory {
     def code: Int = 5
@@ -322,6 +326,7 @@ object DetailCode {
   }
 
   val Argument = DetailCode(ArgumentValueError, ArgumentSite, Invalid, Reaction.ClientInput)
+  val Result = DetailCode(ResultError, OperationSite, LogicDefect, Reaction.SystemDefect)
   val NoReach = DetailCode(ServiceError, OperationSite, LogicDefect, Reaction.SystemDefect)
 
   def apply(category: Category, site: Site, incident: Incident, reaction: Reaction): DetailCode =
