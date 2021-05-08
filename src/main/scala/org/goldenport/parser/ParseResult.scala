@@ -15,7 +15,8 @@ import org.goldenport.exception.SyntaxErrorFaultException
  *  version Sep. 29, 2020
  *  version Oct. 14, 2020
  *  version Jan. 30, 2021
- * @version Feb.  2, 2021
+ *  version Feb.  2, 2021
+ * @version May.  5, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait ParseResult[+AST] {
@@ -166,6 +167,13 @@ object ParseResult {
 
   def error[AST](msgs: NonEmptyList[String]): ParseFailure[AST] = ParseFailure.create[AST](msgs)
 
-  def orMissing[AST](msg: String, p: Option[AST]): ParseResult[AST] =
+  def successOrError[AST](msg: String, p: Option[AST]): ParseResult[AST] =
     p.map(success).getOrElse(error(msg))
+
+  def orMissing[AST](keyword: String, p: Option[AST]): ParseResult[AST] =
+    p.map(ParseResult.success).getOrElse(missing(keyword))
+
+  def missing[AST](keyword: String): ParseResult[AST] = error(s"Missing: $keyword") // TODO Concluion
+
+  def notImplemented[AST](keyword: String): ParseResult[AST] = error("NotImplemented: $keyword") // TODO Concluion
 }

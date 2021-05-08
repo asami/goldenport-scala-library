@@ -7,7 +7,7 @@ import org.goldenport.parser._
 
 /*
  * @since   Feb. 14, 2021
- * @version Feb. 14, 2021
+ * @version May.  2, 2021
  * @author  ASAMI, Tomoharu
  */
 case class TriggerSchedule(
@@ -45,7 +45,7 @@ object TriggerSchedule {
       action <- {
         val xs = values.drop(5)
         val action = xs.lift(0).map(LabelAction)
-        ParseResult.orMissing("Missing action", action)
+        ParseResult.successOrError("Missing action", action)
       }
     } yield Slot(guard, action)
   }

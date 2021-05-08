@@ -15,6 +15,7 @@ import org.goldenport.Strings
 import org.goldenport.i18n.{I18NString, I18NElement}
 import org.goldenport.value._
 import org.goldenport.collection.VectorMap
+import org.goldenport.parser.ParseResult
 import org.goldenport.util.TypesafeConfigUtils
 import org.goldenport.util.AnyUtils
 
@@ -34,8 +35,8 @@ import org.goldenport.util.AnyUtils
  *  version Apr. 28, 2019
  *  version Dec. 22, 2019
  *  version Jun. 18, 2020
-value._ *  version Apr. 30, 2021
-value._ * @version May.  1, 2021
+ *  version Apr. 30, 2021
+ * @version May.  5, 2021
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -48,6 +49,9 @@ object HoconUtils {
       config.getBoolean(key)
     else
       fallback
+
+  def asConfigList(config: Config, key: String): List[Config] =
+    getConfigList(config, key) getOrElse Nil
 
   def asStringList(config: Config, key: String): List[String] =
     getStringList(config, key) getOrElse Nil
@@ -82,6 +86,12 @@ object HoconUtils {
 
   def takeI18NElement(config: Config, key: String): I18NElement =
     I18NElement.parse(config.getString(key))
+
+  def takeConfig(config: Config, key: String): Config =
+    ParseResult.orMissing(key, Option(config.getConfig(key))).take
+
+  def takeConfigList(config: Config, key: String): List[Config] =
+    Option(config.getConfigList(key)).map(_.asScala.toList) getOrElse Nil
 
   def takeValue[T <: ValueInstance](valueclass: ValueClass[T], config: Config, key: String): T =
     getString(config, key).
@@ -124,6 +134,12 @@ object HoconUtils {
 
   def getDurationByMinute(config: Config, key: String): Option[FiniteDuration] =
     TypesafeConfigUtils.getDurationByMinute(key)(config)
+
+  def getConfigList(config: Config, key: String): Option[List[Config]] =
+    if (config.hasPath(key))
+      Option(config.getConfigList(key).asScala.toList)
+    else
+      None
 
   def getStringList(config: Config, key: String): Option[List[String]] =
     if (config.hasPath(key))
@@ -206,33 +222,6 @@ object HoconUtils {
       map(x => valueclass.get(x).
         getOrElse(RAISE.invalidArgumentFault(s"Invalid value name: $key")))
 
-  // def childConfigSet(p: Config): Set[(String, Config)] = p.entrySet.asScala.
-  //   flatMap { x =>
-  //     x.getValue match {
-  //       case m: Config => Some(x.getKey -> m)
-  //       case m => None
-  //     }
-  //   }
-
-  // def childRichConfigSet(p: Config): Set[(String, RichConfig)] =
-  //   childConfigSet(p).mapValues(RichConfig.apply)
-
-  // CAUTION: not work
-  def childConfigMap(p: Config): Map[String, Config] = {
-    val a: mutable.Set[java.util.Map.Entry[String, ConfigValue]] = p.root().entrySet.asScala
-    a.flatMap { x =>
-      x.getValue match {
-        case m: ConfigObject => Some(x.getKey -> m.toConfig)
-        case m: Config => Some(x.getKey -> m)
-        case m => None
-      }
-    }.toMap
-  }
-
-  // CAUTION: not work
-  def childRichConfigMap(p: Config): Map[String, RichConfig] =
-    childConfigMap(p).mapValues(RichConfig.apply)
-
   //
   def getObject(p: ConfigValue): Option[ConfigObject] = Option(p) collect {
     case m: ConfigObject => m
@@ -250,8 +239,94 @@ object HoconUtils {
   def getInt(p: ConfigValue, key: String): Option[Int] = 
     getValue(p, key).map(x => AnyUtils.toInt(x.unwrapped))
 
+  //
+  def parseString(p: Config, key: String): ParseResult[String] =
+    getString(p, key) match {
+      case Some(s) => ParseResult.success(s)
+      case None => ParseResult.missing(key)
+    }
+
+  def parseStringOption(p: Config, key: String): ParseResult[Option[String]] = ParseResult(
+    getString(p, key)
+  )
+
+  def parseStringOrConfig(p: Config, key: String): ParseResult[Either[String, Config]] =
+    if (p.hasPath(key)) {
+      val v = p.getValue(key)
+      v match {
+        case m: ConfigObject => ParseResult(Right(m.toConfig))
+        case m => m.unwrapped match {
+          case null => ParseResult.error(s"Missiong $key")
+          case m: String => ParseResult.success(Left(m))
+          case m => ParseResult.error(s"Not string or object: $m")
+        }
+      }
+    } else {
+     ParseResult.error(s"Missiong $key")
+    }
+
+  def parseStringOrConfigOption(p: Config, key: String): ParseResult[Option[Either[String, Config]]] =
+    if (p.hasPath(key)) {
+      val v = p.getValue(key)
+      v match {
+        case m: ConfigObject => ParseResult(Some(Right(m.toConfig)))
+        case m => m.unwrapped match {
+          case null => ParseResult.success(None)
+          case m: String => ParseResult.success(Some(Left(m)))
+          case m => ParseResult.error(s"Not string or object: $m")
+        }
+      }
+    } else {
+      ParseResult.success(None)
+    }
+
+  def parseConfig(p: Config, key: String): ParseResult[Config] =
+    ParseResult.orMissing(key, getConfig(p, key))
+
+  def parseConfigList(p: Config, key: String): ParseResult[List[Config]] =
+    ParseResult(takeConfigList(p, key))
+
+  def parseAsConfigList(p: Config, key: String): ParseResult[List[Config]] =
+    ParseResult(asConfigList(p, key))
+
+  def parseObjectList[T](p: Config, key: String, f: Config => ParseResult[T]): ParseResult[List[T]] =
+    takeConfigList(p, key).traverse(f)
+
+  def parseAsObjectList[T](p: Config, key: String, f: Config => ParseResult[T]): ParseResult[List[T]] =
+    asConfigList(p, key).traverse(f)
+
+  // def childConfigSet(p: Config): Set[(String, Config)] = p.entrySet.asScala.
+  //   flatMap { x =>
+  //     x.getValue match {
+  //       case m: Config => Some(x.getKey -> m)
+  //       case m => None
+  //     }
+  //   }
+
+  // def childRichConfigSet(p: Config): Set[(String, RichConfig)] =
+  //   childConfigSet(p).mapValues(RichConfig.apply)
+
+  // CAUTION: not work -> probably work
+  def childConfigMap(p: Config): Map[String, Config] = {
+    val a: mutable.Set[java.util.Map.Entry[String, ConfigValue]] = p.root().entrySet.asScala
+    a.flatMap { x =>
+      x.getValue match {
+        case m: ConfigObject => Some(x.getKey -> m.toConfig)
+        case m: Config => Some(x.getKey -> m)
+        case m => None
+      }
+    }.toMap
+  }
+
+  // CAUTION: not work -> probably work
+  def childRichConfigMap(p: Config): Map[String, RichConfig] =
+    childConfigMap(p).mapValues(RichConfig.apply)
+
+  def buildMap[T](p: Config, f: Config => Option[T]): VectorMap[String, T] =
+    VectorMapBuilder(f).build(p)
+
   case class VectorMapBuilder[T](f: Config => Option[T]) {
-    def build(p: Config): Map[String, T] = {
+    def build(p: Config): VectorMap[String, T] = {
       val a: mutable.Set[java.util.Map.Entry[String, ConfigValue]] = p.root().entrySet.asScala
       val b = a.flatMap { x =>
         val y = x.getValue match {
