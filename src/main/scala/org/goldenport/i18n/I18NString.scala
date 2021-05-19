@@ -23,7 +23,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Apr. 17, 2020
  *  version May.  4, 2020
  *  version Feb. 15, 2021
- * @version Apr. 29, 2021
+ *  version Apr. 29, 2021
+ * @version May. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -218,7 +219,7 @@ object I18NString {
   }
 
   def mkI18NString(ps: NonEmptyList[I18NString], infix: String): I18NString =
-    mkI18NString(ps.list, infix)
+    mkI18NString(ps.list.toList, infix)
 
   def mkI18NString(ps: Seq[I18NString], infix: String): I18NString = {
     ???
