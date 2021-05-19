@@ -13,7 +13,10 @@ import org.goldenport.util.StringUtils
  *  version Jun. 25, 2019
  *  version Aug. 18, 2019
  *  version Dec.  7, 2019
- * @version Sep.  1, 2020
+ *  version Sep.  1, 2020
+ *  version Feb.  8, 2021
+ *  version Mar.  6, 2021
+ * @version Apr. 15, 2021
  * @author  ASAMI, Tomoharu
  */
 case class MimeType(name: String) {
@@ -22,6 +25,7 @@ case class MimeType(name: String) {
   def isXml: Boolean = MimeType.isXml(name)
   def isHtml: Boolean = MimeType.isHtml(name)
   def isJson: Boolean = MimeType.isJson(name)
+  def isImage: Boolean = MimeType.isImage(name)
 }
 
 object MimeType {
@@ -53,6 +57,9 @@ object MimeType {
   val image_svg_xml = MimeType(mimetype.image_svg_xml)
   val image_tiff = MimeType(mimetype.image_tiff)
   val image_vnd_microsoft_icon = MimeType(mimetype.image_vnd_microsoft_icon)
+  val image_apng = MimeType(mimetype.image_apng)
+  val image_webp = MimeType(mimetype.image_webp)
+  val image_avif = MimeType(mimetype.image_avif)
   val message_http = MimeType(mimetype.message_http)
   val message_imdn_xml = MimeType(mimetype.message_imdn_xml)
   val message_partianl = MimeType(mimetype.message_partianl)
@@ -102,6 +109,9 @@ object MimeType {
   val IMAGE_SVG_XML = image_svg_xml
   val IMAGE_TIFF = image_tiff
   val IMAGE_VND_MICROSOFT_ICON = image_vnd_microsoft_icon
+  val IMAGE_APNG = image_apng
+  val IMAGE_WEBP = image_webp
+  val IMAGE_AVIF = image_avif
   val MESSAGE_HTTP = message_http
   val MESSAGE_IMDN_XML = message_imdn_xml
   val MESSAGE_PARTIANL = message_partianl
@@ -152,6 +162,9 @@ object MimeType {
     image_svg_xml,
     image_tiff,
     image_vnd_microsoft_icon,
+    image_apng,
+    image_webp,
+    image_avif,
     message_http,
     message_imdn_xml,
     message_partianl,
@@ -213,6 +226,9 @@ object MimeType {
     image_png -> "png",
     image_svg_xml -> "svg",
     image_tiff -> "tiff",
+    image_apng -> "apng",
+    image_webp -> "webp",
+    image_avif -> "avif",
     text_csv -> "csv",
     text_tsv -> "tsv",
     text_xsv -> "xsv",
@@ -228,20 +244,26 @@ object MimeType {
 
   lazy val suffixMimeMap = mimeSuffixMap.map {
     case (m, s) => s -> m
-  }
+  } ++ Map(
+    "htm" -> text_html
+  )
 
   def isText(p: MimeType): Boolean = isText(p.name)
   def isText(p: String): Boolean = p.startsWith("text/") || textMimeTypes.exists(_.name == p)
   def isXml(p: String): Boolean = p.endsWith("xml") || xmlMimeTypes.exists(_.name == p)
   def isHtml(p: String): Boolean = p == mimetype.application_xhtml_xml || p.endsWith("html")
   def isJson(p: String): Boolean = p == mimetype.application_json
+  def isImage(p: String): Boolean = p.startsWith("image/")
+  def isImageFile(p: URI): Boolean = getBySuffix(p).map(_.isImage).getOrElse(false)
+  def isImageFile(p: String): Boolean = getBySuffix(p).map(_.isImage).getOrElse(false)
 
   def isBinary(p: MimeType): Boolean = !isText(p)
   def isBinary(p: String): Boolean = !isText(p)
 
   def getSuffix(p: MimeType): Option[String] = mimeSuffixMap.get(p)
   def getBySuffix(p: String): Option[MimeType] = suffixMimeMap.get(p.toLowerCase)
+  def getByFilename(p: String): Option[MimeType] = StringUtils.getSuffix(p).flatMap(getBySuffix)
   def getBySuffix(p: File): Option[MimeType] = StringUtils.getSuffix(p.getPath).flatMap(getBySuffix)
   def getBySuffix(p: URL): Option[MimeType] = StringUtils.getSuffix(p.getFile).flatMap(getBySuffix)
-  def getBySuffix(p: URI): Option[MimeType] = getBySuffix(p.toURL)
+  def getBySuffix(p: URI): Option[MimeType] = StringUtils.getSuffix(p.getPath).flatMap(getBySuffix)
 }

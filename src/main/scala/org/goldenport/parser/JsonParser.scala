@@ -11,11 +11,12 @@ import LogicalTokens._
  *  version Sep. 22, 2018
  *  version Oct. 15, 2018
  *  version Jul. 16, 2019
- * @version Oct. 12, 2019
+ *  version Oct. 12, 2019
+ * @version Jan. 23, 2021
  * @author  ASAMI, Tomoharu
  */
 case class JsonParser() extends Parser with LogicalTokens.ComplexTokenizer {
-  def accept(config: Config, parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState] = evt.c match {
+  def accept(context: Context, parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState] = evt.c match {
     case '{' => Some(JsonParser.JsonState(parent, evt))
     case _ => None
   }
@@ -58,7 +59,7 @@ object JsonParser {
     text: Vector[Char],
     location: Option[ParseLocation]
   ) extends StringLiteralLogicalTokensParseState {
-    override def addChildState(config: Config, p: LogicalTokens): LogicalTokensParseState = {
+    override def addChildState(context: Context, p: LogicalTokens): LogicalTokensParseState = {
       p.tokens./:(this) { (z, x) =>
         x match {
           case m: StringToken => z.copy(text = text ++ _to_string(m))
@@ -70,13 +71,13 @@ object JsonParser {
 
     private def _to_string(p: StringToken) = '"' +: p.text.toVector :+ '"'
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState = {
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState = {
       val c = evt.c
       c match {
         case '{' => copy(count = count + 1, text = text :+ c)
         case '}' =>
           count - 1 match {
-            case 0 => parent.addChildState(config, _to_token(text :+ c))
+            case 0 => parent.addChildState(context, _to_token(text :+ c))
             case n => copy(count = n, text = text :+ c)
           }
         case _ => copy(text = text :+ c)

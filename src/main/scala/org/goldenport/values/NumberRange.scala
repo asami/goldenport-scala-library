@@ -14,7 +14,7 @@ import org.goldenport.util.{NumberUtils, AnyRefUtils}
  *  version Oct. 16, 2019
  *  version Feb. 28, 2020
  *  version Sep. 28, 2020
- * @version Oct. 12, 2020
+ * @version Jan. 30, 2021
  * @author  ASAMI, Tomoharu
  */
 trait NumberRange extends Showable {
@@ -27,6 +27,13 @@ trait NumberRange extends Showable {
 }
 
 object NumberRange {
+  def apply(
+    start: Number,
+    end: Number,
+    startInclusive: Boolean,
+    endInclusive: Boolean
+  ): RepeatRange = RepeatRange(start, end, startInclusive, endInclusive)
+
   def create(p: String): NumberRange = parse(p).take
 
   def parseOption(p: String): Option[NumberRange] = parse(p).toOption
@@ -308,12 +315,12 @@ object RepeatRange {
 
   def parse(p: String): ParseResult[RepeatRange] = parseCloseClose(p)
 
-  def parseCloseClose(p: String): ParseResult[RepeatRange] = {
+  def parseCloseClose(p: String): ParseResult[RepeatRange] = ParseResult.parse {
     val _regex(prefix, start, spostfix, end, postfix, sop, step) = p
     _parse(prefix, start, spostfix, end, postfix, sop, step, true)
   }
 
-  def parseCloseOpen(p: String): ParseResult[RepeatRange] = {
+  def parseCloseOpen(p: String): ParseResult[RepeatRange] = ParseResult.parse {
     val _regex(prefix, start, spostfix, end, postfix, sop, step) = p
     _parse(prefix, start, spostfix, end, postfix, sop, step, false)
   }
@@ -389,7 +396,7 @@ object RepeatRange {
   def parseCloseOpen(labelf: String => Option[Number], p: String): ParseResult[RepeatRange] =
     _parse(labelf, p, false)
 
-  private def _parse(labelf: String => Option[Number], p: String, endincludedefault: Boolean): ParseResult[RepeatRange] = {
+  private def _parse(labelf: String => Option[Number], p: String, endincludedefault: Boolean): ParseResult[RepeatRange] = ParseResult.parse {
     val _regex(prefix, start, spostfix, end, postfix, sop, step) = p
     for {
       s <- NumberUtils.parse(labelf, start)

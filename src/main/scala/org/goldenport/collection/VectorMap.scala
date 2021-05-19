@@ -13,7 +13,8 @@ import org.goldenport.util.VectorUtils
  *  version Jul.  7, 2019
  *  version Oct. 12, 2019
  *  version Apr.  7, 2020
- * @version Sep. 10, 2020
+ *  version Sep. 10, 2020
+ * @version Apr. 12, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait VectorMap[K, +V] extends Map[K, V] {
@@ -31,6 +32,7 @@ sealed trait VectorMap[K, +V] extends Map[K, V] {
   lazy val valueVector: Vector[V] = toValues
   def toValueList: List[V] = vector.map(_._2).toList
   lazy val valueList: List[V] = toValueList
+  def takeVectorMap(p: Int): VectorMap[K, V]
   def update[W >: V](k: K, v: W): VectorMap[K, W] = update(k -> v)
   def update[W >: V](p: (K, W)): VectorMap[K, W]
   def update[W >: V](p: Map[K, W]): VectorMap[K, W]
@@ -68,6 +70,7 @@ case class PlainVectorMap[K, +V](
   def get(key: K): Option[V] = vector.find(_._1 == key).map(_._2)
   def iterator: Iterator[(K, V)] = vector.iterator
 
+  def takeVectorMap(p: Int): VectorMap[K, V] = PlainVectorMap(vector.take(p))
   def update[W >: V](p: (K, W)): VectorMap[K, W] = PlainVectorMap(update_vector(vector, p))
   def update[W >: V](p: Map[K, W]): VectorMap[K, W] = PlainVectorMap(
     update_vector(vector, p)
@@ -106,6 +109,7 @@ case class IndexedVectorMap[K, +V](
   def get(key: K): Option[V] = map.get(key)
   def iterator: Iterator[(K, V)] = vector.iterator
 
+  def takeVectorMap(p: Int): VectorMap[K, V] = IndexedVectorMap(vector.take(p))
   def update[W >: V](p: (K, W)): VectorMap[K, W] = IndexedVectorMap(
     update_vector(vector, p),
     map + p

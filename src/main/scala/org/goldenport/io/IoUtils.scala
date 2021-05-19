@@ -7,7 +7,9 @@ import java.net.{URL, URI}
 import org.apache.commons.codec.binary.Base64
 import scalax.io._
 import com.asamioffice.goldenport.io.{UIO, UURL}
+import org.goldenport.RAISE
 import org.goldenport.bag.Bag
+import org.goldenport.bag.ClobBag
 
 /*
  * @since   Oct.  9, 2017
@@ -18,8 +20,8 @@ import org.goldenport.bag.Bag
  *  version Dec.  7, 2019
  *  version Mar. 18, 2020
  *  version May.  4, 2020
- *  version Jun.  2, 2020
- * @version  6.  3, 2020
+ *  version Jun.  3, 2020
+ * @version Apr.  4, 2021
  * @author  ASAMI, Tomoharu
  */
 object IoUtils {
@@ -73,13 +75,48 @@ object IoUtils {
       UIO.stream2stream(in, out)
     }
 
+  def copyClose(in: Reader, out: Writer): Unit =
+    for {
+      i <- resource.managed(in)
+      o <- resource.managed(out)
+    } {
+      val buf = new Array[Char](8192)
+      var cont = true
+      while (cont) {
+        val n = i.read(buf)
+        if (n > 0) {
+          o.write(buf, 0, n)
+        } else {
+          o.flush()
+          cont = false
+        }
+      }
+    }
+
   def toInputStream(p: String): InputStream = new StringInputStream(p)
   def toInputStream(p: String, charset: Charset): InputStream = new StringInputStream(p, charset)
+
+  def save(url: URL, p: String, charset: Charset) {
+    val file = UrlUtils.getFile(url) getOrElse RAISE.unsupportedOperationFault("Not file")
+    save(file, p, charset)
+  }
+
+  def save(url: URL, p: ClobBag, charset: Charset) {
+    val file = UrlUtils.getFile(url) getOrElse RAISE.unsupportedOperationFault("Not file")
+    save(file, p, charset)
+  }
 
   def save(file: File, p: String, charset: Charset) {
     ensureParentDirectory(file)
     val in = toInputStream(p, charset)
     val out = new FileOutputStream(file)
+    copyClose(in, out)
+  }
+
+  def save(file: File, p: ClobBag, charset: Charset) {
+    ensureParentDirectory(file)
+    val in = p.openReader()
+    val out = new OutputStreamWriter(new FileOutputStream(file), charset)
     copyClose(in, out)
   }
 

@@ -10,7 +10,8 @@ import org.goldenport.hocon.RichConfig
  *  version Oct.  6, 2018
  *  version Feb. 11, 2019
  *  version Mar. 24, 2019
- * @version Apr.  8, 2019
+ *  version Apr.  8, 2019
+ * @version Jan. 23, 2021
  * @author  ASAMI, Tomoharu
  */
 trait Config {
@@ -20,7 +21,7 @@ trait Config {
   // timezone
   // datetime format
   // message resource
-  // logger
+  // recorder (logger, messager, reporter)
 
   def properties: RichConfig // Typesafe Config (Human-Optimized Config Object Notation)
   def logLevel: LogLevel

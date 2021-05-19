@@ -10,7 +10,9 @@ import java.net.{URL, URI}
 import com.typesafe.config._
 import org.goldenport.Strings
 import org.goldenport.i18n.{I18NString, I18NElement}
+import org.goldenport.collection.VectorMap
 import org.goldenport.value._
+import org.goldenport.parser.ParseResult
 
 /*
  * Migrated from org.goldenport.hocon.HoconUtils.
@@ -25,7 +27,10 @@ import org.goldenport.value._
  *  version Nov. 19, 2018
  *  version Mar. 24, 2019
  *  version Apr. 28, 2019
- * @version Jun. 18, 2020
+ *  version Jun. 18, 2020
+ *  version Apr. 24, 2021
+ *  version Apr. 24, 2021
+ * @version May.  5, 2021
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -42,6 +47,8 @@ case class RichConfig(config: Config) extends AnyVal {
   def takeLocale(key: String) = HoconUtils.takeLocale(config, key)
   def takeI18NString(key: String) = HoconUtils.takeI18NString(config, key)
   def takeI18NElement(key: String) = HoconUtils.takeI18NElement(config, key)
+  def takeConfig(key: String) = HoconUtils.takeConfig(config, key)
+  def takeConfigList(key: String) = HoconUtils.takeConfigList(config, key)
   def takeValue[T <: ValueInstance](valueclass: ValueClass[T], key: String) = HoconUtils.takeValue(valueclass, config, key)
   def asValue[T <: ValueInstance](valueclass: ValueClass[T], key: String, default: T) = HoconUtils.takeValue(valueclass, config, key, default)
   def getObjectOption(key: String) = HoconUtils.getObject(config, key)
@@ -62,13 +69,25 @@ case class RichConfig(config: Config) extends AnyVal {
   def getConfigOption(key: String) = HoconUtils.getConfig(config, key)
   def getRichConfigOption(key: String) = HoconUtils.getRichConfig(config, key)
   def getValueOption[T <: ValueInstance](valueclass: ValueClass[T], key: String) = HoconUtils.getValue(valueclass, config, key)
+
+  def parseString(key: String): ParseResult[String] = HoconUtils.parseString(config, key)
+  def parseStringOption(key: String): ParseResult[Option[String]] = HoconUtils.parseStringOption(config, key)
+  def parseStringOrConfig(key: String): ParseResult[Either[String, Config]] = HoconUtils.parseStringOrConfig(config, key)
+  def parseStringOrConfigOption(key: String): ParseResult[Option[Either[String, Config]]] = HoconUtils.parseStringOrConfigOption(config, key)
+  def parseConfig(key: String): ParseResult[Config] = HoconUtils.parseConfig(config, key)
+  def parseConfigList(key: String): ParseResult[List[Config]] = HoconUtils.parseConfigList(config, key)
+  def parseAsConfigList(key: String): ParseResult[List[Config]] = HoconUtils.parseAsConfigList(config, key)
+  def parseObjectList[T](key: String, f: Config => ParseResult[T]): ParseResult[List[T]] = HoconUtils.parseObjectList(config, key, f)
+  def parseAsObjectList[T](key: String, f: Config => ParseResult[T]): ParseResult[List[T]] = HoconUtils.parseAsObjectList(config, key, f)
+
   def childConfigMap: Map[String, Config] = HoconUtils.childConfigMap(config)
   def childRichConfigMap: Map[String, RichConfig] = HoconUtils.childRichConfigMap(config)
+  def buildMap[T](f: Config => Option[T]): VectorMap[String, T] = HoconUtils.buildMap(config, f)
   def +(rhs: RichConfig): RichConfig = new RichConfig(rhs.config.withFallback(config))
 }
 
 object RichConfig {
-  val empty = RichConfig(ConfigFactory.empty())
+  def empty() = RichConfig(ConfigFactory.empty())
 
   implicit object RichConfigMonoid extends Monoid[RichConfig] {
     def zero = empty

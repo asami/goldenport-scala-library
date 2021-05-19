@@ -17,7 +17,8 @@ import org.goldenport.parser.{ParseResult, ParseSuccess, ParseFailure, EmptyPars
  *  version Nov. 15, 2019
  *  version Dec.  8, 2019
  *  version Feb. 29, 2020
- * @version Mar.  4, 2021
+ *  version Jan. 23, 2021
+ * @version Mar. 28, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Lxsv(
@@ -43,6 +44,8 @@ case class Lxsv(
   def marshall: String = RAISE.notImplementedYetDefect("Implement simplified format.")
 
   def withoutLocation: Lxsv = copy(vectormap = vectormap.mapValues(_.clearLocation))
+
+  def +(rhs: IRecord): IRecord = RAISE.notImplementedYetDefect
 }
 
 object Lxsv {
@@ -90,14 +93,22 @@ object Lxsv {
     Parser(_key_value_separator_chars, _lxsv_token_chars, _complex_chars).apply(p)
 
   def isExplicitLxsvToken(p: String): Boolean =
-    p.exists(_explicit_key_value_separator_chars.contains) || (
-      p.exists(_implicit_key_value_separator_chars.contains) && p.exists(_lxsv_candidate_chars.contains)
-    ) && (
-      if (p.contains('"'))
-        createOption(p).isDefined
-      else
-        true
-    )
+    if (p.isEmpty) {
+      false
+    } else {
+      if (_key_value_separator_chars.contains(p(0))) {
+        false
+      } else {
+        p.exists(_explicit_key_value_separator_chars.contains) || (
+          p.exists(_implicit_key_value_separator_chars.contains) && p.exists(_lxsv_candidate_chars.contains)
+        ) && (
+          if (p.contains('"'))
+            createOption(p).isDefined
+          else
+            true
+        )
+      }
+    }
 
   def load(strategy: Xsv.Strategy, in: ResourceHandle): Vector[Lxsv] = {
     val c = LogicalLines.Config.raw // TODO charset
@@ -118,7 +129,7 @@ object Lxsv {
   ) {
     import Parser._
 
-    private val _config = LogicalTokens.Config.default
+    private val _context = LogicalTokens.Context.create()
 
     private var _key_value_separator: Char = 0
     private var _delimiter: Char = 0
@@ -242,7 +253,7 @@ object Lxsv {
 
     private def _is_delimiter_in_equal(c: Char) =
       if (_delimiter == 0) {
-        if (c == '&') {
+        if (c == '&' || delimiterCandidates.contains(c)) {
           _delimiter = c
           true
         } else {
@@ -309,7 +320,7 @@ object Lxsv {
 
     private def _start_partial(c: Char): Unit = {
       _state = PARTIAL
-      LogicalTokens.PartialParserStateMachine(_config).apply(c) match {
+      LogicalTokens.PartialParserStateMachine(_context).apply(c) match {
         case \/-(t) => RAISE.noReachDefect
         case -\/(sm) => _psm = sm
       }

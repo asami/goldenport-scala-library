@@ -12,7 +12,8 @@ import org.goldenport.io.IoUtils
  *  version Oct. 14, 2019
  *  version Feb. 18, 2020
  *  version Mar.  1, 2020
- * @version May. 24, 2020
+ *  version May. 24, 2020
+ * @version Apr.  4, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Response {
@@ -58,6 +59,8 @@ case class FileRealmResponse(
     realm.export(ctx)
   }
 }
+
+trait ApplicationResponse extends Response
 
 object Response {
   val empty = VoidResponse

@@ -10,7 +10,8 @@ import org.goldenport.util.AnyRefUtils
 /*
  * @since   Sep.  5, 2020
  *  version Sep. 29, 2020
- * @version Oct. 12, 2020
+ *  version Oct. 12, 2020
+ * @version Jan. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 trait IntervalBase[E] extends Showable {
@@ -52,7 +53,7 @@ trait IntervalFactory[T <: IntervalBase[E], E] {
 
   def parseOption(p: String): Option[T] = parse(p).toOption
 
-  def parse(p: String): ParseResult[T] = parse(CloseOpen, p)
+  def parse(p: String): ParseResult[T] = parse(CloseClose, p)
 
   def parse(bounds: BoundsKind, p: String): ParseResult[T] =
     for {
@@ -65,12 +66,14 @@ trait IntervalFactory[T <: IntervalBase[E], E] {
       r <- to_Interval(x)
     } yield r
 
-  private def _regex(p: String): ParseResult[RegexResult] = {
+  private def _regex(p: String): ParseResult[RegexResult] = try {
     val regex(prefix, start, spostfix, end, postfix) = p
     for {
       sinc <- Option(prefix).map(parsePrefix).orElse(Option(spostfix).map(parseStartPostfix)).sequence
       einc <- Option(postfix).map(parsePostfix).sequence
     } yield RegexResult(Option(start), Option(end), sinc, einc)
+  } catch {
+    case m: MatchError => ParseResult.error(s"No interval: $p")
   }
 
   // private def _prefix(p: String): ParseResult[Boolean] = p match {

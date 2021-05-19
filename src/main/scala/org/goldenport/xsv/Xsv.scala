@@ -15,7 +15,8 @@ import org.goldenport.parser._
  *  version Sep. 16, 2019
  *  version Nov. 10, 2019
  *  version Dec.  7, 2019
- * @version Feb. 26, 2020
+ *  version Feb. 26, 2020
+ * @version Apr. 25, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Xsv(
@@ -50,7 +51,15 @@ object Xsv {
     }
   }
   object Strategy extends EnumerationClass[Strategy] {
-    val elements = Vector(XsvStrategy, CsvStrategy, TsvStrategy, SCsvStrategy, SsvStrategy)
+    val elements = Vector(
+      XsvStrategy,
+      CsvStrategy,
+      TsvStrategy,
+      SCsvStrategy,
+      SsvStrategy,
+      RecordStrategy,
+      UrlStrategy
+    )
   }
 
   object XsvStrategy extends Strategy {
@@ -74,19 +83,26 @@ object Xsv {
     def outputDelimiter: Char = '\t'
     def inputDelimiters: Seq[Char] = "\t"
   }
-  object SCsvStrategy extends Strategy {
+  object SCsvStrategy extends Strategy { // semi-colon separated vector
     val name = "scsv"
     def logicalTokenConfig = LogicalTokens.Config.scsv
     def outputKeyValueSeparator: Char = ':'
     def outputDelimiter: Char = ';'
     def inputDelimiters: Seq[Char] = ";"
   }
-  object SsvStrategy extends Strategy {
+  object SsvStrategy extends Strategy { // space separated vector
     val name = "ssv"
     def logicalTokenConfig = LogicalTokens.Config.ssv
     def outputKeyValueSeparator: Char = ':'
     def outputDelimiter: Char = ' '
     def inputDelimiters: Seq[Char] = " \t"
+  }
+  object RecordStrategy extends Strategy {
+    val name = "record"
+    def logicalTokenConfig = LogicalTokens.Config.xsv
+    def outputKeyValueSeparator: Char = ':'
+    def outputDelimiter: Char = ';'
+    def inputDelimiters: Seq[Char] = ";,\t "
   }
   object UrlStrategy extends Strategy {
     val name = "url"

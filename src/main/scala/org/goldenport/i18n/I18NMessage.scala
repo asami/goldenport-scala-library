@@ -11,7 +11,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  * Derived from I18NString
  *
  * @since   Apr. 17, 2020
- * @version Jun.  1, 2020
+ *  version Jun.  1, 2020
+ * @version Mar. 27, 2021
  * @author  ASAMI, Tomoharu
  */
 case class I18NMessage(
@@ -64,6 +65,8 @@ case class I18NMessage(
 
   def get(locale: Locale, bundle: ResourceBundle): Option[String] =
     _format(locale, Option(bundle.getString(key))) orElse get(locale)
+
+  def apply(): String = get(LocaleUtils.C) getOrElse en
 
   def apply(locale: Locale): String = get(locale) getOrElse en
 

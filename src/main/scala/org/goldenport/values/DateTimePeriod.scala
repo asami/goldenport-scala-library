@@ -12,6 +12,7 @@ import spire.math.Interval
 import spire.math.interval._
 import org.goldenport.RAISE
 import org.goldenport.parser.ParseResult
+import org.goldenport.context.DateTimeContext
 import org.goldenport.util.{DateTimeUtils, DateUtils, AnyUtils}
 import org.goldenport.util.SpireUtils.Implicits._
 import org.goldenport.values.Week._
@@ -30,7 +31,9 @@ import org.goldenport.values.IntervalFactory.{BoundsKind, CloseOpen, CloseClose}
  *  version Jan. 10, 2019
  *  version Aug. 14, 2019
  *  version Sep. 18, 2019
- * @version Sep. 10, 2020
+ *  version Sep. 10, 2020
+ *  version Jan. 24, 2021
+ * @version Feb. 28, 2021
  * @author  ASAMI, Tomoharu
  */
 case class DateTimePeriod( // TODO DateTimeInterval (java8 time)
@@ -46,6 +49,13 @@ case class DateTimePeriod( // TODO DateTimeInterval (java8 time)
     val higher = _to_bound(end, isEndInclusive)
     Interval.fromBounds(lower, higher)
   }
+
+  def toLocalDateTimeInterval: LocalDateTimeInterval = LocalDateTimeInterval(
+    start.map(_.toLocalDateTime),
+    end.map(_.toLocalDateTime),
+    isStartInclusive,
+    isEndInclusive
+  )
 
   private def _to_bound(p: Option[DateTime], inclusive: Boolean): Bound[DateTime] =
     p.map(x => if (inclusive) Closed(x) else Open(x)).getOrElse(Unbound())
@@ -399,7 +409,7 @@ object DateTimePeriod {
   val THREASHOLD_DAY = 1
   val THREASHOLD_HOUR = 6
 
-  def effectiveYearMonth(year: Int, month: Int, day: Int): (Int, Int) = {
+  private def effectiveYearMonth(year: Int, month: Int, day: Int): (Int, Int) = {
     if (day <= THREASHOLD_DAY) {
       if (month == 1)
         (year - 1, 12)
@@ -409,7 +419,7 @@ object DateTimePeriod {
       (year, month)
   }
 
-  def effectiveYearMonthDay(tz: DateTimeZone)(year: Int, month: Int, day: Int, hour: Int): (Int, Int, Int) = {
+  private def effectiveYearMonthDay(tz: DateTimeZone)(year: Int, month: Int, day: Int, hour: Int): (Int, Int, Int) = {
     val dt = if (hour <= THREASHOLD_HOUR) {
       new DateTime(year, month, day, 0, 0, tz).
         minusDays(2)
@@ -419,6 +429,9 @@ object DateTimePeriod {
     }
     (dt.getYear, dt.getMonthOfYear, dt.getDayOfMonth)
   }
+
+  def atOrAbove(year: Int, month: Int, day: Int, hour: Int, minute:Int, second:Int, tz: DateTimeZone): DateTimePeriod =
+    DateTimePeriod(Some(new DateTime(year, month, day, hour, minute, second, tz)), None)
 
   def atOrAboveJst(year: Int, month: Int, day: Int): DateTimePeriod =
     DateTimePeriod(Some(new DateTime(year, month, day, 0, 0, jodajst)), None)
@@ -433,7 +446,7 @@ object DateTimePeriod {
   def parse(tz: DateTimeZone, p: String): DateTimePeriod = parse(DateTime.now, tz, p)
 
   def parse(now: DateTime, tz: DateTimeZone, p: String): DateTimePeriod =
-    Builder(now, tz).fromExpression(p)
+    Builder(DateTimeContext(now, tz)).fromExpression(p)
 
   def parseJst(p: String): DateTimePeriod = parse(jodajst, p)
 
@@ -446,7 +459,7 @@ object DateTimePeriod {
     now: DateTime,
     tz: DateTimeZone,
     p: String
-  ): DateTimePeriod = Builder(now, tz, kind).fromExpression(p)
+  ): DateTimePeriod = Builder(DateTimeContext(now, tz), kind).fromExpression(p)
 
   /*
    * Caution: Timezone depends running environment.
@@ -454,18 +467,21 @@ object DateTimePeriod {
   def parseOption(p: String): Option[DateTimePeriod] = Try(parse(p)).toOption
 
   case class Builder(
-    datetime: DateTime,
-    timezoneJoda: DateTimeZone,
+    context: DateTimeContext,
     kind: BoundsKind = CloseClose
   ) {
+    import RichDateTime.Implicits._
+
     def isStartInclusive: Boolean = kind.isStartInclusive
     def isEndInclusive: Boolean = kind.isEndInclusive
 
-    def currentYear: Int = datetime.year.get
-    def currentMonth: Int = datetime.monthOfYear.get
-    def currentWeek: Int = datetime.weekOfWeekyear.get
-    def currentDay: Int = datetime.dayOfMonth.get
-    def currentHour: Int = datetime.hourOfDay.get
+    val datetime: DateTime = context.current
+    def currentYear: Int = datetime.currentYear
+    def currentMonth: Int = datetime.currentMonth 
+    def currentWeek: Int = datetime.currentWeek
+    def currentDay: Int = datetime.currentDay
+    def currentHour: Int = datetime.currentHour
+    def dateTimeZone: DateTimeZone = context.dateTimeZone
 
     def create(
       start: Option[String],
@@ -504,28 +520,28 @@ object DateTimePeriod {
     ): DateTime = {
       def plain(a: String) = a match {
         case YearMonthDay(y, m, d) =>
-          new DateTime(y.toInt, m.toInt, d.toInt, 0, 0, timezoneJoda)
+          new DateTime(y.toInt, m.toInt, d.toInt, 0, 0, dateTimeZone)
         case YearMonth(y, m) =>
-          new DateTime(y.toInt, m.toInt, 1, 0, 0, timezoneJoda)
+          new DateTime(y.toInt, m.toInt, 1, 0, 0, dateTimeZone)
         case Year(y) =>
-          new DateTime(y.toInt, 1, 1, 0, 0, timezoneJoda)
+          new DateTime(y.toInt, 1, 1, 0, 0, dateTimeZone)
         case _ => datetimeParse(a)
       }
       def plus(a: String, n: Int) = a match {
         case YearMonthDay(y, m, d) =>
-          new DateTime(y.toInt, m.toInt, d.toInt, 0, 0, timezoneJoda).plusDays(n)
+          new DateTime(y.toInt, m.toInt, d.toInt, 0, 0, dateTimeZone).plusDays(n)
         case YearMonth(y, m) =>
-          new DateTime(y.toInt, m.toInt, 1, 0, 0, timezoneJoda).plusMonths(n)
+          new DateTime(y.toInt, m.toInt, 1, 0, 0, dateTimeZone).plusMonths(n)
         case Year(y) =>
-          new DateTime(y.toInt, 1, 1, 0, 0, timezoneJoda).plusYears(n)
+          new DateTime(y.toInt, 1, 1, 0, 0, dateTimeZone).plusYears(n)
       }
       def minus(a: String, n: Int) = a match {
         case YearMonthDay(y, m, d) =>
-          new DateTime(y.toInt, m.toInt, d.toInt, 0, 0, timezoneJoda).minusDays(n)
+          new DateTime(y.toInt, m.toInt, d.toInt, 0, 0, dateTimeZone).minusDays(n)
         case YearMonth(y, m) =>
-          new DateTime(y.toInt, m.toInt, 1, 0, 0, timezoneJoda).minusMonths(n)
+          new DateTime(y.toInt, m.toInt, 1, 0, 0, dateTimeZone).minusMonths(n)
         case Year(y) =>
-          new DateTime(y.toInt, 1, 1, 0, 0, timezoneJoda).minusYears(n)
+          new DateTime(y.toInt, 1, 1, 0, 0, dateTimeZone).minusYears(n)
       }
       try {
         s match {
@@ -742,8 +758,8 @@ object DateTimePeriod {
 
     def effectiveMonthly: DateTimePeriod = {
       val (year, month) = effectiveYearMonth(currentYear, currentMonth, currentDay)
-      val start = new DateTime(year, month, 1, 0, 0, timezoneJoda)
-      val end = new DateTime(year, month, 1, 0, 0, timezoneJoda).plusMonths(1).minusDays(1)
+      val start = new DateTime(year, month, 1, 0, 0, dateTimeZone)
+      val end = new DateTime(year, month, 1, 0, 0, dateTimeZone).plusMonths(1).minusDays(1)
       DateTimePeriod(Some(start), Some(end))
     }
 
@@ -776,9 +792,9 @@ object DateTimePeriod {
     }
 
     def effectiveDaily: DateTimePeriod = {
-      val (year, month, day) = effectiveYearMonthDay(timezoneJoda)(currentYear, currentMonth, currentDay, currentHour)
-      val start = new DateTime(year, month, day, 0, 0, timezoneJoda)
-      val end = new DateTime(year, month, day, 0, 0, timezoneJoda).plusDays(1).minusMillis(1)
+      val (year, month, day) = effectiveYearMonthDay(dateTimeZone)(currentYear, currentMonth, currentDay, currentHour)
+      val start = new DateTime(year, month, day, 0, 0, dateTimeZone)
+      val end = new DateTime(year, month, day, 0, 0, dateTimeZone).plusDays(1).minusMillis(1)
       DateTimePeriod(Some(start), Some(end))
     }
 
@@ -791,20 +807,20 @@ object DateTimePeriod {
     }
 
     def datetimeYearFirst(year: Int): DateTime = {
-      new DateTime(year, 1, 1, 0, 0, timezoneJoda)
+      new DateTime(year, 1, 1, 0, 0, dateTimeZone)
     }
 
     def datetimeYearLast(year: Int): DateTime = {
-      val dt = new DateTime(year, 1, 1, 0, 0, timezoneJoda)
+      val dt = new DateTime(year, 1, 1, 0, 0, dateTimeZone)
       dt.plusYears(1).minusMillis(1)
     }
 
     def datetimeMonthFirst(year: Int, month: Int): DateTime = {
-      new DateTime(year, month, 1, 0, 0, timezoneJoda)
+      new DateTime(year, month, 1, 0, 0, dateTimeZone)
     }
 
     def datetimeMonthLast(year: Int, month: Int): DateTime = {
-      val dt = new DateTime(year, month, 1, 0, 0, timezoneJoda)
+      val dt = new DateTime(year, month, 1, 0, 0, dateTimeZone)
       dt.plusMonths(1).minusMillis(1)
     }
 
@@ -813,21 +829,21 @@ object DateTimePeriod {
     }
 
     def datetimeWeekLast(year: Int, week: Int): DateTime = {
-      // val dt = new DateTime(year, month, 1, 0, 0, timezoneJoda)
+      // val dt = new DateTime(year, month, 1, 0, 0, dateTimeZone)
       // dt.plusMonths(1).minusMillis(1)
       ???
     }
 
     def datetimeDayFirst(year: Int, month: Int, day: Int): DateTime = {
-      new DateTime(year, month, day, 0, 0, timezoneJoda)
+      new DateTime(year, month, day, 0, 0, dateTimeZone)
     }
 
     def datetimeDayLast(year: Int, month: Int, day: Int): DateTime = {
-      val dt = new DateTime(year, month, day, 0, 0, timezoneJoda)
+      val dt = new DateTime(year, month, day, 0, 0, dateTimeZone)
       dt.plusDays(1).minusMillis(1)
     }
 
-    def datetimeParse(s: String): DateTime = parseDateTime(s, timezoneJoda)
+    def datetimeParse(s: String): DateTime = parseDateTime(s, dateTimeZone)
 
     def parseDateTime(s: String, tz: DateTimeZone): DateTime =
       DateTimeUtils.parseIsoDateTime(s, tz)

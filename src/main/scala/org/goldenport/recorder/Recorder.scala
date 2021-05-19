@@ -1,5 +1,7 @@
 package org.goldenport.recorder
 
+import java.io.File
+
 // import org.goldenport.parameter.GParameterRepository
 
 /*
@@ -22,7 +24,8 @@ package org.goldenport.recorder
  *  version Oct. 30, 2011
  *  version Jan. 23, 2012
  *  version Dec. 22, 2019
- * @version Mar.  3, 2020
+ *  version Mar.  3, 2020
+ * @version Jan. 24, 2021
  * @author  ASAMI, Tomoharu
  */
 trait Recorder {
@@ -34,6 +37,8 @@ trait Recorder {
 
   def closeRecorder() {
   }
+
+  def setReportFile(p: File): Unit
 
   /**
    * message
@@ -99,6 +104,8 @@ trait Recorder {
 }
 
 trait NullRecorder extends Recorder {
+  def setReportFile(p: File): Unit = {}
+
   override def error(ex: Throwable) {
   }
 

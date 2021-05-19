@@ -23,7 +23,8 @@ import com.asamioffice.goldenport.text.UString
  *  version Jun. 24, 2019
  *  version Jul.  7, 2019
  *  version Dec.  7, 2019
- * @version Sep.  8, 2020
+ *  version Sep.  8, 2020
+ * @version Apr. 15, 2021
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -54,6 +55,9 @@ object Strings {
     val image_svg_xml = "image/svg+xml"
     val image_tiff = "image/tiff"
     val image_vnd_microsoft_icon = "image/vnd.microsoft.icon"
+    val image_apng = "image/apng"
+    val image_webp = "image/webp"
+    val image_avif = "image/avif"
     val message_http = "message/http"
     val message_imdn_xml = "message/imdn+xml"
     val message_partianl = "message/partial"

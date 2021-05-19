@@ -4,7 +4,8 @@ package org.goldenport.tree
  * @since   Jul. 27, 2008
  *          Aug. 12, 2008
  *  version Nov. 18, 2019
- * @version Nov. 15, 2020
+ *  version Nov. 15, 2020
+ * @version Feb.  2, 2021
  * @author  ASAMI, Tomoharu
  */
 class PlainTree[E](node: TreeNode[E]) extends TreeBase[E] {
@@ -23,5 +24,7 @@ object PlainTree {
       PlainTreeNode.create(name, content, children)
   }
 
-  def create[E](): PlainTreeFactory[E] = new PlainTreeFactory[E]()
+  def create[E](root: E): PlainTree[E] = new PlainTree(PlainTreeNode.create("", root, Nil))
+
+  def createFactory[E](): PlainTreeFactory[E] = new PlainTreeFactory[E]()
 }

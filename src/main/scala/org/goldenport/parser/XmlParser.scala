@@ -9,11 +9,12 @@ import LogicalTokens._
  * @since   Aug. 19, 2018
  *  version Sep. 20, 2018
  *  version Jul. 16, 2019
- * @version Oct. 12, 2019
+ *  version Oct. 12, 2019
+ * @version Jan. 23, 2021
  * @author  ASAMI, Tomoharu
  */
 case class XmlParser() extends Parser with LogicalTokens.ComplexTokenizer {
-  def accept(config: Config, parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState] = evt.c match {
+  def accept(context: Context, parent: LogicalTokensParseState, evt: CharEvent): Option[LogicalTokensParseState] = evt.c match {
     case '<' => Some(XmlParser.XmlState.init(parent, evt))
     case _ => None
   }
@@ -45,10 +46,10 @@ object XmlParser {
     parent: LogicalTokensParseState,
     location: Option[ParseLocation]
   ) extends LogicalTokensParseState {
-    override def addChildState(config: Config, ps: Vector[Char]): LogicalTokensParseState = {
+    override def addChildState(context: Context, ps: Vector[Char]): LogicalTokensParseState = {
       val text = ps.mkString
       // println(s"XML: $text")
-      parent.addChildState(config, XmlToken(text, location))
+      parent.addChildState(context, XmlToken(text, location))
     }
   }
   object XmlState {
@@ -70,17 +71,17 @@ object XmlParser {
       case _ => false
     }
 
-    override def addChildState(config: Config, ps: Vector[Char]): LogicalTokensParseState =
+    override def addChildState(context: Context, ps: Vector[Char]): LogicalTokensParseState =
       copy(tag = tag ++ ps)
 
-    override protected def handle_End(config: Config): Transition = RAISE.notImplementedYetDefect // TODO error
+    override protected def handle_End(context: Context): Transition = RAISE.notImplementedYetDefect // TODO error
 
-    override def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       evt.c match {
         case '>' => XmlTextState(this, Vector.empty)
         case '/' => evt.next match {
           case Some('>') => SkipState(
-            parent.addChildState(config, ('<' +: tag) :+ '/' :+ '>')
+            parent.addChildState(context, ('<' +: tag) :+ '/' :+ '>')
           )
           case _ => RAISE.notImplementedYetDefect // TODO error
         }
@@ -98,11 +99,11 @@ object XmlParser {
     lazy val tagName = tag.mkString
     lazy val tagString = s"</${tagName}>"
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       evt.c match {
         case '>' =>
           if (tagName == text.open.tagName)
-            text.open.parent.addChildState(config, s"""${text.open.tagString}${text.textString}${tagString}""".toVector)
+            text.open.parent.addChildState(context, s"""${text.open.tagString}${text.textString}${tagString}""".toVector)
           else
             RAISE.notImplementedYetDefect // TODO error
         case '/' => this
@@ -118,9 +119,9 @@ object XmlParser {
 
     lazy val textString = text.mkString
 
-    override def addChildState(config: Config, ps: Vector[Char]) = copy(text = text ++ ps)
+    override def addChildState(context: Context, ps: Vector[Char]) = copy(text = text ++ ps)
 
-    override protected def character_State(config: Config, evt: CharEvent): LogicalTokensParseState =
+    override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
       evt.c match {
         case '<' => evt.next match {
           case Some(nc) if nc == '/' => XmlCloseState(this)

@@ -2,12 +2,14 @@ package org.goldenport.xml
 
 import scala.xml._
 import org.xml.sax._
+import org.goldenport.RAISE
 import org.goldenport.Strings
 
 /*
  * @since   Feb. 22, 2016
  *  version Apr. 18, 2016
- * @version Oct. 12, 2017
+ *  version Oct. 12, 2017
+ * @version Feb.  5, 2021
  * @author  ASAMI, Tomoharu
  */
 case class XmlAttributes(attributes: Vector[XmlAttribute]) extends Attributes {
@@ -50,6 +52,10 @@ case class XmlAttributes(attributes: Vector[XmlAttribute]) extends Attributes {
 
 object XmlAttributes {
   val empty = XmlAttributes(Vector.empty)
+
+  def create(ps: Seq[Tuple2[String, String]]): XmlAttributes = XmlAttributes(
+    ps.toVector.map(XmlAttribute.create)
+  )
 }
 
 case class XmlAttribute(
@@ -74,6 +80,15 @@ object XmlAttribute {
       ) { uri =>
         Right(XmlAttribute(name, attr.key, Some(prefix), Some(uri), v))
       }
+    }
+  }
+
+  def create(p: Tuple2[String, String]): XmlAttribute = {
+    val (qname, value) = p
+    Strings.totokens(qname, ":") match {
+      case Nil => RAISE.invalidArgumentFault("Empty attribute name")
+      case name :: Nil => XmlAttribute(name, name, None, None, value)
+      case prefix :: name :: _ => XmlAttribute(name, qname, Some(prefix), None, value)
     }
   }
 }

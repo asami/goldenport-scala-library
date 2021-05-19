@@ -14,7 +14,8 @@ import org.goldenport.util.AnyUtils
  * @since   Aug.  4, 2019
  *  version Sep. 30, 2019
  *  version Oct. 18, 2019
- * @version Jan.  2, 2021
+ *  version Jan.  2, 2021
+ * @version Feb. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 case class I18NContext(
@@ -32,6 +33,13 @@ case class I18NContext(
   private lazy val _intFormatter = NumberFormat.getIntegerInstance(locale)
   private lazy val _currencyFormatter = NumberFormat.getCurrencyInstance(locale)
   private lazy val _percentFormatter = NumberFormat.getPercentInstance(locale)
+
+  def print(p: Any): String = p match {
+    case m: Number => printNumber(m)
+    case m: Money => printMoney(m)
+    case m: Percent => printPercent(m)
+    case m => format(m)
+  }
 
   def format(p: Any): String = p match {
     case m: Number => formatNumber(m)
@@ -75,6 +83,12 @@ case class I18NContext(
   def formatMoney(p: Money): String = RAISE.notImplementedYetDefect
 
   def formatPercent(p: Percent): String = RAISE.notImplementedYetDefect
+
+  def printNumber(p: Number): String = AnyUtils.toString(p)
+
+  def printMoney(p: Money): String = RAISE.notImplementedYetDefect
+
+  def printPercent(p: Percent): String = RAISE.notImplementedYetDefect
 
   def format(fmt: String, p: Any): String = p match {
     case m: Number => formatNumber(fmt, m)

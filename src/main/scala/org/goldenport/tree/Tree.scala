@@ -15,7 +15,8 @@ import org.goldenport.values.PathName
  *  version Nov. 18, 2019
  *  version May.  4, 2020
  *  version Oct. 17, 2020
- * @version Nov. 16, 2020
+ *  version Nov. 16, 2020
+ * @version Feb.  2, 2021
  * @author  ASAMI, Tomoharu
  */
 trait Tree[E] extends Showable {
@@ -63,6 +64,7 @@ trait Tree[E] extends Showable {
 
 object Tree {
   def create[T](): Tree[T] = new PlainTree[T]()
+  def create[T](root: T): Tree[T] = PlainTree.create(root)
 
   sealed trait MergeContentStrategy
   case object OverWriteMerge extends MergeContentStrategy

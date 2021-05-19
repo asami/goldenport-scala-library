@@ -13,7 +13,9 @@ import org.goldenport.util.AnyRefUtils
 /*
  * @since   Sep. 12, 2019
  *  version Oct. 16, 2019
- * @version Sep. 29, 2020
+ *  version Sep. 29, 2020
+ *  version Jan. 20, 2021
+ * @version Feb. 28, 2021
  * @author  ASAMI, Tomoharu
  */
 case class NumberInterval(interval: Interval[spire.math.Number]) extends IntervalBase[spire.math.Number] {
@@ -23,6 +25,9 @@ case class NumberInterval(interval: Interval[spire.math.Number]) extends Interva
   //   case Unbound() => ""
   //   case EmptyBound() => ""
   // }
+
+  def toLower: (Option[Number], Boolean) = _to_number(interval.lowerBound)
+  def toUpper: (Option[Number], Boolean) = _to_number(interval.upperBound)
 
   def toRange: NumberRange = {
     val (start, si) = _to_number(interval.lowerBound)
@@ -49,6 +54,8 @@ case class NumberInterval(interval: Interval[spire.math.Number]) extends Interva
 }
 
 object NumberInterval extends IntervalFactory[NumberInterval, spire.math.Number] {
+  import scala.language.implicitConversions
+  implicit def apply(p: Number): spire.math.Number = AnyRefUtils.toSpireNumber(p)
   implicit val _order: spire.algebra.Order[spire.math.Number] = new spire.algebra.Order[spire.math.Number] {
     def compare(lhs: spire.math.Number, rhs: spire.math.Number) = lhs.compare(rhs)
   }
@@ -58,6 +65,30 @@ object NumberInterval extends IntervalFactory[NumberInterval, spire.math.Number]
 
   protected def to_Interval(p: Interval[spire.math.Number]): ParseResult[NumberInterval] =
     ParseResult(NumberInterval(p))
+
+  def apply(start: Number, end: Number, sinc: Boolean, einc: Boolean): NumberInterval =
+    (sinc, einc) match {
+      case (true, true) => closed(start, end)
+      case (true, false) => openUpper(start, end)
+      case (false, true) => openLower(start, end)
+      case (false, false) => open(start, end)
+    }
+
+  def closed(low: Number, high: Number): NumberInterval = NumberInterval(Interval.closed(low, high))
+
+  def open(low: Number, high: Number): NumberInterval = NumberInterval(Interval.open(low, high))
+
+  def openLower(low: Number, high: Number): NumberInterval = NumberInterval(Interval.openLower(low, high))
+
+  def openUpper(low: Number, high: Number): NumberInterval = NumberInterval(Interval.openUpper(low, high))
+
+  def above(low: Number): NumberInterval = NumberInterval(Interval.above(low))
+
+  def below(high: Number): NumberInterval = NumberInterval(Interval.below(high))
+
+  def atOrAbove(low: Number): NumberInterval = NumberInterval(Interval.atOrAbove(low))
+
+  def atOrBelow(high: Number): NumberInterval = NumberInterval(Interval.atOrBelow(high))
 
   def closed(low: Int, high: Int): NumberInterval = NumberInterval(Interval.closed(low, high))
 

@@ -21,7 +21,9 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Feb. 18, 2020
  *  version Mar. 30, 2020
  *  version Apr. 17, 2020
- * @version May.  4, 2020
+ *  version May.  4, 2020
+ *  version Feb. 15, 2021
+ * @version Apr. 29, 2021
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -30,7 +32,8 @@ case class I18NString(
   ja: String,
   map: Map[Locale, String]
 ) {
-  def key: String = en
+  lazy val keyForModel: String = en.trim.toLowerCase
+  lazy val nameForModel: String = en.trim
 
   def as(locale: Locale): String = get(locale) getOrElse en
 
@@ -212,5 +215,12 @@ object I18NString {
     case Nil => None
     case x :: Nil => Some(x)
     case x :: xs => Some(xs./:(x)(_ concat _))
+  }
+
+  def mkI18NString(ps: NonEmptyList[I18NString], infix: String): I18NString =
+    mkI18NString(ps.list, infix)
+
+  def mkI18NString(ps: Seq[I18NString], infix: String): I18NString = {
+    ???
   }
 }
