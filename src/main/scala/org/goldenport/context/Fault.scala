@@ -5,13 +5,15 @@ import org.goldenport.i18n.{I18NString, I18NTemplate, I18NMessage}
 import org.goldenport.extension.IRecord
 import org.goldenport.context.DetailCode.Reaction
 import org.goldenport.util.StringUtils
+import org.goldenport.util.AnyUtils
 import Fault._
 
 /*
  * @since   Feb. 21, 2021
  *  version Feb. 22, 2021
  *  version Mar. 27, 2021
- * @version Apr. 29, 2021
+ *  version Apr. 29, 2021
+ * @version May. 27, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -20,6 +22,23 @@ sealed trait Fault extends Incident {
   def message: I18NMessage
   def reaction: Reaction
   def properties(locale: Locale): IRecord
+
+  def RAISE: Nothing = throw new FaultException(this)
+}
+
+sealed trait Parameters1 extends { self: Fault =>
+  def parameters: Seq[Any]
+  def message = messageTemplate.toI18NMessage(parameters.map(AnyUtils.toString).mkString(";"))
+
+  def properties(locale: Locale): IRecord = IRecord.dataS(
+    KEY_NAME -> name,
+    KEY_PARAMETERS -> parameters,
+    KEY_MESSAGE -> message(locale)
+  )
+}
+
+sealed trait Defect extends Fault {
+  def reaction = Reaction.SystemDefect
 }
 
 object Fault {
@@ -105,7 +124,7 @@ case class MissingArgumentFault(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = MissingArgumentFault.template
 ) extends ArgumentFault {
-  def message = messageTemplate.toI18NMessage(parameters.mkString(","))
+  def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
     KEY_NAME -> name,
@@ -117,11 +136,11 @@ object MissingArgumentFault {
   val template = I18NTemplate("Mising Argument: {0}")
 }
 
-case class TooMuchArgumentFault(
+case class TooManyArgumentFault(
   parameters: Seq[String] = Nil,
-  messageTemplate: I18NTemplate = TooMuchArgumentFault.template
+  messageTemplate: I18NTemplate = TooManyArgumentFault.template
 ) extends ArgumentFault {
-  def message = messageTemplate.toI18NMessage(parameters.mkString(","))
+  def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
     KEY_NAME -> name,
@@ -130,8 +149,8 @@ case class TooMuchArgumentFault(
     KEY_LOCAL_MESSAGE -> message(locale)
   )
 }
-object TooMuchArgumentFault {
-  val template = I18NTemplate("Too much arguments: {0}")
+object TooManyArgumentFault {
+  val template = I18NTemplate("Too many arguments: {0}")
 }
 
 sealed trait ResultFault extends Fault {
@@ -142,7 +161,7 @@ case class ValueDomainResultFault(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = ValueDomainResultFault.template
 ) extends ResultFault {
-  def message = messageTemplate.toI18NMessage(parameters.mkString(","))
+  def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
     KEY_NAME -> name,
@@ -161,7 +180,77 @@ object ValueDomainResultFault {
     ValueDomainResultFault(messageTemplate = I18NTemplate(p))
 }
 
+sealed trait PropertyFault extends Fault {
+  def reaction = Reaction.SystemDefect
+}
+
+case class MissingPropertyFault(
+  parameters: Seq[String] = Nil,
+  messageTemplate: I18NTemplate = MissingPropertyFault.template
+) extends PropertyFault {
+  def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
+
+  def properties(locale: Locale): IRecord = IRecord.dataS(
+    KEY_NAME -> name,
+    KEY_PARAMETERS -> parameters,
+    KEY_MESSAGE -> message(),
+    KEY_LOCAL_MESSAGE -> message(locale)
+  )
+}
+object MissingPropertyFault {
+  val template = I18NTemplate("Value domain fault: {0}")
+
+  def apply(p: I18NString): MissingPropertyFault =
+    MissingPropertyFault(messageTemplate = I18NTemplate(p))
+
+  def apply(p: I18NMessage): MissingPropertyFault =
+    MissingPropertyFault(messageTemplate = I18NTemplate(p))
+}
+
+case class ValueDomainPropertyFault(
+  parameters: Seq[String] = Nil,
+  messageTemplate: I18NTemplate = ValueDomainPropertyFault.template
+) extends PropertyFault {
+  def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
+
+  def properties(locale: Locale): IRecord = IRecord.dataS(
+    KEY_NAME -> name,
+    KEY_PARAMETERS -> parameters,
+    KEY_MESSAGE -> message(),
+    KEY_LOCAL_MESSAGE -> message(locale)
+  )
+}
+object ValueDomainPropertyFault {
+  val template = I18NTemplate("Value domain fault: {0}")
+
+  def apply(p: I18NString): ValueDomainPropertyFault =
+    ValueDomainPropertyFault(messageTemplate = I18NTemplate(p))
+
+  def apply(p: I18NMessage): ValueDomainPropertyFault =
+    ValueDomainPropertyFault(messageTemplate = I18NTemplate(p))
+}
+
 sealed trait IoFault extends Fault {
+}
+
+case class IllegalConfigurationDefect(
+  parameters: Seq[Any],
+  messageTemplate: I18NTemplate = IllegalConfigurationDefect.template
+) extends Defect with Parameters1 {
+}
+object IllegalConfigurationDefect {
+  val template = I18NTemplate("Illegal configuration defect: {0}")
+
+  def apply(p: String): IllegalConfigurationDefect = parameter(p)
+
+  def apply(p: I18NString): IllegalConfigurationDefect =
+    IllegalConfigurationDefect(parameters = Nil, messageTemplate = I18NTemplate(p))
+
+  def apply(p: I18NMessage): IllegalConfigurationDefect =
+    IllegalConfigurationDefect(parameters = Nil, messageTemplate = I18NTemplate(p))
+
+  def parameter(p: Any, ps: Any*): IllegalConfigurationDefect =
+    IllegalConfigurationDefect(parameters = p +: ps)
 }
 
 case class Faults(faults: Vector[Fault] = Vector.empty) {
@@ -171,6 +260,8 @@ case class Faults(faults: Vector[Fault] = Vector.empty) {
 }
 object Faults {
   val empty = Faults()
+
+  def apply(p: Fault, ps: Fault*): Faults = Faults((p +: ps).toVector)
 
   def apply(ps: Iterable[Fault]): Faults = Faults(ps.toVector)
 }

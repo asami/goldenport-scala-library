@@ -11,7 +11,8 @@ import org.goldenport.util.ExceptionUtils
  * @since   Feb. 21, 2021
  *  version Feb. 25, 2021
  *  version Mar. 26, 2021
- * @version Apr. 29, 2021
+ *  version Apr. 29, 2021
+ * @version May. 27, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -33,6 +34,17 @@ case class Conclusion(
   def withTrace(p: TraceHandle): Conclusion = withTrace(p.ctx)
   def withTrace(p: TraceContext): Conclusion = withTrace(p.toTrace)
   def withTrace(p: Trace): Conclusion = copy(trace = p)
+
+  def +(rhs: Conclusion): Conclusion = Conclusion(
+    code,
+    message,
+    errors + rhs.errors,
+    warnings + rhs.warnings,
+    exception, // CAUTION
+    faults, // CAUTION
+    trace, // CAUTION
+    strategy // CAUTION
+  )
 }
 
 object Conclusion {
@@ -44,6 +56,10 @@ object Conclusion {
   val NotImplemented = Conclusion(StatusCode.NotImplemented)
   //
   val NoReach = Conclusion(StatusCode.NoReach)
+  val Invariant = Conclusion(StatusCode.Invariant)
+  val PreCondition = Conclusion(StatusCode.PreCondition)
+  val PreConditionState = Conclusion(StatusCode.PreConditionState)
+  val PostCondition = Conclusion(StatusCode.PostCondition)
 
   case class Strategy(
     cache: CacheStrategy = CacheStrategy.none,
@@ -97,6 +113,12 @@ object Conclusion {
     Conclusion(StatusCode.make(e), message = Some(I18NString(label)), exception = Some(e))
   }
 
+  def error(code: Int, p: String): Conclusion = error(code, I18NString(p))
+  def error(code: Int, p: I18NString): Conclusion = Conclusion(
+    StatusCode(code),
+    Some(p)
+  )
+
   def argumentFault(ps: Seq[ArgumentFault]): Conclusion = {
     val detail = DetailCode.Argument
     val status = StatusCode.BadRequest.withDetail(detail)
@@ -106,8 +128,24 @@ object Conclusion {
 
   def resultFault(ps: Seq[ResultFault]): Conclusion = {
     val detail = DetailCode.Result
-    val status = ??? // StatusCode.BadRequest.withDetail(detail) // TODO
+    val status = StatusCode.InternalServerError.withDetail(detail)
     val faults = Faults(ps)
+    Conclusion(status, faults)
+  }
+
+  def missingPropertyFault(name: String, names: String*): Conclusion = missingPropertyFault(name +: names)
+
+  def missingPropertyFault(names: Seq[String]): Conclusion = {
+    val detail = DetailCode.Result
+    val status = StatusCode.InternalServerError.withDetail(detail)
+    val faults = Faults(MissingPropertyFault(names))
+    Conclusion(status, faults)
+  }
+
+  def illegalConfigurationDefect(msg: String): Conclusion = {
+    val detail = DetailCode.Result
+    val status = StatusCode.InternalServerError.withDetail(detail)
+    val faults = Faults(IllegalConfigurationDefect(msg))
     Conclusion(status, faults)
   }
 }

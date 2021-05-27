@@ -15,7 +15,8 @@ import org.goldenport.log.Loggable
  *  version Sep.  8, 2019
  *  version Apr. 25, 2020
  *  version Jan. 11, 2021
- * @version Feb. 13, 2021
+ *  version Feb. 13, 2021
+ * @version May. 16, 2021
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -43,6 +44,8 @@ case class LogicalBlocks(
   lazy val events = StartBlock +: blocks :+ EndBlock
 
   def text = blocks.flatMap(_.getText).mkString
+
+  def sections: Vector[LogicalSection] = blocks collect { case m: LogicalSection => m }
 }
 
 object LogicalBlocks {

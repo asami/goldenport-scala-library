@@ -7,7 +7,8 @@ import org.goldenport.util.StringUtils
 /*
  * @since   Mar. 12, 2021
  *  version Mar. 27, 2021
- * @version Apr. 29, 2021
+ *  version Apr. 29, 2021
+ * @version May. 27, 2021
  * @author  ASAMI, Tomoharu
  */
 case class DetailCode(
@@ -228,14 +229,26 @@ object DetailCode {
   case object LogicDefect extends Defect {
     def code: Int = 91
   }
-  case object UnsupportedDefect extends Defect {
+  case object ConfigurationDefect extends Defect {
     def code: Int = 92
   }
-  case object NotImplementedYetDefect extends Defect {
-    def code: Int = 91
+  case object UnsupportedDefect extends Defect {
+    def code: Int = 93
   }
-  case object AssertDefect extends Defect {
-    def code: Int = 91
+  case object NotImplementedYetDefect extends Defect {
+    def code: Int = 94
+  }
+  case object InvariantDefect extends Defect {
+    def code: Int = 95
+  }
+  case object PreConditionStateDefect extends Defect {
+    def code: Int = 96
+  }
+  case object PreConditionDefect extends Defect {
+    def code: Int = 97
+  }
+  case object PostConditionDefect extends Defect {
+    def code: Int = 98
   }
 
   case class Reaction(
@@ -328,6 +341,10 @@ object DetailCode {
   val Argument = DetailCode(ArgumentValueError, ArgumentSite, Invalid, Reaction.ClientInput)
   val Result = DetailCode(ResultError, OperationSite, LogicDefect, Reaction.SystemDefect)
   val NoReach = DetailCode(ServiceError, OperationSite, LogicDefect, Reaction.SystemDefect)
+  val Invariant = DetailCode(ServiceError, OperationSite, InvariantDefect, Reaction.SystemDefect)
+  val PreCondition = DetailCode(ServiceError, OperationSite, PreConditionDefect, Reaction.SystemDefect)
+  val PreConditionState = DetailCode(ServiceError, OperationSite, PreConditionStateDefect, Reaction.SystemDefect)
+  val PostCondition = DetailCode(ServiceError, OperationSite, PostConditionDefect, Reaction.SystemDefect)
 
   def apply(category: Category, site: Site, incident: Incident, reaction: Reaction): DetailCode =
     DetailCode(category, site, incident, None, reaction)
