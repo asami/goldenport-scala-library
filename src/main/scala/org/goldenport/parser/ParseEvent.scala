@@ -12,7 +12,8 @@ import org.goldenport.util.VectorUtils
  *  version Apr. 21, 2019
  *  version Sep. 22, 2019
  *  version Jan. 31, 2020
- * @version Jan. 22, 2021
+ *  version Jan. 22, 2021
+ * @version May. 11, 2021
  * @author  ASAMI, Tomoharu
  */
 trait ParseEvent {
@@ -37,18 +38,20 @@ object ParseEvent {
     }
 
     def flush: (SlidingConsoleState, Vector[CharEvent]) = {
-      val a = input.sliding(3).toVector
+      val a = input.sliding(4).toVector
       val init = a.init.flatMap(_.toList match {
         case Nil => RAISE.noReachDefect
         case x :: Nil => RAISE.noReachDefect
         case x :: y :: Nil => RAISE.noReachDefect
-        case x :: y :: z :: _ => Vector(x.withNexts(y, z))
+        case x :: y :: z :: Nil => Vector(x.withNexts(y, z))
+        case x :: y :: z :: zz :: _ => Vector(x.withNexts(y, z, zz))
       })
       val last = a.last.toList match {
         case Nil => RAISE.noReachDefect
         case x :: Nil => Vector(x)
         case x :: y :: Nil => Vector(x.withNext(y), y)
-        case x :: y :: z :: _ => Vector(x.withNexts(y, z), y.withNext(z), z)
+        case x :: y :: z :: Nil => Vector(x.withNexts(y, z), y.withNext(z), z)
+        case x :: y :: z :: zz :: _ => Vector(x.withNexts(y, z, zz), y.withNexts(z, zz), z.withNext(zz), zz)
       }
       (SlidingConsoleState.init, init ++ last)
     }

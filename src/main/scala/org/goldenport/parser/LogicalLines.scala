@@ -20,7 +20,8 @@ import org.goldenport.util.StringUtils
  *  version Jan. 16, 2021
  *  version Feb.  7, 2021
  *  version Mar.  2, 2021
- * @version Apr.  3, 2021
+ *  version Apr.  3, 2021
+ * @version May. 10, 2021
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -571,6 +572,8 @@ object LogicalLines {
     def getLastChar = text.lastOption
     protected def get_Current_Line = Some(text.mkString)
     override def addChild(config: Config, ps: Vector[Char]) = copy(text = text ++ ps)
+    override def addChildEndTransition(config: Config, ps: Vector[Char]): Transition =
+      copy(text = text ++ ps)(config, EndEvent)
 
     override def addChildEndTransition(
       config: Config,
@@ -611,6 +614,8 @@ object LogicalLines {
     def getLastChar = text.lastOption
     protected def get_Current_Line = Some(text.mkString)
     override def addChild(config: Config, ps: Vector[Char]) = copy(text = text ++ ps)
+    override def addChildEndTransition(config: Config, ps: Vector[Char]): Transition =
+      copy(text = text ++ ps)(config, EndEvent)
 
     override protected def end_Result(config: Config): ParseResult[LogicalLines] =
       ParseFailure(s"Json is not completed: ${text.mkString}", location)
@@ -651,6 +656,8 @@ object LogicalLines {
     }
 
     override def addChild(config: Config, ps: Vector[Char]) = copy(tag = tag ++ ps)
+    override def addChildEndTransition(config: Config, ps: Vector[Char]): Transition =
+      copy(tag = tag ++ ps)(config, EndEvent)
 
     override protected def handle_End(config: Config): Transition = RAISE.notImplementedYetDefect(this, "handle_End") // TODO error
 
@@ -716,6 +723,8 @@ object LogicalLines {
       ParseFailure(s"Xml is not completed: ${text.mkString}", location)
 
     override def addChild(config: Config, ps: Vector[Char]) = copy(text = text ++ ps)
+    override def addChildEndTransition(config: Config, ps: Vector[Char]): Transition =
+      copy(text = text ++ ps)(config, EndEvent)
 
     override protected def open_Angle_Bracket_State(config: Config, evt: CharEvent) = {
       // println(s"XmlTextState#close_Angle_Bracket_State: $evt")
@@ -741,6 +750,9 @@ object LogicalLines {
   ) extends AwakeningLogicalLinesParseState {
     def getLastChar = text.lastOption
     protected def get_Current_Line = Some(text.mkString)
+    override def addChild(config: Config, ps: Vector[Char]) = copy(text = text ++ ps)
+    override def addChildEndTransition(config: Config, ps: Vector[Char]): Transition =
+      copy(text = text ++ ps)(config, EndEvent)
 
     override protected def end_Result(config: Config): ParseResult[LogicalLines] =
       ParseFailure(s"Bracket is not closed: ${text.mkString}", location)

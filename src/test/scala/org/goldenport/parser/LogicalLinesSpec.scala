@@ -12,7 +12,8 @@ import org.scalatest._
  *  version Apr. 13, 2019
  *  version Nov. 26, 2019
  *  version Jan. 20, 2020
- * @version Jan. 17, 2021
+ *  version Jan. 17, 2021
+ * @version May. 11, 2021
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -71,6 +72,11 @@ b" c"""))
         val s = "\"\"\"a \"x \"\"\""
         val r = parse(s)
         r should be(LogicalLines.start("\"\"\"a \"x \"\"\""))
+      }
+      "stick" in {
+        val s = "\"\"\"a\"x\"\"\"\""
+        val r = parse(s)
+        r should be(LogicalLines.start("\"\"\"a\"x\"\"\"\""))
       }
     }
     "lisp" which {

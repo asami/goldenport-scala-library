@@ -12,7 +12,8 @@ import org.goldenport.util.AnyUtils
  * @since   Nov. 13, 2017
  *  version Feb. 25, 2021
  *  version Mar. 28, 2021
- * @version Apr. 25, 2021
+ *  version Apr. 25, 2021
+ * @version May. 28, 2021
  * @author  ASAMI, Tomoharu
  */
 class TraceContext() extends Showable {
@@ -152,6 +153,6 @@ object TraceContext {
 case class Result[T](r: T, leaveMessage: String) {
 }
 object Result {
-  // def apply[T](r: T, leaveMessage: Option[String]): Result[T] =
-  //   Result(r, leaveMessage getOrElse "VOID")
+  def apply[T](r: T, leaveMessage: Option[String]): Result[T] =
+    Result(r, leaveMessage getOrElse "VOID")
 }
