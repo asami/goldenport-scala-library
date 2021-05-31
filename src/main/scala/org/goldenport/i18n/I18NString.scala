@@ -22,7 +22,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Apr. 17, 2020
  *  version May.  4, 2020
  *  version Feb. 15, 2021
- * @version Apr. 29, 2021
+ *  version Apr. 29, 2021
+ * @version May. 30, 2021
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -152,6 +153,11 @@ case class I18NString(
 }
 
 object I18NString {
+  implicit def I18NStringMonoid = new Monoid[I18NString] {
+    def zero = empty
+    def append(lhs: I18NString, rhs: => I18NString) = lhs concat rhs
+  }
+
   val empty = I18NString("")
 
   def apply(en: String, ja: String): I18NString = I18NString(en, en, ja, Map.empty)

@@ -12,12 +12,12 @@ import org.goldenport.util.ExceptionUtils
  *  version Feb. 25, 2021
  *  version Mar. 26, 2021
  *  version Apr. 29, 2021
- * @version May. 27, 2021
+ * @version May. 30, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
   code: StatusCode,
-  message: Option[I18NString] = None,
+  messageOption: Option[I18NString] = None,
   errors: ErrorMessages = ErrorMessages.empty,
   warnings: WarningMessages = WarningMessages.empty,
   exception: Option[Throwable] = None,
@@ -25,19 +25,25 @@ case class Conclusion(
   trace: Trace = Trace.empty,
   strategy: Conclusion.Strategy = Conclusion.Strategy.none
 ) {
+  def message: I18NString = messageOption orElse _errors_message orElse _warnings_message orElse exception.map(x => I18NString(x.getMessage)) getOrElse code.message
+
+  private def _errors_message: Option[I18NString] = errors.toOption.map(_.message)
+
+  private def _warnings_message: Option[I18NString] = warnings.toOption.map(_.message)
+
   // def incidents: Incidents = trace.incidents
   // def faults: Faults = incidents.faults
   // def effects: Effects = incidents.effects
   // def statictics: Statictics = incidents.statictics
 
-  def withMessage(p: String) = copy(message = Some(I18NString(p)))
+  def withMessage(p: String) = copy(messageOption = Some(I18NString(p)))
   def withTrace(p: TraceHandle): Conclusion = withTrace(p.ctx)
   def withTrace(p: TraceContext): Conclusion = withTrace(p.toTrace)
   def withTrace(p: Trace): Conclusion = copy(trace = p)
 
   def +(rhs: Conclusion): Conclusion = Conclusion(
     code,
-    message,
+    messageOption,
     errors + rhs.errors,
     warnings + rhs.warnings,
     exception, // CAUTION
@@ -110,7 +116,7 @@ object Conclusion {
 
   def make(p: Throwable, label: String): Conclusion = {
     val e = ExceptionUtils.normalize(p)
-    Conclusion(StatusCode.make(e), message = Some(I18NString(label)), exception = Some(e))
+    Conclusion(StatusCode.make(e), messageOption = Some(I18NString(label)), exception = Some(e))
   }
 
   def error(code: Int, p: String): Conclusion = error(code, I18NString(p))

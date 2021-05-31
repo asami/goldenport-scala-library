@@ -2,25 +2,31 @@ package org.goldenport.statemachine
 
 import scala.util.control.NonFatal
 import org.goldenport.RAISE
+import org.goldenport.trace.{TraceContext, Result}
 
 /*
  * @since   May.  5, 2021
- * @version May. 27, 2021
+ * @version May. 30, 2021
  * @author  ASAMI, Tomoharu
  */
 class ExecutionContext(
+  traceContext: TraceContext,
   logicOption: Option[StateMachineLogic] = None
 ) {
-  lazy val logic = logicOption getOrElse RAISE.noReachDefect
+  def logic = logicOption getOrElse RAISE.noReachDefect
 
-  // def states = statesOption getOrElse ???
+  def withClass(p: StateMachineClass): ExecutionContext = 
+    new ExecutionContext(traceContext, Some(p.logic))
 
   def getStateClass(name: String): Option[StateClass] = logic.getStateClass(name)
+
+  def execute[T](label: String, enter: Any)(body: => Result[T]): T = traceContext.execute(label, enter)(body)
 }
 
 object ExecutionContext {
-  def apply(): ExecutionContext = new ExecutionContext()
-  def apply(p: StateMachineLogic): ExecutionContext = new ExecutionContext(Some(p))
+  def create(): ExecutionContext = new ExecutionContext(TraceContext.create())
+  def create(p: StateMachineLogic): ExecutionContext = new ExecutionContext(TraceContext.create(), Some(p))
+
   // private def apply(p: StateMachineRule): ExecutionContext = apply(p.states)
   // private def apply(p: List[StateClass]): ExecutionContext = ??? // new ExecutionContext(Some(p))
 

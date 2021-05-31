@@ -1,5 +1,6 @@
 package org.goldenport.context
 
+import org.goldenport.Strings
 import org.goldenport.i18n.I18NString
 import org.goldenport.util.ExceptionUtils
 
@@ -8,16 +9,18 @@ import org.goldenport.util.ExceptionUtils
  *  version Feb. 21, 2021
  *  version Mar. 26, 2021
  *  version Apr. 10, 2021
- * @version May. 20, 2021
+ * @version May. 30, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StatusCode(
   main: Int,
   detail: Option[DetailCode] = None,
   application: Option[Int] = None, // FURTHER CONSIDERATION
-  message: Option[I18NString] = None, // FURTHER CONSIDERATION
+  messageOption: Option[I18NString] = None, // FURTHER CONSIDERATION
   externalService: Option[StatusCode] = None // FURTHER CONSIDERATION
 ) {
+  def message: I18NString = messageOption getOrElse StatusCode.message(main)
+
   def withDetail(p: DetailCode) = copy(detail = Some(p))
 }
 
@@ -72,6 +75,11 @@ object StatusCode {
   final val PreCondition = InternalServerError.withDetail(DetailCode.PreCondition)
   final val PreConditionState = InternalServerError.withDetail(DetailCode.PreConditionState)
   final val PostCondition = InternalServerError.withDetail(DetailCode.PostCondition)
+
+  def message(code: Int): I18NString = {
+    val a = Strings.httpstatus.take(code)
+    I18NString(a)
+  }
 
   /*
    * Function

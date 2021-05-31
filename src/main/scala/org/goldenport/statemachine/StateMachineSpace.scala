@@ -7,7 +7,7 @@ import org.goldenport.event.Event
 
 /*
  * @since   May. 20, 2021
- * @version May. 25, 2021
+ * @version May. 30, 2021
  * @author  ASAMI, Tomoharu
  */
 class StateMachineSpace(
@@ -16,7 +16,7 @@ class StateMachineSpace(
   private var _machines: Vector[StateMachine] = Vector.empty
 
   def issueEvent(evt: Event): Parcel = {
-    val ctx = ExecutionContext()
+    val ctx = ExecutionContext.create()
     val parcel = Parcel(ctx, evt)
     issueEvent(parcel)
   }
@@ -24,7 +24,7 @@ class StateMachineSpace(
   def issueEvent(parcel: Parcel): Parcel = {
     case class Z(ms: Vector[StateMachine] = Vector.empty) {
       def r = {
-        _machines.map(_.sendCommit(parcel))
+        ms.map(_.sendCommit(parcel)) // TODO failure
         parcel
       }
 
@@ -32,13 +32,13 @@ class StateMachineSpace(
         case Consequence.Success(b, _) =>
           if (b) {
             rhs.sendPrepare(parcel) match {
-              case Consequence.Success(s, c) => ???
-              case Consequence.Error(c) => ???
+              case Consequence.Success(s, c) => copy(ms = ms :+ rhs)
+              case m: Consequence.Error[_] => m.RAISE
             }
           } else {
             this
           }
-        case Consequence.Error(c) => ???
+        case m: Consequence.Error[_] => m.RAISE
       }
     }
     _machines./:(Z())(_+_).r

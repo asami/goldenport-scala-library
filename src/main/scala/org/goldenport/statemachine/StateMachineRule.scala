@@ -9,7 +9,7 @@ import org.goldenport.event.EventClazz
 /*
  * @since   Jan.  4, 2021
  *  version Apr. 26, 2021
- * @version May. 27, 2021
+ * @version May. 29, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StateMachineRule(
@@ -87,11 +87,11 @@ object StateMachineRule {
     private def _state(p: Hocon): ParseResult[StateClass] =
       for {
         name <- p.parseString(PROP_STMRULE_NAME)
+        ts <- _transition(p, PROP_STMRULE_TRANSITION)
         entrya <- _activity(p, PROP_STMRULE_ENTRY)
         exita <- _activity(p, PROP_STMRULE_EXIT)
         doa <- _do_activity(p, PROP_STMRULE_DO)
-        ts <- _transition(p, PROP_STMRULE_TRANSITION)
-      } yield StateClass(name, entrya, exita, doa, ts.toVector)
+      } yield StateClass(name, ts.toVector, entrya, exita, doa)
 
     private def _activity(p: Hocon, key: String): ParseResult[Activity] =
       for {
@@ -152,7 +152,10 @@ object StateMachineRule {
     } yield a
 
     private def _to_state_by_name(p: String): ParseResult[TransitionTo] =
-      ParseResult(NameTransitionTo(p))
+      p match {
+        case PROP_STATE_FINAL => ParseResult(FinalTransitionTo)
+        case _ => ParseResult(NameTransitionTo(p))
+      }
 
     private def _to_state_by_object(p: Hocon): ParseResult[TransitionTo] =
       ParseResult(NoneTransitionTo) // TODO

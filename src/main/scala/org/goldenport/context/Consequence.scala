@@ -11,7 +11,7 @@ import org.goldenport.parser.{ParseMessage}
  * See org.goldenport.record.v2.ConclusionResult.
  * 
  * @since   Feb. 21, 2021
- * @version May. 21, 2021
+ * @version May. 30, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[T] {
@@ -36,7 +36,7 @@ object Consequence {
     def toOption: Option[T] = Some(result)
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
     def map[U](f: T => U): Consequence[U] = copy(result = f(result))
-    def flatMap[U](f: T => Consequence[U]): Consequence[U] = ???
+    def flatMap[U](f: T => Consequence[U]): Consequence[U] = f(result).add(conclusion)
   }
 
   case class Error[T](
@@ -45,7 +45,8 @@ object Consequence {
     def toOption: Option[T] = None
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
     def map[U](f: T => U): Consequence[U] = this.asInstanceOf[Error[U]]
-    def flatMap[U](f: T => Consequence[U]): Consequence[U] = ???
+    def flatMap[U](f: T => Consequence[U]): Consequence[U] = this.asInstanceOf[Consequence[U]]
+    def RAISE: Nothing = throw new ConsequenceException(this)
   }
 
   implicit object ConsequenceApplicative extends Applicative[Consequence] {
@@ -59,7 +60,7 @@ object Consequence {
     def point[A](a: => A): Consequence[A] = Success(a)
   }
 
-  def apply[T](p: => T): Consequence[T] = success(p)
+  def apply[T](p: => T): Consequence[T] = execute(p)
   def success[T](p: T): Consequence[T] = Success(p)
 
   // Generic error derived from HTTP
@@ -118,6 +119,8 @@ object Consequence {
   // Specific error with detail code.
   def missingPropertyFault[T](p: String, ps: String*): Consequence[T] = missingPropertyFault(p +: ps)
   def missingPropertyFault[T](ps: Seq[String]): Consequence[T] = Error(Conclusion.missingPropertyFault(ps))
+
+  def illegalConfigurationDefect[T](p: String): Consequence[T] = Error(Conclusion.illegalConfigurationDefect(p))
 
   //
   def execute[T](body: => T): Consequence[T] = try {

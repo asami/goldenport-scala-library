@@ -1,11 +1,13 @@
 package org.goldenport.statemachine
 
+import scalaz._, Scalaz._
+import org.goldenport.trace.Result
 import org.goldenport.context.Consequence
 import org.goldenport.event.GoAheadEvent
 
 /*
  * @since   May. 23, 2021
- * @version May. 27, 2021
+ * @version May. 30, 2021
  * @author  ASAMI, Tomoharu
  */
 trait StateMachineLogic {
@@ -17,30 +19,47 @@ trait StateMachineLogic {
 
   def newState(p: StateClass): State = State(p)
 
-  def accept(state: State, p: Parcel): Consequence[Boolean]
+  def accept(state: State, p: Parcel): Consequence[Boolean] = state.accept(p)
 
-  def goAhead(state: State): State = {
-    val ctx = ExecutionContext(this)
+  def receive(sm: StateMachine, state: State, p: Parcel): Consequence[(State, Parcel)] =
+    for {
+      str <- state.transit(p)
+    } yield {
+      val (s, t, r) = str
+      val a = transit(state, t, r)
+      //   (goAhead(a, r), r)
+      (a, r)
+    }
+
+  def goAhead(state: State): (State, Vector[StateMachine.HistorySlot]) = {
+    val ctx = ExecutionContext.create(this)
     val parcel = Parcel(ctx, GoAheadEvent)
     goAhead(state, parcel)
   }
 
-  def goAhead(state: State, parcel: Parcel): State = {
-    state.clazz.transitions.find(_.guard.isGoAhead).map(transit(state, _, parcel)).map(goAhead(_, parcel))getOrElse(state)
+  def goAhead(state: State, parcel: Parcel): (State, Vector[StateMachine.HistorySlot]) =
+    state.clazz.transitions.find(_.guard.isGoAhead) match {
+      case Some(s) =>
+        val a = transit(state, s, parcel)
+        val (b, c) = goAhead(a, parcel)
+        (b, StateMachine.HistorySlot(GoAheadEvent, a) +: c)
+      case None => (state, Vector.empty)
+    }
+
+  def transit(state: State, t: Transition, p: Parcel): State = {
+    p.execute("StateMachineLogic#transit", state.status) {
+      exit(state, p)
+      t.activity(p) // TODO
+      val s = t.to.state(state, p)
+      entry(state, p)
+      Result(s, s.status)
+    }
   }
 
   def entry(state: State, p: Parcel): State = {
     state.entryActivity(p) // TODO
     state.doActivity.entry(p) // TODO
     state
-  }
-
-  def transit(state: State, t: Transition, p: Parcel): State = {
-    exit(state, p)
-    t.activity(p) // TODO
-    val s = t.to.state(p)
-    entry(state, p)
-    s
   }
 
   def exit(state: State, p: Parcel): State = {

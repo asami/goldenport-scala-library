@@ -2,7 +2,7 @@ package org.goldenport.event
 
 /*
  * @since   Jan.  4, 2021
- * @version May. 24, 2021
+ * @version May. 29, 2021
  * @author  ASAMI, Tomoharu
  */
 trait Event {
@@ -38,6 +38,10 @@ case class TimeEvent(
 }
 
 trait ControlEvent extends Event {
+}
+
+case object InitEvent extends ControlEvent {
+  val clazz = EventClazz("system.control.init")
 }
 
 case object GoAheadEvent extends ControlEvent {

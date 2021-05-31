@@ -7,7 +7,7 @@ import org.goldenport.context.Consequence
 
 /*
  * @since   Jan.  4, 2021
- * @version May. 24, 2021
+ * @version May. 29, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StateMachineClass(
@@ -23,7 +23,9 @@ case class StateMachineClass(
 
   def accept(sm: StateMachine, state: State, p: Parcel): Consequence[Boolean] = logic.accept(state, p)
 
-  def goAhead(sm: StateMachine, state: State): State = logic.goAhead(state)
+  def receive(sm: StateMachine, state: State, p: Parcel): Consequence[(State, Parcel)] = logic.receive(sm, state, p)
+
+  def goAhead(sm: StateMachine, state: State): (State, Vector[StateMachine.HistorySlot]) = logic.goAhead(state)
 }
 
 object StateMachineClass {

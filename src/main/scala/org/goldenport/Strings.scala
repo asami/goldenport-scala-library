@@ -24,7 +24,8 @@ import com.asamioffice.goldenport.text.UString
  *  version Jul.  7, 2019
  *  version Dec.  7, 2019
  *  version Sep.  8, 2020
- * @version Apr. 15, 2021
+ *  version Apr. 15, 2021
+ * @version May. 30, 2021
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -165,6 +166,8 @@ object Strings {
     def code(key: String): Int = {
       message.find(_._2 == key).map(_._1).get
     }
+
+    def take(code: Int): String = message.get(code) getOrElse InternalServerError
   }
 
   val delimiter = " ,;\t\n\r"
