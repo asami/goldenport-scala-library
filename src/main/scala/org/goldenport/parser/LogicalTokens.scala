@@ -22,7 +22,8 @@ import org.goldenport.context.DateTimeContext
  *  version Feb. 29, 2020
  *  version Mar.  1, 2020
  *  version Jan. 30, 2021
- * @version Apr. 21, 2021
+ *  version Apr. 21, 2021
+ * @version Jun. 17, 2021
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
@@ -134,7 +135,8 @@ object LogicalTokens {
   object Config {
     val default = Config(
       " \t\n\r\f".toVector,
-      "(){}[]".toVector, // "(){}[],".toVector, get rid of ',' for expression token.
+      // "(){}[]".toVector, // "(){}[],".toVector, get rid of ',' for expression token.
+      "(){}[],".toVector, // SExpression handles ',' as delimiter.
       Vector.empty, // ";".toVector, use c and c++ style comment instead.
       true,
       true,

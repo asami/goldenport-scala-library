@@ -4,6 +4,7 @@ import scalaz._, Scalaz._
 import java.util.Locale
 import java.text.MessageFormat
 import play.api.libs.json._
+import org.goldenport.Strings
 import org.goldenport.util.{AnyUtils, AnyRefUtils}
 
 /*
@@ -23,7 +24,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version May.  4, 2020
  *  version Feb. 15, 2021
  *  version Apr. 29, 2021
- * @version May. 30, 2021
+ *  version May. 30, 2021
+ * @version Jun. 19, 2021
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -149,7 +151,7 @@ case class I18NString(
 
   lazy val toJsonString: String = toJson.toString
 
-  override def toString() = toJsonString
+  override def toString() = s"I18NString(${Strings.cutstring(en, 128)})"
 }
 
 object I18NString {

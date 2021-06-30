@@ -2,6 +2,7 @@ package org.goldenport.context
 
 import scalaz._, Scalaz._
 import org.goldenport.i18n.I18NString
+import org.goldenport.i18n.I18NMessage
 import org.goldenport.trace._
 import org.goldenport.util.ExceptionUtils
 
@@ -12,12 +13,13 @@ import org.goldenport.util.ExceptionUtils
  *  version Feb. 25, 2021
  *  version Mar. 26, 2021
  *  version Apr. 29, 2021
- * @version May. 30, 2021
+ *  version May. 30, 2021
+ * @version Jun. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
   code: StatusCode,
-  messageOption: Option[I18NString] = None,
+  messageOption: Option[I18NMessage] = None,
   errors: ErrorMessages = ErrorMessages.empty,
   warnings: WarningMessages = WarningMessages.empty,
   exception: Option[Throwable] = None,
@@ -25,18 +27,18 @@ case class Conclusion(
   trace: Trace = Trace.empty,
   strategy: Conclusion.Strategy = Conclusion.Strategy.none
 ) {
-  def message: I18NString = messageOption orElse _errors_message orElse _warnings_message orElse exception.map(x => I18NString(x.getMessage)) getOrElse code.message
+  def message: I18NMessage = messageOption orElse _errors_message orElse _warnings_message orElse exception.map(x => I18NMessage(x.getMessage)) getOrElse code.message
 
-  private def _errors_message: Option[I18NString] = errors.toOption.map(_.message)
+  private def _errors_message: Option[I18NMessage] = errors.toOption.map(_.message)
 
-  private def _warnings_message: Option[I18NString] = warnings.toOption.map(_.message)
+  private def _warnings_message: Option[I18NMessage] = warnings.toOption.map(_.message)
 
   // def incidents: Incidents = trace.incidents
   // def faults: Faults = incidents.faults
   // def effects: Effects = incidents.effects
   // def statictics: Statictics = incidents.statictics
 
-  def withMessage(p: String) = copy(messageOption = Some(I18NString(p)))
+  def withMessage(p: String) = copy(messageOption = Some(I18NMessage(p)))
   def withTrace(p: TraceHandle): Conclusion = withTrace(p.ctx)
   def withTrace(p: TraceContext): Conclusion = withTrace(p.toTrace)
   def withTrace(p: Trace): Conclusion = copy(trace = p)
@@ -116,11 +118,12 @@ object Conclusion {
 
   def make(p: Throwable, label: String): Conclusion = {
     val e = ExceptionUtils.normalize(p)
-    Conclusion(StatusCode.make(e), messageOption = Some(I18NString(label)), exception = Some(e))
+    Conclusion(StatusCode.make(e), messageOption = Some(I18NMessage(label)), exception = Some(e))
   }
 
-  def error(code: Int, p: String): Conclusion = error(code, I18NString(p))
-  def error(code: Int, p: I18NString): Conclusion = Conclusion(
+  def error(code: Int, p: String): Conclusion = error(code, I18NMessage(p))
+  def error(code: Int, p: I18NString): Conclusion = error(code, p.toI18NMessage)
+  def error(code: Int, p: I18NMessage): Conclusion = Conclusion(
     StatusCode(code),
     Some(p)
   )
@@ -136,6 +139,13 @@ object Conclusion {
     val detail = DetailCode.Result
     val status = StatusCode.InternalServerError.withDetail(detail)
     val faults = Faults(ps)
+    Conclusion(status, faults)
+  }
+
+  def invalidArgumentFault(message: I18NMessage): Conclusion = {
+    val detail = DetailCode.Result
+    val status = StatusCode.InternalServerError.withDetail(detail)
+    val faults = Faults(InvalidArgumentFault(message))
     Conclusion(status, faults)
   }
 

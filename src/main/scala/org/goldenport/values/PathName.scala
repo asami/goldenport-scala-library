@@ -20,7 +20,8 @@ import org.goldenport.util.StringUtils
  *  version Apr. 14, 2020
  *  version May. 18, 2020
  *  version Jun.  6, 2020
- * @version Mar. 15, 2021
+ *  version Mar. 15, 2021
+ * @version Jun. 29, 2021
  * @author  ASAMI, Tomoharu
  */
 case class PathName(
@@ -48,7 +49,7 @@ case class PathName(
     if (isBase)
       None
     else
-      Some(PathName(components.init))
+      Some(PathName.create(components.init))
   lazy val getChild: Option[PathName] = components.tail match {
     case Nil => None
     case xs => Some(PathName(xs.mkString(delimiter)))
@@ -74,11 +75,14 @@ case class PathName(
   def isOperation(p: String): Boolean = firstComponent == p
 
   def +(p: PathName): PathName = :+(p)
-  def :+(p: PathName): PathName = PathName(v, p.v)
-  def +:(p: PathName): PathName = PathName(p.v, v)
+  def :+(p: PathName): PathName = _concat_pathname(v, p.v)
+  def +:(p: PathName): PathName = _concat_pathname(p.v, v)
   def +(p: String): PathName = :+(p)
-  def :+(p: String): PathName = PathName(_concat_path(v, p))
-  def +:(p: String): PathName = PathName(_concat_path(p, v))
+  def :+(p: String): PathName = _concat_pathname(v, p)
+  def +:(p: String): PathName = _concat_pathname(p, v)
+
+
+  private def _concat_pathname(lhs: String, rhs: String) = copy(v = _concat_path(lhs, rhs))
 
   private def _concat_path(lhs: String, rhs: String) = delimiter match {
     case "/" => StringUtils.concatPath(lhs, rhs)
@@ -103,9 +107,8 @@ case class PathName(
 object PathName {
   val home = PathName("")
 
-  def apply(ps: List[String]): PathName = PathName(StringUtils.concatPath(ps))
-  def apply(p: String, pp: String, ps: String*): PathName = apply(p :: pp :: ps.toList)
-
-  def create(path: String): PathName = PathName(path)
-  def create(path: String, delimiter: String): PathName = PathName(path, delimiter)
+  def create(ps: List[String]): PathName = PathName(StringUtils.concatPath(ps))
+  def create(p: String, pp: String, ps: String*): PathName = create(p :: pp :: ps.toList)
+//  def create(path: String): PathName = PathName(path)
+//  def create(path: String, delimiter: String): PathName = PathName(path, delimiter)
 }

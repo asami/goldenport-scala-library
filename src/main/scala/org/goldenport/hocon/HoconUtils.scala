@@ -36,7 +36,8 @@ import org.goldenport.util.AnyUtils
  *  version Dec. 22, 2019
  *  version Jun. 18, 2020
  *  version Apr. 30, 2021
- * @version May.  5, 2021
+ *  version May.  5, 2021
+ * @version Jun. 13, 2021
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -92,6 +93,9 @@ object HoconUtils {
 
   def takeConfigList(config: Config, key: String): List[Config] =
     Option(config.getConfigList(key)).map(_.asScala.toList) getOrElse Nil
+
+  def takeConfigOrConfigList(config: Config, key: String): Either[Config, List[Config]] =
+    getConfigOrConfigList(config, key).get
 
   def takeValue[T <: ValueInstance](valueclass: ValueClass[T], config: Config, key: String): T =
     getString(config, key).
@@ -217,6 +221,19 @@ object HoconUtils {
   def getRichConfig(config: Config, key: String): Option[RichConfig] =
     getConfig(config, key).map(RichConfig.apply)
 
+  def getConfigOrConfigList(config: Config, key: String): Option[Either[Config, List[Config]]] =
+    if (config.hasPath(key))
+      config.getValue(key) match {
+        case m: ConfigObject => Some(Left(m.toConfig))
+        case m: ConfigList => Some(Right(m.asScala.toList.map(_to_config)))
+      }
+    else
+      None
+
+  private def _to_config(p: ConfigValue): Config = p match {
+    case m: ConfigObject => m.toConfig
+  }
+
   def getValue[T <: ValueInstance](valueclass: ValueClass[T], config: Config, key: String): Option[T] =
     getString(config, key).
       map(x => valueclass.get(x).
@@ -294,6 +311,9 @@ object HoconUtils {
 
   def parseAsObjectList[T](p: Config, key: String, f: Config => ParseResult[T]): ParseResult[List[T]] =
     asConfigList(p, key).traverse(f)
+
+  def parseConfigOrConfigList(p: Config, key: String): ParseResult[Either[Config, List[Config]]] =
+    ParseResult(takeConfigOrConfigList(p, key))
 
   // def childConfigSet(p: Config): Set[(String, Config)] = p.entrySet.asScala.
   //   flatMap { x =>

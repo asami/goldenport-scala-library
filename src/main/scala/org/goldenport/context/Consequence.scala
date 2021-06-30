@@ -4,6 +4,7 @@ import scalaz._, Scalaz._
 import scala.util.control.NonFatal
 import java.util.Locale
 import org.goldenport.i18n.I18NString
+import org.goldenport.i18n.I18NMessage
 import org.goldenport.parser.{ParseResult, ParseSuccess, ParseFailure, EmptyParseResult}
 import org.goldenport.parser.{ParseMessage}
 
@@ -11,7 +12,8 @@ import org.goldenport.parser.{ParseMessage}
  * See org.goldenport.record.v2.ConclusionResult.
  * 
  * @since   Feb. 21, 2021
- * @version May. 30, 2021
+ *  version May. 30, 2021
+ * @version Jun. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[T] {
@@ -117,6 +119,9 @@ object Consequence {
   //   p.map(success).getOrElse(missingPropertyOrError(name))
 
   // Specific error with detail code.
+  def invalidArgumentFault[T](p: String): Consequence[T] = invalidArgumentFault(I18NMessage(p))
+  def invalidArgumentFault[T](p: String, arg: Any, args: Any*): Consequence[T] = Error(Conclusion.invalidArgumentFault(I18NMessage(p, args +: args)))
+  def invalidArgumentFault[T](p: I18NMessage): Consequence[T] = Error(Conclusion.invalidArgumentFault(p))
   def missingPropertyFault[T](p: String, ps: String*): Consequence[T] = missingPropertyFault(p +: ps)
   def missingPropertyFault[T](ps: Seq[String]): Consequence[T] = Error(Conclusion.missingPropertyFault(ps))
 

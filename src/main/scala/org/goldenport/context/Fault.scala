@@ -1,8 +1,10 @@
 package org.goldenport.context
 
+import scalaz.NonEmptyList
 import java.util.Locale
 import org.goldenport.i18n.{I18NString, I18NTemplate, I18NMessage}
 import org.goldenport.extension.IRecord
+import org.goldenport.collection.NonEmptyVector
 import org.goldenport.context.DetailCode.Reaction
 import org.goldenport.util.StringUtils
 import org.goldenport.util.AnyUtils
@@ -13,12 +15,13 @@ import Fault._
  *  version Feb. 22, 2021
  *  version Mar. 27, 2021
  *  version Apr. 29, 2021
- * @version May. 27, 2021
+ *  version May. 27, 2021
+ * @version Jun. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
   def name = StringUtils.classNameToHypenName("Fault", this)
-  def messageTemplate: I18NTemplate
+//  def messageTemplate: I18NTemplate
   def message: I18NMessage
   def reaction: Reaction
   def properties(locale: Locale): IRecord
@@ -27,13 +30,14 @@ sealed trait Fault extends Incident {
 }
 
 sealed trait Parameters1 extends { self: Fault =>
-  def parameters: Seq[Any]
-  def message = messageTemplate.toI18NMessage(parameters.map(AnyUtils.toString).mkString(";"))
+  def parameters: Option[Seq[Any]]
+//  def message = messageTemplate.toI18NMessage(parameters.map(AnyUtils.toString).mkString(";"))
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
     KEY_NAME -> name,
-    KEY_PARAMETERS -> parameters,
     KEY_MESSAGE -> message(locale)
+  ) + IRecord.dataOptionS(
+    KEY_PARAMETERS -> parameters
   )
 }
 
@@ -100,24 +104,40 @@ sealed trait ArgumentFault extends Fault {
 }
 
 case class InvalidArgumentFault(
-  parameter: String = "",
-  value: String = "",
-  messageTemplate: I18NTemplate = InvalidArgumentFault.template
+  message: I18NMessage,
+  parameter: Option[String] = None,
+  value: Option[String] = None,
+  faults: Option[NonEmptyVector[Fault]] = None
 ) extends ArgumentFault {
-  def message = messageTemplate.toI18NMessage(parameter, value)
-
   def properties(locale: Locale): IRecord = IRecord.dataS(
     KEY_NAME -> name,
-    KEY_PARAMETER -> parameter,
-    KEY_VALUE -> value,
     KEY_MESSAGE -> message(locale)
+  ) + IRecord.dataOptionS(
+    KEY_PARAMETER -> parameter,
+    KEY_VALUE -> value
   )
-}
+} 
 object InvalidArgumentFault {
   val template = I18NTemplate("Invalid Argument[{0}]: {1}")
 
-  def apply(p: I18NString): InvalidArgumentFault =
-    InvalidArgumentFault(messageTemplate = I18NTemplate(p))
+  def apply(p: I18NString): InvalidArgumentFault = InvalidArgumentFault(p.toI18NMessage)
+  def apply(p: String, fault: Fault): InvalidArgumentFault = {
+    val msg = _message(p, List(fault))
+    InvalidArgumentFault(msg, Some(p), None, Some(NonEmptyVector(fault)))
+  }
+  def apply(p: String, faults: Iterable[Fault]): InvalidArgumentFault = {
+    val msg = _message(p, faults)
+    InvalidArgumentFault(msg, Some(p), None, NonEmptyVector.createOption(faults))
+  }
+  def apply(p: String, faults: NonEmptyList[Fault]): InvalidArgumentFault = {
+    val msg = _message(p, faults.list)
+    InvalidArgumentFault(msg, Some(p), None, Some(NonEmptyVector(faults)))
+  }
+
+  private def _message(key: String, ps: Iterable[Fault]): I18NMessage = {
+    ???
+  }
+  // .map(_.message).list.mkString(";")))) * @version Jun. 20, 2021
 }
 
 case class MissingArgumentFault(
@@ -234,8 +254,9 @@ sealed trait IoFault extends Fault {
 }
 
 case class IllegalConfigurationDefect(
-  parameters: Seq[Any],
-  messageTemplate: I18NTemplate = IllegalConfigurationDefect.template
+  message: I18NMessage,
+  parameters: Option[Seq[Any]] = None
+//  messageTemplate: I18NTemplate = IllegalConfigurationDefect.template
 ) extends Defect with Parameters1 {
 }
 object IllegalConfigurationDefect {
@@ -243,14 +264,12 @@ object IllegalConfigurationDefect {
 
   def apply(p: String): IllegalConfigurationDefect = parameter(p)
 
-  def apply(p: I18NString): IllegalConfigurationDefect =
-    IllegalConfigurationDefect(parameters = Nil, messageTemplate = I18NTemplate(p))
+  def apply(p: I18NString): IllegalConfigurationDefect = apply(p.toI18NMessage)
 
-  def apply(p: I18NMessage): IllegalConfigurationDefect =
-    IllegalConfigurationDefect(parameters = Nil, messageTemplate = I18NTemplate(p))
-
-  def parameter(p: Any, ps: Any*): IllegalConfigurationDefect =
-    IllegalConfigurationDefect(parameters = p +: ps)
+  def parameter(p: Any, ps: Any*): IllegalConfigurationDefect = {
+    val xs = p +: ps
+    IllegalConfigurationDefect(template.toI18NMessage(xs), parameters = Some(xs))
+  }
 }
 
 case class Faults(faults: Vector[Fault] = Vector.empty) {

@@ -1,13 +1,16 @@
 package org.goldenport.cli
 
+import java.net.{URL, URI}
+import org.goldenport.Strings
+import org.goldenport.bag.StringBag
 import org.goldenport.util.AnyRefUtils
 import Environment.AppEnvironment
-import org.goldenport.Strings
 
 /*
  * @since   Feb. 24, 2019
  *  version Mar.  6, 2019
- * @version Oct. 15, 2019
+ *  version Oct. 15, 2019
+ * @version Jun. 18, 2021
  * @author  ASAMI, Tomoharu
  */
 trait Method {
@@ -26,6 +29,12 @@ trait Method {
   protected final def to_response(p: String) = StringResponse(p)
 
   protected final def to_response_lines_string(p: String) = to_response(build_lines_string(p))
+
+  protected final def to_response_file(url: URL, p: String) = {
+    url.getFile // TODO
+    val bag = StringBag.create(p)
+    FileResponse(bag)
+  }
 
   protected final def build_lines(s: String): String = build_lines(Strings.tolines(s))
 

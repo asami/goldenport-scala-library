@@ -30,7 +30,8 @@ import org.goldenport.parser.ParseResult
  *  version Jun. 18, 2020
  *  version Apr. 24, 2021
  *  version Apr. 24, 2021
- * @version May.  5, 2021
+ *  version May.  5, 2021
+ * @version Jun. 12, 2021
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -43,6 +44,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def asEagerStringVector(key: String) = HoconUtils.asEagerStringVector(config, key)
   def asUrlList(key: String) = HoconUtils.asUrlList(config, key)
   def asDuration(key: String, fallback: FiniteDuration) = HoconUtils.asDuration(config, key, fallback)
+  def asConfigList(key: String) = HoconUtils.asConfigList(config, key)
   def takeString(key: String): String = HoconUtils.takeString(config, key)
   def takeLocale(key: String) = HoconUtils.takeLocale(config, key)
   def takeI18NString(key: String) = HoconUtils.takeI18NString(config, key)
@@ -76,6 +78,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def parseStringOrConfigOption(key: String): ParseResult[Option[Either[String, Config]]] = HoconUtils.parseStringOrConfigOption(config, key)
   def parseConfig(key: String): ParseResult[Config] = HoconUtils.parseConfig(config, key)
   def parseConfigList(key: String): ParseResult[List[Config]] = HoconUtils.parseConfigList(config, key)
+  def parseConfigOrConfigList(key: String): ParseResult[Either[Config, List[Config]]] = HoconUtils.parseConfigOrConfigList(config, key)
   def parseAsConfigList(key: String): ParseResult[List[Config]] = HoconUtils.parseAsConfigList(config, key)
   def parseObjectList[T](key: String, f: Config => ParseResult[T]): ParseResult[List[T]] = HoconUtils.parseObjectList(config, key, f)
   def parseAsObjectList[T](key: String, f: Config => ParseResult[T]): ParseResult[List[T]] = HoconUtils.parseAsObjectList(config, key, f)

@@ -12,7 +12,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *
  * @since   Apr. 17, 2020
  *  version Jun.  1, 2020
- * @version Mar. 27, 2021
+ *  version Mar. 27, 2021
+ * @version Jun. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 case class I18NMessage(
@@ -181,6 +182,11 @@ case class I18NMessage(
 }
 
 object I18NMessage {
+  implicit def I18NMessageMonoid = new Monoid[I18NMessage] {
+    def zero = empty
+    def append(lhs: I18NMessage, rhs: => I18NMessage) = lhs concat rhs
+  }
+
   val empty = I18NMessage("")
 
   def apply(p: I18NString): I18NMessage = I18NMessage(p.c, p.en, p.ja, p.map, Vector.empty)

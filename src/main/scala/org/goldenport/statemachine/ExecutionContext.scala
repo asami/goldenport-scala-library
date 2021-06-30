@@ -6,7 +6,8 @@ import org.goldenport.trace.{TraceContext, Result}
 
 /*
  * @since   May.  5, 2021
- * @version May. 30, 2021
+ *  version May. 30, 2021
+ * @version Jun.  6, 2021
  * @author  ASAMI, Tomoharu
  */
 class ExecutionContext(
@@ -18,7 +19,7 @@ class ExecutionContext(
   def withClass(p: StateMachineClass): ExecutionContext = 
     new ExecutionContext(traceContext, Some(p.logic))
 
-  def getStateClass(name: String): Option[StateClass] = logic.getStateClass(name)
+//  def getStateClass(name: String): Option[StateClass] = logic.getStateClass(name)
 
   def execute[T](label: String, enter: Any)(body: => Result[T]): T = traceContext.execute(label, enter)(body)
 }

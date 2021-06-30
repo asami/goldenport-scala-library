@@ -7,7 +7,8 @@ import org.goldenport.event.Event
 
 /*
  * @since   May. 20, 2021
- * @version May. 30, 2021
+ *  version May. 30, 2021
+ * @version Jun. 13, 2021
  * @author  ASAMI, Tomoharu
  */
 class StateMachineSpace(
@@ -48,6 +49,10 @@ class StateMachineSpace(
 
   def spawnOption(name: String): Option[StateMachine] = {
     classes.get(name).map(_.spawn).map(_register)
+  }
+
+  def spawnOption(name: String, to: ObjectId): Option[StateMachine] = {
+    classes.get(name).map(_.spawn(to)).map(_register)
   }
 
   private def _register(p: StateMachine) = synchronized {
