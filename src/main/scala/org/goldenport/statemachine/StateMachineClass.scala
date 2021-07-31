@@ -9,7 +9,8 @@ import org.goldenport.statemachine.StateMachine.RuleAndState
 /*
  * @since   Jan.  4, 2021
  *  version May. 29, 2021
- * @version Jun. 14, 2021
+ *  version Jun. 14, 2021
+ * @version Jul.  4, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StateMachineClass(
@@ -18,6 +19,8 @@ case class StateMachineClass(
   logic: StateMachineLogic
 ) {
   def kind = rule.kind
+  def states = rule.states
+  def statemachines = rule.statemachines
 
   def spawn: StateMachine = {
     val sm = new StateMachine(this, logic.initState())

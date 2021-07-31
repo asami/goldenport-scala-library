@@ -5,7 +5,8 @@ import org.goldenport.context.Consequence
 /*
  * @since   Jan.  4, 2021
  *  version May. 25, 2021
- * @version Jun. 11, 2021
+ *  version Jun. 11, 2021
+ * @version Jul.  9, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Transition(
@@ -13,6 +14,10 @@ case class Transition(
   activity: Activity,
   to: TransitionTo
 ) {
+  def getEventName: Option[String] = guard match {
+    case EventNameGuard(name) => Some(name)
+    case _ => None // TODO
+  }
 }
 
 case class Transitions(transitions: Vector[Transition]) {
