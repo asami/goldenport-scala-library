@@ -5,10 +5,11 @@ import org.goldenport.event._
 
 /*
  * @since   May.  2, 2021
- * @version May. 30, 2021
+ *  version May. 30, 2021
+ * @version Sep. 26, 2021
  * @author  ASAMI, Tomoharu
  */
-case class Parcel(
+case class Parcel( // TODO Intension
   context: ExecutionContext,
   event: Event
 ) {

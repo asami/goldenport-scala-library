@@ -10,7 +10,8 @@ import org.goldenport.statemachine.StateMachine.RuleAndState
 /*
  * @since   May. 23, 2021
  *  version May. 30, 2021
- * @version Jun. 14, 2021
+ *  version Jun. 14, 2021
+ * @version Sep. 26, 2021
  * @author  ASAMI, Tomoharu
  */
 trait StateMachineLogic {
@@ -78,7 +79,7 @@ trait StateMachineLogic {
   }
 
   def goAhead(sm: StateMachine, state: State, parcel: Parcel): (StateMachineRule, State, Vector[StateMachine.HistorySlot]) =
-    state.clazz.transitions.transitions.find(_.guard.isGoAhead) match {
+    state.clazz.transitions.findGoAhead(parcel) match {
       case Some(s) =>
         val a = transit(sm, state, s, parcel)
         val (c, b, h) = goAhead(sm, a.state, parcel)

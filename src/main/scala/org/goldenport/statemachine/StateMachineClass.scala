@@ -10,7 +10,8 @@ import org.goldenport.statemachine.StateMachine.RuleAndState
  * @since   Jan.  4, 2021
  *  version May. 29, 2021
  *  version Jun. 14, 2021
- * @version Jul.  4, 2021
+ *  version Jul.  4, 2021
+ * @version Sep. 26, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StateMachineClass(
@@ -51,9 +52,18 @@ object StateMachineClass {
     factory: StateMachineLogic.Factory,
     name: String,
     p: String
-  ): ParseResult[StateMachineClass] =  new Parser(factory).parseBody(name, p)
+  ): ParseResult[StateMachineClass] = new Parser(factory).parseBody(name, p)
 
-  class Parser(factory: StateMachineLogic.Factory) {
+  def parseBodyForResource(
+    factory: StateMachineLogic.Factory,
+    name: String,
+    p: String
+  ): ParseResult[StateMachineClass] = new Parser(factory, StateMachineKind.Resource).parseBody(name, p)
+
+  class Parser(
+    factory: StateMachineLogic.Factory,
+    kind: StateMachineKind = StateMachineKind.Plain
+  ) {
     def parse(p: String): ParseResult[StateMachineClass] = {
       val hocon = ConfigFactory.parseString(p)
       for {
@@ -74,6 +84,16 @@ object StateMachineClass {
       } yield StateMachineClass(name, rule, factory.create(rule))
     }
 
+    // def parseBodyForResource(name: String, p: String): ParseResult[StateMachineClass] = {
+    //   val hocon = ConfigFactory.parseString(p)
+    //   for {
+    //     r <- _rule(hocon)
+    //   } yield {
+    //     val rule = r.withKind(StateMachineKind.Resource)
+    //     StateMachineClass(name, rule, factory.create(rule))
+    //   }
+    // }
+
     private def _rule(hocon: Hocon): ParseResult[StateMachineRule] = for {
       sc <- hocon.parseStringOrConfigOption(PROP_STM_RULE)
       rule <- _rule(hocon, sc)
@@ -92,6 +112,6 @@ object StateMachineClass {
       ParseResult.notImplemented(p)
 
     private def _rule_by_object(p: Hocon): ParseResult[StateMachineRule] =
-      StateMachineRule.buildBody(p)
+      StateMachineRule.buildBody(kind, p)
   }
 }

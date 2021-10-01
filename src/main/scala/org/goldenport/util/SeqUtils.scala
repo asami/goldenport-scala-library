@@ -12,7 +12,9 @@ import scala.collection.mutable.Builder
  *  version Oct. 13, 2017
  *  version Nov.  1, 2017
  *  version Feb. 18, 2018
- * @version May. 23, 2018
+ *  version May. 23, 2018
+ *  version Sep. 30, 2021
+ * @version Oct.  1, 2021
  * @author  ASAMI, Tomoharu
  */
 object SeqUtils {
@@ -168,4 +170,22 @@ object SeqUtils {
     else
       x
   )
+
+  // def zipRightOption[A, B, S[_] <: Seq[(A, Option[B])]](
+  //   pl: Seq[A],
+  //   pr: Seq[B]
+  // )(implicit bf: CanBuildFrom[Seq[_], (A, Option[B]), S[(A, Option[B])]]): S[(A, Option[B])] = {
+  //   case class Z(
+  //     rs: List[B] = pr.toList,
+  //     xs: Vector[(A, Option[B])] = Vector.empty
+  //   ) {
+  //     def r = bf(xs)
+
+  //     def +(rhs: A) = rs.headOption match {
+  //       case Some(s) => copy(rs = rs.tail, r = r :+ (rhs, Some(s)))
+  //       case None => copy(r = r :+ (rhs, None))
+  //     }
+  //   }
+  //   pl./:(Z())(_+_).r
+  // }
 }

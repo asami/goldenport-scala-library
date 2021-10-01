@@ -8,13 +8,21 @@ import org.goldenport.event.Event
 /*
  * @since   May. 20, 2021
  *  version May. 30, 2021
- * @version Jun. 13, 2021
+ *  version Jun. 13, 2021
+ * @version Sep. 25, 2021
  * @author  ASAMI, Tomoharu
  */
 class StateMachineSpace(
-  classes: TreeMap[StateMachineClass] = TreeMap.empty
 ) {
+  private var _classes: TreeMap[StateMachineClass] = TreeMap.empty
   private var _machines: Vector[StateMachine] = Vector.empty
+
+  def classes: TreeMap[StateMachineClass] = _classes
+
+  def addClasses(p: TreeMap[StateMachineClass]): StateMachineSpace = {
+    _classes = _classes + p
+    this
+  }
 
   def issueEvent(evt: Event): Parcel = {
     val ctx = ExecutionContext.create()
@@ -55,6 +63,8 @@ class StateMachineSpace(
     classes.get(name).map(_.spawn(to)).map(_register)
   }
 
+  def register(p: StateMachine) = _register(p)
+
   private def _register(p: StateMachine) = synchronized {
     _machines = _machines :+ p
     p
@@ -64,5 +74,5 @@ class StateMachineSpace(
 object StateMachineSpace {
   def create(): StateMachineSpace = new StateMachineSpace()
 
-  def create(p: TreeMap[StateMachineClass]): StateMachineSpace = new StateMachineSpace(p)
+  def create(p: TreeMap[StateMachineClass]): StateMachineSpace = create().addClasses(p)
 }

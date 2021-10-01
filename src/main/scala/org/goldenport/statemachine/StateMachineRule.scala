@@ -11,7 +11,9 @@ import org.goldenport.event.EventClazz
  * @since   Jan.  4, 2021
  *  version Apr. 26, 2021
  *  version May. 29, 2021
- * @version Jun. 29, 2021
+ *  version Jun. 29, 2021
+ *  version Aug.  2, 2021
+ * @version Sep. 26, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StateMachineRule(
@@ -24,6 +26,8 @@ case class StateMachineRule(
   transitions: Transitions = Transitions.empty
 ) {
   import StateMachineRule.RuleAndStateClass
+
+  def withKind(p: StateMachineKind): StateMachineRule = copy(kind = p)
 
   def isMatch(p: String): Boolean = name == Some(p)
 
@@ -63,10 +67,14 @@ object StateMachineRule {
 
   def build(p: Hocon): ParseResult[StateMachineRule] = Builder().build(p)
 
-  def buildBody(p: Hocon): ParseResult[StateMachineRule] = Builder().buildBody(p)
+//  def buildBody(p: Hocon): ParseResult[StateMachineRule] = Builder().buildBody(p)
+
+  def buildBody(kind: StateMachineKind, p: Hocon): ParseResult[StateMachineRule] =
+    Builder(kind = kind).buildBody(p)
 
   case class Builder(
-    config: Config = Config.default
+    config: Config = Config.default,
+    kind: StateMachineKind = StateMachineKind.Plain
   ) {
     def build(rule: String): ParseResult[StateMachineRule] = {
       val hocon = ConfigFactory.parseString(rule)
@@ -100,15 +108,15 @@ object StateMachineRule {
         name <- p.parseStringOption(PROP_STMRULE_NAME)
         kind <- _kind(p)
         smpathname = _statemachine_pathname(parent, name)
-        states <- _states(smpathname, p)
-        sms <- _statemachines(smpathname, p)
-        ts <- _transition(p, PROP_STMRULE_TRANSITION)
+        states <- _states(kind, smpathname, p)
+        sms <- _statemachines(kind, smpathname, p)
+        ts <- _transition(kind, p, PROP_STMRULE_TRANSITION)
       } yield StateMachineRule(name, parent, kind, Nil, states, sms, ts)
     }
 
     private def _kind(p: Hocon): ParseResult[StateMachineKind] = for {
       a <- p.parseStringOption(PROP_STMRULE_KIND)
-      b <- a.map(StateMachineKind.parse).getOrElse(ParseResult.success(StateMachineKind.Plain))
+      b <- a.map(StateMachineKind.parse).getOrElse(ParseResult.success(kind))
     } yield b
 
     private def _statemachine_pathname(ancestor: Option[PathName], parent: Option[String])=
@@ -119,15 +127,15 @@ object StateMachineRule {
         case (Some(l), Some(r)) => Some(l :+ r)
       }
 
-    private def _states(smpath: Option[PathName], p: Hocon): ParseResult[List[StateClass]] = {
+    private def _states(kind: StateMachineKind, smpath: Option[PathName], p: Hocon): ParseResult[List[StateClass]] = {
       val cs = p.takeConfigList(PROP_STMRULE_STATE)
-      cs.traverse(_state(smpath, _))
+      cs.traverse(_state(kind, smpath, _))
     }
 
-    private def _state(smpath: Option[PathName], p: Hocon): ParseResult[StateClass] =
+    private def _state(kind: StateMachineKind, smpath: Option[PathName], p: Hocon): ParseResult[StateClass] =
       for {
         name <- p.parseString(PROP_STMRULE_NAME)
-        ts <- _transition(p, PROP_STMRULE_TRANSITION)
+        ts <- _transition(kind, p, PROP_STMRULE_TRANSITION)
         entrya <- _activity(p, PROP_STMRULE_ENTRY)
         exita <- _activity(p, PROP_STMRULE_EXIT)
         doa <- _do_activity(p, PROP_STMRULE_DO)
@@ -154,12 +162,15 @@ object StateMachineRule {
     private def _do_activity(p: Hocon, key: String): ParseResult[DoActivity] =
       ParseResult(NoneDoActivity)
 
-    private def _transition(p: Hocon, key: String): ParseResult[Transitions] =
+    private def _transition(kind: StateMachineKind, p: Hocon, key: String): ParseResult[Transitions] =
 //      println(p)
 //      println(p.parseAsConfigList(key))
       for {
         xs <- p.parseAsObjectList(key, _to_transition)
-      } yield Transitions(xs.toVector)
+      } yield kind match {
+        case StateMachineKind.Plain => Transitions.global(xs.toVector)
+        case StateMachineKind.Resource => Transitions.call(xs.toVector)
+      }
 
     private def _to_transition(p: Hocon): ParseResult[Transition] = for {
       gurad <- _guard(p)
@@ -193,11 +204,12 @@ object StateMachineRule {
     } yield a
 
     private def _to_state_by_name(p: String): ParseResult[TransitionTo] =
-      p match {
-        case PROP_STATE_FINAL => ParseResult(FinalTransitionTo)
-        case PROP_STATE_HISTORY => ParseResult(HistoryTransitionTo())
-        case _ => ParseResult(NameTransitionTo(p))
-      }
+      if (p.equalsIgnoreCase(PROP_STATE_FINAL))
+        ParseResult(FinalTransitionTo)
+      else if (p.equalsIgnoreCase(PROP_STATE_HISTORY))
+        ParseResult(HistoryTransitionTo())
+      else
+        ParseResult(NameTransitionTo(p))
 
     private def _to_state_by_object(p: Hocon): ParseResult[TransitionTo] =
       ParseResult(NoneTransitionTo) // TODO
@@ -216,7 +228,7 @@ object StateMachineRule {
     //   _statemachines(pn, p)
     // }
 
-    private def _statemachines(parent: Option[PathName], p: Hocon): ParseResult[List[StateMachineRule]] = {
+    private def _statemachines(kind: StateMachineKind, parent: Option[PathName], p: Hocon): ParseResult[List[StateMachineRule]] = {
       val cs = p.asConfigList(PROP_STMRULE_STATEMACHINE)
       cs.traverse(_statemachine(parent, _))
     }
