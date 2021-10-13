@@ -12,6 +12,7 @@ import org.goldenport.Strings
 import org.goldenport.i18n.{I18NString, I18NElement}
 import org.goldenport.collection.VectorMap
 import org.goldenport.value._
+import org.goldenport.context.Consequence
 import org.goldenport.parser.ParseResult
 
 /*
@@ -31,7 +32,8 @@ import org.goldenport.parser.ParseResult
  *  version Apr. 24, 2021
  *  version Apr. 24, 2021
  *  version May.  5, 2021
- * @version Jun. 12, 2021
+ *  version Jun. 12, 2021
+ * @version Oct. 13, 2021
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -44,6 +46,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def asEagerStringVector(key: String) = HoconUtils.asEagerStringVector(config, key)
   def asUrlList(key: String) = HoconUtils.asUrlList(config, key)
   def asDuration(key: String, fallback: FiniteDuration) = HoconUtils.asDuration(config, key, fallback)
+  def asConfig(key: String) = HoconUtils.asConfig(config, key)
   def asConfigList(key: String) = HoconUtils.asConfigList(config, key)
   def takeString(key: String): String = HoconUtils.takeString(config, key)
   def takeLocale(key: String) = HoconUtils.takeLocale(config, key)
@@ -56,6 +59,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def getObjectOption(key: String) = HoconUtils.getObject(config, key)
   def getStringOption(key: String) = HoconUtils.getString(config, key)
   def getBooleanOption(key: String) = HoconUtils.getBoolean(config, key)
+  def getBigDecimalOption(key: String) = HoconUtils.getBigDecimal(config, key)
   def getIntOption(key: String)= HoconUtils.getInt(config, key)
   def getDurationOption(key: String) = HoconUtils.getDuration(config, key)
   def getDurationByMinuteOption(key: String) = HoconUtils.getDurationByMinute(config, key)
@@ -72,6 +76,20 @@ case class RichConfig(config: Config) extends AnyVal {
   def getRichConfigOption(key: String) = HoconUtils.getRichConfig(config, key)
   def getValueOption[T <: ValueInstance](valueclass: ValueClass[T], key: String) = HoconUtils.getValue(valueclass, config, key)
 
+  def parseBoolean(key: String): ParseResult[Boolean] = HoconUtils.parseBoolean(config, key)
+  def parseBooleanOption(key: String): ParseResult[Option[Boolean]] = HoconUtils.parseBooleanOption(config, key)
+  def parseShort(key: String): ParseResult[Short] = HoconUtils.parseShort(config, key)
+  def parseShortOption(key: String): ParseResult[Option[Short]] = HoconUtils.parseShortOption(config, key)
+  def parseInt(key: String): ParseResult[Int] = HoconUtils.parseInt(config, key)
+  def parseIntOption(key: String): ParseResult[Option[Int]] = HoconUtils.parseIntOption(config, key)
+  def parseLong(key: String): ParseResult[Long] = HoconUtils.parseLong(config, key)
+  def parseLongOption(key: String): ParseResult[Option[Long]] = HoconUtils.parseLongOption(config, key)
+  def parseFloat(key: String): ParseResult[Float] = HoconUtils.parseFloat(config, key)
+  def parseFloatOption(key: String): ParseResult[Option[Float]] = HoconUtils.parseFloatOption(config, key)
+  def parseDouble(key: String): ParseResult[Double] = HoconUtils.parseDouble(config, key)
+  def parseDoubleOption(key: String): ParseResult[Option[Double]] = HoconUtils.parseDoubleOption(config, key)
+  def parseBigDecimal(key: String): ParseResult[BigDecimal] = HoconUtils.parseBigDecimal(config, key)
+  def parseBigDecimalOption(key: String): ParseResult[Option[BigDecimal]] = HoconUtils.parseBigDecimalOption(config, key)
   def parseString(key: String): ParseResult[String] = HoconUtils.parseString(config, key)
   def parseStringOption(key: String): ParseResult[Option[String]] = HoconUtils.parseStringOption(config, key)
   def parseStringOrConfig(key: String): ParseResult[Either[String, Config]] = HoconUtils.parseStringOrConfig(config, key)
@@ -82,6 +100,32 @@ case class RichConfig(config: Config) extends AnyVal {
   def parseAsConfigList(key: String): ParseResult[List[Config]] = HoconUtils.parseAsConfigList(config, key)
   def parseObjectList[T](key: String, f: Config => ParseResult[T]): ParseResult[List[T]] = HoconUtils.parseObjectList(config, key, f)
   def parseAsObjectList[T](key: String, f: Config => ParseResult[T]): ParseResult[List[T]] = HoconUtils.parseAsObjectList(config, key, f)
+
+  def consequenceBoolean(key: String): Consequence[Boolean] = HoconUtils.consequenceBoolean(config, key)
+  def consequenceBoolean(key: String, default: Boolean): Consequence[Boolean] = HoconUtils.consequenceBoolean(config, key, default)
+  def consequenceBooleanOption(key: String): Consequence[Option[Boolean]] = HoconUtils.consequenceBooleanOption(config, key)
+  def consequenceShort(key: String): Consequence[Short] = HoconUtils.consequenceShort(config, key)
+  def consequenceShortOption(key: String): Consequence[Option[Short]] = HoconUtils.consequenceShortOption(config, key)
+  def consequenceInt(key: String): Consequence[Int] = HoconUtils.consequenceInt(config, key)
+  def consequenceIntOption(key: String): Consequence[Option[Int]] = HoconUtils.consequenceIntOption(config, key)
+  def consequenceLong(key: String): Consequence[Long] = HoconUtils.consequenceLong(config, key)
+  def consequenceLongOption(key: String): Consequence[Option[Long]] = HoconUtils.consequenceLongOption(config, key)
+  def consequenceFloat(key: String): Consequence[Float] = HoconUtils.consequenceFloat(config, key)
+  def consequenceFloatOption(key: String): Consequence[Option[Float]] = HoconUtils.consequenceFloatOption(config, key)
+  def consequenceDouble(key: String): Consequence[Double] = HoconUtils.consequenceDouble(config, key)
+  def consequenceDoubleOption(key: String): Consequence[Option[Double]] = HoconUtils.consequenceDoubleOption(config, key)
+  def consequenceBigDecimal(key: String): Consequence[BigDecimal] = HoconUtils.consequenceBigDecimal(config, key)
+  def consequenceBigDecimalOption(key: String): Consequence[Option[BigDecimal]] = HoconUtils.consequenceBigDecimalOption(config, key)
+  def consequenceString(key: String): Consequence[String] = HoconUtils.consequenceString(config, key)
+  def consequenceStringOption(key: String): Consequence[Option[String]] = HoconUtils.consequenceStringOption(config, key)
+  def consequenceStringOrConfig(key: String): Consequence[Either[String, Config]] = HoconUtils.consequenceStringOrConfig(config, key)
+  def consequenceStringOrConfigOption(key: String): Consequence[Option[Either[String, Config]]] = HoconUtils.consequenceStringOrConfigOption(config, key)
+  def consequenceConfig(key: String): Consequence[Config] = HoconUtils.consequenceConfig(config, key)
+  def consequenceConfigList(key: String): Consequence[List[Config]] = HoconUtils.consequenceConfigList(config, key)
+  def consequenceConfigOrConfigList(key: String): Consequence[Either[Config, List[Config]]] = HoconUtils.consequenceConfigOrConfigList(config, key)
+  def consequenceAsConfigList(key: String): Consequence[List[Config]] = HoconUtils.consequenceAsConfigList(config, key)
+  def consequenceObjectList[T](key: String, f: Config => Consequence[T]): Consequence[List[T]] = HoconUtils.consequenceObjectList(config, key, f)
+  def consequenceAsObjectList[T](key: String, f: Config => Consequence[T]): Consequence[List[T]] = HoconUtils.consequenceAsObjectList(config, key, f)
 
   def childConfigMap: Map[String, Config] = HoconUtils.childConfigMap(config)
   def childRichConfigMap: Map[String, RichConfig] = HoconUtils.childRichConfigMap(config)

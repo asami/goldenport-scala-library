@@ -14,7 +14,8 @@ import org.goldenport.util.ExceptionUtils
  *  version Mar. 26, 2021
  *  version Apr. 29, 2021
  *  version May. 30, 2021
- * @version Jun. 20, 2021
+ *  version Jun. 20, 2021
+ * @version Oct. 12, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -29,9 +30,9 @@ case class Conclusion(
 ) {
   def message: I18NMessage = messageOption orElse _errors_message orElse _warnings_message orElse exception.map(x => I18NMessage(x.getMessage)) getOrElse code.message
 
-  private def _errors_message: Option[I18NMessage] = errors.toOption.map(_.message)
+  private def _errors_message: Option[I18NMessage] = errors.toOption.map(_.toI18NMessage)
 
-  private def _warnings_message: Option[I18NMessage] = warnings.toOption.map(_.message)
+  private def _warnings_message: Option[I18NMessage] = warnings.toOption.map(_.toI18NMessage)
 
   // def incidents: Incidents = trace.incidents
   // def faults: Faults = incidents.faults
@@ -53,6 +54,8 @@ case class Conclusion(
     trace, // CAUTION
     strategy // CAUTION
   )
+
+  def RAISE: Throwable = new ConclusionException(this)
 }
 
 object Conclusion {
@@ -143,8 +146,8 @@ object Conclusion {
   }
 
   def invalidArgumentFault(message: I18NMessage): Conclusion = {
-    val detail = DetailCode.Result
-    val status = StatusCode.InternalServerError.withDetail(detail)
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
     val faults = Faults(InvalidArgumentFault(message))
     Conclusion(status, faults)
   }
@@ -152,9 +155,16 @@ object Conclusion {
   def missingPropertyFault(name: String, names: String*): Conclusion = missingPropertyFault(name +: names)
 
   def missingPropertyFault(names: Seq[String]): Conclusion = {
-    val detail = DetailCode.Result
-    val status = StatusCode.InternalServerError.withDetail(detail)
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
     val faults = Faults(MissingPropertyFault(names))
+    Conclusion(status, faults)
+  }
+
+  def syntaxErrorFault(messages: Seq[Message]): Conclusion = {
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(SyntaxErrorFault(messages))
     Conclusion(status, faults)
   }
 

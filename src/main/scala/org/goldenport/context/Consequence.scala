@@ -13,10 +13,11 @@ import org.goldenport.parser.{ParseMessage}
  * 
  * @since   Feb. 21, 2021
  *  version May. 30, 2021
- * @version Jun. 20, 2021
+ *  version Jun. 20, 2021
+ * @version Oct.  8, 2021
  * @author  ASAMI, Tomoharu
  */
-sealed trait Consequence[T] {
+sealed trait Consequence[+T] {
   def conclusion: Conclusion
   def toOption: Option[T]
   def add(p: Conclusion): Consequence[T]
@@ -31,7 +32,7 @@ sealed trait Consequence[T] {
 }
 
 object Consequence {
-  case class Success[T](
+  case class Success[+T](
     result: T,
     conclusion: Conclusion = Conclusion.Ok
   ) extends Consequence[T] {
@@ -41,7 +42,7 @@ object Consequence {
     def flatMap[U](f: T => Consequence[U]): Consequence[U] = f(result).add(conclusion)
   }
 
-  case class Error[T](
+  case class Error[+T](
     conclusion: Conclusion = Conclusion.InternalServerError
   ) extends Consequence[T] {
     def toOption: Option[T] = None

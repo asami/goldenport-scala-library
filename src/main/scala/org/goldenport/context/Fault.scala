@@ -1,6 +1,6 @@
 package org.goldenport.context
 
-import scalaz.NonEmptyList
+import scalaz._, Scalaz._
 import java.util.Locale
 import org.goldenport.i18n.{I18NString, I18NTemplate, I18NMessage}
 import org.goldenport.extension.IRecord
@@ -16,7 +16,8 @@ import Fault._
  *  version Mar. 27, 2021
  *  version Apr. 29, 2021
  *  version May. 27, 2021
- * @version Jun. 20, 2021
+ *  version Jun. 20, 2021
+ * @version Oct. 12, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -135,9 +136,9 @@ object InvalidArgumentFault {
   }
 
   private def _message(key: String, ps: Iterable[Fault]): I18NMessage = {
-    ???
+    ps.toVector.map(_.message).concatenate
   }
-  // .map(_.message).list.mkString(";")))) * @version Jun. 20, 2021
+  // .map(_.message).list.mkString(";")))) * @version Oct. 12, 2021
 }
 
 case class MissingArgumentFault(
@@ -250,6 +251,26 @@ object ValueDomainPropertyFault {
     ValueDomainPropertyFault(messageTemplate = I18NTemplate(p))
 }
 
+case class SyntaxErrorFault(
+  message: I18NMessage,
+  parameters: Option[Seq[Any]] = None
+) extends ArgumentFault with Parameters1 {
+}
+object SyntaxErrorFault {
+  val template = I18NTemplate("Illegal configuration defect: {0}")
+
+  def apply(p: String): SyntaxErrorFault = parameter(p)
+
+  def apply(p: I18NString): SyntaxErrorFault = apply(p.toI18NMessage)
+
+  def apply(ps: Seq[Message]): SyntaxErrorFault = apply(ps.toVector.map(_.toI18NMessage).concatenate)
+
+  def parameter(p: Any, ps: Any*): SyntaxErrorFault = {
+    val xs = p +: ps
+    SyntaxErrorFault(template.toI18NMessage(xs), parameters = Some(xs))
+  }
+}
+
 sealed trait IoFault extends Fault {
 }
 
@@ -276,6 +297,9 @@ case class Faults(faults: Vector[Fault] = Vector.empty) {
   def argumentFaults: Vector[ArgumentFault] = faults.collect {
     case m: ArgumentFault => m
   }
+
+  def toI18NStringONev: Option[NonEmptyVector[I18NString]] =
+    faults.headOption.map(x => NonEmptyVector(x.message.toI18NString, faults.tail.map(_.message.toI18NString)))
 }
 object Faults {
   val empty = Faults()

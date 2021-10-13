@@ -27,7 +27,8 @@ import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperation
  *  version Mar. 12, 2020
  *  version Apr. 10, 2020
  *  version May. 16, 2020
- * @version Jan. 24, 2021
+ *  version Jan. 24, 2021
+ * @version Oct.  2, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Config(
@@ -51,6 +52,8 @@ case class Config(
   lazy val recorder: Recorder = new StandardRecorder() // TODO upper layer
 
   def withLogLevel(p: LogLevel) = copy(log = log.withLogLevel(p))
+
+  def makeConfig(key: String): HoconConfig = properties.asConfig(key)
 }
 
 object Config {

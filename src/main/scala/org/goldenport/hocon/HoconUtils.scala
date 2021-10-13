@@ -15,6 +15,7 @@ import org.goldenport.Strings
 import org.goldenport.i18n.{I18NString, I18NElement}
 import org.goldenport.value._
 import org.goldenport.collection.VectorMap
+import org.goldenport.context.Consequence
 import org.goldenport.parser.ParseResult
 import org.goldenport.util.TypesafeConfigUtils
 import org.goldenport.util.AnyUtils
@@ -37,10 +38,13 @@ import org.goldenport.util.AnyUtils
  *  version Jun. 18, 2020
  *  version Apr. 30, 2021
  *  version May.  5, 2021
- * @version Jun. 13, 2021
+ *  version Jun. 13, 2021
+ * @version Oct. 13, 2021
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
+  val empty = ConfigFactory.empty()
+
   def parse(p: String): RichConfig = new RichConfig(ConfigFactory.parseString(p))
 
   def isDefined(config: Config, key: String): Boolean = config.hasPath(key)
@@ -50,6 +54,9 @@ object HoconUtils {
       config.getBoolean(key)
     else
       fallback
+
+  def asConfig(config: Config, key: String): Config =
+    getConfig(config, key) getOrElse empty
 
   def asConfigList(config: Config, key: String): List[Config] =
     getConfigList(config, key) getOrElse Nil
@@ -121,9 +128,39 @@ object HoconUtils {
     else
       None
 
+  def getShort(config: Config, key: String): Option[Short] =
+    if (config.hasPath(key))
+      Some(config.getInt(key)).map(_.toShort)
+    else
+      None
+
   def getInt(config: Config, key: String): Option[Int] =
     if (config.hasPath(key))
       Some(config.getInt(key))
+    else
+      None
+
+  def getLong(config: Config, key: String): Option[Long] =
+    if (config.hasPath(key))
+      Some(config.getLong(key))
+    else
+      None
+
+  def getFloat(config: Config, key: String): Option[Float] =
+    if (config.hasPath(key))
+      Some(config.getDouble(key)).map(_.toFloat)
+    else
+      None
+
+  def getDouble(config: Config, key: String): Option[Double] =
+    if (config.hasPath(key))
+      Some(config.getDouble(key))
+    else
+      None
+
+  def getBigDecimal(config: Config, key: String): Option[BigDecimal] =
+    if (config.hasPath(key))
+      Some(config.getString(key)).map(BigDecimal(_))
     else
       None
 
@@ -257,6 +294,76 @@ object HoconUtils {
     getValue(p, key).map(x => AnyUtils.toInt(x.unwrapped))
 
   //
+  def parseBoolean(p: Config, key: String): ParseResult[Boolean] =
+    getBoolean(p, key) match {
+      case Some(s) => ParseResult.success(s)
+      case None => ParseResult.missing(key)
+    }
+
+  def parseBooleanOption(p: Config, key: String): ParseResult[Option[Boolean]] = ParseResult(
+    getBoolean(p, key)
+  )
+
+  def parseShort(p: Config, key: String): ParseResult[Short] =
+    getShort(p, key) match {
+      case Some(s) => ParseResult.success(s)
+      case None => ParseResult.missing(key)
+    }
+
+  def parseShortOption(p: Config, key: String): ParseResult[Option[Short]] = ParseResult(
+    getShort(p, key)
+  )
+
+  def parseInt(p: Config, key: String): ParseResult[Int] =
+    getInt(p, key) match {
+      case Some(s) => ParseResult.success(s)
+      case None => ParseResult.missing(key)
+    }
+
+  def parseIntOption(p: Config, key: String): ParseResult[Option[Int]] = ParseResult(
+    getInt(p, key)
+  )
+
+  def parseLong(p: Config, key: String): ParseResult[Long] =
+    getLong(p, key) match {
+      case Some(s) => ParseResult.success(s)
+      case None => ParseResult.missing(key)
+    }
+
+  def parseLongOption(p: Config, key: String): ParseResult[Option[Long]] = ParseResult(
+    getLong(p, key)
+  )
+
+  def parseFloat(p: Config, key: String): ParseResult[Float] =
+    getFloat(p, key) match {
+      case Some(s) => ParseResult.success(s)
+      case None => ParseResult.missing(key)
+    }
+
+  def parseFloatOption(p: Config, key: String): ParseResult[Option[Float]] = ParseResult(
+    getFloat(p, key)
+  )
+
+  def parseDouble(p: Config, key: String): ParseResult[Double] =
+    getDouble(p, key) match {
+      case Some(s) => ParseResult.success(s)
+      case None => ParseResult.missing(key)
+    }
+
+  def parseDoubleOption(p: Config, key: String): ParseResult[Option[Double]] = ParseResult(
+    getDouble(p, key)
+  )
+
+  def parseBigDecimal(p: Config, key: String): ParseResult[BigDecimal] =
+    getBigDecimal(p, key) match {
+      case Some(s) => ParseResult.success(s)
+      case None => ParseResult.missing(key)
+    }
+
+  def parseBigDecimalOption(p: Config, key: String): ParseResult[Option[BigDecimal]] = ParseResult(
+    getBigDecimal(p, key)
+  )
+
   def parseString(p: Config, key: String): ParseResult[String] =
     getString(p, key) match {
       case Some(s) => ParseResult.success(s)
@@ -314,6 +421,140 @@ object HoconUtils {
 
   def parseConfigOrConfigList(p: Config, key: String): ParseResult[Either[Config, List[Config]]] =
     ParseResult(takeConfigOrConfigList(p, key))
+
+  def consequenceBoolean(p: Config, key: String): Consequence[Boolean] =
+    getBoolean(p, key) match {
+      case Some(s) => Consequence.success(s)
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceBoolean(p: Config, key: String, default: Boolean): Consequence[Boolean] =
+    getBoolean(p, key) match {
+      case Some(s) => Consequence.success(s)
+      case None => Consequence.success(default)
+    }
+
+  def consequenceBooleanOption(p: Config, key: String): Consequence[Option[Boolean]] = Consequence(
+    getBoolean(p, key)
+  )
+
+  def consequenceShort(p: Config, key: String): Consequence[Short] =
+    getShort(p, key) match {
+      case Some(s) => Consequence.success(s)
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceShortOption(p: Config, key: String): Consequence[Option[Short]] = Consequence(
+    getShort(p, key)
+  )
+
+  def consequenceInt(p: Config, key: String): Consequence[Int] =
+    getInt(p, key) match {
+      case Some(s) => Consequence.success(s)
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceIntOption(p: Config, key: String): Consequence[Option[Int]] = Consequence(
+    getInt(p, key)
+  )
+
+  def consequenceLong(p: Config, key: String): Consequence[Long] =
+    getLong(p, key) match {
+      case Some(s) => Consequence.success(s)
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceLongOption(p: Config, key: String): Consequence[Option[Long]] = Consequence(
+    getLong(p, key)
+  )
+
+  def consequenceFloat(p: Config, key: String): Consequence[Float] =
+    getFloat(p, key) match {
+      case Some(s) => Consequence.success(s)
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceFloatOption(p: Config, key: String): Consequence[Option[Float]] = Consequence(
+    getFloat(p, key)
+  )
+
+  def consequenceDouble(p: Config, key: String): Consequence[Double] =
+    getDouble(p, key) match {
+      case Some(s) => Consequence.success(s)
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceDoubleOption(p: Config, key: String): Consequence[Option[Double]] = Consequence(
+    getDouble(p, key)
+  )
+
+  def consequenceBigDecimal(p: Config, key: String): Consequence[BigDecimal] =
+    getBigDecimal(p, key) match {
+      case Some(s) => Consequence.success(s)
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceBigDecimalOption(p: Config, key: String): Consequence[Option[BigDecimal]] = Consequence(
+    getBigDecimal(p, key)
+  )
+
+  def consequenceString(p: Config, key: String): Consequence[String] =
+    getString(p, key) match {
+      case Some(s) => Consequence.success(s)
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceStringOption(p: Config, key: String): Consequence[Option[String]] = Consequence(
+    getString(p, key)
+  )
+
+  def consequenceStringOrConfig(p: Config, key: String): Consequence[Either[String, Config]] =
+    if (p.hasPath(key)) {
+      val v = p.getValue(key)
+      v match {
+        case m: ConfigObject => Consequence(Right(m.toConfig))
+        case m => m.unwrapped match {
+          case null => Consequence.missingPropertyFault(key)
+          case m: String => Consequence.success(Left(m))
+          case m => Consequence.invalidArgumentFault(s"Not string or object: $m")
+        }
+      }
+    } else {
+     Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceStringOrConfigOption(p: Config, key: String): Consequence[Option[Either[String, Config]]] =
+    if (p.hasPath(key)) {
+      val v = p.getValue(key)
+      v match {
+        case m: ConfigObject => Consequence(Some(Right(m.toConfig)))
+        case m => m.unwrapped match {
+          case null => Consequence.success(None)
+          case m: String => Consequence.success(Some(Left(m)))
+          case m => Consequence.invalidArgumentFault(s"Not string or object: $m")
+        }
+      }
+    } else {
+      Consequence.success(None)
+    }
+
+  def consequenceConfig(p: Config, key: String): Consequence[Config] =
+    Consequence.successOrMissingPropertyFault(key, getConfig(p, key))
+
+  def consequenceConfigList(p: Config, key: String): Consequence[List[Config]] =
+    Consequence(takeConfigList(p, key))
+
+  def consequenceAsConfigList(p: Config, key: String): Consequence[List[Config]] =
+    Consequence(asConfigList(p, key))
+
+  def consequenceObjectList[T](p: Config, key: String, f: Config => Consequence[T]): Consequence[List[T]] =
+    takeConfigList(p, key).traverse(f)
+
+  def consequenceAsObjectList[T](p: Config, key: String, f: Config => Consequence[T]): Consequence[List[T]] =
+    asConfigList(p, key).traverse(f)
+
+  def consequenceConfigOrConfigList(p: Config, key: String): Consequence[Either[Config, List[Config]]] =
+    Consequence(takeConfigOrConfigList(p, key))
 
   // def childConfigSet(p: Config): Set[(String, Config)] = p.entrySet.asScala.
   //   flatMap { x =>

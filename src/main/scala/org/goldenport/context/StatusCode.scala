@@ -10,8 +10,8 @@ import org.goldenport.util.ExceptionUtils
  *  version Feb. 21, 2021
  *  version Mar. 26, 2021
  *  version Apr. 10, 2021
-String *  version May. 30, 2021
-String * @version Jun. 20, 2021
+ *  version May. 30, 2021
+ * @version Jun. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StatusCode(
