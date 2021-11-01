@@ -2,11 +2,12 @@ package org.goldenport
 
 /*
  * @since   Jun. 12, 2021
- * @version Jun. 13, 2021
+ *  version Jun. 13, 2021
+ * @version Oct. 31, 2021
  * @author  ASAMI, Tomoharu
  */
 package object event {
-  type ObjectId = String
+//  type ObjectId = String
 
   val PROP_EVT_EVENT = "event"
   val PROP_EVT_NAME = "name"

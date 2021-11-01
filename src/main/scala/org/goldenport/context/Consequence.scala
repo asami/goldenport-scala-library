@@ -14,7 +14,7 @@ import org.goldenport.parser.{ParseMessage}
  * @since   Feb. 21, 2021
  *  version May. 30, 2021
  *  version Jun. 20, 2021
- * @version Oct.  8, 2021
+ * @version Oct. 25, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -120,11 +120,22 @@ object Consequence {
   //   p.map(success).getOrElse(missingPropertyOrError(name))
 
   // Specific error with detail code.
+
+  def successOrInvalidTokenFault[T](name: String, p: Option[T]): Consequence[T] =
+    p.map(success).getOrElse(invalidTokenFault(name))
+
+
   def invalidArgumentFault[T](p: String): Consequence[T] = invalidArgumentFault(I18NMessage(p))
   def invalidArgumentFault[T](p: String, arg: Any, args: Any*): Consequence[T] = Error(Conclusion.invalidArgumentFault(I18NMessage(p, args +: args)))
   def invalidArgumentFault[T](p: I18NMessage): Consequence[T] = Error(Conclusion.invalidArgumentFault(p))
+
   def missingPropertyFault[T](p: String, ps: String*): Consequence[T] = missingPropertyFault(p +: ps)
   def missingPropertyFault[T](ps: Seq[String]): Consequence[T] = Error(Conclusion.missingPropertyFault(ps))
+
+  def invalidTokenFault[T](value: String): Consequence[T] = Error(Conclusion.invalidTokenFault(value))
+  def invalidTokenFault[T](label: String, value: String): Consequence[T] = Error(Conclusion.invalidTokenFault(label, value))
+
+  def syntaxErrorFault[T](messages: Seq[Message]): Consequence[T] = Error(Conclusion.syntaxErrorFault(messages))
 
   def illegalConfigurationDefect[T](p: String): Consequence[T] = Error(Conclusion.illegalConfigurationDefect(p))
 
@@ -159,4 +170,9 @@ object Consequence {
 
   private def _errors(ps: Vector[ParseMessage]): ErrorMessages = ???
   private def _warnings(ps: Vector[ParseMessage]): WarningMessages = ???
+
+  def from[E <: Fault, A](p: ValidationNel[E, A]): Consequence[A] = p match {
+    case scalaz.Success(s) => Consequence.success(s)
+    case scalaz.Failure(es) => Consequence.Error(Conclusion.make(es))
+  }
 }

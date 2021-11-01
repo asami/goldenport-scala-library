@@ -4,14 +4,17 @@ import com.typesafe.config.{Config => Hocon, ConfigFactory, ConfigObject}
 import org.goldenport.parser.ParseResult
 import org.goldenport.hocon.RichConfig.Implicits._
 import org.goldenport.context.Consequence
+import org.goldenport.event.ObjectId
 import org.goldenport.statemachine.StateMachine.RuleAndState
+import org.goldenport.util.AnyUtils
 
 /*
  * @since   Jan.  4, 2021
  *  version May. 29, 2021
  *  version Jun. 14, 2021
  *  version Jul.  4, 2021
- * @version Sep. 26, 2021
+ *  version Sep. 26, 2021
+ * @version Oct. 31, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StateMachineClass(
@@ -34,6 +37,21 @@ case class StateMachineClass(
     sm.goAhead()
     sm
   }
+
+  def reconstitute(value: Any): Consequence[StateMachine] = value match {
+    case m: Byte => reconstituteInt(m.toInt)
+    case m: Short => reconstituteInt(m.toInt)
+    case m: Int => reconstituteInt(m)
+    case m: Long => reconstituteInt(m.toInt)
+    case m: String => reconstituteString(m)
+    case m => Consequence.invalidTokenFault(name, AnyUtils.toString(m))
+  }
+
+  def reconstituteInt(value: Int): Consequence[StateMachine] =
+    logic.reconstitute(value).map(x => new StateMachine(this, x))
+
+  def reconstituteString(value: String): Consequence[StateMachine] =
+    logic.reconstitute(value).map(x => new StateMachine(this, x))
 
   def accept(sm: StateMachine, state: State, p: Parcel): Consequence[Boolean] = logic.accept(sm, state, p)
 

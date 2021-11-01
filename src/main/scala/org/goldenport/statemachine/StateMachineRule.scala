@@ -3,6 +3,7 @@ package org.goldenport.statemachine
 import scalaz._, Scalaz._
 import com.typesafe.config.{Config => Hocon, ConfigFactory, ConfigObject}
 import org.goldenport.parser.ParseResult
+import org.goldenport.value._
 import org.goldenport.values.PathName
 import org.goldenport.hocon.RichConfig.Implicits._
 import org.goldenport.event.EventClazz
@@ -13,7 +14,8 @@ import org.goldenport.event.EventClazz
  *  version May. 29, 2021
  *  version Jun. 29, 2021
  *  version Aug.  2, 2021
- * @version Sep. 26, 2021
+ *  version Sep. 26, 2021
+ * @version Oct. 29, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StateMachineRule(
@@ -53,6 +55,11 @@ case class StateMachineRule(
     case x :: Nil => _find_state(x)
     case x :: xs => _find_state(x, xs)
   }
+
+  def findState(v: Int): Option[RuleAndStateClass] =
+    states.find(_.value == v).map(x => RuleAndStateClass(this, x)) orElse (
+      statemachines.toStream.flatMap(_.findState(v)).headOption
+    )
 }
 
 object StateMachineRule {
@@ -63,6 +70,21 @@ object StateMachineRule {
 
   case class RuleAndStateClass(rule: StateMachineRule, state: StateClass)
 
+  case class StateValue(name: String, value: Int)
+
+  private val _default_state_values = Vector(
+    StateValue("init", STATE_VALUE_INIT),
+    StateValue("final", STATE_VALUE_FINAL),
+    StateValue("canceled", 10),
+    StateValue("suspended", 20),
+    StateValue("running", 101),
+    StateValue("confirming", 102),
+    StateValue("confirmed", 103),
+    StateValue("rejected", 201),
+    StateValue("delivering", 501),
+    StateValue("delivered", 502)
+  )
+
   def parse(p: String): ParseResult[StateMachineRule] = Builder().build(p)
 
   def build(p: Hocon): ParseResult[StateMachineRule] = Builder().build(p)
@@ -72,24 +94,27 @@ object StateMachineRule {
   def buildBody(kind: StateMachineKind, p: Hocon): ParseResult[StateMachineRule] =
     Builder(kind = kind).buildBody(p)
 
-  case class Builder(
-    config: Config = Config.default,
-    kind: StateMachineKind = StateMachineKind.Plain
+   class Builder(
+     val config: Config = Config.default,
+     val kind: StateMachineKind = StateMachineKind.Plain,
+     val valueStrategy: Builder.ValueStrategy = Builder.ValueStrategy.Auto
   ) {
-    def build(rule: String): ParseResult[StateMachineRule] = {
-      val hocon = ConfigFactory.parseString(rule)
-      build(hocon)
-    }
+     private var _state_values = _default_state_values.map(x => x.name -> x).toMap
 
-    def build(hocon: Hocon): ParseResult[StateMachineRule] = for {
-      ev <- _events(hocon)
-      stm <- _statemachine_rule(hocon)
-    } yield stm.addEvents(ev)
+     def build(rule: String): ParseResult[StateMachineRule] = {
+       val hocon = ConfigFactory.parseString(rule)
+       build(hocon)
+     }
 
-    private def _events(p: Hocon): ParseResult[List[EventClazz]] = {
-      val cs = p.takeConfigList(PROP_STMRULE_EVENT)
-      cs.traverse(_event)
-    }
+     def build(hocon: Hocon): ParseResult[StateMachineRule] = for {
+       ev <- _events(hocon)
+       stm <- _statemachine_rule(hocon)
+     } yield stm.addEvents(ev)
+
+     private def _events(p: Hocon): ParseResult[List[EventClazz]] = {
+       val cs = p.takeConfigList(PROP_STMRULE_EVENT)
+       cs.traverse(_event)
+     }
 
     private def _event(p: Hocon): ParseResult[EventClazz] =
       for {
@@ -135,11 +160,21 @@ object StateMachineRule {
     private def _state(kind: StateMachineKind, smpath: Option[PathName], p: Hocon): ParseResult[StateClass] =
       for {
         name <- p.parseString(PROP_STMRULE_NAME)
+        value <- _value(p, name, PROP_STMRULE_VALUE)
         ts <- _transition(kind, p, PROP_STMRULE_TRANSITION)
         entrya <- _activity(p, PROP_STMRULE_ENTRY)
         exita <- _activity(p, PROP_STMRULE_EXIT)
         doa <- _do_activity(p, PROP_STMRULE_DO)
-      } yield StateClass(name, smpath, ts, entrya, exita, doa)
+      } yield StateClass(name, value, smpath, ts, entrya, exita, doa)
+
+    private def _value(p: Hocon, name: String, key: String): ParseResult[Int] = for {
+      a <- p.parseIntOption(key)
+    } yield a getOrElse valueStrategy match {
+      case Builder.ValueStrategy.Auto => _value_auto(name)
+    }
+
+    private def _value_auto(name: String): Int =
+      _state_values.get(name).map(_.value) getOrElse STATE_VALUE_UNDEFINED
 
     private def _activity(p: Hocon, key: String): ParseResult[Activity] =
       for {
@@ -232,5 +267,19 @@ object StateMachineRule {
       val cs = p.asConfigList(PROP_STMRULE_STATEMACHINE)
       cs.traverse(_statemachine(parent, _))
     }
+  }
+  object Builder {
+    sealed trait ValueStrategy extends NamedValueInstance {
+    }
+    object ValueStrategy extends EnumerationClass[ValueStrategy] {
+      val elements = Vector(Auto)
+
+      case object Auto extends ValueStrategy {
+        val name = "auto"
+      }
+    }
+
+    def apply(): Builder = new Builder()
+    def apply(kind: StateMachineKind): Builder = new Builder(kind = kind)
   }
 }

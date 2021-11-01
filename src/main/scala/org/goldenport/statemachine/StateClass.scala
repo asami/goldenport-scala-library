@@ -6,11 +6,13 @@ import org.goldenport.values.PathName
 /*
  * @since   Jan.  4, 2021
  *  version May. 29, 2021
- * @version Jun. 29, 2021
+ *  version Jun. 29, 2021
+ * @version Oct. 24, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StateClass(
   name: String,
+  value: Int,
   stateMachinePath: Option[PathName],
   transitions: Transitions,
   entryActivity: Activity = NoneActivity,
@@ -34,5 +36,5 @@ case class StateClass(
 }
 
 object StateClass {
-  val finalState = StateClass(PROP_STATE_FINAL, None, Transitions.empty)
+  val finalState = StateClass(PROP_STATE_FINAL, STATE_VALUE_FINAL, None, Transitions.empty)
 }

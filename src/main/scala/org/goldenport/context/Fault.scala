@@ -17,7 +17,7 @@ import Fault._
  *  version Apr. 29, 2021
  *  version May. 27, 2021
  *  version Jun. 20, 2021
- * @version Oct. 12, 2021
+ * @version Oct. 25, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -26,6 +26,7 @@ sealed trait Fault extends Incident {
   def message: I18NMessage
   def reaction: Reaction
   def properties(locale: Locale): IRecord
+  def implicitStatusCode: StatusCode
 
   def RAISE: Nothing = throw new FaultException(this)
 }
@@ -66,6 +67,8 @@ case class ValueDomainValueFault(
   value: String = "",
   messageTemplate: I18NTemplate = ValueDomainValueFault.template
 ) extends ValueDomainFault {
+  def implicitStatusCode: StatusCode = StatusCode.BadRequest
+
   def message = messageTemplate.toI18NMessage(value)
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
@@ -85,6 +88,8 @@ case class ValueDomainMultiplicityFault(
   value: String = "",
   messageTemplate: I18NTemplate = ValueDomainMultiplicityFault.template
 ) extends ValueDomainFault {
+  def implicitStatusCode: StatusCode = StatusCode.BadRequest
+
   def message = messageTemplate.toI18NMessage(value)
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
@@ -110,6 +115,8 @@ case class InvalidArgumentFault(
   value: Option[String] = None,
   faults: Option[NonEmptyVector[Fault]] = None
 ) extends ArgumentFault {
+  def implicitStatusCode: StatusCode = StatusCode.BadRequest
+
   def properties(locale: Locale): IRecord = IRecord.dataS(
     KEY_NAME -> name,
     KEY_MESSAGE -> message(locale)
@@ -138,13 +145,15 @@ object InvalidArgumentFault {
   private def _message(key: String, ps: Iterable[Fault]): I18NMessage = {
     ps.toVector.map(_.message).concatenate
   }
-  // .map(_.message).list.mkString(";")))) * @version Oct. 12, 2021
+  // .map(_.message).list.mkString(";")))) * @version Oct. 25, 2021
 }
 
 case class MissingArgumentFault(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = MissingArgumentFault.template
 ) extends ArgumentFault {
+  def implicitStatusCode: StatusCode = StatusCode.BadRequest
+
   def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
@@ -161,6 +170,8 @@ case class TooManyArgumentFault(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = TooManyArgumentFault.template
 ) extends ArgumentFault {
+  def implicitStatusCode: StatusCode = StatusCode.BadRequest
+
   def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
@@ -182,6 +193,8 @@ case class ValueDomainResultFault(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = ValueDomainResultFault.template
 ) extends ResultFault {
+  def implicitStatusCode: StatusCode = StatusCode.InternalServerError
+
   def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
@@ -209,6 +222,8 @@ case class MissingPropertyFault(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = MissingPropertyFault.template
 ) extends PropertyFault {
+  def implicitStatusCode: StatusCode = StatusCode.BadRequest
+
   def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
@@ -219,7 +234,7 @@ case class MissingPropertyFault(
   )
 }
 object MissingPropertyFault {
-  val template = I18NTemplate("Value domain fault: {0}")
+  val template = I18NTemplate("Missing property: {0}")
 
   def apply(p: I18NString): MissingPropertyFault =
     MissingPropertyFault(messageTemplate = I18NTemplate(p))
@@ -228,10 +243,35 @@ object MissingPropertyFault {
     MissingPropertyFault(messageTemplate = I18NTemplate(p))
 }
 
+case class InvalidTokenFault(
+  message: I18NMessage,
+  parameters: Option[Seq[Any]] = None
+) extends ArgumentFault with Parameters1 {
+  def implicitStatusCode: StatusCode = StatusCode.BadRequest
+}
+object InvalidTokenFault {
+  val template = I18NTemplate("Illegal configuration defect: {0}")
+
+  def apply(label: String, value: String): InvalidTokenFault = apply(value) // TODO
+
+  def apply(p: String): InvalidTokenFault = parameter(p)
+
+  def apply(p: I18NString): InvalidTokenFault = apply(p.toI18NMessage)
+
+  def apply(ps: Seq[Message]): InvalidTokenFault = apply(ps.toVector.map(_.toI18NMessage).concatenate)
+
+  def parameter(p: Any, ps: Any*): InvalidTokenFault = {
+    val xs = p +: ps
+    InvalidTokenFault(template.toI18NMessage(xs), parameters = Some(xs))
+  }
+}
+
 case class ValueDomainPropertyFault(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = ValueDomainPropertyFault.template
 ) extends PropertyFault {
+  def implicitStatusCode: StatusCode = StatusCode.BadRequest
+
   def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
@@ -255,6 +295,7 @@ case class SyntaxErrorFault(
   message: I18NMessage,
   parameters: Option[Seq[Any]] = None
 ) extends ArgumentFault with Parameters1 {
+  def implicitStatusCode: StatusCode = StatusCode.BadRequest
 }
 object SyntaxErrorFault {
   val template = I18NTemplate("Illegal configuration defect: {0}")
@@ -279,6 +320,7 @@ case class IllegalConfigurationDefect(
   parameters: Option[Seq[Any]] = None
 //  messageTemplate: I18NTemplate = IllegalConfigurationDefect.template
 ) extends Defect with Parameters1 {
+  def implicitStatusCode: StatusCode = StatusCode.InternalServerError
 }
 object IllegalConfigurationDefect {
   val template = I18NTemplate("Illegal configuration defect: {0}")
@@ -300,6 +342,12 @@ case class Faults(faults: Vector[Fault] = Vector.empty) {
 
   def toI18NStringONev: Option[NonEmptyVector[I18NString]] =
     faults.headOption.map(x => NonEmptyVector(x.message.toI18NString, faults.tail.map(_.message.toI18NString)))
+
+  def guessStatusCode: StatusCode = faults.
+    map(_.implicitStatusCode).sortWith(_is_strong).
+    headOption.getOrElse(StatusCode.InternalServerError)
+
+  private def _is_strong(lhs: StatusCode, rhs: StatusCode): Boolean = lhs.main >= rhs.main
 }
 object Faults {
   val empty = Faults()

@@ -15,7 +15,8 @@ import org.goldenport.util.ExceptionUtils
  *  version Apr. 29, 2021
  *  version May. 30, 2021
  *  version Jun. 20, 2021
- * @version Oct. 12, 2021
+ *  version Oct. 25, 2021
+ * @version Nov.  1, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -55,7 +56,7 @@ case class Conclusion(
     strategy // CAUTION
   )
 
-  def RAISE: Throwable = new ConclusionException(this)
+  def RAISE: Nothing = throw new ConclusionException(this)
 }
 
 object Conclusion {
@@ -124,6 +125,10 @@ object Conclusion {
     Conclusion(StatusCode.make(e), messageOption = Some(I18NMessage(label)), exception = Some(e))
   }
 
+  def make(p: NonEmptyList[Fault]): Conclusion = make(Faults(p.list))
+
+  def make(p: Faults): Conclusion = Conclusion(p.guessStatusCode, p)
+
   def error(code: Int, p: String): Conclusion = error(code, I18NMessage(p))
   def error(code: Int, p: I18NString): Conclusion = error(code, p.toI18NMessage)
   def error(code: Int, p: I18NMessage): Conclusion = Conclusion(
@@ -158,6 +163,20 @@ object Conclusion {
     val detail = DetailCode.Argument
     val status = StatusCode.BadRequest.withDetail(detail)
     val faults = Faults(MissingPropertyFault(names))
+    Conclusion(status, faults)
+  }
+
+  def invalidTokenFault(value: String): Conclusion = {
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(InvalidTokenFault(value))
+    Conclusion(status, faults)
+  }
+
+  def invalidTokenFault(label: String, value: String): Conclusion = {
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(InvalidTokenFault(label, value))
     Conclusion(status, faults)
   }
 

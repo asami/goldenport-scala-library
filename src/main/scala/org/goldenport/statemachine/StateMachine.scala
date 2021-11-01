@@ -2,31 +2,40 @@ package org.goldenport.statemachine
 
 import scalaz._, Scalaz._
 import scala.collection.immutable.Stack
+import org.goldenport.extension.Showable
 import org.goldenport.context.Consequence
 import org.goldenport.values.CompactUuid
+import org.goldenport.event.ObjectId
 import org.goldenport.event.{Event, InitEvent}
 import org.goldenport.statemachine.StateMachineRule.RuleAndStateClass
 
 /*
  * @since   Jan.  4, 2021
  *  version May. 30, 2021
- * @version Jun. 14, 2021
+ *  version Jun. 14, 2021
+ * @version Oct. 31, 2021
  * @author  ASAMI, Tomoharu
  */
 class StateMachine(
   val clazz: StateMachineClass,
   initstate: State,
   val content: StateMachine.Content = StateMachine.Content.empty
-) {
+) extends Showable {
   import StateMachine._
 
   val id = CompactUuid.generateString
   def name = clazz.name
   def kind = clazz.kind
+  def value = state.value
   def status = state.status
 
   private var _state: State = initstate
   def state = _state
+
+  def print: String = status
+  def display: String = status
+  def show: String = status
+  def embed: String = status
 
   private var _statemachine_rule_stack: Stack[StateMachineRule] = Stack(clazz.rule)
   private def _current_statemachine_rule = _statemachine_rule_stack.head

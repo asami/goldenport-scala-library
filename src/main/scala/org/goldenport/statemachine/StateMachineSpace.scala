@@ -3,13 +3,15 @@ package org.goldenport.statemachine
 import org.goldenport.RAISE
 import org.goldenport.collection.TreeMap
 import org.goldenport.context.Consequence
+import org.goldenport.event.ObjectId
 import org.goldenport.event.Event
 
 /*
  * @since   May. 20, 2021
  *  version May. 30, 2021
  *  version Jun. 13, 2021
- * @version Sep. 25, 2021
+ *  version Sep. 25, 2021
+ * @version Oct. 31, 2021
  * @author  ASAMI, Tomoharu
  */
 class StateMachineSpace(

@@ -39,7 +39,7 @@ import org.goldenport.util.AnyUtils
  *  version Apr. 30, 2021
  *  version May.  5, 2021
  *  version Jun. 13, 2021
- * @version Oct. 13, 2021
+ * @version Oct. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -507,6 +507,18 @@ object HoconUtils {
   def consequenceStringOption(p: Config, key: String): Consequence[Option[String]] = Consequence(
     getString(p, key)
   )
+
+  def consequenceToken[T <: ValueInstance](p: Config, key: String, f: ValueClass[T]): Consequence[T] =
+    getString(p, key) match {
+      case Some(s) => Consequence.successOrMissingPropertyFault(key, f.get(s))
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceTokenOption[T <: ValueInstance](p: Config, key: String, f: ValueClass[T]): Consequence[Option[T]] =
+    getString(p, key) match {
+      case Some(s) => Consequence.success(f.get(s))
+      case None => Consequence.success(None)
+    }
 
   def consequenceStringOrConfig(p: Config, key: String): Consequence[Either[String, Config]] =
     if (p.hasPath(key)) {

@@ -5,7 +5,8 @@ import org.goldenport.context.Consequence
 /*
  * @since   Jan.  4, 2021
  *  version May. 29, 2021
- * @version Jun. 29, 2021
+ *  version Jun. 29, 2021
+ * @version Oct. 24, 2021
  * @author  ASAMI, Tomoharu
  */
 case class State(
@@ -14,6 +15,7 @@ case class State(
   // minor: MinorState
 ) {
   def status: String = clazz.name
+  def value: Int = clazz.value
   def qualifiedFullName: String = clazz.qualifiedFullName
   def entryActivity: Activity = clazz.entryActivity
   def exitActivity: Activity = clazz.exitActivity

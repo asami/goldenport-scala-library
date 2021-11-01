@@ -33,7 +33,7 @@ import org.goldenport.parser.ParseResult
  *  version Apr. 24, 2021
  *  version May.  5, 2021
  *  version Jun. 12, 2021
- * @version Oct. 13, 2021
+ * @version Oct. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -118,6 +118,11 @@ case class RichConfig(config: Config) extends AnyVal {
   def consequenceBigDecimalOption(key: String): Consequence[Option[BigDecimal]] = HoconUtils.consequenceBigDecimalOption(config, key)
   def consequenceString(key: String): Consequence[String] = HoconUtils.consequenceString(config, key)
   def consequenceStringOption(key: String): Consequence[Option[String]] = HoconUtils.consequenceStringOption(config, key)
+  def consequenceToken[T <: ValueInstance](key: String, f: ValueClass[T]): Consequence[T] =
+    HoconUtils.consequenceToken(config, key, f)
+  def consequenceTokenOption[T <: ValueInstance](key: String, f: ValueClass[T]): Consequence[Option[T]] =
+    HoconUtils.consequenceTokenOption(config, key, f)
+
   def consequenceStringOrConfig(key: String): Consequence[Either[String, Config]] = HoconUtils.consequenceStringOrConfig(config, key)
   def consequenceStringOrConfigOption(key: String): Consequence[Option[Either[String, Config]]] = HoconUtils.consequenceStringOrConfigOption(config, key)
   def consequenceConfig(key: String): Consequence[Config] = HoconUtils.consequenceConfig(config, key)

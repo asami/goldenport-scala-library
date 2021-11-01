@@ -11,7 +11,8 @@ import org.goldenport.statemachine.StateMachine.RuleAndState
  * @since   May. 23, 2021
  *  version May. 30, 2021
  *  version Jun. 14, 2021
- * @version Sep. 26, 2021
+ *  version Sep. 26, 2021
+ * @version Oct. 29, 2021
  * @author  ASAMI, Tomoharu
  */
 trait StateMachineLogic {
@@ -22,6 +23,12 @@ trait StateMachineLogic {
   def initState(): State = State(rule.initState)
 
   def newState(p: StateClass): State = State(p)
+
+  def reconstitute(p: Int): Consequence[State] =
+    Consequence.successOrMissingPropertyFault(p.toString, rule.findState(p).map(x => State(x.state)))
+
+  def reconstitute(p: String): Consequence[State] =
+    Consequence.successOrMissingPropertyFault(p, rule.findState(p).map(x => State(x.state)))
 
   def accept(sm: StateMachine, state: State, p: Parcel): Consequence[Boolean] = for {
     f <- _force_accept(sm, state, p)
