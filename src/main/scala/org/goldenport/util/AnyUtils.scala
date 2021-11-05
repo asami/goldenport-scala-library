@@ -30,7 +30,8 @@ import org.goldenport.extension.Showable
  *  version Nov. 28, 2019
  *  version Jan. 18, 2020
  *  version Jan. 23, 2021
- * @version Apr. 20, 2021
+ *  version Apr. 20, 2021
+ * @version Nov.  5, 2021
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -241,4 +242,13 @@ object AnyUtils {
     case "" => true
     case _ => guessNumber(p)
   }
+
+  def getByte(p: Any): Option[Byte] = NumberUtils.optionByte(p)
+  def getShort(p: Any): Option[Short] = NumberUtils.optionShort(p)
+  def getInt(p: Any): Option[Int] = NumberUtils.optionInt(p)
+  def getLong(p: Any): Option[Long] = NumberUtils.optionLong(p)
+  def getFloat(p: Any): Option[Float] = NumberUtils.optionFloat(p)
+  def getDouble(p: Any): Option[Double] = NumberUtils.optionDouble(p)
+  def getBigInt(p: Any): Option[BigInt] = NumberUtils.optionBigInt(p)
+  def getBigDecimal(p: Any): Option[BigDecimal] = NumberUtils.optionBigDecimal(p)
 }

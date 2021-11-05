@@ -14,7 +14,8 @@ import org.goldenport.parser.{ParseMessage}
  * @since   Feb. 21, 2021
  *  version May. 30, 2021
  *  version Jun. 20, 2021
- * @version Oct. 25, 2021
+ *  version Oct. 25, 2021
+ * @version Nov.  5, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -135,6 +136,9 @@ object Consequence {
   def invalidTokenFault[T](value: String): Consequence[T] = Error(Conclusion.invalidTokenFault(value))
   def invalidTokenFault[T](label: String, value: String): Consequence[T] = Error(Conclusion.invalidTokenFault(label, value))
 
+  def valueDomainFault[T](value: String): Consequence[T] = Error(Conclusion.valueDomainFault(value))
+  def valueDomainFault[T](label: String, value: String): Consequence[T] = Error(Conclusion.valueDomainFault(label, value))
+
   def syntaxErrorFault[T](messages: Seq[Message]): Consequence[T] = Error(Conclusion.syntaxErrorFault(messages))
 
   def illegalConfigurationDefect[T](p: String): Consequence[T] = Error(Conclusion.illegalConfigurationDefect(p))
@@ -145,6 +149,13 @@ object Consequence {
   } catch {
     case NonFatal(e) => error(e)
   }
+
+  def run[T](body: => Consequence[T]): Consequence[T] = try {
+    body
+  } catch {
+    case NonFatal(e) => error(e)
+  }
+
   //
   def from[A](p: ParseResult[A]): Consequence[A] = p match {
     case m: ParseSuccess[_] => Success(m.ast, _conclusion_success(m))

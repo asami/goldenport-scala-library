@@ -17,7 +17,8 @@ import Fault._
  *  version Apr. 29, 2021
  *  version May. 27, 2021
  *  version Jun. 20, 2021
- * @version Oct. 25, 2021
+ *  version Oct. 25, 2021
+ * @version Nov.  5, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -61,6 +62,7 @@ trait ValueDomainFault extends Fault {
 }
 object ValueDomainFault {
   def apply(p: I18NString): ValueDomainFault = ValueDomainValueFault(p)
+  def apply(p: String): ValueDomainFault = ValueDomainValueFault(p)
 }
 
 case class ValueDomainValueFault(
@@ -145,7 +147,7 @@ object InvalidArgumentFault {
   private def _message(key: String, ps: Iterable[Fault]): I18NMessage = {
     ps.toVector.map(_.message).concatenate
   }
-  // .map(_.message).list.mkString(";")))) * @version Oct. 25, 2021
+  // .map(_.message).list.mkString(";")))) * @version Nov.  5, 2021
 }
 
 case class MissingArgumentFault(

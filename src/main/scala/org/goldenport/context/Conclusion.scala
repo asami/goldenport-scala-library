@@ -16,7 +16,7 @@ import org.goldenport.util.ExceptionUtils
  *  version May. 30, 2021
  *  version Jun. 20, 2021
  *  version Oct. 25, 2021
- * @version Nov.  1, 2021
+ * @version Nov.  5, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -177,6 +177,20 @@ object Conclusion {
     val detail = DetailCode.Argument
     val status = StatusCode.BadRequest.withDetail(detail)
     val faults = Faults(InvalidTokenFault(label, value))
+    Conclusion(status, faults)
+  }
+
+  def valueDomainFault(value: String): Conclusion = {
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(ValueDomainFault(value))
+    Conclusion(status, faults)
+  }
+
+  def valueDomainFault(label: String, value: String): Conclusion = {
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(ValueDomainFault(label)) // XXX
     Conclusion(status, faults)
   }
 
