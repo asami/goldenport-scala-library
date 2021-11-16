@@ -7,12 +7,14 @@ import com.github.nscala_time.time.Imports._
 import org.goldenport.RAISE
 import org.goldenport.Strings
 import org.goldenport.context.DateTimeContext
+import org.goldenport.value._
 import org.goldenport.parser._
 import org.goldenport.util.DateTimeUtils
 
 /*
  * @since   Feb. 14, 2021
- * @version Feb. 28, 2021
+ *  version Feb. 28, 2021
+ * @version Nov. 13, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait TriggerGuard {
@@ -28,7 +30,8 @@ case class CronTriggerGuard(
   month: CronTriggerGuard.MonthGuard,
   dayOfWeek: CronTriggerGuard.DayOfWeekGuard,
   accuracy: Duration,
-  timezone: DateTimeZone
+  timezone: DateTimeZone,
+  day293031Strategy: CronTriggerGuard.Day293031Strategy = CronTriggerGuard.Day293031Strategy.Resolve
 ) extends TriggerGuard {
   import CronTriggerGuard._
 
@@ -136,15 +139,33 @@ case class CronTriggerGuard(
     candidate: DateTime,
     predicate: (DateTime, Duration, DateTime) => Boolean
   ) = {
-    val a = for {
+    val a0 = for {
       ys <- _year_candidates(candidate)
       mos <- _month_candidates(candidate)
       ds <- day.candidates
       hs <- hour.candidates
       ms <- minute.candidates
-      dt = new DateTime(ys, mos, ds, hs, ms, timezone)
-      if predicate(dt, accuracy, now)
+      dt = {
+        // println(ys)
+        // println(mos)
+        // println(ds)
+        // println(hs)
+        // println(ms)
+        val r = try {
+          Some(new DateTime(ys, mos, ds, hs, ms, timezone))
+        } catch {
+          case NonFatal(e) => day293031Strategy match {
+            case Day293031Strategy.Resolve => Some(new DateTime(ys, mos, 1, hs, ms, timezone).plusMonths(1))
+            case Day293031Strategy.Skip => None
+          }
+            
+        }
+//        println(r)
+        r
+      }
+      if dt.map(predicate(_, accuracy, now)).getOrElse(false)
     } yield dt
+    val a: List[DateTime] = a0.flatten
     a.nonEmpty option {
       val b = a.maxBy(_.getMillis)
       new Timestamp(b.getMillis)
@@ -478,6 +499,18 @@ object CronTriggerGuard {
   }
 
   case class ActionPrepareAt(actionAt: Timestamp, prepareAt: Timestamp)
+
+  sealed trait Day293031Strategy extends NamedValueInstance
+  object Day293031Strategy extends EnumerationClass[Day293031Strategy] {
+    val elements = Vector(Resolve, Skip)
+
+    case object Resolve extends Day293031Strategy {
+      val name = "resolve"
+    }
+    case object Skip extends Day293031Strategy {
+      val name = "skip"
+    }
+  }
 
   def parse(ctx: DateTimeContext, p: String): ParseResult[CronTriggerGuard] =
     parse(ctx.dateTimeZone, p)

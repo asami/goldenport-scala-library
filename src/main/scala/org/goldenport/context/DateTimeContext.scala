@@ -8,7 +8,8 @@ import org.goldenport.util.DateTimeUtils
  * 
  * @since   Jan. 22, 2021
  *  version Feb. 28, 2021
- * @version Apr. 26, 2021
+ *  version Apr. 26, 2021
+ * @version Nov. 13, 2021
  * @author  ASAMI, Tomoharu
  */
 case class DateTimeContext(
@@ -18,11 +19,11 @@ case class DateTimeContext(
 ) {
   def current: DateTime = DateTime.now(dateTimeZone) plus gap
 
-  // def currentYear: Int = current.year.get
-  // def currentMonth: Int = current.monthOfYear.get
-  // def currentWeek: Int = current.weekOfWeekyear.get
-  // def currentDay: Int = current.dayOfMonth.get
-  // def currentHour: Int = current.hourOfDay.get
+  def currentYear: Int = current.year.get
+  def currentMonth: Int = current.monthOfYear.get
+  def currentWeek: Int = current.weekOfWeekyear.get
+  def currentDay: Int = current.dayOfMonth.get
+  def currentHour: Int = current.hourOfDay.get
 }
 
 object DateTimeContext {
@@ -35,5 +36,14 @@ object DateTimeContext {
   def now() = {
     val dt = DateTime.now
     DateTimeContext(dt, Period.ZERO, dt.getZone)
+  }
+
+  def create(y: Int, m: Int, d: Int, h: Int, mi: Int): DateTimeContext = 
+    create(DateTime.now.getZone, y, m, d, h, mi)
+
+  def create(tz: DateTimeZone, y: Int, m: Int, d: Int, h: Int, mi: Int): DateTimeContext = {
+    val base = DateTime.now(tz)
+    val a = new DateTime(y, m, d, h, mi, tz)
+    DateTimeContext(base, new Period(base, a), tz)
   }
 }

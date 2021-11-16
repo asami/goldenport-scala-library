@@ -18,7 +18,7 @@ import Fault._
  *  version May. 27, 2021
  *  version Jun. 20, 2021
  *  version Oct. 25, 2021
- * @version Nov.  5, 2021
+ * @version Nov. 15, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -147,7 +147,7 @@ object InvalidArgumentFault {
   private def _message(key: String, ps: Iterable[Fault]): I18NMessage = {
     ps.toVector.map(_.message).concatenate
   }
-  // .map(_.message).list.mkString(";")))) * @version Nov.  5, 2021
+  // .map(_.message).list.mkString(";")))) * @version Nov. 15, 2021
 }
 
 case class MissingArgumentFault(
@@ -338,12 +338,28 @@ object IllegalConfigurationDefect {
 }
 
 case class Faults(faults: Vector[Fault] = Vector.empty) {
+  def getMessage: Option[String] = toI18NStringONev.map(x =>
+    x.list.map(_.en).mkString(";")
+  )
+
+  def getMessage(locale: Locale): Option[String] = toI18NStringONev.map(x =>
+    x.list.map(_.apply(locale)).mkString(";")
+  )
+
   def argumentFaults: Vector[ArgumentFault] = faults.collect {
     case m: ArgumentFault => m
   }
 
   def toI18NStringONev: Option[NonEmptyVector[I18NString]] =
     faults.headOption.map(x => NonEmptyVector(x.message.toI18NString, faults.tail.map(_.message.toI18NString)))
+
+  def getStringI18N: Option[I18NString] = toI18NStringONev.map(x =>
+    I18NString.mkI18NString(x.list, ";")
+  )
+
+  def getMessageI18N: Option[I18NMessage] = faults.headOption.map(i =>
+    faults.tail.foldLeft(i.message)((z, x) => z concat x.message)
+  )
 
   def guessStatusCode: StatusCode = faults.
     map(_.implicitStatusCode).sortWith(_is_strong).

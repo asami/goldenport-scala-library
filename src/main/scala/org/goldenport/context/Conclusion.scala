@@ -1,6 +1,7 @@
 package org.goldenport.context
 
 import scalaz._, Scalaz._
+import java.util.Locale
 import org.goldenport.i18n.I18NString
 import org.goldenport.i18n.I18NMessage
 import org.goldenport.trace._
@@ -16,12 +17,12 @@ import org.goldenport.util.ExceptionUtils
  *  version May. 30, 2021
  *  version Jun. 20, 2021
  *  version Oct. 25, 2021
- * @version Nov.  5, 2021
+ * @version Nov. 15, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
   code: StatusCode,
-  messageOption: Option[I18NMessage] = None,
+  messageI18NOption: Option[I18NMessage] = None,
   errors: ErrorMessages = ErrorMessages.empty,
   warnings: WarningMessages = WarningMessages.empty,
   exception: Option[Throwable] = None,
@@ -29,25 +30,28 @@ case class Conclusion(
   trace: Trace = Trace.empty,
   strategy: Conclusion.Strategy = Conclusion.Strategy.none
 ) {
-  def message: I18NMessage = messageOption orElse _errors_message orElse _warnings_message orElse exception.map(x => I18NMessage(x.getMessage)) getOrElse code.message
+  def messageI18N: I18NMessage = messageI18NOption orElse _errors_message orElse _warnings_message orElse exception.map(x => I18NMessage(x.getMessage)) orElse faults.getMessageI18N getOrElse code.message
 
   private def _errors_message: Option[I18NMessage] = errors.toOption.map(_.toI18NMessage)
 
   private def _warnings_message: Option[I18NMessage] = warnings.toOption.map(_.toI18NMessage)
+
+  def message: String = messageI18N.en
+  def message(locale: Locale): String = messageI18N(locale)
 
   // def incidents: Incidents = trace.incidents
   // def faults: Faults = incidents.faults
   // def effects: Effects = incidents.effects
   // def statictics: Statictics = incidents.statictics
 
-  def withMessage(p: String) = copy(messageOption = Some(I18NMessage(p)))
+  def withMessage(p: String) = copy(messageI18NOption = Some(I18NMessage(p)))
   def withTrace(p: TraceHandle): Conclusion = withTrace(p.ctx)
   def withTrace(p: TraceContext): Conclusion = withTrace(p.toTrace)
   def withTrace(p: Trace): Conclusion = copy(trace = p)
 
   def +(rhs: Conclusion): Conclusion = Conclusion(
     code,
-    messageOption,
+    messageI18NOption,
     errors + rhs.errors,
     warnings + rhs.warnings,
     exception, // CAUTION
@@ -122,7 +126,7 @@ object Conclusion {
 
   def make(p: Throwable, label: String): Conclusion = {
     val e = ExceptionUtils.normalize(p)
-    Conclusion(StatusCode.make(e), messageOption = Some(I18NMessage(label)), exception = Some(e))
+    Conclusion(StatusCode.make(e), messageI18NOption = Some(I18NMessage(label)), exception = Some(e))
   }
 
   def make(p: NonEmptyList[Fault]): Conclusion = make(Faults(p.list))

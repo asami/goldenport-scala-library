@@ -15,7 +15,7 @@ import org.goldenport.parser.{ParseMessage}
  *  version May. 30, 2021
  *  version Jun. 20, 2021
  *  version Oct. 25, 2021
- * @version Nov.  5, 2021
+ * @version Nov. 15, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -27,9 +27,9 @@ sealed trait Consequence[+T] {
   def flatMap[U](f: T => Consequence[U]): Consequence[U]
 
   // def getMessage: Option[String] = conclusion.getMessage
-  // def message: String = conclusion.message
+  def message: String = conclusion.message
   // def getMessage(locale: Locale): Option[String] = conclusion.getMessage(locale)
-  // def message(locale: Locale): String = conclusion.message(locale)
+  def message(locale: Locale): String = conclusion.message(locale)
 }
 
 object Consequence {
