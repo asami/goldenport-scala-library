@@ -8,13 +8,14 @@ import org.goldenport.event.CallEvent
  *  version May. 25, 2021
  *  version Jun. 11, 2021
  *  version Jul.  9, 2021
- * @version Sep. 26, 2021
+ *  version Sep. 26, 2021
+ * @version Nov. 28, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Transition(
   guard: SmGuard,
-  activity: Activity,
-  to: TransitionTo
+  to: TransitionTo,
+  effect: Activity
 ) {
   def getEventName: Option[String] = guard match {
     case EventNameGuard(name) => Some(name)

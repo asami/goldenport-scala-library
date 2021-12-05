@@ -6,6 +6,7 @@ import org.goldenport.hocon.RichConfig.Implicits._
 import org.goldenport.context.Consequence
 import org.goldenport.event.ObjectId
 import org.goldenport.statemachine.StateMachine.RuleAndState
+import org.goldenport.statemachine.StateMachineRule.RuleAndStateClass
 import org.goldenport.util.AnyUtils
 
 /*
@@ -14,7 +15,9 @@ import org.goldenport.util.AnyUtils
  *  version Jun. 14, 2021
  *  version Jul.  4, 2021
  *  version Sep. 26, 2021
- * @version Oct. 31, 2021
+ *  version Oct. 31, 2021
+ *  version Nov. 29, 2021
+ * @version Dec.  5, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StateMachineClass(
@@ -26,17 +29,20 @@ case class StateMachineClass(
   def states = rule.states
   def statemachines = rule.statemachines
 
-  def spawn: StateMachine = {
-    val sm = new StateMachine(this, logic.initState())
-    sm.goAhead()
+  def spawn()(implicit ctx: ExecutionContext): StateMachine =
+    _spawn(new StateMachine(this, logic.initState()))
+
+  def spawn(resourceid: ObjectId)(implicit ctx: ExecutionContext): StateMachine =
+    _spawn(StateMachine.create(this, logic.initState(), resourceid))
+
+  private def _spawn(sm: StateMachine)(implicit ctx: ExecutionContext): StateMachine = {
+    sm.init()
     sm
   }
 
-  def spawn(resourceid: ObjectId): StateMachine = {
-    val sm = new StateMachine(this, logic.initState(), StateMachine.Content.create(resourceid))
-    sm.goAhead()
-    sm
-  }
+  def reconstitute(value: Any, id: ObjectId): Consequence[StateMachine] = for {
+    sm <- reconstitute(value)
+  } yield sm.setResourceId(id)
 
   def reconstitute(value: Any): Consequence[StateMachine] = value match {
     case m: Byte => reconstituteInt(m.toInt)
@@ -48,16 +54,30 @@ case class StateMachineClass(
   }
 
   def reconstituteInt(value: Int): Consequence[StateMachine] =
-    logic.reconstitute(value).map(x => new StateMachine(this, x))
+    logic.reconstitute(value).map(_reconstituite)
 
   def reconstituteString(value: String): Consequence[StateMachine] =
-    logic.reconstitute(value).map(x => new StateMachine(this, x))
+    logic.reconstitute(value).map(_reconstituite)
+
+  private def _reconstituite(p: RuleAndStateClass): StateMachine = {
+    val a = new StateMachine(this, State(p.state))
+    a.setCurrentStateMachineRule(p.rule) // XXX multiple nesting
+    a
+  }
 
   def accept(sm: StateMachine, state: State, p: Parcel): Consequence[Boolean] = logic.accept(sm, state, p)
 
   def receive(sm: StateMachine, state: State, p: Parcel): Consequence[(RuleAndState, Parcel)] = logic.receive(sm, state, p)
 
-  def goAhead(sm: StateMachine, state: State): (StateMachineRule, State, Vector[StateMachine.HistorySlot]) = logic.goAhead(sm, state)
+  def init(
+    sm: StateMachine,
+    state: State
+  )(implicit ctx: ExecutionContext): Unit = logic.init(sm, state)
+
+  def goAhead(
+    sm: StateMachine,
+    state: State
+  )(implicit ctx: ExecutionContext): (StateMachineRule, State, Vector[StateMachine.HistorySlot]) = logic.goAhead(sm, state)
 }
 
 object StateMachineClass {

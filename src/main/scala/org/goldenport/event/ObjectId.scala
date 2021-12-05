@@ -2,13 +2,14 @@ package org.goldenport.event
 
 /*
  * @since   Oct. 31, 2021
- * @version Oct. 31, 2021
+ * @version Nov. 21, 2021
  * @author  ASAMI, Tomoharu
  */
 case class ObjectId(
   id: String,
   entity: Option[String]
 ) {
+  def isMatch(p: ObjectId) = id == p.id
 }
 
 object ObjectId {

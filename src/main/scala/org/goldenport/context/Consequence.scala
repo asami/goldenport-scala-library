@@ -15,7 +15,8 @@ import org.goldenport.parser.{ParseMessage}
  *  version May. 30, 2021
  *  version Jun. 20, 2021
  *  version Oct. 25, 2021
- * @version Nov. 15, 2021
+ *  version Nov. 30, 2021
+ * @version Dec.  5, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -30,6 +31,14 @@ sealed trait Consequence[+T] {
   def message: String = conclusion.message
   // def getMessage(locale: Locale): Option[String] = conclusion.getMessage(locale)
   def message(locale: Locale): String = conclusion.message(locale)
+
+  def get = toOption
+
+  def take: T = get getOrElse Conclusion.missingElementFault.RAISE
+
+  def takeOrInvalidArgumentFault(message: String): T = get getOrElse Conclusion.invalidArgumentFault(message).RAISE
+
+  def takeOrIllegalConfigurationDefect(name: String): T = get getOrElse Conclusion.illegalConfigurationDefect(name).RAISE
 }
 
 object Consequence {

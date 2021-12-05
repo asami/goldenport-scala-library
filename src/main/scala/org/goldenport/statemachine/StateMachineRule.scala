@@ -15,7 +15,9 @@ import org.goldenport.event.EventClazz
  *  version Jun. 29, 2021
  *  version Aug.  2, 2021
  *  version Sep. 26, 2021
- * @version Oct. 29, 2021
+ *  version Oct. 29, 2021
+ *  version Nov. 28, 2021
+ * @version Dec.  5, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StateMachineRule(
@@ -184,18 +186,24 @@ object StateMachineRule {
             case Left(l) => _activity_by_name(l)
             case Right(r) => _activity_by_object(r)
           }
-          case None => ParseResult(NoneActivity)
+          case None => ParseResult(Activity.Empty)
         }
       } yield a
 
-    private def _activity_by_name(p: String): ParseResult[Activity] =
-      ParseResult(NoneActivity) // TODO
+    private def _activity_by_name(p: String): ParseResult[Activity] = {
+      ParseResult(Activity.Opaque(p))
+    }
 
     private def _activity_by_object(p: Hocon): ParseResult[Activity] =
-      ParseResult(NoneActivity) // TODO
+      ParseResult(Activity.Empty)
 
-    private def _do_activity(p: Hocon, key: String): ParseResult[DoActivity] =
-      ParseResult(NoneDoActivity)
+     private def _do_activity(p: Hocon, key: String): ParseResult[DoActivity] =
+       p.getConfigOption(key).map(x => 
+         for {
+           entrya <- _activity(x, PROP_STMRULE_ENTRY)
+           exita <- _activity(x, PROP_STMRULE_EXIT)
+         } yield DoActivity(entrya, exita)
+       ).getOrElse(ParseResult.success(DoActivity.Empty))
 
     private def _transition(kind: StateMachineKind, p: Hocon, key: String): ParseResult[Transitions] =
 //      println(p)
@@ -209,9 +217,9 @@ object StateMachineRule {
 
     private def _to_transition(p: Hocon): ParseResult[Transition] = for {
       gurad <- _guard(p)
-      activity <- _activity(p, PROP_STMRULE_ACTIVITY)
       tostate <- _to_state(p)
-    } yield new Transition(gurad, activity, tostate)
+      effect <- _activity(p, PROP_STMRULE_EFFECT)
+    } yield new Transition(gurad, tostate, effect)
 
     private def _guard(p: Hocon): ParseResult[SmGuard] = for {
       r <- p.parseStringOrConfigOption(PROP_STMRULE_GUARD)

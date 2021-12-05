@@ -17,7 +17,8 @@ import org.goldenport.util.ExceptionUtils
  *  version May. 30, 2021
  *  version Jun. 20, 2021
  *  version Oct. 25, 2021
- * @version Nov. 15, 2021
+ *  version Nov. 15, 2021
+ * @version Dec.  5, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -154,10 +155,19 @@ object Conclusion {
     Conclusion(status, faults)
   }
 
+  def invalidArgumentFault(message: String): Conclusion = invalidArgumentFault(I18NMessage(message))
+
   def invalidArgumentFault(message: I18NMessage): Conclusion = {
     val detail = DetailCode.Argument
     val status = StatusCode.BadRequest.withDetail(detail)
     val faults = Faults(InvalidArgumentFault(message))
+    Conclusion(status, faults)
+  }
+
+  def missingElementFault(): Conclusion = {
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(MissingPropertyFault())
     Conclusion(status, faults)
   }
 

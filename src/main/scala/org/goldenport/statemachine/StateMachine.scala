@@ -13,13 +13,14 @@ import org.goldenport.statemachine.StateMachineRule.RuleAndStateClass
  * @since   Jan.  4, 2021
  *  version May. 30, 2021
  *  version Jun. 14, 2021
- * @version Oct. 31, 2021
+ *  version Oct. 31, 2021
+ *  version Nov. 29, 2021
+ * @version Dec.  5, 2021
  * @author  ASAMI, Tomoharu
  */
 class StateMachine(
   val clazz: StateMachineClass,
-  initstate: State,
-  val content: StateMachine.Content = StateMachine.Content.empty
+  initstate: State
 ) extends Showable {
   import StateMachine._
 
@@ -48,6 +49,24 @@ class StateMachine(
   private var _history: Vector[HistorySlot] = Vector(HistorySlot(InitEvent, _current_statemachine_rule, initstate))
   def history = _history
 
+  private var _content: StateMachine.Content = StateMachine.Content.empty
+  def content = _content
+
+  def setResourceId(p: ObjectId) = {
+    _content = _content.withResourceId(p)
+    this
+  }
+
+  def getResourceId: Option[ObjectId] = content.resourceId
+
+  def isSame(p: StateMachine): Boolean = {
+    val a = for {
+      l <- this.getResourceId
+      r <- p.getResourceId
+    } yield l == r
+    a.getOrElse(false)
+  }
+
   def getStateClass(name: String): Option[RuleAndStateClass] = 
     stateMacineRuleList.flatMap(_.findState(name)).headOption
 
@@ -59,13 +78,14 @@ class StateMachine(
   def sendPrepare(p: Parcel): Consequence[Parcel] = Consequence.success(p)
 
   def sendCommit(p: Parcel): Consequence[Parcel] = synchronized {
+    val parcel = p.withClass(clazz)
     for {
-      sp <- clazz.receive(this, _state, p.withClass(clazz))
+      sp <- clazz.receive(this, _state, parcel)
     } yield {
       _state = sp._1.state
       _set_rule(sp._1.rule)
       _history = _history :+ HistorySlot(p.event, _current_statemachine_rule, _state)
-      goAhead()
+      goAhead()(parcel.context)
       sp._2
     }
   }
@@ -75,7 +95,12 @@ class StateMachine(
     commited <- sendCommit(p)
   } yield commited
 
-  def goAhead(): Unit = synchronized {
+  def init()(implicit ctx: ExecutionContext): Unit = {
+    clazz.init(this, _state)
+    goAhead()
+  }
+
+  def goAhead()(implicit ctx: ExecutionContext): Unit = synchronized {
     val (c, s, h) = clazz.goAhead(this, _state)
     _state = s
     _set_rule(c)
@@ -92,7 +117,9 @@ class StateMachine(
 object StateMachine {
   case class Content(
     resourceId: Option[ObjectId] = None
-  )
+  ) {
+    def withResourceId(p: ObjectId) = copy(resourceId = Some(p))
+  }
   object Content {
     val empty = Content()
 
@@ -104,4 +131,10 @@ object StateMachine {
   case class HistorySlot(event: Event, statemachine: StateMachineRule, state: State) {
     def toRuleAndState: RuleAndState = RuleAndState(statemachine, state)
   }
+
+  def create(
+    clazz: StateMachineClass,
+    initstate: State,
+    resourceid: ObjectId
+  ): StateMachine = new StateMachine(clazz, initstate).setResourceId(resourceid)
 }

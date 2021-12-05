@@ -11,7 +11,8 @@ import org.goldenport.event.Event
  *  version May. 30, 2021
  *  version Jun. 13, 2021
  *  version Sep. 25, 2021
- * @version Oct. 31, 2021
+ *  version Oct. 31, 2021
+ * @version Nov. 29, 2021
  * @author  ASAMI, Tomoharu
  */
 class StateMachineSpace(
@@ -26,11 +27,11 @@ class StateMachineSpace(
     this
   }
 
-  def issueEvent(evt: Event): Parcel = {
-    val ctx = ExecutionContext.create()
-    val parcel = Parcel(ctx, evt)
-    issueEvent(parcel)
-  }
+  // def issueEvent(evt: Event): Parcel = {
+  //   val ctx = ExecutionContext.create()
+  //   val parcel = Parcel(ctx, evt)
+  //   issueEvent(parcel)
+  // }
 
   def issueEvent(parcel: Parcel): Parcel = {
     case class Z(ms: Vector[StateMachine] = Vector.empty) {
@@ -55,20 +56,28 @@ class StateMachineSpace(
     _machines./:(Z())(_+_).r
   }
 
-  def spawn(name: String): StateMachine = RAISE.notImplementedYetDefect
+  def spawn(
+    name: String
+  )(implicit ctx: ExecutionContext): StateMachine = RAISE.notImplementedYetDefect
 
-  def spawnOption(name: String): Option[StateMachine] = {
+  def spawnOption(
+    name: String
+  )(implicit ctx: ExecutionContext): Option[StateMachine] = {
     classes.get(name).map(_.spawn).map(_register)
   }
 
-  def spawnOption(name: String, to: ObjectId): Option[StateMachine] = {
+  def spawnOption(
+    name: String,
+    to: ObjectId
+  )(implicit ctx: ExecutionContext): Option[StateMachine] = {
     classes.get(name).map(_.spawn(to)).map(_register)
   }
 
   def register(p: StateMachine) = _register(p)
 
   private def _register(p: StateMachine) = synchronized {
-    _machines = _machines :+ p
+    val a = _machines.filterNot(_.isSame(p))
+    _machines = a :+ p
     p
   }
 }

@@ -6,13 +6,16 @@ import org.goldenport.context.Consequence
 import org.goldenport.event.GoAheadEvent
 import org.goldenport.event.CallEvent
 import org.goldenport.statemachine.StateMachine.RuleAndState
+import org.goldenport.statemachine.StateMachineRule.RuleAndStateClass
 
 /*
  * @since   May. 23, 2021
  *  version May. 30, 2021
  *  version Jun. 14, 2021
  *  version Sep. 26, 2021
- * @version Oct. 29, 2021
+ *  version Oct. 29, 2021
+ *  version Nov. 29, 2021
+ * @version Dec.  5, 2021
  * @author  ASAMI, Tomoharu
  */
 trait StateMachineLogic {
@@ -24,11 +27,17 @@ trait StateMachineLogic {
 
   def newState(p: StateClass): State = State(p)
 
-  def reconstitute(p: Int): Consequence[State] =
-    Consequence.successOrMissingPropertyFault(p.toString, rule.findState(p).map(x => State(x.state)))
+  def reconstitute(p: Int): Consequence[RuleAndStateClass] =
+    Consequence.successOrMissingPropertyFault(p.toString, rule.findState(p))
 
-  def reconstitute(p: String): Consequence[State] =
-    Consequence.successOrMissingPropertyFault(p, rule.findState(p).map(x => State(x.state)))
+  def reconstitute(p: String): Consequence[RuleAndStateClass] =
+    Consequence.successOrMissingPropertyFault(p, rule.findState(p))
+
+  // def reconstitute(p: Int): Consequence[State] =
+  //   Consequence.successOrMissingPropertyFault(p.toString, rule.findState(p).map(x => State(x.state)))
+
+  // def reconstitute(p: String): Consequence[State] =
+  //   Consequence.successOrMissingPropertyFault(p, rule.findState(p).map(x => State(x.state)))
 
   def accept(sm: StateMachine, state: State, p: Parcel): Consequence[Boolean] = for {
     f <- _force_accept(sm, state, p)
@@ -49,7 +58,7 @@ trait StateMachineLogic {
       sm.kind match {
         case StateMachineKind.Resource => sm.content.resourceId.flatMap(rid =>
           p.event match {
-            case m: CallEvent => Some(m.to == rid)
+            case m: CallEvent => Some(m.to.isMatch(rid))
             case _ => None
           }
         )
@@ -74,13 +83,25 @@ trait StateMachineLogic {
       }
     } yield {
       val (s, t, r) = str
-      val a = transit(sm, state, t, r)
-      //   (goAhead(a, r), r)
-      (a, r)
+      // val a = transit(sm, state, t, r)
+      // //   (goAhead(a, r), r)
+      // (a, r)
+      (RuleAndState(sm.currentStateMachineRule, s), r)
     }
 
-  def goAhead(sm: StateMachine, state: State): (StateMachineRule, State, Vector[StateMachine.HistorySlot]) = {
-    val ctx = ExecutionContext.create(this)
+  def init(
+    sm: StateMachine,
+    state: State
+  )(implicit ctx: ExecutionContext): Unit = {
+    val parcel = Parcel(ctx, GoAheadEvent)
+    entry(sm, state, parcel)
+  }
+
+  def goAhead(
+    sm: StateMachine,
+    state: State
+  )(implicit ctx: ExecutionContext): (StateMachineRule, State, Vector[StateMachine.HistorySlot]) = {
+//    val ctx = ExecutionContext.create(this)
     val parcel = Parcel(ctx, GoAheadEvent)
     goAhead(sm, state, parcel)
   }
@@ -98,24 +119,26 @@ trait StateMachineLogic {
     p.execute("StateMachineLogic#transit", state.status) {
       val rs = t.to.state(sm, state, p)
       sm.setCurrentStateMachineRule(rs.rule)
-      exit(state, p)
-      t.activity(p) // TODO parcel
-      entry(state, p)
+      exit(sm, state, p)
+      t.effect(sm, p) // TODO parcel
+      entry(sm, rs.state, p)
       Result(rs, rs.state.status)
     }
   }
 
-  def entry(state: State, p: Parcel): State = {
-    state.entryActivity(p) // TODO parcel
-    state.doActivity.entry(p) // TODO parcel
+  def entry(sm: StateMachine, state: State, p: Parcel): State = {
+    state.entryActivity(sm, p) // TODO parcel
+    state.doActivity.entry(sm, p) // TODO parcel
     state
   }
 
-  def exit(state: State, p: Parcel): State = {
-    state.doActivity.exit(p) // TODO parcel
-    state.exitActivity(p) // TODO parcel
+  def exit(sm: StateMachine, state: State, p: Parcel): State = {
+    state.doActivity.exit(sm, p) // TODO parcel
+    state.exitActivity(sm, p) // TODO parcel
     state
   }
+
+  def execute(sm: StateMachine, activity: Activity, p: Parcel): Parcel
 }
 
 object StateMachineLogic {

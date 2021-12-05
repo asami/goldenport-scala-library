@@ -7,7 +7,8 @@ import org.goldenport.values.PathName
  * @since   Jan.  4, 2021
  *  version May. 29, 2021
  *  version Jun. 29, 2021
- * @version Oct. 24, 2021
+ *  version Oct. 24, 2021
+ * @version Nov. 28, 2021
  * @author  ASAMI, Tomoharu
  */
 case class StateClass(
@@ -15,9 +16,9 @@ case class StateClass(
   value: Int,
   stateMachinePath: Option[PathName],
   transitions: Transitions,
-  entryActivity: Activity = NoneActivity,
-  exitActivity: Activity = NoneActivity,
-  doActivity: DoActivity = NoneDoActivity
+  entryActivity: Activity = Activity.Empty,
+  exitActivity: Activity = Activity.Empty,
+  doActivity: DoActivity = DoActivity.Empty
 ) {
   def qualifiedFullName: String = stateMachinePath.fold(name)(x => (x :+ name).v)
 
