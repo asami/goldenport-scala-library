@@ -2,6 +2,7 @@ package org.goldenport.parser
 
 import org.goldenport.RAISE
 import org.goldenport.i18n.I18NElement
+import org.goldenport.util.StringUtils
 
 /*
  * @since   Sep. 22, 2018
@@ -10,7 +11,8 @@ import org.goldenport.i18n.I18NElement
  *  version Feb.  9, 2019
  *  version May. 19, 2019
  *  version Feb. 15, 2021
- * @version May. 16, 2021
+ *  version May. 16, 2021
+ * @version Dec. 31, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalBlock {
@@ -70,6 +72,20 @@ case class LogicalSection(
   blocks: LogicalBlocks,
   location: Option[ParseLocation] = None
 ) extends LogicalBlock {
+  override def toString(): String = {
+    val s = blocks.sections.toList match {
+      case Nil => blocks.blocks.toStream.flatMap {
+        case StartBlock => None
+        case EndBlock => None
+        case m: LogicalSection => Some(m.nameForModel)
+        case m: LogicalParagraph => m.getText.map(StringUtils.forToString)
+        case m: LogicalVerbatim => m.getText.map(StringUtils.forToString)
+      }.headOption.getOrElse("EMPTY")
+      case xs => xs.map(_.nameForModel).mkString(",")
+    }
+    s"LogicalSection[${title.nameForModel}]: ${s}"
+  }
+
   def isEmpty = false
   def keyForModel: String = title.keyForModel
   def nameForModel: String = title.nameForModel

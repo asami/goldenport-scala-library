@@ -6,13 +6,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.JavaConverters._
 import java.io.{File, InputStream, IOException}
 import org.goldenport.Strings
+import org.goldenport.context.Showable
 import org.goldenport.io.{InputSource, StringInputSource}
 import org.goldenport.bag.{ChunkBag, BufferFileBag}
 
 /*
  * @since   Oct.  4, 2018
  *  version Oct.  8, 2018
- * @version May. 21, 2020
+ *  version May. 21, 2020
+ * @version Dec. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 class ShellCommand(
@@ -21,7 +23,9 @@ class ShellCommand(
   directory: Option[File],
   in: Option[InputSource],
   timeout: Option[Duration]
-) {
+) extends Showable {
+  def print = commands.mkString(" ")
+
   private val _commands = {
     val a = Vector("sh", "-c") // TODO
     val b = a :+ commands.mkString(" ")

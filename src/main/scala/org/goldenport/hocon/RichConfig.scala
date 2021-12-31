@@ -33,7 +33,8 @@ import org.goldenport.parser.ParseResult
  *  version Apr. 24, 2021
  *  version May.  5, 2021
  *  version Jun. 12, 2021
- * @version Oct. 20, 2021
+ *  version Oct. 20, 2021
+ * @version Dec. 31, 2021
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -92,6 +93,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def parseBigDecimalOption(key: String): ParseResult[Option[BigDecimal]] = HoconUtils.parseBigDecimalOption(config, key)
   def parseString(key: String): ParseResult[String] = HoconUtils.parseString(config, key)
   def parseStringOption(key: String): ParseResult[Option[String]] = HoconUtils.parseStringOption(config, key)
+  def parseStringList(key: String): ParseResult[List[String]] = HoconUtils.parseStringList(config, key)
   def parseStringOrConfig(key: String): ParseResult[Either[String, Config]] = HoconUtils.parseStringOrConfig(config, key)
   def parseStringOrConfigOption(key: String): ParseResult[Option[Either[String, Config]]] = HoconUtils.parseStringOrConfigOption(config, key)
   def parseConfig(key: String): ParseResult[Config] = HoconUtils.parseConfig(config, key)

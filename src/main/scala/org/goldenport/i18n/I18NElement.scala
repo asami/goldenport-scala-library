@@ -16,7 +16,8 @@ import org.goldenport.xml.XmlUtils.{makeString, parseNodeSeq}
  *  version Sep. 23, 2019
  *  version Apr. 17, 2020
  *  version Feb. 15, 2021
- * @version Sep. 17, 2021
+ *  version Sep. 17, 2021
+ * @version Dec. 31, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait I18NElement {
@@ -76,5 +77,5 @@ case class I18NStringI18NElement(v: I18NString) extends I18NElement {
     v.map.mapValues(makeString)
   )
 
-  override def toString() = s"I18NStringI18NElement(v.toString)"
+  override def toString() = s"I18NStringI18NElement(${v.toString})"
 }

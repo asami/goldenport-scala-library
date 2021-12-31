@@ -39,7 +39,8 @@ import org.goldenport.util.AnyUtils
  *  version Apr. 30, 2021
  *  version May.  5, 2021
  *  version Jun. 13, 2021
- * @version Oct. 20, 2021
+ *  version Oct. 20, 2021
+ * @version Dec. 31, 2021
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -372,6 +373,10 @@ object HoconUtils {
 
   def parseStringOption(p: Config, key: String): ParseResult[Option[String]] = ParseResult(
     getString(p, key)
+  )
+
+  def parseStringList(p: Config, key: String): ParseResult[List[String]] = ParseResult(
+    asStringList(p, key)
   )
 
   def parseStringOrConfig(p: Config, key: String): ParseResult[Either[String, Config]] =

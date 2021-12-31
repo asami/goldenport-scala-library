@@ -10,7 +10,8 @@ import org.goldenport.parser.CommandParser
  *  version Feb. 18, 2020
  *  version Mar.  1, 2020
  *  version May. 16, 2020
- * @version Apr. 25, 2021
+ *  version Apr. 25, 2021
+ * @version Dec. 18, 2021
  * @author  ASAMI, Tomoharu
  */
 case class Engine(
@@ -63,8 +64,10 @@ case class Engine(
     _output(env, r)
   }
 
-  def apply(env: Environment, service: ServiceClass, args: Seq[String]): Response =
-    RAISE.notImplementedYetDefect
+  def apply(env: Environment, service: ServiceClass, args: Seq[String]): Response = {
+    val r = service.execute(env, args)
+    _output(env, r)
+  }
 
   def apply(env: Environment, operation: OperationClass, args: Seq[String]): Response = {
     val r = operation.execute(env, args)

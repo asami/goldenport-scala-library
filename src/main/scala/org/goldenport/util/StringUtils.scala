@@ -45,7 +45,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Jul. 29, 2020
  *  version Sep.  1, 2020
  *  version Jan.  9, 2021
- * @version Apr. 10, 2021
+ *  version Apr. 10, 2021
+ * @version Dec. 31, 2021
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -592,6 +593,8 @@ object StringUtils {
 
   def normalizeConsoleMessageWithoutTrailingNewline(newline: String)(p: String): String =
     dropRightNewlines(normalizeConsoleMessage(newline)(p))
+
+  def forToString(p: String): String = showConsole(p, "\\n", 1)
 
   /*
    * List
