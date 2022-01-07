@@ -40,7 +40,8 @@ import org.goldenport.util.AnyUtils
  *  version May.  5, 2021
  *  version Jun. 13, 2021
  *  version Oct. 20, 2021
- * @version Dec. 31, 2021
+ *  version Dec. 31, 2021
+ * @version Jan.  7, 2022
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -521,7 +522,10 @@ object HoconUtils {
 
   def consequenceTokenOption[T <: ValueInstance](p: Config, key: String, f: ValueClass[T]): Consequence[Option[T]] =
     getString(p, key) match {
-      case Some(s) => Consequence.success(f.get(s))
+      case Some(s) => f.get(s) match {
+        case Some(v) => Consequence.success(Some(v))
+        case None => Consequence.invalidTokenFault(key, s)
+      }
       case None => Consequence.success(None)
     }
 
