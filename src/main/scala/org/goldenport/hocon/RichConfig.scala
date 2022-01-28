@@ -7,6 +7,7 @@ import scala.util.control.NonFatal
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 import java.net.{URL, URI}
+import java.io.File
 import com.typesafe.config._
 import org.goldenport.Strings
 import org.goldenport.i18n.{I18NString, I18NElement}
@@ -34,7 +35,8 @@ import org.goldenport.parser.ParseResult
  *  version May.  5, 2021
  *  version Jun. 12, 2021
  *  version Oct. 20, 2021
- * @version Dec. 31, 2021
+ *  version Dec. 31, 2021
+ * @version Jan. 24, 2022
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -76,7 +78,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def getConfigOption(key: String) = HoconUtils.getConfig(config, key)
   def getRichConfigOption(key: String) = HoconUtils.getRichConfig(config, key)
   def getValueOption[T <: ValueInstance](valueclass: ValueClass[T], key: String) = HoconUtils.getValue(valueclass, config, key)
-
+  def getFileOption(key: String): Option[File] = HoconUtils.getFile(config, key)
   def parseBoolean(key: String): ParseResult[Boolean] = HoconUtils.parseBoolean(config, key)
   def parseBooleanOption(key: String): ParseResult[Option[Boolean]] = HoconUtils.parseBooleanOption(config, key)
   def parseShort(key: String): ParseResult[Short] = HoconUtils.parseShort(config, key)
@@ -120,6 +122,10 @@ case class RichConfig(config: Config) extends AnyVal {
   def consequenceBigDecimalOption(key: String): Consequence[Option[BigDecimal]] = HoconUtils.consequenceBigDecimalOption(config, key)
   def consequenceString(key: String): Consequence[String] = HoconUtils.consequenceString(config, key)
   def consequenceStringOption(key: String): Consequence[Option[String]] = HoconUtils.consequenceStringOption(config, key)
+
+  def consequenceUrl(key: String): Consequence[URL] = HoconUtils.consequenceUrl(config, key)
+  def consequenceUrlOption(key: String): Consequence[Option[URL]] = HoconUtils.consequenceUrlOption(config, key)
+
   def consequenceToken[T <: ValueInstance](key: String, f: ValueClass[T]): Consequence[T] =
     HoconUtils.consequenceToken(config, key, f)
   def consequenceTokenOption[T <: ValueInstance](key: String, f: ValueClass[T]): Consequence[Option[T]] =
@@ -137,6 +143,8 @@ case class RichConfig(config: Config) extends AnyVal {
   def childConfigMap: Map[String, Config] = HoconUtils.childConfigMap(config)
   def childRichConfigMap: Map[String, RichConfig] = HoconUtils.childRichConfigMap(config)
   def buildMap[T](f: Config => Option[T]): VectorMap[String, T] = HoconUtils.buildMap(config, f)
+  def buildMap[T](key: String, f: Config => Option[T]): VectorMap[String, T] = HoconUtils.buildMap(config, f, key)
+
   def +(rhs: RichConfig): RichConfig = new RichConfig(rhs.config.withFallback(config))
 }
 

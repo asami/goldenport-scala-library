@@ -1,6 +1,8 @@
 package org.goldenport.util
 
 import scala.util.control.NonFatal
+import java.math.MathContext
+import java.math.RoundingMode
 import org.goldenport.Strings
 import org.goldenport.context.Consequence
 import org.goldenport.parser.ParseResult
@@ -13,7 +15,8 @@ import org.goldenport.parser.ParseResult
  *  version Jan. 19, 2021
  *  version Feb. 14, 2021
  *  version Mar. 24, 2021
- * @version Nov.  5, 2021
+ *  version Nov.  5, 2021
+ * @version Jan. 27, 2022
  * @author  ASAMI, Tomoharu
  */
 object NumberUtils {
@@ -631,4 +634,83 @@ object NumberUtils {
     case m: java.math.BigDecimal => Consequence(BigDecimal(m))
     case _ => Consequence.valueDomainFault(AnyUtils.toString(p))
   }
+
+  def addScaleZero(lhs: BigDecimal, rhs: Float, mc: MathContext): BigDecimal = {
+    val a = lhs.apply(mc) + rhs
+    roundScaleZero(a, mc)
+  }
+
+  def addScale(lhs: BigDecimal, rhs: Float, mc: MathContext, scale: Int): BigDecimal = {
+    val a = lhs.apply(mc) + rhs
+    roundScale(a, mc, scale)
+  }
+
+  def subtractScaleZero(lhs: BigDecimal, rhs: Float, mc: MathContext): BigDecimal = {
+    val a = lhs.apply(mc) - rhs
+    roundScaleZero(a, mc)
+  }
+
+  def subtractScale(lhs: BigDecimal, rhs: Float, mc: MathContext, scale: Int): BigDecimal = {
+    val a = lhs.apply(mc) - rhs
+    roundScale(a, mc, scale)
+  }
+
+  def multiplyScaleZero(lhs: BigDecimal, rhs: Float, mc: MathContext): BigDecimal = {
+    val a = lhs.apply(mc) * rhs
+    roundScaleZero(a, mc)
+  }
+
+  def multiplyScale(lhs: BigDecimal, rhs: Float, mc: MathContext, scale: Int): BigDecimal = {
+    val a = lhs.apply(mc) * rhs
+    roundScale(a, mc, scale)
+  }
+
+  def divideScaleZero(lhs: BigDecimal, rhs: Float, mc: MathContext): BigDecimal = {
+    val a = lhs.apply(mc) / rhs
+    roundScaleZero(a, mc)
+  }
+
+  def divideScale(lhs: BigDecimal, rhs: Float, mc: MathContext, scale: Int): BigDecimal = {
+    val a = lhs.apply(mc) / rhs
+    roundScale(a, mc, scale)
+  }
+
+  def roundScaleZero(p: BigDecimal, mc: MathContext): BigDecimal =
+    roundScaleZero(p, mc.getRoundingMode)
+
+  def roundScaleZero(p: BigDecimal, rm: RoundingMode): BigDecimal =
+    roundScale(p, rm, 0)
+
+  def roundScale(p: BigDecimal, mc: MathContext, scale: Int): BigDecimal =
+    p.setScale(scale, roundingModeJavaToScala(mc.getRoundingMode)).apply(p.mc)
+
+  def roundScale(p: BigDecimal, rm: RoundingMode, scale: Int): BigDecimal =
+    p.setScale(scale, roundingModeJavaToScala(rm)).apply(p.mc)
+
+
+  def roundingModeJavaToScala(p: RoundingMode): BigDecimal.RoundingMode.RoundingMode = p match {
+      case RoundingMode.UP => BigDecimal.RoundingMode.UP
+      case RoundingMode.DOWN => BigDecimal.RoundingMode.DOWN
+      case RoundingMode.CEILING => BigDecimal.RoundingMode.CEILING // ceil(p)
+      case RoundingMode.FLOOR => BigDecimal.RoundingMode.FLOOR // floor(p)
+      case RoundingMode.HALF_UP => BigDecimal.RoundingMode.HALF_UP
+      case RoundingMode.HALF_DOWN => BigDecimal.RoundingMode.HALF_DOWN
+      case RoundingMode.HALF_EVEN => BigDecimal.RoundingMode.HALF_EVEN
+      case RoundingMode.UNNECESSARY => BigDecimal.RoundingMode.UNNECESSARY
+  }
+
+  def roundingModeScalaToJava(p: BigDecimal.RoundingMode.RoundingMode): RoundingMode = p match {
+      case BigDecimal.RoundingMode.UP => RoundingMode.UP
+      case BigDecimal.RoundingMode.DOWN => RoundingMode.DOWN
+      case BigDecimal.RoundingMode.CEILING => RoundingMode.CEILING // ceil(p)
+      case BigDecimal.RoundingMode.FLOOR => RoundingMode.FLOOR // floor(p)
+      case BigDecimal.RoundingMode.HALF_UP => RoundingMode.HALF_UP
+      case BigDecimal.RoundingMode.HALF_DOWN => RoundingMode.HALF_DOWN
+      case BigDecimal.RoundingMode.HALF_EVEN => RoundingMode.HALF_EVEN
+      case BigDecimal.RoundingMode.UNNECESSARY => RoundingMode.UNNECESSARY
+  }
+
+  def round(p: BigDecimal): BigDecimal = BigDecimal(scala.math.round(p.doubleValue), p.mc)
+  def floor(p: BigDecimal): BigDecimal = BigDecimal(scala.math.floor(p.doubleValue), p.mc)
+  def ceil(p: BigDecimal): BigDecimal = BigDecimal(scala.math.ceil(p.doubleValue), p.mc)
 }

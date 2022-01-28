@@ -6,6 +6,7 @@ import java.util.{Date, Locale, TimeZone}
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import org.joda.time.{DateTime, LocalDate, DateTimeZone}
+import org.joda.time.LocalDateTime
 import org.joda.time.format.ISODateTimeFormat
 
 /*
@@ -17,7 +18,8 @@ import org.joda.time.format.ISODateTimeFormat
  *  version Mar. 17, 2016
  *  version Sep.  9, 2016
  *  version Jan. 19, 2017
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version Jan. 27, 2022
  * @author  ASAMI, Tomoharu
  */
 object TimestampUtils {
@@ -74,6 +76,14 @@ object TimestampUtils {
     new DateTime(base.getTime, tz).toLocalDate
   }
 
+  def toLocalDateTime(tz: TimeZone, base: Timestamp): LocalDateTime = {
+    new DateTime(base.getTime, DateTimeZone.forTimeZone(tz)).toLocalDateTime
+  }
+
+  def toLocalDateTime(tz: DateTimeZone, base: Timestamp): LocalDateTime = {
+    new DateTime(base.getTime, tz).toLocalDateTime
+  }
+
   //
   def isInMinute(ts: Timestamp): Boolean = isInMinute(ts.getTime)
   def isInMinuteWithSkew(ts: Timestamp, skew: Long): Boolean =
@@ -101,4 +111,43 @@ object TimestampUtils {
 
   def isIn(current: Long, target: Long, duration: Long): Boolean =
     current <= target + duration
+
+  def isInHours(ts: Timestamp, hours: Int): Boolean = isInHours(System.currentTimeMillis, ts.getTime, hours)
+
+  def isInHours(current: Long, ts: Timestamp, hours: Int): Boolean = isInHours(current, ts.getTime, hours)
+
+  def isInHours(ts: Long, hours: Int): Boolean = isInHours(System.currentTimeMillis, ts, hours)
+
+  def isInHours(current: Long, ts: Long, hours: Int): Boolean = 
+    isIn(current, ts, hours * millisInHour)
+
+  def isInMinutes(ts: Timestamp, minutes: Int): Boolean = isInMinutes(System.currentTimeMillis, ts.getTime, minutes)
+
+  def isInMinutes(current: Long, ts: Timestamp, minutes: Int): Boolean = isInMinutes(current, ts.getTime, minutes)
+
+  def isInMinutes(ts: Long, minutes: Int): Boolean = isInMinutes(System.currentTimeMillis, ts, minutes)
+
+  def isInMinutes(current: Long, ts: Long, minutes: Int): Boolean = 
+    isIn(current, ts, minutes * millisInMinute)
+
+  def isInSeconds(ts: Timestamp, seconds: Int): Boolean = isInSeconds(System.currentTimeMillis, ts.getTime, seconds)
+
+  def isInSeconds(current: Long, ts: Timestamp, seconds: Int): Boolean = isInSeconds(current, ts.getTime, seconds)
+
+  def isInSeconds(ts: Long, seconds: Int): Boolean = isInSeconds(System.currentTimeMillis, ts, seconds)
+
+  def isInSeconds(current: Long, ts: Long, seconds: Int): Boolean = 
+    isIn(current, ts, seconds * millisInSecond)
+
+  def countOfMonthsAlmost(start: Timestamp, end: Timestamp, tz: TimeZone): Int =
+    LocalDateTimeUtils.countOfMonthsAlmost(toLocalDateTime(tz, start), toLocalDateTime(tz, end))
+
+  def countOfMonthsPassed(start: Timestamp, end: Timestamp, tz: TimeZone): Int =
+    LocalDateTimeUtils.countOfMonthsPassed(toLocalDateTime(tz, start), toLocalDateTime(tz, end))
+
+  def countOfYearsAlmost(start: Timestamp, end: Timestamp, tz: TimeZone): Int =
+    LocalDateTimeUtils.countOfYearsAlmost(toLocalDateTime(tz, start), toLocalDateTime(tz, end))
+
+  def countOfYearsPassed(start: Timestamp, end: Timestamp, tz: TimeZone): Int =
+    LocalDateTimeUtils.countOfYearsPassed(toLocalDateTime(tz, start), toLocalDateTime(tz, end))
 }

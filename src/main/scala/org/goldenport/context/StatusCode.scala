@@ -11,7 +11,8 @@ import org.goldenport.util.ExceptionUtils
  *  version Mar. 26, 2021
  *  version Apr. 10, 2021
  *  version May. 30, 2021
- * @version Jun. 20, 2021
+ *  version Jun. 20, 2021
+ * @version Jan. 20, 2022
  * @author  ASAMI, Tomoharu
  */
 case class StatusCode(
@@ -21,9 +22,19 @@ case class StatusCode(
   messageOption: Option[I18NMessage] = None, // FURTHER CONSIDERATION
   externalService: Option[StatusCode] = None // FURTHER CONSIDERATION
 ) {
+  import StatusCode._
+
   def message: I18NMessage = messageOption getOrElse StatusCode.message(main)
 
   def withDetail(p: DetailCode) = copy(detail = Some(p))
+
+  def isSuccess: Boolean = Ok.main <= main && main < MultipleChoices.main
+
+  def forConfig: StatusCode =
+    if (isSuccess)
+      this
+    else
+      copy(main = InternalServerError.main, detail = detail.map(_.forConfig))
 }
 
 object StatusCode {
@@ -70,8 +81,9 @@ object StatusCode {
   /*
    * Main and Detail
    */
-  final val IllegalArugument = BadRequest // TODO
-  final val SyntaxError = BadRequest // TODO
+  final val IllegalArugument = BadRequest.withDetail(DetailCode.Argument)
+  final val SyntaxError = BadRequest.withDetail(DetailCode.ArgumentSyntax)
+  final val Config = InternalServerError.withDetail(DetailCode.Config)
   final val NoReach = InternalServerError.withDetail(DetailCode.NoReach)
   final val Invariant = InternalServerError.withDetail(DetailCode.Invariant)
   final val PreCondition = InternalServerError.withDetail(DetailCode.PreCondition)

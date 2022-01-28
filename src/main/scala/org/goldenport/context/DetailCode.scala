@@ -8,7 +8,8 @@ import org.goldenport.util.StringUtils
  * @since   Mar. 12, 2021
  *  version Mar. 27, 2021
  *  version Apr. 29, 2021
- * @version May. 27, 2021
+ *  version May. 27, 2021
+ * @version Jan. 20, 2022
  * @author  ASAMI, Tomoharu
  */
 case class DetailCode(
@@ -18,6 +19,8 @@ case class DetailCode(
   application: Option[DetailCode.ApplicationCode], // 2
   reaction: DetailCode.Reaction // 2
 ) {
+  import DetailCode._
+
   // 7 or 9
   def code = application.
     map(x =>
@@ -29,6 +32,11 @@ case class DetailCode(
     s"${category.name}-${site.name}-${incident.name}-${x.name}-${reaction.name}"
   ).getOrElse(
     s"${category.name}-${site.name}-${incident.name}-${reaction.name}"
+  )
+
+  def forConfig: DetailCode = copy(
+    category = SystemError,
+    site = ConfigSite
   )
 }
 
@@ -43,15 +51,19 @@ object DetailCode {
   }
   sealed trait ErrorCategory extends Category {
   }
-  sealed trait ArgumentError extends ErrorCategory {
-  }
-  case object ArgumentValueError extends ArgumentError {
+  // sealed trait ArgumentError extends ErrorCategory {
+  // }
+  // case object ArgumentValueError extends ArgumentError {
+  //   def code: Int = 1
+  //   def name: String = "argumentvalue"
+  // }
+  // case object ArgumentReferenceError extends ArgumentError {
+  //   def code: Int = 2
+  //   def name: String = "argumentreference"
+  // }
+  case object ArgumentError extends ErrorCategory {
     def code: Int = 1
-    def name: String = "argumentvalue"
-  }
-  case object ArgumentReferenceError extends ArgumentError {
-    def code: Int = 2
-    def name: String = "argumentreference"
+    def name: String = "argument"
   }
   case object ResultError extends ErrorCategory {
     def code: Int = 3
@@ -64,6 +76,10 @@ object DetailCode {
   case object ServiceError extends ErrorCategory {
     def code: Int = 7
     def name: String = "service"
+  }
+  case object SystemError extends ErrorCategory {
+    def code: Int = 9
+    def name: String = "system"
   }
 
   sealed trait Site {
@@ -338,8 +354,10 @@ object DetailCode {
     }
   }
 
-  val Argument = DetailCode(ArgumentValueError, ArgumentSite, Invalid, Reaction.ClientInput)
+  val Argument = DetailCode(ArgumentError, ArgumentSite, Invalid, Reaction.ClientInput)
+  val ArgumentSyntax = DetailCode(ArgumentError, ArgumentSite, SyntaxError, Reaction.ClientInput)
   val Result = DetailCode(ResultError, OperationSite, LogicDefect, Reaction.SystemDefect)
+  val Config = DetailCode(SystemError, ServiceSite, ConfigurationDefect, Reaction.SystemDefect)
   val NoReach = DetailCode(ServiceError, OperationSite, LogicDefect, Reaction.SystemDefect)
   val Invariant = DetailCode(ServiceError, OperationSite, InvariantDefect, Reaction.SystemDefect)
   val PreCondition = DetailCode(ServiceError, OperationSite, PreConditionDefect, Reaction.SystemDefect)

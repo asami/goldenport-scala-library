@@ -11,7 +11,8 @@ import org.goldenport.recorder.ForwardRecorder
  * @since   Feb. 21, 2021
  *  version May. 30, 2021
  *  version Jun. 20, 2021
- * @version Oct. 12, 2021
+ *  version Oct. 12, 2021
+ * @version Jan. 20, 2022
  * @author  ASAMI, Tomoharu
  */
 trait Message {
@@ -46,6 +47,9 @@ case class ErrorMessages(messages: List[ErrorMessage] = Nil) extends Messages {
 }
 object ErrorMessages {
   val empty = ErrorMessages()
+
+  def apply(ps: Iterable[ErrorMessage]):  ErrorMessages = new ErrorMessages(ps.toList)
+  def apply(ps: Iterator[ErrorMessage]):  ErrorMessages = new ErrorMessages(ps.toList)
 }
 
 case class WarningMessages(messages: List[WarningMessage] = Nil) extends Messages {
@@ -56,4 +60,7 @@ case class WarningMessages(messages: List[WarningMessage] = Nil) extends Message
 }
 object WarningMessages {
   val empty = WarningMessages()
+
+  def apply(ps: Iterable[WarningMessage]):  WarningMessages = new WarningMessages(ps.toList)
+  def apply(ps: Iterator[WarningMessage]):  WarningMessages = new WarningMessages(ps.toList)
 }

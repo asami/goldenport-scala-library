@@ -1,11 +1,12 @@
 package org.goldenport.util
 
-import org.joda.time._
+import com.github.nscala_time.time.Imports._
 import org.joda.time.DateTimeConstants._
 
 /*
  * @since   Jan.  2, 2019
- * @version Jan. 23, 2021
+ *  version Jan. 23, 2021
+ * @version Jan. 27, 2022
  * @author  ASAMI, Tomoharu
  */
 object LocalDateTimeUtils {
@@ -28,6 +29,56 @@ object LocalDateTimeUtils {
   private def _count_day(x: Long): Int = {
     val round = if (x % MILLIS_PER_MINUTE == 0) 0 else 1
     ((x / MILLIS_PER_DAY) + round).toInt
+  }
+
+  def countOfMonthsAlmost(start: LocalDateTime, end: LocalDateTime): Int = {
+    @annotation.tailrec
+    def _go_(p: LocalDateTime, count: Int): Int = {
+      // println(s"$p - $end: $count")
+      if (p == end)
+        count + 1
+      else if (p > end)
+        count
+      else
+        _go_(p.plusMonths(1), count + 1)
+    }
+    _go_(start, 0)
+  }
+
+  def countOfMonthsPassed(start: LocalDateTime, end: LocalDateTime): Int = {
+    @annotation.tailrec
+    def _go_(p: LocalDateTime, count: Int): Int = {
+      // println(s"$p - $end: $count")
+      if (p == end)
+        count + 1
+      else if (p >= end)
+        count
+      else
+        _go_(p.plusMonths(1), count + 1)
+    }
+    _go_(start, -1)
+  }
+
+  def countOfYearsAlmost(start: LocalDateTime, end: LocalDateTime): Int = {
+    @annotation.tailrec
+    def _go_(p: LocalDateTime, count: Int): Int = {
+      if (p > end)
+        count
+      else
+        _go_(p.plusYears(1), count)
+    }
+    _go_(start, 1)
+  }
+
+  def countOfYearsPassed(start: LocalDateTime, end: LocalDateTime): Int = {
+    @annotation.tailrec
+    def _go_(p: LocalDateTime, count: Int): Int = {
+      if (p >= end)
+        count
+      else
+        _go_(p.plusYears(1), count + 1)
+    }
+    _go_(start, 0)
   }
 }
 

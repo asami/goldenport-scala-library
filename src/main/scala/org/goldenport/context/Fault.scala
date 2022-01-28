@@ -18,7 +18,8 @@ import Fault._
  *  version May. 27, 2021
  *  version Jun. 20, 2021
  *  version Oct. 25, 2021
- * @version Nov. 15, 2021
+ *  version Nov. 15, 2021
+ * @version Jan. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -147,7 +148,7 @@ object InvalidArgumentFault {
   private def _message(key: String, ps: Iterable[Fault]): I18NMessage = {
     ps.toVector.map(_.message).concatenate
   }
-  // .map(_.message).list.mkString(";")))) * @version Nov. 15, 2021
+  // .map(_.message).list.mkString(";")))) * @version Jan. 28, 2022
 }
 
 case class MissingArgumentFault(
@@ -218,6 +219,31 @@ object ValueDomainResultFault {
 
 sealed trait PropertyFault extends Fault {
   def reaction = Reaction.SystemDefect
+}
+
+case class InvalidPropertyFault(
+  parameters: Seq[String] = Nil,
+  messageTemplate: I18NTemplate = InvalidPropertyFault.template
+) extends PropertyFault {
+  def implicitStatusCode: StatusCode = StatusCode.BadRequest
+
+  def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
+
+  def properties(locale: Locale): IRecord = IRecord.dataS(
+    KEY_NAME -> name,
+    KEY_PARAMETERS -> parameters,
+    KEY_MESSAGE -> message(),
+    KEY_LOCAL_MESSAGE -> message(locale)
+  )
+}
+object InvalidPropertyFault {
+  val template = I18NTemplate("Invalid property: {0}")
+
+  def apply(p: I18NString): InvalidPropertyFault =
+    InvalidPropertyFault(messageTemplate = I18NTemplate(p))
+
+  def apply(p: I18NMessage): InvalidPropertyFault =
+    InvalidPropertyFault(messageTemplate = I18NTemplate(p))
 }
 
 case class MissingPropertyFault(
@@ -300,7 +326,7 @@ case class SyntaxErrorFault(
   def implicitStatusCode: StatusCode = StatusCode.BadRequest
 }
 object SyntaxErrorFault {
-  val template = I18NTemplate("Illegal configuration defect: {0}")
+  val template = I18NTemplate("Syntax error: {0}")
 
   def apply(p: String): SyntaxErrorFault = parameter(p)
 

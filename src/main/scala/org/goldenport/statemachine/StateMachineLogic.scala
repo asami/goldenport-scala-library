@@ -15,7 +15,8 @@ import org.goldenport.statemachine.StateMachineRule.RuleAndStateClass
  *  version Sep. 26, 2021
  *  version Oct. 29, 2021
  *  version Nov. 29, 2021
- * @version Dec.  5, 2021
+ *  version Dec.  5, 2021
+ * @version Jan. 20, 2022
  * @author  ASAMI, Tomoharu
  */
 trait StateMachineLogic {
@@ -77,7 +78,7 @@ trait StateMachineLogic {
               traverse(_.transitions.transit(sm, state, p)).
               flatMap(_.flatten.headOption match {
                 case Some(s) => Consequence.success(s)
-                case None => Consequence.illegalConfigurationDefect("StateMachineLogic#receive")
+                case None => Consequence.config.illegalConfigurationDefect("StateMachineLogic#receive")
               })
           a
       }

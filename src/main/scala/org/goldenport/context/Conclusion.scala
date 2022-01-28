@@ -18,7 +18,8 @@ import org.goldenport.util.ExceptionUtils
  *  version Jun. 20, 2021
  *  version Oct. 25, 2021
  *  version Nov. 15, 2021
- * @version Dec.  5, 2021
+ *  version Dec.  5, 2021
+ * @version Jan. 20, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -62,6 +63,10 @@ case class Conclusion(
   )
 
   def RAISE: Nothing = throw new ConclusionException(this)
+
+  def isSuccess: Boolean = code.isSuccess
+
+  def forConfig: Conclusion = if (isSuccess) this else copy(code = code.forConfig)
 }
 
 object Conclusion {
@@ -164,10 +169,28 @@ object Conclusion {
     Conclusion(status, faults)
   }
 
+  def missingArgumentFault(name: String, names: String*): Conclusion = missingArgumentFault(name +: names)
+
+  def missingArgumentFault(names: Seq[String]): Conclusion = {
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(MissingArgumentFault(names))
+    Conclusion(status, faults)
+  }
+
   def missingElementFault(): Conclusion = {
     val detail = DetailCode.Argument
     val status = StatusCode.BadRequest.withDetail(detail)
     val faults = Faults(MissingPropertyFault())
+    Conclusion(status, faults)
+  }
+
+  def invalidPropertyFault(message: String): Conclusion = invalidPropertyFault(I18NMessage(message))
+
+  def invalidPropertyFault(message: I18NMessage): Conclusion = {
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(InvalidPropertyFault(message))
     Conclusion(status, faults)
   }
 
@@ -208,6 +231,13 @@ object Conclusion {
     Conclusion(status, faults)
   }
 
+  def syntaxErrorFault(message: String): Conclusion = {
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(SyntaxErrorFault(message))
+    Conclusion(status, faults)
+  }
+
   def syntaxErrorFault(messages: Seq[Message]): Conclusion = {
     val detail = DetailCode.Argument
     val status = StatusCode.BadRequest.withDetail(detail)
@@ -215,10 +245,65 @@ object Conclusion {
     Conclusion(status, faults)
   }
 
-  def illegalConfigurationDefect(msg: String): Conclusion = {
-    val detail = DetailCode.Result
-    val status = StatusCode.InternalServerError.withDetail(detail)
-    val faults = Faults(IllegalConfigurationDefect(msg))
-    Conclusion(status, faults)
+  object config {
+    def invalidPropertyFault(message: String): Conclusion = invalidPropertyFault(I18NMessage(message))
+
+    def invalidPropertyFault(message: I18NMessage): Conclusion = {
+      val detail = DetailCode.Config
+      val status = StatusCode.InternalServerError.withDetail(detail)
+      val faults = Faults(InvalidPropertyFault(message))
+      Conclusion(status, faults)
+    }
+
+    def missingPropertyFault(name: String, names: String*): Conclusion = missingPropertyFault(name +: names)
+
+    def missingPropertyFault(names: Seq[String]): Conclusion = {
+      val detail = DetailCode.Config
+      val status = StatusCode.InternalServerError.withDetail(detail)
+      val faults = Faults(MissingPropertyFault(names))
+      Conclusion(status, faults)
+    }
+
+    def invalidTokenFault(value: String): Conclusion = {
+      val detail = DetailCode.Config
+      val status = StatusCode.InternalServerError.withDetail(detail)
+      val faults = Faults(InvalidTokenFault(value))
+      Conclusion(status, faults)
+    }
+
+    def invalidTokenFault(label: String, value: String): Conclusion = {
+      val detail = DetailCode.Config
+      val status = StatusCode.InternalServerError.withDetail(detail)
+      val faults = Faults(InvalidTokenFault(label, value))
+      Conclusion(status, faults)
+    }
+
+    def valueDomainFault(value: String): Conclusion = {
+      val detail = DetailCode.Config
+      val status = StatusCode.InternalServerError.withDetail(detail)
+      val faults = Faults(ValueDomainFault(value))
+      Conclusion(status, faults)
+    }
+
+    def valueDomainFault(label: String, value: String): Conclusion = {
+      val detail = DetailCode.Config
+      val status = StatusCode.InternalServerError.withDetail(detail)
+      val faults = Faults(ValueDomainFault(label)) // XXX
+      Conclusion(status, faults)
+    }
+
+    def syntaxErrorFault(messages: Seq[Message]): Conclusion = {
+      val detail = DetailCode.Config
+      val status = StatusCode.InternalServerError.withDetail(detail)
+      val faults = Faults(SyntaxErrorFault(messages))
+      Conclusion(status, faults)
+    }
+
+    def illegalConfigurationDefect(msg: String): Conclusion = {
+      val detail = DetailCode.Config
+      val status = StatusCode.InternalServerError.withDetail(detail)
+      val faults = Faults(IllegalConfigurationDefect(msg))
+      Conclusion(status, faults)
+    }
   }
 }

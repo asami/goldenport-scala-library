@@ -8,7 +8,8 @@ import org.goldenport.trace.{TraceContext, Result}
  * @since   May.  5, 2021
  *  version May. 30, 2021
  *  version Jun.  6, 2021
- * @version Nov. 29, 2021
+ *  version Nov. 29, 2021
+ * @version Jan. 22, 2022
  * @author  ASAMI, Tomoharu
  */
 class ExecutionContext(
@@ -16,7 +17,7 @@ class ExecutionContext(
   logicOption: Option[StateMachineLogic] = None,
   val opaque: Option[AnyRef] = None
 ) {
-  def logic = logicOption getOrElse RAISE.noReachDefect
+  def logic = logicOption getOrElse RAISE.noReachDefect("ExecutionContext#logic: no StateMachineLogic")
 
   def withClass(p: StateMachineClass): ExecutionContext = 
     new ExecutionContext(traceContext, Some(p.logic), opaque)

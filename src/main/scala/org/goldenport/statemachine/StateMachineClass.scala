@@ -17,7 +17,8 @@ import org.goldenport.util.AnyUtils
  *  version Sep. 26, 2021
  *  version Oct. 31, 2021
  *  version Nov. 29, 2021
- * @version Dec.  5, 2021
+ *  version Dec.  5, 2021
+ * @version Jan. 22, 2022
  * @author  ASAMI, Tomoharu
  */
 case class StateMachineClass(
@@ -30,10 +31,10 @@ case class StateMachineClass(
   def statemachines = rule.statemachines
 
   def spawn()(implicit ctx: ExecutionContext): StateMachine =
-    _spawn(new StateMachine(this, logic.initState()))
+    _spawn(new StateMachine(this, logic.initState()))(ctx.withClass(this))
 
   def spawn(resourceid: ObjectId)(implicit ctx: ExecutionContext): StateMachine =
-    _spawn(StateMachine.create(this, logic.initState(), resourceid))
+    _spawn(StateMachine.create(this, logic.initState(), resourceid))(ctx.withClass(this))
 
   private def _spawn(sm: StateMachine)(implicit ctx: ExecutionContext): StateMachine = {
     sm.init()

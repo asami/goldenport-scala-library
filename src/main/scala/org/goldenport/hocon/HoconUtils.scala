@@ -9,6 +9,7 @@ import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 import java.util.Locale
 import java.net.{URL, URI}
+import java.io.File
 import com.typesafe.config._
 import org.goldenport.RAISE
 import org.goldenport.Strings
@@ -41,7 +42,7 @@ import org.goldenport.util.AnyUtils
  *  version Jun. 13, 2021
  *  version Oct. 20, 2021
  *  version Dec. 31, 2021
- * @version Jan.  7, 2022
+ * @version Jan. 27, 2022
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -277,6 +278,9 @@ object HoconUtils {
     getString(config, key).
       map(x => valueclass.get(x).
         getOrElse(RAISE.invalidArgumentFault(s"Invalid value name: $key")))
+
+  def getFile(config: Config, key: String): Option[File] =
+    getString(config, key).map(new File(_))
 
   //
   def getObject(p: ConfigValue): Option[ConfigObject] = Option(p) collect {
@@ -514,6 +518,15 @@ object HoconUtils {
     getString(p, key)
   )
 
+  def consequenceUrl(p: Config, key: String): Consequence[URL] =
+    getString(p, key) match {
+      case Some(s) => Consequence(new URL(s))
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceUrlOption(p: Config, key: String): Consequence[Option[URL]] =
+    consequenceStringOption(p, key).flatMap(x => Consequence(x.map(a => new URL(a))))
+
   def consequenceToken[T <: ValueInstance](p: Config, key: String, f: ValueClass[T]): Consequence[T] =
     getString(p, key) match {
       case Some(s) => Consequence.successOrMissingPropertyFault(key, f.get(s))
@@ -603,6 +616,9 @@ object HoconUtils {
   // CAUTION: not work -> probably work
   def childRichConfigMap(p: Config): Map[String, RichConfig] =
     childConfigMap(p).mapValues(RichConfig.apply)
+
+  def buildMap[T](p: Config, f: Config => Option[T], key: String): VectorMap[String, T] =
+    HoconUtils.getConfig(p, key).map(buildMap(_, f)).getOrElse(VectorMap.empty)
 
   def buildMap[T](p: Config, f: Config => Option[T]): VectorMap[String, T] =
     VectorMapBuilder(f).build(p)

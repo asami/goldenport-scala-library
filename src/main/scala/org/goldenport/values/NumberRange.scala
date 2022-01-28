@@ -14,7 +14,8 @@ import org.goldenport.util.{NumberUtils, AnyRefUtils}
  *  version Oct. 16, 2019
  *  version Feb. 28, 2020
  *  version Sep. 28, 2020
- * @version Jan. 30, 2021
+ *  version Jan. 30, 2021
+ * @version Jan. 25, 2022
  * @author  ASAMI, Tomoharu
  */
 trait NumberRange extends Showable {
@@ -24,6 +25,7 @@ trait NumberRange extends Showable {
   def isValid(index: Int): Boolean
   def indexes: List[Int]
   def isMatch(p: Number): Boolean
+  def marshall: String = display
 }
 
 object NumberRange {
@@ -193,25 +195,28 @@ case class RepeatRange(
 
   def indexes: List[Int] = _ints.toList
 
-  private def _ints: Stream[Int] =
+  private def _ints: Vector[Int] =
     if (startInclusive)
-      _go_ints(start.intValue, Some(start.intValue))
+      _ints(_start_int)
     else
-      _go_ints(start.intValue, None)
+      _ints(_start_int + _step_int)
 
-  @annotation.tailrec
-  private def _go_ints(p: Int, prepend: Option[Int]): Stream[Int] = {
-    val v = p + _step_int
-    if (v == _end_int) {
-      if (endInclusive)
-        prepend.map(_ #:: Stream(v)).getOrElse(Stream(v))
-      else
-        prepend.map(_ #:: Stream.empty).getOrElse(Stream.empty)
-    } else if (v > _end_int) {
-      prepend.map(_ #:: Stream.empty).getOrElse(Stream.empty)
-    } else {
-      _go_ints(v, Some(v))
+  def _ints(p: Int): Vector[Int] = {
+    @annotation.tailrec
+    def _go_(x: Int, xs: Vector[Int]): Vector[Int] = {
+      if (endInclusive) {
+        if (x <= _end_int)
+          _go_(x + _step_int, xs :+ x)
+        else
+          xs
+      } else {
+        if (x < _end_int)
+          _go_(x + _step_int, xs :+ x)
+        else
+          xs
+      }
     }
+    _go_(p, Vector.empty)
   }
 
   def print: String = {

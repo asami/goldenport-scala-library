@@ -16,7 +16,8 @@ import org.goldenport.parser.{ParseMessage}
  *  version Jun. 20, 2021
  *  version Oct. 25, 2021
  *  version Nov. 30, 2021
- * @version Dec.  5, 2021
+ *  version Dec.  5, 2021
+ * @version Jan. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -26,19 +27,22 @@ sealed trait Consequence[+T] {
   def map[U](f: T => U): Consequence[U]
   // Consequence is not Monad. Just to use 'for' comprehension in Scala syntax suger.
   def flatMap[U](f: T => Consequence[U]): Consequence[U]
+  def forConfig: Consequence[T]
 
   // def getMessage: Option[String] = conclusion.getMessage
   def message: String = conclusion.message
   // def getMessage(locale: Locale): Option[String] = conclusion.getMessage(locale)
   def message(locale: Locale): String = conclusion.message(locale)
 
+  def isSuccess: Boolean = conclusion.isSuccess
+
   def get = toOption
 
-  def take: T = get getOrElse Conclusion.missingElementFault.RAISE
+  def take: T
 
   def takeOrInvalidArgumentFault(message: String): T = get getOrElse Conclusion.invalidArgumentFault(message).RAISE
 
-  def takeOrIllegalConfigurationDefect(name: String): T = get getOrElse Conclusion.illegalConfigurationDefect(name).RAISE
+  def takeOrIllegalConfigurationDefect(name: String): T = get getOrElse Conclusion.config.illegalConfigurationDefect(name).RAISE
 }
 
 object Consequence {
@@ -50,6 +54,8 @@ object Consequence {
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
     def map[U](f: T => U): Consequence[U] = copy(result = f(result))
     def flatMap[U](f: T => Consequence[U]): Consequence[U] = f(result).add(conclusion)
+    def take = result
+    def forConfig: Consequence[T] = if (conclusion.isSuccess) this else copy(conclusion = conclusion.forConfig)
   }
 
   case class Error[+T](
@@ -59,6 +65,9 @@ object Consequence {
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
     def map[U](f: T => U): Consequence[U] = this.asInstanceOf[Error[U]]
     def flatMap[U](f: T => Consequence[U]): Consequence[U] = this.asInstanceOf[Consequence[U]]
+    def take = RAISE
+    def forConfig: Consequence[T] = if (conclusion.isSuccess) this else copy(conclusion = conclusion.forConfig)
+
     def RAISE: Nothing = throw new ConsequenceException(this)
   }
 
@@ -134,10 +143,16 @@ object Consequence {
   def successOrInvalidTokenFault[T](name: String, p: Option[T]): Consequence[T] =
     p.map(success).getOrElse(invalidTokenFault(name))
 
-
   def invalidArgumentFault[T](p: String): Consequence[T] = invalidArgumentFault(I18NMessage(p))
   def invalidArgumentFault[T](p: String, arg: Any, args: Any*): Consequence[T] = Error(Conclusion.invalidArgumentFault(I18NMessage(p, args +: args)))
   def invalidArgumentFault[T](p: I18NMessage): Consequence[T] = Error(Conclusion.invalidArgumentFault(p))
+
+  def missingArgumentFault[T](p: String, ps: String*): Consequence[T] = missingArgumentFault(p +: ps)
+  def missingArgumentFault[T](ps: Seq[String]): Consequence[T] = Error(Conclusion.missingArgumentFault(ps))
+
+  def invalidPropertyFault[T](p: String): Consequence[T] = invalidPropertyFault(I18NMessage(p))
+  def invalidPropertyFault[T](p: String, arg: Any, args: Any*): Consequence[T] = Error(Conclusion.invalidPropertyFault(I18NMessage(p, args +: args)))
+  def invalidPropertyFault[T](p: I18NMessage): Consequence[T] = Error(Conclusion.invalidPropertyFault(p))
 
   def missingPropertyFault[T](p: String, ps: String*): Consequence[T] = missingPropertyFault(p +: ps)
   def missingPropertyFault[T](ps: Seq[String]): Consequence[T] = Error(Conclusion.missingPropertyFault(ps))
@@ -148,9 +163,9 @@ object Consequence {
   def valueDomainFault[T](value: String): Consequence[T] = Error(Conclusion.valueDomainFault(value))
   def valueDomainFault[T](label: String, value: String): Consequence[T] = Error(Conclusion.valueDomainFault(label, value))
 
-  def syntaxErrorFault[T](messages: Seq[Message]): Consequence[T] = Error(Conclusion.syntaxErrorFault(messages))
+  def syntaxErrorFault[T](message: String): Consequence[T] = Error(Conclusion.syntaxErrorFault(message))
 
-  def illegalConfigurationDefect[T](p: String): Consequence[T] = Error(Conclusion.illegalConfigurationDefect(p))
+  def syntaxErrorFault[T](messages: Seq[Message]): Consequence[T] = Error(Conclusion.syntaxErrorFault(messages))
 
   //
   def execute[T](body: => T): Consequence[T] = try {
@@ -188,11 +203,52 @@ object Consequence {
       warnings = _warnings(p.warnings)
     )
 
-  private def _errors(ps: Vector[ParseMessage]): ErrorMessages = ???
-  private def _warnings(ps: Vector[ParseMessage]): WarningMessages = ???
+  private def _conclusion_config_error(p: ParseResult[_]): Conclusion = 
+    Conclusion(
+      StatusCode.Config,
+      None,
+      errors = _errors(p.errors),
+      warnings = _warnings(p.warnings)
+    )
+
+  private def _errors(ps: Vector[ErrorMessage]): ErrorMessages = ErrorMessages(ps)
+
+  private def _warnings(ps: Vector[WarningMessage]): WarningMessages = WarningMessages(ps)
 
   def from[E <: Fault, A](p: ValidationNel[E, A]): Consequence[A] = p match {
     case scalaz.Success(s) => Consequence.success(s)
     case scalaz.Failure(es) => Consequence.Error(Conclusion.make(es))
+  }
+
+  object config {
+    def successOrMissingPropertyFault[T](name: String, p: Option[T]): Consequence[T] =
+      p.map(success).getOrElse(missingPropertyFault(name))
+  // def successOrMissingPropertyOrError[T](name: String, p: Option[Left[String, T]]): Consequence[T] =
+  //   p.map(success).getOrElse(missingPropertyOrError(name))
+
+  // Specific error with detail code.
+
+    def successOrInvalidTokenFault[T](name: String, p: Option[T]): Consequence[T] =
+      p.map(success).getOrElse(invalidTokenFault(name))
+
+    def invalidPropertyFault[T](p: String): Consequence[T] = Error(Conclusion.config.invalidPropertyFault(p))
+
+    def missingPropertyFault[T](p: String): Consequence[T] = Error(Conclusion.config.missingPropertyFault(p))
+
+    def invalidTokenFault[T](value: String): Consequence[T] = Error(Conclusion.config.invalidTokenFault(value))
+
+    def invalidTokenFault[T](label: String, value: String): Consequence[T] = Error(Conclusion.config.invalidTokenFault(label, value))
+
+    def valueDomainFault[T](value: String): Consequence[T] = Error(Conclusion.config.valueDomainFault(value))
+
+    def valueDomainFault[T](label: String, value: String): Consequence[T] = Error(Conclusion.config.valueDomainFault(label, value))
+
+    def illegalConfigurationDefect[T](p: String): Consequence[T] = Error(Conclusion.config.illegalConfigurationDefect(p))
+
+    def from[A](p: ParseResult[A]): Consequence[A] = p match {
+      case m: ParseSuccess[_] => Success(m.ast, _conclusion_success(m))
+      case m: ParseFailure[_] => Error(_conclusion_config_error(m))
+      case m: EmptyParseResult[_] => Error(_conclusion_config_error(m))
+    }
   }
 }

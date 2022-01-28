@@ -19,7 +19,8 @@ import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
  *  version Aug. 29, 2017
  *  version Oct.  3, 2017
  *  version Dec. 29, 2018
- * @version Sep. 25, 2019
+ *  version Sep. 25, 2019
+ * @version Jan. 27, 2022
  * @author  ASAMI, Tomoharu
  */
 object DateTimeUtils {
@@ -116,7 +117,6 @@ object DateTimeUtils {
     else
       getNaturalStringJstExclusive(start, end)
   }
-
 
   def getNaturalStringJstInclusive(
     start: Option[DateTime],
@@ -275,5 +275,21 @@ object DateTimeUtils {
   def tzToDateTimeZone(p: TimeZone): DateTimeZone = DateTimeZone.forID(p.getID)
 
   def dateTimeZoneToTz(p: DateTimeZone): TimeZone = p.toTimeZone
+
+  /*
+   * Count
+   */
+
+  def countOfMonthsAlmost(start: DateTime, end: DateTime): Int =
+    LocalDateTimeUtils.countOfMonthsAlmost(start.toLocalDateTime, end.withZone(start.getZone).toLocalDateTime)
+
+  def countOfMonthsPassed(start: DateTime, end: DateTime): Int =
+    LocalDateTimeUtils.countOfMonthsPassed(start.toLocalDateTime, end.withZone(start.getZone).toLocalDateTime)
+
+  def countOfYearsAlmost(start: DateTime, end: DateTime): Int =
+    LocalDateTimeUtils.countOfYearsAlmost(start.toLocalDateTime, end.withZone(start.getZone).toLocalDateTime)
+
+  def countOfYearsPassed(start: DateTime, end: DateTime): Int =
+    LocalDateTimeUtils.countOfYearsPassed(start.toLocalDateTime, end.withZone(start.getZone).toLocalDateTime)
 }
 
