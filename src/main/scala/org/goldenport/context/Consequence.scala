@@ -17,7 +17,7 @@ import org.goldenport.parser.{ParseMessage}
  *  version Oct. 25, 2021
  *  version Nov. 30, 2021
  *  version Dec.  5, 2021
- * @version Jan. 28, 2022
+ * @version Jan. 30, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -173,6 +173,12 @@ object Consequence {
   } catch {
     case NonFatal(e) => error(e)
   }
+
+  def executeOrMissingPropertyFault[T](name: String)(p: => Option[T]): Consequence[T] =
+    execute(p).flatMap {
+      case Some(s) => Success(s)
+      case None => Error(Conclusion.missingPropertyFault(name))
+    }
 
   def run[T](body: => Consequence[T]): Consequence[T] = try {
     body

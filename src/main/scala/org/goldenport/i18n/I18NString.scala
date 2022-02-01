@@ -25,7 +25,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Feb. 15, 2021
  *  version Apr. 29, 2021
  *  version May. 30, 2021
- * @version Jun. 19, 2021
+ *  version Jun. 19, 2021
+ * @version Feb.  1, 2022
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -227,6 +228,11 @@ object I18NString {
     mkI18NString(ps.list, infix)
 
   def mkI18NString(ps: Seq[I18NString], infix: String): I18NString = {
-    ???
+    @annotation.tailrec
+    def _go_(z: I18NString, ps: List[I18NString]): I18NString = ps match {
+      case Nil => z
+      case x :: xs => _go_(z.appendAll(infix) + x, xs)
+    }
+    _go_(empty, ps.toList)
   }
 }

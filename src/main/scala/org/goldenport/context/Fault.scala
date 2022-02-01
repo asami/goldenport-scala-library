@@ -19,7 +19,8 @@ import Fault._
  *  version Jun. 20, 2021
  *  version Oct. 25, 2021
  *  version Nov. 15, 2021
- * @version Jan. 28, 2022
+ *  version Jan. 28, 2022
+ * @version Feb.  1, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -42,6 +43,20 @@ sealed trait Parameters1 extends { self: Fault =>
     KEY_MESSAGE -> message(locale)
   ) + IRecord.dataOptionS(
     KEY_PARAMETERS -> parameters
+  )
+}
+
+sealed trait MessageTemplateImpl { slef: Fault =>
+  def parameters: Seq[Any]
+  def messageTemplate: I18NTemplate
+
+  def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
+
+  def properties(locale: Locale): IRecord = IRecord.dataS(
+    KEY_NAME -> name,
+    KEY_PARAMETERS -> parameters,
+    KEY_MESSAGE -> message(),
+    KEY_LOCAL_MESSAGE -> message(locale)
   )
 }
 
@@ -109,6 +124,7 @@ object ValueDomainMultiplicityFault {
 }
 
 sealed trait ArgumentFault extends Fault {
+  def implicitStatusCode: StatusCode = StatusCode.BadRequest
   def reaction = Reaction.ClientInput
 }
 
@@ -118,8 +134,6 @@ case class InvalidArgumentFault(
   value: Option[String] = None,
   faults: Option[NonEmptyVector[Fault]] = None
 ) extends ArgumentFault {
-  def implicitStatusCode: StatusCode = StatusCode.BadRequest
-
   def properties(locale: Locale): IRecord = IRecord.dataS(
     KEY_NAME -> name,
     KEY_MESSAGE -> message(locale)
@@ -148,15 +162,13 @@ object InvalidArgumentFault {
   private def _message(key: String, ps: Iterable[Fault]): I18NMessage = {
     ps.toVector.map(_.message).concatenate
   }
-  // .map(_.message).list.mkString(";")))) * @version Jan. 28, 2022
+  // .map(_.message).list.mkString(";")))) * @version Feb.  1, 2022
 }
 
 case class MissingArgumentFault(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = MissingArgumentFault.template
 ) extends ArgumentFault {
-  def implicitStatusCode: StatusCode = StatusCode.BadRequest
-
   def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
@@ -173,8 +185,6 @@ case class TooManyArgumentFault(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = TooManyArgumentFault.template
 ) extends ArgumentFault {
-  def implicitStatusCode: StatusCode = StatusCode.BadRequest
-
   def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
@@ -275,7 +285,6 @@ case class InvalidTokenFault(
   message: I18NMessage,
   parameters: Option[Seq[Any]] = None
 ) extends ArgumentFault with Parameters1 {
-  def implicitStatusCode: StatusCode = StatusCode.BadRequest
 }
 object InvalidTokenFault {
   val template = I18NTemplate("Illegal configuration defect: {0}")
@@ -320,24 +329,60 @@ object ValueDomainPropertyFault {
 }
 
 case class SyntaxErrorFault(
-  message: I18NMessage,
-  parameters: Option[Seq[Any]] = None
-) extends ArgumentFault with Parameters1 {
-  def implicitStatusCode: StatusCode = StatusCode.BadRequest
+  parameters: Seq[Any] = Nil,
+  messageTemplate: I18NTemplate = SyntaxErrorFault.template
+) extends ArgumentFault with MessageTemplateImpl {
 }
 object SyntaxErrorFault {
   val template = I18NTemplate("Syntax error: {0}")
 
   def apply(p: String): SyntaxErrorFault = parameter(p)
 
-  def apply(p: I18NString): SyntaxErrorFault = apply(p.toI18NMessage)
+  def apply(p: I18NString): SyntaxErrorFault =
+    SyntaxErrorFault(messageTemplate = I18NTemplate(p))
 
-  def apply(ps: Seq[Message]): SyntaxErrorFault = apply(ps.toVector.map(_.toI18NMessage).concatenate)
+  def apply(ps: Seq[Message]): SyntaxErrorFault =
+    SyntaxErrorFault(messageTemplate = ps.toVector.map(_.toI18NMessage).concatenate.toI18NTemplate)
 
-  def parameter(p: Any, ps: Any*): SyntaxErrorFault = {
-    val xs = p +: ps
-    SyntaxErrorFault(template.toI18NMessage(xs), parameters = Some(xs))
-  }
+  def parameter(p: Any, ps: Any*): SyntaxErrorFault = SyntaxErrorFault(p +: ps.toList)
+}
+
+case class UnsupportedOperationFault(
+  parameters: Seq[Any] = Nil,
+  messageTemplate: I18NTemplate = UnsupportedOperationFault.template
+) extends ArgumentFault with MessageTemplateImpl {
+}
+object UnsupportedOperationFault {
+  val template = I18NTemplate("Unsupported operation: {0}")
+
+  def apply(p: String): UnsupportedOperationFault = parameter(p)
+
+  def apply(p: I18NString): UnsupportedOperationFault =
+    UnsupportedOperationFault(messageTemplate = I18NTemplate(p))
+
+  def apply(ps: Seq[Message]): UnsupportedOperationFault =
+    UnsupportedOperationFault(messageTemplate = ps.toVector.map(_.toI18NMessage).concatenate.toI18NTemplate)
+
+  def parameter(p: Any, ps: Any*): UnsupportedOperationFault = UnsupportedOperationFault(p +: ps.toList)
+}
+
+case class UnsupportedFormatFault(
+  parameters: Seq[Any] = Nil,
+  messageTemplate: I18NTemplate = UnsupportedFormatFault.template
+) extends ArgumentFault with MessageTemplateImpl {
+}
+object UnsupportedFormatFault {
+  val template = I18NTemplate("Unsupported format: {0}")
+
+  def apply(p: String): UnsupportedFormatFault = parameter(p)
+
+  def apply(p: I18NString): UnsupportedFormatFault =
+    UnsupportedFormatFault(messageTemplate = I18NTemplate(p))
+
+  def apply(ps: Seq[Message]): UnsupportedFormatFault =
+    UnsupportedFormatFault(messageTemplate = ps.toVector.map(_.toI18NMessage).concatenate.toI18NTemplate)
+
+  def parameter(p: Any, ps: Any*): UnsupportedFormatFault = UnsupportedFormatFault(p +: ps.toList)
 }
 
 sealed trait IoFault extends Fault {

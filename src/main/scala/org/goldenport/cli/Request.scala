@@ -3,6 +3,7 @@ package org.goldenport.cli
 import java.net.URL
 import org.goldenport.RAISE
 import org.goldenport.Strings
+import org.goldenport.context.Consequence
 
 /*
  * @since   Oct.  4, 2018
@@ -11,7 +12,9 @@ import org.goldenport.Strings
  *  version Mar.  4, 2019
  *  version Feb. 16, 2020
  *  version May. 19, 2020
- * @version Apr. 25, 2021
+ *  version Apr. 25, 2021
+ *  version Jan. 30, 2022
+ * @version Feb.  1, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Request(
@@ -42,6 +45,14 @@ case class Request(
 
   def getUrlList(name: Symbol): Option[List[URL]] = getProperty(name).map(_.asUrlList)
   def asUrlList(name: Symbol): List[URL] = getUrlList(name) getOrElse Nil
+
+  def consequenceArg1Url: Consequence[URL] =
+    Consequence.executeOrMissingPropertyFault("argument1")(
+      arguments.headOption.map(_.asUrl)
+    )
+
+  def consequenceArg1UrlOption: Consequence[Option[URL]] =
+    Consequence(arguments.headOption.map(_.asUrl))
 }
 
 object Request {

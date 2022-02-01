@@ -13,7 +13,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  * @since   Apr. 17, 2020
  *  version Jun.  1, 2020
  *  version Mar. 27, 2021
- * @version Jun. 20, 2021
+ *  version Jun. 20, 2021
+ * @version Feb.  1, 2022
  * @author  ASAMI, Tomoharu
  */
 case class I18NMessage(
@@ -177,6 +178,8 @@ case class I18NMessage(
       case (k, v) => k -> _format(k, v)
     }
   )
+
+  def toI18NTemplate: I18NTemplate = I18NTemplate(this)
 
   override def toString() = toJsonString
 }

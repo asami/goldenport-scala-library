@@ -19,7 +19,8 @@ import org.goldenport.util.ExceptionUtils
  *  version Oct. 25, 2021
  *  version Nov. 15, 2021
  *  version Dec.  5, 2021
- * @version Jan. 20, 2022
+ *  version Jan. 20, 2022
+ * @version Feb.  1, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -242,6 +243,20 @@ object Conclusion {
     val detail = DetailCode.Argument
     val status = StatusCode.BadRequest.withDetail(detail)
     val faults = Faults(SyntaxErrorFault(messages))
+    Conclusion(status, faults)
+  }
+
+  def unsupportedOperationFault(message: String): Conclusion = {
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(UnsupportedOperationFault(message))
+    Conclusion(status, faults)
+  }
+
+  def unsupportedFormatFault(message: String): Conclusion = {
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(UnsupportedFormatFault(message))
     Conclusion(status, faults)
   }
 

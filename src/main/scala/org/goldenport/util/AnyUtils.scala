@@ -12,6 +12,7 @@ import org.joda.time._
 import com.asamioffice.goldenport.io.UURL
 import org.goldenport.RAISE
 import org.goldenport.extension.Showable
+import org.goldenport.context.Consequence
 
 /*
  * See org.goldenport.record.util.AnyUtils
@@ -31,7 +32,8 @@ import org.goldenport.extension.Showable
  *  version Jan. 18, 2020
  *  version Jan. 23, 2021
  *  version Apr. 20, 2021
- * @version Nov.  5, 2021
+ *  version Nov.  5, 2021
+ * @version Jan. 30, 2022
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -251,4 +253,14 @@ object AnyUtils {
   def getDouble(p: Any): Option[Double] = NumberUtils.optionDouble(p)
   def getBigInt(p: Any): Option[BigInt] = NumberUtils.optionBigInt(p)
   def getBigDecimal(p: Any): Option[BigDecimal] = NumberUtils.optionBigDecimal(p)
+
+  def consequenceBoolean(p: Any): Consequence[Boolean] = Consequence(toBoolean(p))
+  def consequenceShort(p: Any): Consequence[Short] = Consequence(toShort(p))
+  def consequenceInt(p: Any): Consequence[Int] = Consequence(toInt(p))
+  def consequenceLong(p: Any): Consequence[Long] = Consequence(toLong(p))
+  def consequenceFloat(p: Any): Consequence[Float] = Consequence(toFloat(p))
+  def consequenceDouble(p: Any): Consequence[Double] = Consequence(toDouble(p))
+  def consequenceBigDecimal(p: Any): Consequence[BigDecimal] = Consequence(toBigDecimal(p))
+  def consequenceString(p: Any): Consequence[String] = Consequence(toString(p))
+  def consequenceUrl(p: Any): Consequence[URL] = Consequence(toUrl(p))
 }
