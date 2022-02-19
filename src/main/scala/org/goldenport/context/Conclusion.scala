@@ -20,7 +20,7 @@ import org.goldenport.util.ExceptionUtils
  *  version Nov. 15, 2021
  *  version Dec.  5, 2021
  *  version Jan. 20, 2022
- * @version Feb.  1, 2022
+ * @version Feb. 18, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -48,6 +48,7 @@ case class Conclusion(
   // def statictics: Statictics = incidents.statictics
 
   def withMessage(p: String) = copy(messageI18NOption = Some(I18NMessage(p)))
+  def withMessage(p: I18NMessage) = copy(messageI18NOption = Some(p))
   def withTrace(p: TraceHandle): Conclusion = withTrace(p.ctx)
   def withTrace(p: TraceContext): Conclusion = withTrace(p.toTrace)
   def withTrace(p: Trace): Conclusion = copy(trace = p)
@@ -63,7 +64,8 @@ case class Conclusion(
     strategy // CAUTION
   )
 
-  def RAISE: Nothing = throw new ConclusionException(this)
+  def toException = throw new ConclusionException(this)
+  def RAISE: Nothing = throw toException
 
   def isSuccess: Boolean = code.isSuccess
 

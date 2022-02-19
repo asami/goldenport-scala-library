@@ -19,7 +19,8 @@ import org.joda.time.format.ISODateTimeFormat
  *  version Sep.  9, 2016
  *  version Jan. 19, 2017
  *  version Aug. 29, 2017
- * @version Jan. 27, 2022
+ *  version Jan. 27, 2022
+ * @version Feb. 19, 2022
  * @author  ASAMI, Tomoharu
  */
 object TimestampUtils {
@@ -66,6 +67,8 @@ object TimestampUtils {
 
   def toTimestampGmt(year: Int, month: Int, day: Int, hour: Int, minute: Int) =
     new Timestamp(DateTimeUtils.toDateTimeGmt(year, month, day, hour, minute).getMillis)
+
+  def toTimestamp(p: DateTime) = new Timestamp(p.getMillis)
 
   //
   def toLocalDate(tz: TimeZone, base: Timestamp): LocalDate = {
@@ -138,6 +141,15 @@ object TimestampUtils {
 
   def isInSeconds(current: Long, ts: Long, seconds: Int): Boolean = 
     isIn(current, ts, seconds * millisInSecond)
+
+  def startOfFirstDayOfNextMonth(p: Timestamp, tz: TimeZone): Timestamp =
+    toTimestamp(DateTimeUtils.startOfFirstDayOfNextMonth(DateTimeUtils.toDateTime(p, tz)))
+
+  def startOfFirstDayOfThisMonth(p: Timestamp, tz: TimeZone): Timestamp =
+    toTimestamp(DateTimeUtils.startOfFirstDayOfThisMonth(DateTimeUtils.toDateTime(p, tz)))
+
+  def endOfLastDayOfThisMonth(p: Timestamp, tz: TimeZone): Timestamp =
+    toTimestamp(DateTimeUtils.endOfLastDayOfThisMonth(DateTimeUtils.toDateTime(p, tz)))
 
   def countOfMonthsAlmost(start: Timestamp, end: Timestamp, tz: TimeZone): Int =
     LocalDateTimeUtils.countOfMonthsAlmost(toLocalDateTime(tz, start), toLocalDateTime(tz, end))

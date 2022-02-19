@@ -12,7 +12,8 @@ import org.goldenport.recorder.ForwardRecorder
  *  version May. 30, 2021
  *  version Jun. 20, 2021
  *  version Oct. 12, 2021
- * @version Jan. 20, 2022
+ *  version Jan. 20, 2022
+ * @version Feb. 18, 2022
  * @author  ASAMI, Tomoharu
  */
 trait Message {
@@ -23,11 +24,17 @@ trait Message {
 trait ErrorMessage extends Message {
 }
 object ErrorMessage {
+  case class I18NStringErrorMessage(message: I18NString) extends ErrorMessage {
+    override def toI18NString = message
+  }
 }
 
 trait WarningMessage extends Message {
 }
 object WarningMessage {
+  case class I18NStringWarningMessage(message: I18NString) extends WarningMessage {
+    override def toI18NString = message
+  }
 }
 
 sealed trait Messages {

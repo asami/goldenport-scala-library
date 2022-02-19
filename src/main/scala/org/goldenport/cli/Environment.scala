@@ -14,7 +14,8 @@ import Environment._
  *  version May. 30, 2020
  *  version Nov. 23, 2020
  *  version Jan. 24, 2021
- * @version Mar. 27, 2021
+ *  version Mar. 27, 2021
+ * @version Feb.  7, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Environment(
@@ -30,6 +31,7 @@ case class Environment(
   def consoleCharset = config.consoleCharset
   def homeDirectory: File = config.homeDirectory getOrElse monitor.userHome
   def workDirectory: File = config.workDirectory getOrElse monitor.userDir
+  def tmpDirectory: File = config.tmpDirectory getOrElse monitor.tmpDir
   def getProjectDirectory: Option[File] = config.projectDirectory
   def outputDirectory = config.outputDirectory
   def toAppEnvironment[T <: AppEnvironment] = appEnvironment.asInstanceOf[T]

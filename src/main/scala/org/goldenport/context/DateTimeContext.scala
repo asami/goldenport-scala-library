@@ -9,7 +9,8 @@ import org.goldenport.util.DateTimeUtils
  * @since   Jan. 22, 2021
  *  version Feb. 28, 2021
  *  version Apr. 26, 2021
- * @version Nov. 13, 2021
+ *  version Nov. 13, 2021
+ * @version Feb. 16, 2022
  * @author  ASAMI, Tomoharu
  */
 case class DateTimeContext(
@@ -24,6 +25,12 @@ case class DateTimeContext(
   def currentWeek: Int = current.weekOfWeekyear.get
   def currentDay: Int = current.dayOfMonth.get
   def currentHour: Int = current.hourOfDay.get
+
+  def timestamp: Long = datetime.getMillis
+  def datetime: DateTime = base plus gap
+
+  def toDateTime(p: java.sql.Timestamp): DateTime = toDateTime(p.getTime)
+  def toDateTime(p: Long): DateTime = new DateTime(p, dateTimeZone)
 }
 
 object DateTimeContext {

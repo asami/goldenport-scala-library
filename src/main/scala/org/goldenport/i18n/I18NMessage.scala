@@ -1,6 +1,7 @@
 package org.goldenport.i18n
 
 import scalaz._, Scalaz._
+import scala.util.control.NonFatal
 import java.util.{Locale, ResourceBundle}
 import java.text.MessageFormat
 import play.api.libs.json._
@@ -14,7 +15,7 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Jun.  1, 2020
  *  version Mar. 27, 2021
  *  version Jun. 20, 2021
- * @version Feb.  1, 2022
+ * @version Feb.  9, 2022
  * @author  ASAMI, Tomoharu
  */
 case class I18NMessage(
@@ -181,7 +182,13 @@ case class I18NMessage(
 
   def toI18NTemplate: I18NTemplate = I18NTemplate(this)
 
-  override def toString() = toJsonString
+  override def toString() = _to_string
+
+  private lazy val _to_string = try {
+    s"I18NMessage(${_c}, ${parameters.map(AnyUtils.toEmbed)})"
+  } catch {
+    case NonFatal(e) => s"I18NMessage(${_c}): $e"
+  }
 }
 
 object I18NMessage {

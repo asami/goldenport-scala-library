@@ -28,13 +28,15 @@ import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperation
  *  version Apr. 10, 2020
  *  version May. 16, 2020
  *  version Jan. 24, 2021
- * @version Oct.  2, 2021
+ *  version Oct.  2, 2021
+ * @version Feb.  7, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Config(
   i18n: I18NContext,
   homeDirectory: Option[File],
   workDirectory: Option[File],
+  tmpDirectory: Option[File],
   projectDirectory: Option[File],
   log: LogConfig,
   numericalOperations: INumericalOperations,
@@ -151,6 +153,7 @@ object Config {
     val bundle = EmptyResourceBundle
     val homedir = Option(System.getProperty("user.home")).map(x => new File(x))
     val workdir = Option(System.getProperty("user.dir")).map(x => new File(x))
+    val tmpdir = Option(System.getProperty("java.io.tmpdir")).map(x => new File(x))
     val projectdir = None // TODO
     Config(
       I18NContext(
@@ -165,6 +168,7 @@ object Config {
       ),
       homedir,
       workdir,
+      tmpdir,
       projectdir,
       LogConfig.empty,
       GoldenportNumericalOperations,

@@ -1,11 +1,13 @@
 package org.goldenport.util
 
-import scala.util.Try
+import scala.util.{Try, Success}
 import java.util.{Date, TimeZone, Locale}
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import org.joda.time._
 import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
+import org.goldenport.RAISE
+import org.goldenport.context.Consequence
 
 /*
  * TODO unify org.goldenport.record.util.DateTimeUtils
@@ -20,7 +22,8 @@ import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
  *  version Oct.  3, 2017
  *  version Dec. 29, 2018
  *  version Sep. 25, 2019
- * @version Jan. 27, 2022
+ *  version Jan. 27, 2022
+ * @version Feb. 19, 2022
  * @author  ASAMI, Tomoharu
  */
 object DateTimeUtils {
@@ -152,19 +155,40 @@ object DateTimeUtils {
 
   def toSimpleStringJst(ts: java.sql.Timestamp): String = simpleFormatterJst.print(ts.getTime)
 
-  def toSimpleString24Jst(dt: java.sql.Timestamp): String = ???
+  def toSimpleString24Jst(dt: java.sql.Timestamp): String = RAISE.notImplementedYetDefect
 
   // Parser
-  def parseIsoDateTime(s: String, tz: DateTimeZone): DateTime = Try(
-    if (tz == jodajst)
-      isoJstFormatter.parseDateTime(s)
-    else
-      ISODateTimeFormat.dateTimeParser.withZone(tz).parseDateTime(s)
-  ).recover {
-    case e => LocalDateTime.parse(s).toDateTime(tz)
-  }.recover {
-    case e => LocalDate.parse(s).toDateTimeAtStartOfDay(tz)
-  }.get
+  def parseIsoDateTime(s: String, tz: DateTimeZone): DateTime = {
+    val a = Try(
+      if (tz == jodajst)
+        isoJstParser.parseDateTime(s)
+      else
+        ISODateTimeFormat.dateTimeParser.withZone(tz).parseDateTime(s)
+    )
+    a match {
+      case Success(s) => s
+      case _ =>
+        val b = a.recover {
+          case e => LocalDateTime.parse(s).toDateTime(tz)
+        }.recover {
+          case e => LocalDate.parse(s).toDateTimeAtStartOfDay(tz)
+        }
+        b match {
+          case Success(s) => s
+          case _ => a.get
+        }
+    }
+  }
+
+  def consequenceDateTimeWithContext(s: String)(implicit ctx: org.goldenport.context.DateTimeContext): Consequence[DateTime] =
+    consequenceDateTime(s, ctx.dateTimeZone)
+
+  def consequenceDateTime(s: String): Consequence[DateTime] =
+    consequenceDateTime(s, jodajst) // TODO
+
+  def consequenceDateTime(s: String, tz: DateTimeZone): Consequence[DateTime] = Consequence(
+    parseIsoDateTime(s, tz)
+  )
 
   def parseIsoDateTimeJst(s: String): DateTime = {
     parseIsoDateTime(s, jodajst)
@@ -183,6 +207,21 @@ object DateTimeUtils {
   }
 
   def toDateTime(dt: DateTime, tz: DateTimeZone): DateTime = {
+    toDateTime(dt.getMillis, tz)
+  }
+
+  def toDateTime(dt: java.util.Date, tz: TimeZone): DateTime =
+    toDateTime(dt.getTime, tz)
+
+  def toDateTime(dt: java.sql.Timestamp, tz: TimeZone): DateTime = {
+    toDateTime(dt.getTime, tz)
+  }
+
+  def toDateTime(dt: Long, tz: TimeZone): DateTime = {
+    new DateTime(dt, tzToDateTimeZone(tz))
+  }
+
+  def toDateTime(dt: DateTime, tz: TimeZone): DateTime = {
     toDateTime(dt.getMillis, tz)
   }
 
@@ -272,14 +311,25 @@ object DateTimeUtils {
   /*
    * DateTimeZone
    */
-  def tzToDateTimeZone(p: TimeZone): DateTimeZone = DateTimeZone.forID(p.getID)
+  def tzToDateTimeZone(p: TimeZone): DateTimeZone = DateTimeZone.forTimeZone(p)
 
   def dateTimeZoneToTz(p: DateTimeZone): TimeZone = p.toTimeZone
 
   /*
+   * Calculation
+   */
+  def startOfFirstDayOfNextMonth(p: DateTime): DateTime =
+    p.plusMonths(1).withDayOfMonth(1).withTimeAtStartOfDay
+
+  def startOfFirstDayOfThisMonth(p: DateTime): DateTime =
+    p.withDayOfMonth(1).withTimeAtStartOfDay
+
+  def endOfLastDayOfThisMonth(p: DateTime): DateTime =
+    startOfFirstDayOfNextMonth(p).minusMillis(1)
+
+  /*
    * Count
    */
-
   def countOfMonthsAlmost(start: DateTime, end: DateTime): Int =
     LocalDateTimeUtils.countOfMonthsAlmost(start.toLocalDateTime, end.withZone(start.getZone).toLocalDateTime)
 

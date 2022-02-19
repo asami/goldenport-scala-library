@@ -33,7 +33,8 @@ import org.goldenport.values.IntervalFactory.{BoundsKind, CloseOpen, CloseClose}
  *  version Sep. 18, 2019
  *  version Sep. 10, 2020
  *  version Jan. 24, 2021
- * @version Feb. 28, 2021
+ *  version Feb. 28, 2021
+ * @version Feb. 17, 2022
  * @author  ASAMI, Tomoharu
  */
 case class DateTimePeriod( // TODO DateTimeInterval (java8 time)
@@ -687,6 +688,7 @@ object DateTimePeriod {
       }
 
       def body(inclusivep: Boolean, sb: String, si: Boolean, ei: Boolean): DateTimePeriod = {
+//        println(s"body: $inclusivep, $sb, $si, $ei")
         if (!sb.contains("~")) {
           sb match {
             case Compute(x, "+", n) => plus_one(x, n.toInt)
@@ -727,11 +729,12 @@ object DateTimePeriod {
           case _ => (s, isStartInclusive)
         }
         val (b, isendinclusive) = a.last match {
-          case MARK_START_OPEN => (a.init, false)
-          case MARK_START_CLOSE => (a.init, true)
+          case MARK_END_OPEN => (a.init, false)
+          case MARK_END_CLOSE => (a.init, true)
           case MARK_OPEN => (a.init, false)
           case _ => (a, isEndInclusive)
         }
+//        println(s"pre body: $s, $a, $b)")
         body(false, b, isstartinclusive, isendinclusive)
       }
     }

@@ -16,10 +16,13 @@ import org.goldenport.parser.ParseResult
  *  version Feb. 14, 2021
  *  version Mar. 24, 2021
  *  version Nov.  5, 2021
- * @version Jan. 27, 2022
+ *  version Jan. 27, 2022
+ * @version Feb. 16, 2022
  * @author  ASAMI, Tomoharu
  */
 object NumberUtils {
+  val BIGDECIMAL_ZERO = BigDecimal(0)
+
   def getBoolean(p: Option[String]): Option[Boolean] = p.flatMap(getBoolean)
 
   def getBoolean(p: String): Option[Boolean] = p.trim.toLowerCase match {

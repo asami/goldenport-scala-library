@@ -25,7 +25,8 @@ import org.goldenport.values.IntervalFactory.{BoundsKind, CloseOpen, CloseClose}
  * 
  * @since   Jan. 20, 2021
  *  version Jan. 23, 2021
- * @version Feb. 28, 2021
+ *  version Feb. 28, 2021
+ * @version Feb. 17, 2022
  * @author  ASAMI, Tomoharu
  */
 case class LocalDateTimeInterval( // TODO DateTimeInterval (java8 time)
@@ -268,6 +269,16 @@ case class LocalDateTimeInterval( // TODO DateTimeInterval (java8 time)
       case None => LocalDateTimeInterval.empty
     }
   }
+
+  def marshall: String = (start, end) match {
+    case (Some(s), Some(e)) => s"${_startmark}${s}~${e}${_endmark}"
+    case (Some(s), None) => s"${_startmark}${s}~"
+    case (None, Some(e)) => s"~${e}${_endmark}"
+    case (None, None) => ""
+  }
+
+  private def _startmark = if (isStartInclusive) MARK_START_CLOSE else MARK_START_OPEN
+  private def _endmark = if (isEndInclusive) MARK_END_CLOSE else MARK_END_OPEN
 }
 
 object LocalDateTimeInterval {
@@ -319,6 +330,9 @@ object LocalDateTimeInterval {
 
   def atOrAbove(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int): LocalDateTimeInterval =
     LocalDateTimeInterval(Some(new LocalDateTime(year, month, day, hour, minute, second)), None)
+
+  def openUpper(start: DateTime, end: DateTime): LocalDateTimeInterval =
+    LocalDateTimeInterval(Some(start.toLocalDateTime), Some(end.toLocalDateTime), true, false)
 
   /*
    * Caution: Timezone depends on running environment.

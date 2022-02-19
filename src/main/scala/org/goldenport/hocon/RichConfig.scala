@@ -8,12 +8,14 @@ import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 import java.net.{URL, URI}
 import java.io.File
+import org.joda.time.DateTime
 import com.typesafe.config._
 import org.goldenport.Strings
 import org.goldenport.i18n.{I18NString, I18NElement}
 import org.goldenport.collection.VectorMap
 import org.goldenport.value._
 import org.goldenport.context.Consequence
+import org.goldenport.context.DateTimeContext
 import org.goldenport.parser.ParseResult
 
 /*
@@ -36,7 +38,8 @@ import org.goldenport.parser.ParseResult
  *  version Jun. 12, 2021
  *  version Oct. 20, 2021
  *  version Dec. 31, 2021
- * @version Jan. 24, 2022
+ *  version Jan. 24, 2022
+ * @version Feb. 17, 2022
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -125,6 +128,10 @@ case class RichConfig(config: Config) extends AnyVal {
 
   def consequenceUrl(key: String): Consequence[URL] = HoconUtils.consequenceUrl(config, key)
   def consequenceUrlOption(key: String): Consequence[Option[URL]] = HoconUtils.consequenceUrlOption(config, key)
+  def consequenceDateTime(key: String): Consequence[DateTime] = HoconUtils.consequenceDateTime(config, key)
+  def consequenceDateTimeOption(key: String): Consequence[Option[DateTime]] = HoconUtils.consequenceDateTimeOption(config, key)
+  def consequenceDateTimeWithContext(key: String)(implicit ctx: DateTimeContext): Consequence[DateTime] = HoconUtils.consequenceDateTimeWithContext(config, key)
+  def consequenceDateTimeOptionWithContext(key: String)(implicit ctx: DateTimeContext): Consequence[Option[DateTime]] = HoconUtils.consequenceDateTimeOptionWithContext(config, key)
 
   def consequenceToken[T <: ValueInstance](key: String, f: ValueClass[T]): Consequence[T] =
     HoconUtils.consequenceToken(config, key, f)
@@ -134,6 +141,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def consequenceStringOrConfig(key: String): Consequence[Either[String, Config]] = HoconUtils.consequenceStringOrConfig(config, key)
   def consequenceStringOrConfigOption(key: String): Consequence[Option[Either[String, Config]]] = HoconUtils.consequenceStringOrConfigOption(config, key)
   def consequenceConfig(key: String): Consequence[Config] = HoconUtils.consequenceConfig(config, key)
+  def consequenceConfigOption(key: String): Consequence[Option[Config]] = HoconUtils.consequenceConfigOption(config, key)
   def consequenceConfigList(key: String): Consequence[List[Config]] = HoconUtils.consequenceConfigList(config, key)
   def consequenceConfigOrConfigList(key: String): Consequence[Either[Config, List[Config]]] = HoconUtils.consequenceConfigOrConfigList(config, key)
   def consequenceAsConfigList(key: String): Consequence[List[Config]] = HoconUtils.consequenceAsConfigList(config, key)

@@ -5,6 +5,7 @@ import scala.util.Try
 import org.goldenport.RAISE
 import org.goldenport.Strings
 import org.goldenport.extension.Showable
+import org.goldenport.context.Consequence
 import org.goldenport.parser._
 import org.goldenport.values.RichNumber.Implicits._
 import org.goldenport.util.{NumberUtils, AnyRefUtils}
@@ -15,7 +16,8 @@ import org.goldenport.util.{NumberUtils, AnyRefUtils}
  *  version Feb. 28, 2020
  *  version Sep. 28, 2020
  *  version Jan. 30, 2021
- * @version Jan. 25, 2022
+ *  version Jan. 25, 2022
+ * @version Feb. 17, 2022
  * @author  ASAMI, Tomoharu
  */
 trait NumberRange extends Showable {
@@ -39,6 +41,8 @@ object NumberRange {
   def create(p: String): NumberRange = parse(p).take
 
   def parseOption(p: String): Option[NumberRange] = parse(p).toOption
+
+  def unmarshall(p: String): Consequence[NumberRange] = Consequence.from(parse(p))
 
   def parse(s: String): ParseResult[NumberRange] = {
     Strings.totokens(s, ",") match {

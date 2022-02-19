@@ -10,15 +10,19 @@ import scala.collection.JavaConverters._
 import java.util.Locale
 import java.net.{URL, URI}
 import java.io.File
+import org.joda.time.DateTime
 import com.typesafe.config._
+import com.asamioffice.goldenport.io.UURL
 import org.goldenport.RAISE
 import org.goldenport.Strings
 import org.goldenport.i18n.{I18NString, I18NElement}
 import org.goldenport.value._
 import org.goldenport.collection.VectorMap
 import org.goldenport.context.Consequence
+import org.goldenport.context.DateTimeContext
 import org.goldenport.parser.ParseResult
 import org.goldenport.util.TypesafeConfigUtils
+import org.goldenport.util.DateTimeUtils
 import org.goldenport.util.AnyUtils
 
 /*
@@ -42,7 +46,8 @@ import org.goldenport.util.AnyUtils
  *  version Jun. 13, 2021
  *  version Oct. 20, 2021
  *  version Dec. 31, 2021
- * @version Jan. 27, 2022
+ *  version Jan. 27, 2022
+ * @version Feb. 17, 2022
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -62,7 +67,13 @@ object HoconUtils {
     getConfig(config, key) getOrElse empty
 
   def asConfigList(config: Config, key: String): List[Config] =
-    getConfigList(config, key) getOrElse Nil
+    getConfigOrConfigList(config, key) match {
+      case Some(s) => s match {
+        case Right(r) => r
+        case Left(l) => List(l)
+      }
+      case None => Nil
+    }
 
   def asStringList(config: Config, key: String): List[String] =
     getStringList(config, key) getOrElse Nil
@@ -520,12 +531,36 @@ object HoconUtils {
 
   def consequenceUrl(p: Config, key: String): Consequence[URL] =
     getString(p, key) match {
-      case Some(s) => Consequence(new URL(s))
+      case Some(s) => Consequence(UURL.getURLFromFileOrURLName(s))
       case None => Consequence.missingPropertyFault(key)
     }
 
   def consequenceUrlOption(p: Config, key: String): Consequence[Option[URL]] =
-    consequenceStringOption(p, key).flatMap(x => Consequence(x.map(a => new URL(a))))
+    consequenceStringOption(p, key).flatMap(x => Consequence(x.map(UURL.getURLFromFileOrURLName)))
+
+  def consequenceDateTimeWithContext(p: Config, key: String)(implicit ctx: DateTimeContext): Consequence[DateTime] =
+    getString(p, key) match {
+      case Some(s) => DateTimeUtils.consequenceDateTimeWithContext(s)
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceDateTimeOptionWithContext(p: Config, key: String)(implicit ctx: DateTimeContext): Consequence[Option[DateTime]] =
+    for {
+      s <- consequenceStringOption(p, key)
+      x <- s.traverse(DateTimeUtils.consequenceDateTimeWithContext)
+    } yield x
+
+  def consequenceDateTime(p: Config, key: String): Consequence[DateTime] =
+    getString(p, key) match {
+      case Some(s) => DateTimeUtils.consequenceDateTime(s)
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceDateTimeOption(p: Config, key: String): Consequence[Option[DateTime]] =
+    for {
+      s <- consequenceStringOption(p, key)
+      x <- s.traverse(DateTimeUtils.consequenceDateTime)
+    } yield x
 
   def consequenceToken[T <: ValueInstance](p: Config, key: String, f: ValueClass[T]): Consequence[T] =
     getString(p, key) match {
@@ -574,6 +609,9 @@ object HoconUtils {
 
   def consequenceConfig(p: Config, key: String): Consequence[Config] =
     Consequence.successOrMissingPropertyFault(key, getConfig(p, key))
+
+  def consequenceConfigOption(p: Config, key: String): Consequence[Option[Config]] =
+    Consequence(getConfig(p, key))
 
   def consequenceConfigList(p: Config, key: String): Consequence[List[Config]] =
     Consequence(takeConfigList(p, key))
