@@ -29,7 +29,7 @@ import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperation
  *  version May. 16, 2020
  *  version Jan. 24, 2021
  *  version Oct.  2, 2021
- * @version Feb.  7, 2022
+ * @version Feb. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Config(
@@ -43,6 +43,9 @@ case class Config(
   properties: RichConfig
 ) {
   def charset: Charset = i18n.charset
+  def charsetInputFile = i18n.charsetInputFile
+  def charsetOutputFile = i18n.charsetOutputFile
+  def charsetConsole = i18n.charsetConsole
   def newline: String = i18n.newline
   def locale: Locale = i18n.locale
   def timezone: TimeZone = i18n.timezone
@@ -158,6 +161,9 @@ object Config {
     Config(
       I18NContext(
         charset,
+        None,
+        None,
+        None,
         newline,
         locale,
         timezone,

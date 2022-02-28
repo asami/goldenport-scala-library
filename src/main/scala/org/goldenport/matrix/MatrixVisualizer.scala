@@ -1,8 +1,10 @@
 package org.goldenport.matrix
 
-import scalaz._, Scalaz._
+import scalaz.{Align => _, _}, Scalaz._
 import org.goldenport.RAISE
 import org.goldenport.value._
+import org.goldenport.util.StringUtils
+import org.goldenport.util.AnyUtils
 import MatrixVisualizer._
 
 /*
@@ -11,7 +13,8 @@ import MatrixVisualizer._
  *  version Aug. 24, 2019
  *  version Oct. 11, 2019
  *  version Nov. 30, 2019
- * @version Mar.  8, 2021
+ *  version Mar.  8, 2021
+ * @version Feb. 24, 2022
  * @author  ASAMI, Tomoharu
  */
 case class MatrixVisualizer[T](
@@ -66,6 +69,12 @@ case class MatrixVisualizer[T](
     _draw(columns, r)
   }
 
+  def plainTextCenter(columns: ColumnInfos, p: IMatrix[T]): String = {
+    val raw = _build_raw(p)
+    val r = _make_center(columns, raw)
+    _draw(columns, r)
+  }
+
   private def _build_raw(p: IMatrix[T]): Rows = {
     val rs = for (y <- 0 until p.height) yield {
       val cs = for (x <- 0 until p.width) yield {
@@ -81,7 +90,7 @@ case class MatrixVisualizer[T](
 
   private def _build_columns(p: Rows): ColumnInfos = {
     case class Z(columns: Vector[Int] = Vector.fill(p.width)(0)) {
-      def r = ColumnInfos(columns.map(ColumnInfo))
+      def r = ColumnInfos(columns.map(ColumnInfo(_)))
 
       def +(rhs: Row) = {
         val a = columns.zip(rhs.cells.map(_string_width)).zipWithIndex
@@ -112,7 +121,7 @@ case class MatrixVisualizer[T](
       val isUnresolved = true
     }
 
-    case class Z(xs: Vector[Slot] = Vector.empty, remainder: Int = width - 1) {
+    case class Z(xs: Vector[Slot] = Vector.empty, remainder: Int = width - 1 - (p.length + 1)) {
       def r = if (remainder <= 0)
         _asis
       else
@@ -166,10 +175,16 @@ case class MatrixVisualizer[T](
     ColumnInfos(r)
   }
 
-  private def _make(columns: ColumnInfos, rows: Rows): Rows = {
+  private def _make(columns: ColumnInfos, rows: Rows): Rows =
+    _make(columns, Align.Left, rows)
+
+  private def _make_center(columns: ColumnInfos, rows: Rows): Rows =
+    _make(columns, Align.Center, rows)
+
+  private def _make(columns: ColumnInfos, align: Align, rows: Rows): Rows = {
     val a: Seq[Row] = rows.rows.map { row =>
       val xs = row.effectiveCells(columns).zip(columns.columns).map {
-        case (cell, column) => cell.normalize(column, charWidth)
+        case (cell, column) => cell.normalize(column, align) // cell.normalize(column, charWidth)
       }
       Row(xs.toVector)
     }
@@ -379,9 +394,10 @@ case class MatrixVisualizer[T](
     sb.append(newline)
   }
 
-  def stringWidth(p: String): Int = p.map(charWidth).sum
-
-  def charWidth(p: Char): Int = if (p > 0x1000) 2 else 1 // TODO
+  // def stringWidth(p: String): Int = p.map(charWidth).sum
+  // def charWidth(p: Char): Int = if (p > 0x1000) 2 else 1 // TODO
+  private def stringWidth(p: String): Int = StringUtils.stringConsoleWidth(p)
+  private def charWidth(p: Char): Int = StringUtils.charConsoleWidth(p)
 }
 object MatrixVisualizer {
   sealed trait LineStyle extends NamedValueInstance {
@@ -546,7 +562,25 @@ object MatrixVisualizer {
     val name = "middle"
   }
 
-  case class ColumnDef(width: Option[Int]) {
+  sealed trait Align extends NamedValueInstance {
+  }
+  object Align extends EnumerationClass[Align] {
+    val elements = Vector(Left, Center, Right)
+
+    case object Left extends Align {
+      val name ="left"
+    }
+    case object Center extends Align {
+      val name ="center"
+    }
+    case object Right extends Align {
+      val name ="right"
+    }
+  }
+
+  case class ColumnDef(
+    width: Option[Int]
+  ) {
     def withWidth(p: Int) = copy(width = Some(p))
     def withoutWidth() = copy(width = None)
   }
@@ -561,7 +595,10 @@ object MatrixVisualizer {
   object ColumnDefs {
     val empty = ColumnDefs(Vector.empty)
   }
-  case class ColumnInfo(width: Int) {
+  case class ColumnInfo(
+    width: Int,
+    align: Option[Align] = None
+  ) {
     def withWidth(p: Int) = copy(width = p)
   }
   case class ColumnInfos(columns: IndexedSeq[ColumnInfo]) {
@@ -587,7 +624,13 @@ object MatrixVisualizer {
         (cells.toStream ++ Stream.continually(Cell.empty)).take(p.length).toVector
   }
   case class Cell(lines: Seq[String]) {
-    def normalize(p: ColumnInfo, f: Char => Int) = Cell(lines.flatMap(_normalize(p.width, f, _)))
+    def normalize(p: ColumnInfo, align: Align): Cell = (p.align getOrElse align) match {
+      case Align.Left => Cell(lines.map(AnyUtils.toEmbed(_, p.width)))
+      case Align.Center => Cell(lines.map(AnyUtils.toEmbedCenter(_, p.width)))
+      case Align.Right => Cell(lines.map(AnyUtils.toEmbedRight(_, p.width)))
+    }
+
+    def normalizex(p: ColumnInfo, f: Char => Int) = Cell(lines.flatMap(_normalize(p.width, f, _)))
 
     private def _normalize(width: Int, f: Char => Int, p: String): Vector[String] = {
       case class Z(

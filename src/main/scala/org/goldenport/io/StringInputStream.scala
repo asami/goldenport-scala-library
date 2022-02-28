@@ -2,11 +2,13 @@ package org.goldenport.io
 
 import java.io._
 import java.nio.charset.Charset
+import scalax.io.Codec
 import org.goldenport.Platform
 
 /*
  * @since   Jun. 24, 2019
- * @version May.  4, 2020
+ *  version May.  4, 2020
+ * @version Feb. 26, 2022
  * @author  ASAMI, Tomoharu
  */
 class StringInputStream(
@@ -75,4 +77,7 @@ object StringInputStream {
       c
     }
   }
+
+  def apply(p: String, encoding: String): StringInputStream = new StringInputStream(p, Charset.forName(encoding))
+  def apply(p: String, codec: Codec): StringInputStream = new StringInputStream(p, codec.charSet)
 }

@@ -13,6 +13,7 @@ import com.asamioffice.goldenport.io.UURL
 import org.goldenport.RAISE
 import org.goldenport.extension.Showable
 import org.goldenport.context.Consequence
+import org.goldenport.i18n.StringFormatter
 
 /*
  * See org.goldenport.record.util.AnyUtils
@@ -33,7 +34,8 @@ import org.goldenport.context.Consequence
  *  version Jan. 23, 2021
  *  version Apr. 20, 2021
  *  version Nov.  5, 2021
- * @version Jan. 30, 2022
+ *  version Jan. 30, 2022
+ * @version Feb. 24, 2022
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -61,10 +63,18 @@ object AnyUtils {
     case m: Showable => m.show
     case m => toString(m)
   }
-  def toEmbed(x: Any): String = x match {
-    case m: Showable => m.embed
-    case m => toString(m)
+  def toEmbed(x: Any): String = toEmbed(x, 8)
+  def toEmbed(x: Any, width: Int): String = x match {
+    case m: Showable => m.embed(width)
+    case m => toEmbedString(toString(m), width)
   }
+  def toEmbedCenter(x: Any, width: Int): String =
+    StringFormatter.display.enCenter(toEmbed(x, width), width)
+  def toEmbedRight(x: Any, width: Int): String =
+    StringFormatter.display.enRight(toEmbed(x, width), width)
+
+  def toEmbedString(p: String, width: Int): String = StringUtils.toEmbedConsole(p, width)
+
   def toBoolean(x: Any): Boolean = {
     x match {
       case v: Boolean => v

@@ -15,11 +15,15 @@ import org.goldenport.util.AnyUtils
  *  version Sep. 30, 2019
  *  version Oct. 18, 2019
  *  version Jan.  2, 2021
- * @version Feb. 20, 2021
+ *  version Feb. 20, 2021
+ * @version Feb. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 case class I18NContext(
   charset: Charset,
+  charsetInputFileOption: Option[Charset],
+  charsetOutputFileOption: Option[Charset],
+  charsetConsoleOption: Option[Charset],
   newline: String,
   locale: Locale,
   timezone: TimeZone,
@@ -33,6 +37,10 @@ case class I18NContext(
   private lazy val _intFormatter = NumberFormat.getIntegerInstance(locale)
   private lazy val _currencyFormatter = NumberFormat.getCurrencyInstance(locale)
   private lazy val _percentFormatter = NumberFormat.getPercentInstance(locale)
+
+  def charsetInputFile = charsetInputFileOption getOrElse charset
+  def charsetOutputFile = charsetOutputFileOption getOrElse charset
+  def charsetConsole = charsetConsoleOption getOrElse charset
 
   def print(p: Any): String = p match {
     case m: Number => printNumber(m)
@@ -189,6 +197,9 @@ object I18NContext {
     val bundle = EmptyResourceBundle
     I18NContext(
       charset,
+      None,
+      None,
+      None,
       newline,
       locale,
       timezone,
@@ -210,6 +221,9 @@ object I18NContext {
     val bundle = EmptyResourceBundle
     I18NContext(
       charset,
+      None,
+      None,
+      None,
       newline,
       locale,
       timezone,
@@ -227,6 +241,9 @@ object I18NContext {
     timezone: TimeZone
   ): I18NContext = I18NContext(
     charset,
+    None,
+    None,
+    None,
     newline,
     locale,
     timezone,

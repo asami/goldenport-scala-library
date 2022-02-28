@@ -15,7 +15,7 @@ import Environment._
  *  version Nov. 23, 2020
  *  version Jan. 24, 2021
  *  version Mar. 27, 2021
- * @version Feb.  7, 2022
+ * @version Feb. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Environment(
@@ -25,6 +25,9 @@ case class Environment(
 ) {
   def recorder = config.recorder
   def charset = config.charset
+  def charsetInputFile = config.charsetInputFile
+  def charsetOutputFile = config.charsetOutputFile
+  def charsetConsole = config.charsetConsole
   def newline = config.newline
   def locale = config.locale
   def timezone = config.timezone

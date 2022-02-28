@@ -9,6 +9,7 @@ import java.net.URLEncoder
 import com.asamioffice.goldenport.text.{UString, UPathString}
 import org.goldenport.RAISE
 import org.goldenport.Strings
+import org.goldenport.i18n.StringFormatter
 import org.goldenport.values.{PathName, Urn}
 
 /*
@@ -46,7 +47,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Sep.  1, 2020
  *  version Jan.  9, 2021
  *  version Apr. 10, 2021
- * @version Dec. 31, 2021
+ *  version Dec. 31, 2021
+ * @version Feb. 25, 2022
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -267,6 +269,10 @@ object StringUtils {
   def isLispIdentifierI18NFirstChar(c: Char) = isLispIdentifierFirstChar(c) || isI18NIdentifierChar(c)
 
   def isLispSymbolChar(c: Char) = lispSymbolChars.contains(c)
+
+  def stringConsoleWidth(p: String): Int = p.map(charConsoleWidth).sum
+
+  def charConsoleWidth(p: Char): Int = if (p > 0x1000) 2 else 1 // TODO
 
   //
   def dropWhileRight(s: String, p: Char => Boolean): String =
@@ -575,7 +581,7 @@ object StringUtils {
     val b = a.map(Strings.cutstring(_, width))
     val c = b.take(size).mkString(newline)
     if (a.length > size)
-      s"$c ... (${a.length}/${p.length})"
+      s"$c$newline ... total: ${a.length} lines/${p.length} characters"
     else
       c
   }
@@ -595,6 +601,9 @@ object StringUtils {
     dropRightNewlines(normalizeConsoleMessage(newline)(p))
 
   def forToString(p: String): String = showConsole(p, "\\n", 1)
+
+  def toEmbedConsole(p: String, width: Int): String =
+    StringFormatter.display.embed(p, width)
 
   /*
    * List
