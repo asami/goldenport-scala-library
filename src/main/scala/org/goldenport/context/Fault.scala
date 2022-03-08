@@ -20,7 +20,8 @@ import Fault._
  *  version Oct. 25, 2021
  *  version Nov. 15, 2021
  *  version Jan. 28, 2022
- * @version Feb.  1, 2022
+ *  version Feb.  1, 2022
+ * @version Mar.  6, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -162,7 +163,7 @@ object InvalidArgumentFault {
   private def _message(key: String, ps: Iterable[Fault]): I18NMessage = {
     ps.toVector.map(_.message).concatenate
   }
-  // .map(_.message).list.mkString(";")))) * @version Feb.  1, 2022
+  // .map(_.message).list.mkString(";")))) * @version Mar.  6, 2022
 }
 
 case class MissingArgumentFault(
@@ -436,7 +437,7 @@ case class Faults(faults: Vector[Fault] = Vector.empty) {
     map(_.implicitStatusCode).sortWith(_is_strong).
     headOption.getOrElse(StatusCode.InternalServerError)
 
-  private def _is_strong(lhs: StatusCode, rhs: StatusCode): Boolean = lhs.main >= rhs.main
+  private def _is_strong(lhs: StatusCode, rhs: StatusCode): Boolean = lhs.code >= rhs.code
 }
 object Faults {
   val empty = Faults()

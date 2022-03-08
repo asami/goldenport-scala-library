@@ -21,12 +21,13 @@ import org.goldenport.util.StringUtils
  *  version May. 18, 2020
  *  version Jun.  6, 2020
  *  version Mar. 15, 2021
- * @version Jun. 29, 2021
+ *  version Jun. 29, 2021
+ * @version Mar.  6, 2022
  * @author  ASAMI, Tomoharu
  */
 case class PathName(
   v: String,
-  delimiter: String = "/"
+  delimiter: String = PathName.DELIMITER
 ) {
   override def toString() = v
 
@@ -37,23 +38,38 @@ case class PathName(
   def tailOption: Option[PathName] = getChild
   lazy val components: List[String] = Strings.totokens(v, delimiter)
   lazy val firstComponent: String = components.headOption.getOrElse("")
+  lazy val firstComponentBody: String = StringUtils.toPathnameBody(firstComponent)
+  lazy val lastComponent: String = components.lastOption.getOrElse("")
+  // deprecated
   lazy val lastConcreteComponent: String = {
     components.reverse.filterNot(_.contains("{")) match { // XXX "{"
       case Nil => ""
       case x :: _ => x
     }
   }
-  lazy val leaf: String = getChild.map(_.v) getOrElse ""
-  lazy val body: String = getParent.map(_.v) getOrElse ""
-  lazy val getParent: Option[PathName] =
+  def leaf: String = lastComponent
+  lazy val leafBody: String = StringUtils.toPathnameBody(leaf)
+  lazy val body: String = StringUtils.toPathnameBody(v)
+  lazy val trunk: String = getTrunk.map(_.v) getOrElse ""
+  lazy val suffix: String = getSuffix getOrElse ""
+  lazy val getTrunk: Option[PathName] =
     if (isBase)
       None
     else
-      Some(PathName.create(components.init))
+      Some(
+        if (isAbsolute)
+          PathName.createAbsolute(components.init)
+        else
+          PathName.createRelative(components.init)
+      )
   lazy val getChild: Option[PathName] = components.tail match {
     case Nil => None
     case xs => Some(PathName(xs.mkString(delimiter)))
   }
+  def getSuffix: Option[String] = StringUtils.getSuffix(v) // lowercase
+  def getSuffixLowerCase: Option[String] = StringUtils.getSuffixLowerCase(v)
+  def getSuffixRaw: Option[String] = StringUtils.getSuffixRaw(v)
+  def isSuffix(p: String): Boolean = getSuffix.fold(false)(_ == p)
 
   def get(i: Int): Option[String] = components.lift(i)
 
@@ -101,14 +117,18 @@ case class PathName(
   }
 
   def length = components.length
-  def getSuffix: Option[String] = StringUtils.getSuffix(v)
 }
 
 object PathName {
   val home = PathName("")
+  val DELIMITER = "/"
 
-  def create(ps: List[String]): PathName = PathName(StringUtils.concatPath(ps))
-  def create(p: String, pp: String, ps: String*): PathName = create(p :: pp :: ps.toList)
+  def createAbsolute(delimiter: Char, ps: List[String]): PathName = PathName(delimiter + StringUtils.concatPath(delimiter, ps))
+  def createAbsolute(ps: List[String]): PathName = createAbsolute('/', ps)
+  def createAbsolute(p: String, pp: String, ps: String*): PathName = createAbsolute(p :: pp :: ps.toList)
+  def createRelative(delimiter: Char, ps: List[String]): PathName = PathName(StringUtils.concatPath(delimiter, ps))
+  def createRelative(ps: List[String]): PathName = createRelative('/', ps)
+  def createRelative(p: String, pp: String, ps: String*): PathName = createRelative(p :: pp :: ps.toList)
 //  def create(path: String): PathName = PathName(path)
 //  def create(path: String, delimiter: String): PathName = PathName(path, delimiter)
 }

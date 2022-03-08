@@ -1,6 +1,7 @@
 package org.goldenport.cli
 
 import java.io._
+import java.net.URL
 import org.goldenport.monitor.Monitor
 import org.goldenport.context._
 import Environment._
@@ -15,7 +16,8 @@ import Environment._
  *  version Nov. 23, 2020
  *  version Jan. 24, 2021
  *  version Mar. 27, 2021
- * @version Feb. 28, 2022
+ *  version Feb. 28, 2022
+ * @version Mar.  6, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Environment(
@@ -60,6 +62,10 @@ case class Environment(
     stderr.println(p)
     stderr.flush()
   }
+
+  def getAppResource(o: Object, path: String): Option[URL] = Option(o.getClass().getClassLoader().getResource(path))
+
+  def getClassResource(o: Object, path: String): Option[URL] = Option(o.getClass().getResource(path))
 }
 
 object Environment {

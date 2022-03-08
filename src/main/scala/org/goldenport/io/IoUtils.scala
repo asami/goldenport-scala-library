@@ -22,7 +22,8 @@ import org.goldenport.bag.ClobBag
  *  version May.  4, 2020
  *  version Jun.  3, 2020
  *  version Apr.  4, 2021
- * @version Feb. 26, 2022
+ *  version Feb. 26, 2022
+ * @version Mar.  6, 2022
  * @author  ASAMI, Tomoharu
  */
 object IoUtils {
@@ -122,6 +123,9 @@ object IoUtils {
 
   def write(out: OutputStream, p: String, codec: Codec): Unit =
     copyCloseIn(toInputStream(p, codec), out)
+
+  def write(out: OutputStream, p: URL): Unit =
+    copyCloseIn(p.openStream, out)
 
   def writeClose(out: OutputStream, p: String): Unit = writeClose(out, p, Codec.UTF8)
 

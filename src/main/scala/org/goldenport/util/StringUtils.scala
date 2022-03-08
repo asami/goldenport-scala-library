@@ -48,7 +48,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Jan.  9, 2021
  *  version Apr. 10, 2021
  *  version Dec. 31, 2021
- * @version Feb. 25, 2022
+ *  version Feb. 25, 2022
+ * @version Mar.  6, 2022
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -301,12 +302,33 @@ object StringUtils {
     }
   }
 
-  def concatPath(path: Seq[String]): String = {
-    path.length match {
+  // def concatPath(path: Seq[String]): String = {
+  //   path.length match {
+  //     case 0 => ""
+  //     case 1 => path.head
+  //     case _ => path.tail.foldLeft(path.head)(concatPath).toString
+  //   }
+  // }
+
+  def concatPath(path: Seq[String]): String = concatPath('/', path)
+
+  def concatPath(delimiter: Char, path: Seq[String]): String = {
+    def _concat_path_(lhs: String, rhs: String) = s"${lhs}${delimiter}${escapePathComponent(delimiter, rhs)}"
+    path.filterNot(_.isEmpty).length match {
       case 0 => ""
-      case 1 => path.head
-      case _ => path.tail.foldLeft(path.head)(concatPath).toString
+      case 1 => escapePathComponent(delimiter, path.head)
+      case _ => path.tail.foldLeft(path.head)(_concat_path_)
     }
+  }
+
+  def escapePathComponent(delimiter: Char, p: String): String = {
+    val sb = new StringBuilder()
+    for (c <- p) {
+      if (c == delimiter)
+        sb.append("\\")
+        sb.append(c)
+    }
+    sb.toString
   }
 
   def isSuffix(s: String, suffix: String): Boolean = {
@@ -325,6 +347,10 @@ object StringUtils {
   def toSuffix(s: String): String = getSuffix(s).getOrElse("")
 
   def getSuffix(s: String): Option[String] = Option(UPathString.getSuffix(s)).map(_.toLowerCase)
+
+  def getSuffixLowerCase(s: String): Option[String] = getSuffix(s)
+
+  def getSuffixRaw(s: String): Option[String] = Option(UPathString.getSuffix(s))
 
   def toPathnameBody(s: String): String = UPathString.getPathnameBody(s)
 

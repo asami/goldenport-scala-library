@@ -25,7 +25,8 @@ import com.asamioffice.goldenport.text.UString
  *  version Dec.  7, 2019
  *  version Sep.  8, 2020
  *  version Apr. 15, 2021
- * @version May. 30, 2021
+ *  version May. 30, 2021
+ * @version Mar.  6, 2022
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -59,6 +60,7 @@ object Strings {
     val image_apng = "image/apng"
     val image_webp = "image/webp"
     val image_avif = "image/avif"
+    val image_xicon = "image/x-icon"
     val message_http = "message/http"
     val message_imdn_xml = "message/imdn+xml"
     val message_partianl = "message/partial"

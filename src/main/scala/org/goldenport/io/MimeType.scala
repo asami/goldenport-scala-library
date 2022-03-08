@@ -16,7 +16,8 @@ import org.goldenport.util.StringUtils
  *  version Sep.  1, 2020
  *  version Feb.  8, 2021
  *  version Mar.  6, 2021
- * @version Apr. 15, 2021
+ *  version Apr. 15, 2021
+ * @version Mar.  6, 2022
  * @author  ASAMI, Tomoharu
  */
 case class MimeType(name: String) {
@@ -60,6 +61,7 @@ object MimeType {
   val image_apng = MimeType(mimetype.image_apng)
   val image_webp = MimeType(mimetype.image_webp)
   val image_avif = MimeType(mimetype.image_avif)
+  val image_xicon = MimeType(mimetype.image_xicon) // https://stackoverflow.com/questions/13827325/correct-mime-type-for-favicon-ico
   val message_http = MimeType(mimetype.message_http)
   val message_imdn_xml = MimeType(mimetype.message_imdn_xml)
   val message_partianl = MimeType(mimetype.message_partianl)

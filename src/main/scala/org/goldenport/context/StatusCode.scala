@@ -12,11 +12,12 @@ import org.goldenport.util.ExceptionUtils
  *  version Apr. 10, 2021
  *  version May. 30, 2021
  *  version Jun. 20, 2021
- * @version Jan. 20, 2022
+ *  version Jan. 20, 2022
+ * @version Mar.  6, 2022
  * @author  ASAMI, Tomoharu
  */
 case class StatusCode(
-  main: Int,
+  code: Int,
   detail: Option[DetailCode] = None,
   application: Option[Int] = None, // FURTHER CONSIDERATION
   messageOption: Option[I18NMessage] = None, // FURTHER CONSIDERATION
@@ -24,22 +25,22 @@ case class StatusCode(
 ) {
   import StatusCode._
 
-  def message: I18NMessage = messageOption getOrElse StatusCode.message(main)
+  def message: I18NMessage = messageOption getOrElse StatusCode.message(code)
 
   def withDetail(p: DetailCode) = copy(detail = Some(p))
 
-  def isSuccess: Boolean = Ok.main <= main && main < MultipleChoices.main
+  def isSuccess: Boolean = Ok.code <= code && code < MultipleChoices.code
 
   def forConfig: StatusCode =
     if (isSuccess)
       this
     else
-      copy(main = InternalServerError.main, detail = detail.map(_.forConfig))
+      copy(code = InternalServerError.code, detail = detail.map(_.forConfig))
 }
 
 object StatusCode {
   /*
-   * Main
+   * Code
    */
   final val Ok = StatusCode(200)
   final val Created = StatusCode(201)
@@ -79,7 +80,7 @@ object StatusCode {
   final val GatewayTimeout = StatusCode(504)
 
   /*
-   * Main and Detail
+   * Code and Detail
    */
   final val IllegalArugument = BadRequest.withDetail(DetailCode.Argument)
   final val SyntaxError = BadRequest.withDetail(DetailCode.ArgumentSyntax)
