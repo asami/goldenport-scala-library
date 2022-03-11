@@ -11,6 +11,7 @@ import java.util.Locale
 import java.net.{URL, URI}
 import java.io.File
 import org.joda.time.DateTime
+import spire.math.Rational
 import com.typesafe.config._
 import com.asamioffice.goldenport.io.UURL
 import org.goldenport.RAISE
@@ -20,6 +21,7 @@ import org.goldenport.value._
 import org.goldenport.collection.VectorMap
 import org.goldenport.context.Consequence
 import org.goldenport.context.DateTimeContext
+import org.goldenport.extension.IRecord
 import org.goldenport.parser.ParseResult
 import org.goldenport.util.TypesafeConfigUtils
 import org.goldenport.util.DateTimeUtils
@@ -47,7 +49,8 @@ import org.goldenport.util.AnyUtils
  *  version Oct. 20, 2021
  *  version Dec. 31, 2021
  *  version Jan. 27, 2022
- * @version Feb. 17, 2022
+ *  version Feb. 17, 2022
+ * @version Mar. 11, 2022
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -175,6 +178,12 @@ object HoconUtils {
   def getBigDecimal(config: Config, key: String): Option[BigDecimal] =
     if (config.hasPath(key))
       Some(config.getString(key)).map(BigDecimal(_))
+    else
+      None
+
+  def getRational(config: Config, key: String): Option[Rational] =
+    if (config.hasPath(key))
+      Some(config.getString(key)).map(Rational(_))
     else
       None
 
@@ -519,6 +528,16 @@ object HoconUtils {
     getBigDecimal(p, key)
   )
 
+  def consequenceRational(p: Config, key: String): Consequence[Rational] =
+    getRational(p, key) match {
+      case Some(s) => Consequence.success(s)
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceRationalOption(p: Config, key: String): Consequence[Option[Rational]] = Consequence(
+    getRational(p, key)
+  )
+
   def consequenceString(p: Config, key: String): Consequence[String] =
     getString(p, key) match {
       case Some(s) => Consequence.success(s)
@@ -616,6 +635,9 @@ object HoconUtils {
   def consequenceConfigList(p: Config, key: String): Consequence[List[Config]] =
     Consequence(takeConfigList(p, key))
 
+  def consequenceAsConfig(p: Config, key: String): Consequence[Config] =
+    Consequence(getConfig(p, key).getOrElse(empty))
+
   def consequenceAsConfigList(p: Config, key: String): Consequence[List[Config]] =
     Consequence(asConfigList(p, key))
 
@@ -674,5 +696,44 @@ object HoconUtils {
       }
       VectorMap(b.toVector)
     }
+  }
+
+  def makeJsonString(props: (String, Any)*): String = {
+    val config = createHocon(props.toVector)
+    config.root.render(ConfigRenderOptions.defaults.setJson(true).setComments(false).setOriginComments(false))
+  }
+
+  def makeJsonString(p: Map[String, Any]): String = {
+    val config = createHocon(p)
+    config.root.render(ConfigRenderOptions.defaults.setJson(true).setComments(false).setOriginComments(false))
+  }
+
+  def makeHoconString(props: (String, Any)*): String = {
+    val config = createHocon(props.toVector)
+    config.root.render(ConfigRenderOptions.defaults.setOriginComments(false))
+  }
+
+  def makeHoconString(p: Map[String, Any]): String = {
+    val config = createHocon(p.toVector)
+    config.root.render(ConfigRenderOptions.defaults.setOriginComments(false))
+  }
+
+  def buildHocon(props: (String, Any)*): Config = createHocon(props.toVector)
+
+  def createHocon(props: Map[String, Any]): Config = createHocon(props.toVector)
+
+  def createHocon(props: Seq[(String, Any)]): Config = {
+    val config = ConfigFactory.empty
+    props./:(config)((z, x) => z.withValue(x._1, _to_value(x._2)))
+  }
+
+  private def _to_value(p: Any): ConfigValue = p match {
+    case m: String => ConfigValueFactory.fromAnyRef(m)
+    case m: Rational => ConfigValueFactory.fromAnyRef(m.toString)
+    case m: BigDecimal => ConfigValueFactory.fromAnyRef(m.toString)
+    case m: Number => ConfigValueFactory.fromAnyRef(m)
+    case m: IRecord => RAISE.notImplementedYetDefect
+    case m: Map[_, _] => RAISE.notImplementedYetDefect
+    case m => ConfigValueFactory.fromAnyRef(AnyUtils.toMarshall(m))
   }
 }

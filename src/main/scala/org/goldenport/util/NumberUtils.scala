@@ -17,7 +17,8 @@ import org.goldenport.parser.ParseResult
  *  version Mar. 24, 2021
  *  version Nov.  5, 2021
  *  version Jan. 27, 2022
- * @version Feb. 16, 2022
+ *  version Feb. 16, 2022
+ * @version Mar. 11, 2022
  * @author  ASAMI, Tomoharu
  */
 object NumberUtils {
@@ -659,6 +660,11 @@ object NumberUtils {
   }
 
   def multiplyScaleZero(lhs: BigDecimal, rhs: Float, mc: MathContext): BigDecimal = {
+    val a = lhs.apply(mc) * rhs
+    roundScaleZero(a, mc)
+  }
+
+  def multiplyScaleZero(lhs: BigDecimal, rhs: BigDecimal, mc: MathContext): BigDecimal = {
     val a = lhs.apply(mc) * rhs
     roundScaleZero(a, mc)
   }

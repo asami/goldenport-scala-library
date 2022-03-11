@@ -3,7 +3,11 @@ package org.goldenport.values
 import scalaz._, Scalaz._
 import java.math.MathContext
 import spire.math.Rational
+import com.typesafe.config.{Config => Hocon, ConfigFactory}
 import org.goldenport.RAISE
+import org.goldenport.context.Consequence
+import org.goldenport.hocon.RichConfig.Implicits._
+import org.goldenport.hocon.HoconUtils
 
 /*
  * @since   Apr. 12, 2018
@@ -12,7 +16,8 @@ import org.goldenport.RAISE
  *  version Sep.  4, 2020
  *  version Oct. 26, 2020
  *  version Nov.  1, 2020
- * @version Dec. 20, 2020
+ *  version Dec. 20, 2020
+ * @version Mar. 10, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Price {
@@ -23,6 +28,8 @@ sealed trait Price {
   def priceExcludingTax: BigDecimal
   def taxRational: Rational
   def mathContext: MathContext
+  def toMap: Map[String, Any]
+  def marshall: String = HoconUtils.makeJsonString(toMap)
   lazy val tax = taxRational.toBigDecimal(mathContext)
 
   // def -(p: BigDecimal): Price
@@ -43,6 +50,10 @@ sealed trait Price {
     // }
 }
 object Price {
+  val PROP_KIND = "kind"
+  val PROP_PRICE = "price"
+  val PROP_TAX = "tax"
+
   def plus(lhs: Price, rhs: Price): Price = {
     lhs match {
       case m: PriceExcludingTax => rhs match {
@@ -131,6 +142,22 @@ object Price {
     def zero = PriceNoTax.ZERO
     def append(l: Price, r: => Price): Price = plus(l, r)
   }
+
+  def unmarshall(p: String): Consequence[Price] = for {
+    x <- Consequence(ConfigFactory.parseString(p))
+    r <- unmarshall(x)
+  } yield r
+
+  def unmarshall(p: Map[String, Any]): Consequence[Price] = unmarshall(HoconUtils.createHocon(p))
+
+  def unmarshall(p: Hocon): Consequence[Price] = for {
+    kind <- p.cString("kind")
+    r <- kind match {
+      case PriceIncludingTax.NAME => PriceIncludingTax.unmarshall(p)
+      case PriceExcludingTax.NAME => PriceExcludingTax.unmarshall(p)
+      case PriceNoTax.NAME => PriceNoTax.unmarshall(p)
+    }
+  } yield r
 }
 
 case class PriceExcludingTax(
@@ -138,6 +165,8 @@ case class PriceExcludingTax(
   taxRational: Rational,
   mathContext: MathContext = MathContext.DECIMAL32
 ) extends Price {
+  import Price._
+
   def isZero = price == 0
   def displayPrice = price
   def isTaxExclusive = true
@@ -149,11 +178,21 @@ case class PriceExcludingTax(
     PriceExcludingTax(price + rhs.price, tax + rhs.tax)
   def -(rhs: PriceExcludingTax): PriceExcludingTax =
     PriceExcludingTax(price - rhs.price, tax - rhs.tax)
+  def *(rhs: Rational): PriceExcludingTax = PriceExcludingTax((price * rhs).toBigDecimal(mathContext), (tax * rhs).toBigDecimal(mathContext))
 
   // def +(rhs: BigDecimal): PriceExcludingTax = copy(price + rhs)
   // def -(rhs: BigDecimal): PriceExcludingTax = copy(price - rhs)
+
+  def toMap = Map(
+    PROP_KIND -> PriceExcludingTax.NAME,
+    PROP_PRICE -> price,
+    PROP_TAX -> taxRational
+  )
 }
 object PriceExcludingTax {
+  import Price._
+
+  val NAME = "price-excluding-tax"
   val ZERO = PriceExcludingTax(BigDecimal(0), 0)
 
   def createByPercent(p: BigDecimal, percent: Int): PriceExcludingTax =
@@ -164,6 +203,11 @@ object PriceExcludingTax {
 
   def createByRate(p: BigDecimal, rate: Rational): PriceExcludingTax = 
     PriceExcludingTax(p, p * rate)
+
+  def unmarshall(p: Hocon): Consequence[PriceExcludingTax] = for {
+    price <- p.cBigDecimal(PROP_PRICE)
+    tax <- p.cRational(PROP_TAX)
+  } yield PriceExcludingTax(price, tax)
 }
 
 case class PriceIncludingTax(
@@ -171,6 +215,8 @@ case class PriceIncludingTax(
   taxRational: Rational,
   mathContext: MathContext = MathContext.DECIMAL32
 ) extends Price {
+  import Price._
+
   def isZero = price == 0
   def displayPrice = price
   def isTaxExclusive = false
@@ -184,11 +230,21 @@ case class PriceIncludingTax(
     PriceIncludingTax(price - rhs.price, tax - rhs.tax)
   def -(rhs: PriceNoTax): PriceIncludingTax =
     PriceIncludingTax(price - rhs.price, tax - rhs.tax)
+  def *(rhs: Rational): PriceIncludingTax = PriceIncludingTax((price * rhs).toBigDecimal(mathContext), (tax * rhs).toBigDecimal(mathContext))
 
   // def +(rhs: BigDecimal): PriceIncludingTax = copy(price + rhs)
   // def -(rhs: BigDecimal): PriceIncludingTax = copy(price - rhs)
+
+  def toMap = Map(
+    PROP_KIND -> PriceIncludingTax.NAME,
+    PROP_PRICE -> price,
+    PROP_TAX -> taxRational
+  )
 }
 object PriceIncludingTax {
+  import Price._
+
+  val NAME = "price-including-tax"
   val ZERO = PriceIncludingTax(BigDecimal(0), 0)
 
   def createByPercent(p: BigDecimal, percent: Int): PriceIncludingTax =
@@ -204,9 +260,16 @@ object PriceIncludingTax {
 
   def calcTaxRateRationalByPercent(percent: Int): Rational =
     percent * Rational(1, 100)
+
+  def unmarshall(p: Hocon): Consequence[PriceIncludingTax] = for {
+    price <- p.cBigDecimal(PROP_PRICE)
+    tax <- p.cRational(PROP_TAX)
+  } yield PriceIncludingTax(price, tax)
 }
 
 case class PriceNoTax(price: BigDecimal) extends Price {
+  import Price._
+
   val mathContext: MathContext = MathContext.DECIMAL32
   def isZero = price == 0
   def displayPrice = price
@@ -224,7 +287,21 @@ case class PriceNoTax(price: BigDecimal) extends Price {
 
   def +(rhs: BigDecimal): PriceNoTax = copy(price - rhs)
   def -(rhs: BigDecimal): PriceNoTax = copy(price - rhs)
+
+  def *(rhs: Rational): PriceNoTax = PriceNoTax((price * rhs).toBigDecimal(mathContext))
+
+  def toMap = Map(
+    PROP_KIND -> PriceNoTax.NAME,
+    PROP_PRICE -> price
+  )
 }
 object PriceNoTax {
+  import Price._
+
+  val NAME = "price-no-tax"
   val ZERO = PriceNoTax(BigDecimal(0))
+
+  def unmarshall(p: Hocon): Consequence[PriceNoTax] = for {
+    price <- p.cBigDecimal(PROP_PRICE)
+  } yield PriceNoTax(price)
 }

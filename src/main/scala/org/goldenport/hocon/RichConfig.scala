@@ -9,6 +9,7 @@ import scala.collection.JavaConverters._
 import java.net.{URL, URI}
 import java.io.File
 import org.joda.time.DateTime
+import spire.math.Rational
 import com.typesafe.config._
 import org.goldenport.Strings
 import org.goldenport.i18n.{I18NString, I18NElement}
@@ -39,7 +40,8 @@ import org.goldenport.parser.ParseResult
  *  version Oct. 20, 2021
  *  version Dec. 31, 2021
  *  version Jan. 24, 2022
- * @version Feb. 17, 2022
+ *  version Feb. 17, 2022
+ * @version Mar. 11, 2022
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -107,6 +109,12 @@ case class RichConfig(config: Config) extends AnyVal {
   def parseAsConfigList(key: String): ParseResult[List[Config]] = HoconUtils.parseAsConfigList(config, key)
   def parseObjectList[T](key: String, f: Config => ParseResult[T]): ParseResult[List[T]] = HoconUtils.parseObjectList(config, key, f)
   def parseAsObjectList[T](key: String, f: Config => ParseResult[T]): ParseResult[List[T]] = HoconUtils.parseAsObjectList(config, key, f)
+
+  def cString(key: String): Consequence[String] = HoconUtils.consequenceString(config, key)
+  def cBigDecimal(key: String): Consequence[BigDecimal] = HoconUtils.consequenceBigDecimal(config, key)
+  def cRational(key: String): Consequence[Rational] = HoconUtils.consequenceRational(config, key)
+  def cAsConfig(key: String): Consequence[Config] = HoconUtils.consequenceAsConfig(config, key)
+  def cAsConfigList(key: String): Consequence[List[Config]] = HoconUtils.consequenceAsConfigList(config, key)
 
   def consequenceBoolean(key: String): Consequence[Boolean] = HoconUtils.consequenceBoolean(config, key)
   def consequenceBoolean(key: String, default: Boolean): Consequence[Boolean] = HoconUtils.consequenceBoolean(config, key, default)

@@ -7,7 +7,8 @@ import spire.math.Rational
 
 /*
  * @since   Jun. 29, 2018
- * @version Dec. 22, 2020
+ *  version Dec. 22, 2020
+ * @version Mar.  9, 2022
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -30,6 +31,23 @@ class PriceSpec extends WordSpec with Matchers with GivenWhenThen {
     "calc 2" in {
       val price = PriceIncludingTax.createByPercent(500, 10)
       println(s"calc: ${price.taxRational.toFloat}")
+    }
+  }
+
+  "Marshalling" should {
+    "PriceIncludingTax" in {
+      val x = PriceIncludingTax.createByPercent(BigDecimal(500), 8)
+      val s = x.marshall
+//      println(s)
+      val v = Price.unmarshall(s)
+      v.take should be(x)
+    }
+    "PriceExcludingTax" in {
+      val x = PriceExcludingTax.createByPercent(BigDecimal(500), 8)
+      val s = x.marshall
+//      println(s)
+      val v = Price.unmarshall(s)
+      v.take should be(x)
     }
   }
 }

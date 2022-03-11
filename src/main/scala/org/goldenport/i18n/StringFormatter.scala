@@ -5,7 +5,8 @@ import org.goldenport.util.StringUtils
 
 /*
  * @since   Jan.  2, 2021
- * @version Feb. 25, 2022
+ *  version Feb. 25, 2022
+ * @version Mar. 11, 2022
  * @author  ASAMI, Tomoharu
  */
 case class StringFormatter() {
@@ -199,6 +200,12 @@ object StringFormatter {
     }
 
     def escapeDisplay(s: String): String =
+      if (s.contains('\n') | s.contains('\r'))
+        s.replace("\r\n", "■□").replace("\n", "□").replace("\r", "■")
+      else
+        s
+
+    def escapeDisplayOld(s: String): String =
       if (s.contains('\n') | s.contains('\r'))
         s.replace("\r\n", "♼").replace("\n", "♲").replace("\r", "♻")
       else

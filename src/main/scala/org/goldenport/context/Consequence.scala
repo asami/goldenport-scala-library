@@ -17,7 +17,8 @@ import org.goldenport.parser.{ParseMessage}
  *  version Oct. 25, 2021
  *  version Nov. 30, 2021
  *  version Dec.  5, 2021
- * @version Jan. 30, 2022
+ *  version Jan. 30, 2022
+ * @version Mar. 10, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {

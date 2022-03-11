@@ -35,7 +35,8 @@ import org.goldenport.i18n.StringFormatter
  *  version Apr. 20, 2021
  *  version Nov.  5, 2021
  *  version Jan. 30, 2022
- * @version Feb. 24, 2022
+ *  version Feb. 24, 2022
+ * @version Mar.  9, 2022
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -74,6 +75,11 @@ object AnyUtils {
     StringFormatter.display.enRight(toEmbed(x, width), width)
 
   def toEmbedString(p: String, width: Int): String = StringUtils.toEmbedConsole(p, width)
+
+  def toMarshall(p: Any): String = p match {
+    case m: Showable => m.print
+    case m => toString(m)
+  }
 
   def toBoolean(x: Any): Boolean = {
     x match {
