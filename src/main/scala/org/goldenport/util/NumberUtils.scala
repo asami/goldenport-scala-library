@@ -18,7 +18,7 @@ import org.goldenport.parser.ParseResult
  *  version Nov.  5, 2021
  *  version Jan. 27, 2022
  *  version Feb. 16, 2022
- * @version Mar. 11, 2022
+ * @version Mar. 19, 2022
  * @author  ASAMI, Tomoharu
  */
 object NumberUtils {
@@ -690,12 +690,17 @@ object NumberUtils {
   def roundScaleZero(p: BigDecimal, rm: RoundingMode): BigDecimal =
     roundScale(p, rm, 0)
 
+  def roundScaleZeroHalfUp(p: BigDecimal): BigDecimal =
+    roundScaleHalfUp(p, 0)
+
   def roundScale(p: BigDecimal, mc: MathContext, scale: Int): BigDecimal =
     p.setScale(scale, roundingModeJavaToScala(mc.getRoundingMode)).apply(p.mc)
 
   def roundScale(p: BigDecimal, rm: RoundingMode, scale: Int): BigDecimal =
     p.setScale(scale, roundingModeJavaToScala(rm)).apply(p.mc)
 
+  def roundScaleHalfUp(p: BigDecimal, scale: Int): BigDecimal =
+    p.setScale(scale, BigDecimal.RoundingMode.HALF_UP).apply(p.mc)
 
   def roundingModeJavaToScala(p: RoundingMode): BigDecimal.RoundingMode.RoundingMode = p match {
       case RoundingMode.UP => BigDecimal.RoundingMode.UP

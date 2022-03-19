@@ -8,7 +8,7 @@ import spire.math.Rational
 /*
  * @since   Jun. 29, 2018
  *  version Dec. 22, 2020
- * @version Mar.  9, 2022
+ * @version Mar. 19, 2022
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -21,16 +21,16 @@ class PriceSpec extends WordSpec with Matchers with GivenWhenThen {
     }
     "calc 1" in {
       val price = PriceIncludingTax.createByPercent(9000, 10)
-      println(s"calc: ${price.taxRational.toFloat}")
+//      println(s"calc: ${price.taxRational.toFloat}")
       val x = BigDecimal(9000)
       val rate = BigDecimal(0.1)
       val a = (x / (1 + rate)) * rate
       val mc = java.math.MathContext.DECIMAL32
-      println(s"calc BigDecimal: ${a.round(mc)}")
+//      println(s"calc BigDecimal: ${a.round(mc)}")
     }
     "calc 2" in {
       val price = PriceIncludingTax.createByPercent(500, 10)
-      println(s"calc: ${price.taxRational.toFloat}")
+//      println(s"calc: ${price.taxRational.toFloat}")
     }
   }
 
@@ -48,6 +48,22 @@ class PriceSpec extends WordSpec with Matchers with GivenWhenThen {
 //      println(s)
       val v = Price.unmarshall(s)
       v.take should be(x)
+    }
+  }
+
+  "TaxRate" should {
+    "PriceIncludingTax" which {
+      "PriceIncludingTax" in {
+        val price = PriceIncludingTax.createByRate(1000, 0.1)
+//        println(price)
+        price.taxRate should be(BigDecimal(0.1))
+      }
+    }
+    "PriceExcludingTax" which {
+      "PriceExcludingTax" in {
+        val price = PriceExcludingTax.createByRate(1000, 0.1)
+        price.taxRate should be(BigDecimal(0.1))
+      }
     }
   }
 }

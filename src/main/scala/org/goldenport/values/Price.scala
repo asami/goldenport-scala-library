@@ -2,12 +2,14 @@ package org.goldenport.values
 
 import scalaz._, Scalaz._
 import java.math.MathContext
+import java.math.RoundingMode
 import spire.math.Rational
 import com.typesafe.config.{Config => Hocon, ConfigFactory}
 import org.goldenport.RAISE
 import org.goldenport.context.Consequence
 import org.goldenport.hocon.RichConfig.Implicits._
 import org.goldenport.hocon.HoconUtils
+import org.goldenport.util.NumberUtils
 
 /*
  * @since   Apr. 12, 2018
@@ -17,7 +19,7 @@ import org.goldenport.hocon.HoconUtils
  *  version Oct. 26, 2020
  *  version Nov.  1, 2020
  *  version Dec. 20, 2020
- * @version Mar. 10, 2022
+ * @version Mar. 19, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Price {
@@ -27,10 +29,14 @@ sealed trait Price {
   def priceIncludingTax: BigDecimal
   def priceExcludingTax: BigDecimal
   def taxRational: Rational
+  def taxRate: BigDecimal
   def mathContext: MathContext
+  def withPrice(p: BigDecimal): Price
+  def toScaleZero: Price
   def toMap: Map[String, Any]
   def marshall: String = HoconUtils.makeJsonString(toMap)
   lazy val tax = taxRational.toBigDecimal(mathContext)
+  lazy val taxScaleZero = NumberUtils.roundScaleZeroHalfUp(tax)
 
   // def -(p: BigDecimal): Price
 
@@ -50,6 +56,7 @@ sealed trait Price {
     // }
 }
 object Price {
+  val mathContext = new MathContext(MathContext.DECIMAL32.getPrecision, RoundingMode.HALF_UP)
   val PROP_KIND = "kind"
   val PROP_PRICE = "price"
   val PROP_TAX = "tax"
@@ -163,7 +170,7 @@ object Price {
 case class PriceExcludingTax(
   price: BigDecimal,
   taxRational: Rational,
-  mathContext: MathContext = MathContext.DECIMAL32
+  mathContext: MathContext = Price.mathContext
 ) extends Price {
   import Price._
 
@@ -172,6 +179,7 @@ case class PriceExcludingTax(
   def isTaxExclusive = true
   def priceIncludingTax = price + tax
   def priceExcludingTax = price
+  def taxRate = (taxRational / price).toBigDecimal(mathContext)
   def toIncludingTax: PriceIncludingTax = PriceIncludingTax(price + tax, tax)
 
   def +(rhs: PriceExcludingTax): PriceExcludingTax =
@@ -182,6 +190,10 @@ case class PriceExcludingTax(
 
   // def +(rhs: BigDecimal): PriceExcludingTax = copy(price + rhs)
   // def -(rhs: BigDecimal): PriceExcludingTax = copy(price - rhs)
+
+  def withPrice(p: BigDecimal): PriceExcludingTax = PriceExcludingTax.createByRate(p, taxRate)
+
+  def toScaleZero: PriceExcludingTax = withPrice(NumberUtils.roundScaleZeroHalfUp(price))
 
   def toMap = Map(
     PROP_KIND -> PriceExcludingTax.NAME,
@@ -213,7 +225,7 @@ object PriceExcludingTax {
 case class PriceIncludingTax(
   price: BigDecimal,
   taxRational: Rational,
-  mathContext: MathContext = MathContext.DECIMAL32
+  mathContext: MathContext = Price.mathContext
 ) extends Price {
   import Price._
 
@@ -222,6 +234,10 @@ case class PriceIncludingTax(
   def isTaxExclusive = false
   def priceIncludingTax = price
   def priceExcludingTax = price - tax
+  def taxRate = {
+    val n = (taxRational / price).toBigDecimal(mathContext)
+    NumberUtils.roundScaleHalfUp(n, 1)
+  }
   def toExcludingTax: PriceExcludingTax = PriceExcludingTax(price - tax, tax)
 
   def +(rhs: PriceIncludingTax): PriceIncludingTax = 
@@ -234,6 +250,11 @@ case class PriceIncludingTax(
 
   // def +(rhs: BigDecimal): PriceIncludingTax = copy(price + rhs)
   // def -(rhs: BigDecimal): PriceIncludingTax = copy(price - rhs)
+
+  def withPrice(p: BigDecimal): PriceIncludingTax =
+    PriceIncludingTax.createByRate(p, taxRate)
+
+  def toScaleZero: PriceIncludingTax = withPrice(NumberUtils.roundScaleZeroHalfUp(price))
 
   def toMap = Map(
     PROP_KIND -> PriceIncludingTax.NAME,
@@ -254,7 +275,12 @@ object PriceIncludingTax {
     createByRate(p, percent.rate)
 
   def createByRate(p: BigDecimal, rate: Rational): PriceIncludingTax = {
+    // val price = p / (1 + rate)
+    // println(s"price: $price")
+    // val tax = p - price
+    // println(s"tax: ${tax.toBigDecimal(mathContext)}")
     val tax = (p / (1 + rate)) * rate
+    // println(s"tax2: ${tax2.toBigDecimal(mathContext)}")
     PriceIncludingTax(p, tax)
   }
 
@@ -270,15 +296,18 @@ object PriceIncludingTax {
 case class PriceNoTax(price: BigDecimal) extends Price {
   import Price._
 
-  val mathContext: MathContext = MathContext.DECIMAL32
+  val mathContext: MathContext = Price.mathContext
   def isZero = price == 0
   def displayPrice = price
   def isTaxExclusive = false
   def priceIncludingTax = price
   def priceExcludingTax = price
   def taxRational = 0
+  def taxRate = 0
   def toIncludingTax: PriceIncludingTax = PriceIncludingTax(price, 0)
   def toExcludingTax: PriceExcludingTax = PriceExcludingTax(price, 0)
+  def toIncludingTax(rate: Rational): PriceIncludingTax = PriceIncludingTax.createByRate(price, rate)
+  def toExcludingTax(rate: Rational): PriceExcludingTax = PriceExcludingTax.createByRate(price, rate)
 
   def +(rhs: PriceNoTax): PriceNoTax =
     PriceNoTax(price + rhs.price)
@@ -289,6 +318,10 @@ case class PriceNoTax(price: BigDecimal) extends Price {
   def -(rhs: BigDecimal): PriceNoTax = copy(price - rhs)
 
   def *(rhs: Rational): PriceNoTax = PriceNoTax((price * rhs).toBigDecimal(mathContext))
+
+  def withPrice(p: BigDecimal): PriceNoTax = PriceNoTax(p)
+
+  def toScaleZero: PriceNoTax = PriceNoTax(NumberUtils.roundScaleZeroHalfUp(price))
 
   def toMap = Map(
     PROP_KIND -> PriceNoTax.NAME,
