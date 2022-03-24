@@ -19,7 +19,7 @@ import org.goldenport.util.NumberUtils
  *  version Oct. 26, 2020
  *  version Nov.  1, 2020
  *  version Dec. 20, 2020
- * @version Mar. 19, 2022
+ * @version Mar. 25, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Price {
@@ -60,6 +60,7 @@ object Price {
   val PROP_KIND = "kind"
   val PROP_PRICE = "price"
   val PROP_TAX = "tax"
+  val PROP_RATE = "rate"
 
   def plus(lhs: Price, rhs: Price): Price = {
     lhs match {
@@ -224,7 +225,8 @@ object PriceExcludingTax {
 
 case class PriceIncludingTax(
   price: BigDecimal,
-  taxRational: Rational,
+  // taxRational: Rational,
+  taxRateRational: Rational,
   mathContext: MathContext = Price.mathContext
 ) extends Price {
   import Price._
@@ -234,10 +236,12 @@ case class PriceIncludingTax(
   def isTaxExclusive = false
   def priceIncludingTax = price
   def priceExcludingTax = price - tax
-  def taxRate = {
-    val n = (taxRational / price).toBigDecimal(mathContext)
-    NumberUtils.roundScaleHalfUp(n, 1)
-  }
+  def taxRate: BigDecimal = taxRateRational.toBigDecimal(mathContext)
+  def taxRational: Rational = (price / (1 + taxRateRational)) * taxRateRational
+  // def taxRate = {
+  //   val n = (taxRational / price).toBigDecimal(mathContext)
+  //   NumberUtils.roundScaleHalfUp(n, 1)
+  // }
   def toExcludingTax: PriceExcludingTax = PriceExcludingTax(price - tax, tax)
 
   def +(rhs: PriceIncludingTax): PriceIncludingTax = 
@@ -259,7 +263,8 @@ case class PriceIncludingTax(
   def toMap = Map(
     PROP_KIND -> PriceIncludingTax.NAME,
     PROP_PRICE -> price,
-    PROP_TAX -> taxRational
+    PROP_TAX -> taxRational,
+    PROP_RATE -> taxRateRational
   )
 }
 object PriceIncludingTax {
@@ -279,9 +284,14 @@ object PriceIncludingTax {
     // println(s"price: $price")
     // val tax = p - price
     // println(s"tax: ${tax.toBigDecimal(mathContext)}")
-    val tax = (p / (1 + rate)) * rate
+    // val tax = (p / (1 + rate)) * rate
     // println(s"tax2: ${tax2.toBigDecimal(mathContext)}")
-    PriceIncludingTax(p, tax)
+    PriceIncludingTax(p, rate)
+  }
+
+  def createByTax(p: BigDecimal, tax: Rational): PriceIncludingTax = {
+    val rate = tax / (p - tax)
+    PriceIncludingTax(p, rate)
   }
 
   def calcTaxRateRationalByPercent(percent: Int): Rational =
@@ -289,8 +299,12 @@ object PriceIncludingTax {
 
   def unmarshall(p: Hocon): Consequence[PriceIncludingTax] = for {
     price <- p.cBigDecimal(PROP_PRICE)
-    tax <- p.cRational(PROP_TAX)
-  } yield PriceIncludingTax(price, tax)
+    tax <- p.cRational(PROP_TAX) // old
+    rate <- p.cRationalOption(PROP_RATE) // new
+  } yield rate match {
+    case Some(s) => PriceIncludingTax(price, s)
+    case None => PriceIncludingTax.createByTax(price, tax)
+  }
 }
 
 case class PriceNoTax(price: BigDecimal) extends Price {
