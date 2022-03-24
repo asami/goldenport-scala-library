@@ -15,7 +15,8 @@ import org.goldenport.statemachine.StateMachineRule.RuleAndStateClass
  *  version Jun. 14, 2021
  *  version Oct. 31, 2021
  *  version Nov. 29, 2021
- * @version Dec.  5, 2021
+ *  version Dec.  5, 2021
+ * @version Mar. 19, 2022
  * @author  ASAMI, Tomoharu
  */
 class StateMachine(
@@ -36,7 +37,6 @@ class StateMachine(
   def print: String = status
   def display: String = status
   def show: String = status
-  def embed: String = status
 
   private var _statemachine_rule_stack: Stack[StateMachineRule] = Stack(clazz.rule)
   private def _current_statemachine_rule = _statemachine_rule_stack.head

@@ -11,7 +11,8 @@ import org.goldenport.util.StringUtils
  *  version Aug. 30, 2017
  *  version Oct.  6, 2017
  *  version Dec.  9, 2019
- * @version Jan. 26, 2020
+ *  version Jan. 26, 2020
+ * @version Mar. 21, 2022
  * @author  ASAMI, Tomoharu
  */
 object UrlUtils {
@@ -19,6 +20,9 @@ object UrlUtils {
 
   def takeLeafName(url: URL): String =
     StringUtils.pathLastComponent(url.getPath)
+
+  def takeLeafNameBody(url: URL): String =
+    StringUtils.pathLastComponentBody(url.getPath)
 
   def isExist(url: URL): Boolean =
     Option(UURL.getActiveFile(url)).fold {

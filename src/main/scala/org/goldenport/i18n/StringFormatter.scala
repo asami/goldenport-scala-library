@@ -6,7 +6,7 @@ import org.goldenport.util.StringUtils
 /*
  * @since   Jan.  2, 2021
  *  version Feb. 25, 2022
- * @version Mar. 11, 2022
+ * @version Mar. 19, 2022
  * @author  ASAMI, Tomoharu
  */
 case class StringFormatter() {
@@ -19,6 +19,9 @@ case class StringFormatter() {
 
 object StringFormatter {
   val default = StringFormatter()
+  val symbolCR = "■"
+  val symbolLF = "□"
+  val symbolCRLF = symbolCR + symbolLF
 
   def isWordSeparating(prev: Char, next: Char): Boolean =
     StringUtils.isAsciiChar(prev) && StringUtils.isAsciiChar(next)
@@ -201,7 +204,7 @@ object StringFormatter {
 
     def escapeDisplay(s: String): String =
       if (s.contains('\n') | s.contains('\r'))
-        s.replace("\r\n", "■□").replace("\n", "□").replace("\r", "■")
+        s.replace("\r\n", symbolCRLF).replace("\n", symbolLF).replace("\r", symbolCR)
       else
         s
 

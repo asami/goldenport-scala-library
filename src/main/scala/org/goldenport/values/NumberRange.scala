@@ -17,13 +17,13 @@ import org.goldenport.util.{NumberUtils, AnyRefUtils}
  *  version Sep. 28, 2020
  *  version Jan. 30, 2021
  *  version Jan. 25, 2022
- * @version Feb. 17, 2022
+ *  version Feb. 17, 2022
+ * @version Mar. 19, 2022
  * @author  ASAMI, Tomoharu
  */
 trait NumberRange extends Showable {
   def display: String = print
   def show: String = print
-  def embed: String = print
   def isValid(index: Int): Boolean
   def indexes: List[Int]
   def isMatch(p: Number): Boolean

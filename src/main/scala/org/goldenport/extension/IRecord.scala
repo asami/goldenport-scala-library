@@ -11,7 +11,8 @@ import org.goldenport.collection.VectorMap
  *  version Sep. 23, 2019
  *  version May. 19, 2020
  *  version Oct. 18, 2020
- * @version Mar. 28, 2021
+ *  version Mar. 28, 2021
+ * @version Mar. 19, 2022
  * @author  ASAMI, Tomoharu
  */
 trait IRecord extends Showable {
@@ -33,7 +34,6 @@ object IRecord {
     val print = map.toString
     def display = print
     def show = print
-    def embed = print
     def keySymbols: List[Symbol] = map.keySet.toList
     def keyNames: List[String] = keySymbols.map(_.name)
     def length: Int = map.size
@@ -50,7 +50,6 @@ object IRecord {
     val print = map.toString
     def display = print
     def show = print
-    def embed = print
     def keySymbols: List[Symbol] = map.keySet.toList
     def keyNames: List[String] = keySymbols.map(_.name)
     def length: Int = map.size
