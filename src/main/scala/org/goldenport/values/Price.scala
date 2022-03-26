@@ -19,7 +19,7 @@ import org.goldenport.util.NumberUtils
  *  version Oct. 26, 2020
  *  version Nov.  1, 2020
  *  version Dec. 20, 2020
- * @version Mar. 25, 2022
+ * @version Mar. 26, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Price {
@@ -244,13 +244,23 @@ case class PriceIncludingTax(
   // }
   def toExcludingTax: PriceExcludingTax = PriceExcludingTax(price - tax, tax)
 
-  def +(rhs: PriceIncludingTax): PriceIncludingTax = 
-    PriceIncludingTax(price + rhs.price, tax + rhs.tax)
-  def -(rhs: PriceIncludingTax): PriceIncludingTax = 
-    PriceIncludingTax(price - rhs.price, tax - rhs.tax)
-  def -(rhs: PriceNoTax): PriceIncludingTax =
-    PriceIncludingTax(price - rhs.price, tax - rhs.tax)
-  def *(rhs: Rational): PriceIncludingTax = PriceIncludingTax((price * rhs).toBigDecimal(mathContext), (tax * rhs).toBigDecimal(mathContext))
+  def +(rhs: PriceIncludingTax): PriceIncludingTax =
+    if (taxRateRational == rhs.taxRateRational)
+      withPrice(price + rhs.price)
+    else
+      RAISE.noReachDefect("PriceIncludingTax unmatch tax rate")
+
+  def -(rhs: PriceIncludingTax): PriceIncludingTax =
+    if (taxRateRational == rhs.taxRateRational)
+      withPrice(price - rhs.price)
+    else
+      RAISE.noReachDefect("PriceIncludingTax unmatch tax rate")
+
+  def -(rhs: PriceNoTax): PriceIncludingTax = withPrice(price - rhs.price)
+
+  def *(rhs: Rational): PriceIncludingTax = {
+    withPrice((price * rhs).toBigDecimal(mathContext))
+  }
 
   // def +(rhs: BigDecimal): PriceIncludingTax = copy(price + rhs)
   // def -(rhs: BigDecimal): PriceIncludingTax = copy(price - rhs)
@@ -291,7 +301,8 @@ object PriceIncludingTax {
 
   def createByTax(p: BigDecimal, tax: Rational): PriceIncludingTax = {
     val rate = tax / (p - tax)
-    PriceIncludingTax(p, rate)
+    val r = NumberUtils.roundScaleHalfUp(rate.toBigDecimal(mathContext), 2)
+    PriceIncludingTax(p, Rational(r))
   }
 
   def calcTaxRateRationalByPercent(percent: Int): Rational =
