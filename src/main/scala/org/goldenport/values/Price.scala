@@ -19,7 +19,7 @@ import org.goldenport.util.NumberUtils
  *  version Oct. 26, 2020
  *  version Nov.  1, 2020
  *  version Dec. 20, 2020
- * @version Mar. 26, 2022
+ * @version Mar. 27, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Price {
@@ -181,7 +181,7 @@ case class PriceExcludingTax(
   def priceIncludingTax = price + tax
   def priceExcludingTax = price
   def taxRate = (taxRational / price).toBigDecimal(mathContext)
-  def toIncludingTax: PriceIncludingTax = PriceIncludingTax(price + tax, tax)
+  def toIncludingTax: PriceIncludingTax = PriceIncludingTax.createByTax(price + tax, tax)
 
   def +(rhs: PriceExcludingTax): PriceExcludingTax =
     PriceExcludingTax(price + rhs.price, tax + rhs.tax)
@@ -223,13 +223,15 @@ object PriceExcludingTax {
   } yield PriceExcludingTax(price, tax)
 }
 
-case class PriceIncludingTax(
+case class PriceIncludingTax private(
   price: BigDecimal,
   // taxRational: Rational,
   taxRateRational: Rational,
   mathContext: MathContext = Price.mathContext
 ) extends Price {
   import Price._
+
+  assert (taxRate < 1 && taxRate >= 0, s"Invalid tax rate: $taxRateRational")
 
   def isZero = price == 0
   def displayPrice = price
@@ -245,13 +247,21 @@ case class PriceIncludingTax(
   def toExcludingTax: PriceExcludingTax = PriceExcludingTax(price - tax, tax)
 
   def +(rhs: PriceIncludingTax): PriceIncludingTax =
-    if (taxRateRational == rhs.taxRateRational)
+    if (isZero)
+      rhs
+    else if (rhs.isZero)
+      this
+    else if (taxRateRational == rhs.taxRateRational)
       withPrice(price + rhs.price)
     else
       RAISE.noReachDefect("PriceIncludingTax unmatch tax rate")
 
   def -(rhs: PriceIncludingTax): PriceIncludingTax =
-    if (taxRateRational == rhs.taxRateRational)
+    if (isZero)
+      rhs
+    else if (rhs.isZero)
+      this
+    else if (taxRateRational == rhs.taxRateRational)
       withPrice(price - rhs.price)
     else
       RAISE.noReachDefect("PriceIncludingTax unmatch tax rate")
@@ -300,9 +310,16 @@ object PriceIncludingTax {
   }
 
   def createByTax(p: BigDecimal, tax: Rational): PriceIncludingTax = {
-    val rate = tax / (p - tax)
-    val r = NumberUtils.roundScaleHalfUp(rate.toBigDecimal(mathContext), 2)
-    PriceIncludingTax(p, Rational(r))
+    if (p == NumberUtils.BIGDECIMAL_ZERO) {
+      if (tax == Rational(0))
+        PriceIncludingTax.ZERO
+      else
+        RAISE.invalidArgumentFault(s"tax is bigger than price: $p, $tax")
+    } else {
+      val rate = tax / (p - tax)
+      val r = NumberUtils.roundScaleHalfUp(rate.toBigDecimal(mathContext), 2)
+      PriceIncludingTax(p, Rational(r))
+    }
   }
 
   def calcTaxRateRationalByPercent(percent: Int): Rational =
@@ -329,7 +346,7 @@ case class PriceNoTax(price: BigDecimal) extends Price {
   def priceExcludingTax = price
   def taxRational = 0
   def taxRate = 0
-  def toIncludingTax: PriceIncludingTax = PriceIncludingTax(price, 0)
+  def toIncludingTax: PriceIncludingTax = PriceIncludingTax.createByTax(price, 0)
   def toExcludingTax: PriceExcludingTax = PriceExcludingTax(price, 0)
   def toIncludingTax(rate: Rational): PriceIncludingTax = PriceIncludingTax.createByRate(price, rate)
   def toExcludingTax(rate: Rational): PriceExcludingTax = PriceExcludingTax.createByRate(price, rate)
