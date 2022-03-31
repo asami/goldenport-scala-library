@@ -49,7 +49,7 @@ import org.goldenport.values.{PathName, Urn}
  *  version Apr. 10, 2021
  *  version Dec. 31, 2021
  *  version Feb. 25, 2022
- * @version Mar.  6, 2022
+ * @version Mar. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -901,4 +901,12 @@ object StringUtils {
       Some(p.substring(prefix.length))
     else
       None
+
+  def getPrefixBody(p: String, d: String = ":"): (Option[String], String) = {
+    val i = p.indexOf(":")
+    if (i == -1)
+      (None, p)
+    else
+      (Option(p.substring(0, i)), p.substring(i + 1))
+  }
 }

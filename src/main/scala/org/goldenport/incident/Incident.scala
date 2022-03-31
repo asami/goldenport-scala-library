@@ -7,7 +7,8 @@ import org.goldenport.io.Retry
 
 /*
  * @since   Jun.  7, 2019
- * @version Jun.  9, 2019
+ *  version Jun.  9, 2019
+ * @version Mar. 27, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Incident {
@@ -61,6 +62,17 @@ case class RetryIncident(
   }
 
   def isNoRetry = retryCount == 0
+}
+
+case class TraverseIncident(
+  start: Long,
+  end: Long,
+  key: Any,
+  target: Any,
+  result: Option[Any],
+  message: Option[I18NString],
+  exception: Option[Throwable]
+) extends Incident {
 }
 
 sealed trait StorageIoIncident extends IoIncident {

@@ -26,7 +26,7 @@ import com.asamioffice.goldenport.text.UString
  *  version Sep.  8, 2020
  *  version Apr. 15, 2021
  *  version May. 30, 2021
- * @version Mar.  6, 2022
+ * @version Mar. 30, 2022
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -44,6 +44,7 @@ object Strings {
     val application_xml_dtd = "application/xml-dtd"
     val application_zip = "application/zip"
     val application_x_gzip = "application/x-gzip"
+    val application_x_www_form_urlencoded = "application/x-www-form-urlencoded"
     val application_excel = "application/vnd.ms-excel"
     val application_excelx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     val application_powerpoint = "application/vnd.ms-powerpoint"

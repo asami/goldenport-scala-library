@@ -16,7 +16,8 @@ import org.goldenport.util.{AnyUtils, SeqUtils}
  *  version Nov. 15, 2017
  *  version Jan. 12, 2018
  *  version Feb. 18, 2018
- * @version Aug.  5, 2018
+ *  version Aug.  5, 2018
+ * @version Mar. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
@@ -217,12 +218,21 @@ object XmlUtils {
   }
 
   def concat(lhs: NodeSeq, rhs: NodeSeq): NodeSeq = {
-    val a = nodeSeqToNodeList(lhs) ::: nodeSeqToNodeList(rhs)
-    a match {
-      case Nil => Group(Nil)
-      case x :: Nil => x
-      case xs => Group(xs)
-    }
+    val a: List[Node] = nodeSeqToNodeList(lhs) ::: nodeSeqToNodeList(rhs)
+    nodesToNodeSeq(a)
+  }
+
+  def concat(ps: Seq[NodeSeq]): NodeSeq = ps.toList match {
+    case Nil => Group(Nil)
+    case xs => 
+      val a = xs./:(List[Node]())((z, x) => z ::: nodeSeqToNodeList(x))
+      nodesToNodeSeq(a)
+  }
+
+  def nodesToNodeSeq(ps: Seq[Node]): NodeSeq = ps.toList match {
+    case Nil => Group(Nil)
+    case x :: Nil => x
+    case xs => Group(xs)
   }
 
   def nodesToNode(ps: Seq[Node]): Node = nodesToNodeOption(ps).getOrElse(Group(Nil))

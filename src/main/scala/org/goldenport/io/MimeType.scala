@@ -17,7 +17,7 @@ import org.goldenport.util.StringUtils
  *  version Feb.  8, 2021
  *  version Mar.  6, 2021
  *  version Apr. 15, 2021
- * @version Mar.  6, 2022
+ * @version Mar. 30, 2022
  * @author  ASAMI, Tomoharu
  */
 case class MimeType(name: String) {
@@ -45,6 +45,7 @@ object MimeType {
   val application_xml_dtd = MimeType(mimetype.application_xml_dtd)
   val application_zip = MimeType(mimetype.application_zip)
   val application_x_gzip = MimeType(mimetype.application_x_gzip)
+  val application_x_www_form_urlencoded = MimeType(mimetype.application_x_www_form_urlencoded)
   val application_excel = MimeType(mimetype.application_excel)
   val application_excelx = MimeType(mimetype.application_excelx)
   val application_powerpoint = MimeType(mimetype.application_powerpoint)
@@ -98,6 +99,7 @@ object MimeType {
   val APPLICATION_XML_DTD = application_xml_dtd
   val APPLICATION_ZIP = application_zip
   val APPLICATION_X_GZIP = application_x_gzip
+  val APPLICATION_X_WWW_FORM_URLENCODED = application_x_www_form_urlencoded
   val APPLICATION_EXCEL = application_excel
   val APPLICATION_EXCELX = application_excelx
   val APPLICATION_POWERPOINT = application_powerpoint
@@ -268,4 +270,59 @@ object MimeType {
   def getBySuffix(p: File): Option[MimeType] = StringUtils.getSuffix(p.getPath).flatMap(getBySuffix)
   def getBySuffix(p: URL): Option[MimeType] = StringUtils.getSuffix(p.getFile).flatMap(getBySuffix)
   def getBySuffix(p: URI): Option[MimeType] = StringUtils.getSuffix(p.getPath).flatMap(getBySuffix)
+
+  object name {
+    val APPLICATION_ATOM_XML = application_atom_xml.name
+    val APPLICATION_ECMASCRIPT = application_ecmascript.name
+    val APPLICATION_JSON = application_json.name
+    val APPLICATION_JAVASCRIPT = application_javascript.name
+    val APPLICATION_OCTET_STREAM = application_octet_stream.name
+    val APPLICATION_PDF = application_pdf.name
+    val APPLICATION_POSTSCRIPT = application_postscript.name
+    val APPLICATION_RSS_XML = application_rss_xml.name
+    val APPLICATION_SOAP_XML = application_soap_xml.name
+    val APPLICATION_XHTML_XML = application_xhtml_xml.name
+    val APPLICATION_XML_DTD = application_xml_dtd.name
+    val APPLICATION_ZIP = application_zip.name
+    val APPLICATION_X_GZIP = application_x_gzip.name
+    val APPLICATION_X_WWW_FORM_URLENCODED = application_x_www_form_urlencoded.name
+    val APPLICATION_EXCEL = application_excel.name
+    val APPLICATION_EXCELX = application_excelx.name
+    val APPLICATION_POWERPOINT = application_powerpoint.name
+    val APPLICATION_POWERPOINTX = application_powerpointx.name
+    val APPLICATION_WORD = application_word.name
+    val APPLICATION_WORDX = application_wordx.name
+    val IMAGE_GIF = image_gif.name
+    val IMAGE_JPEG = image_jpeg.name
+    val IMAGE_PJPEG = image_pjpeg.name
+    val IMAGE_PNG = image_png.name
+    val IMAGE_SVG_XML = image_svg_xml.name
+    val IMAGE_TIFF = image_tiff.name
+    val IMAGE_VND_MICROSOFT_ICON = image_vnd_microsoft_icon.name
+    val IMAGE_APNG = image_apng.name
+    val IMAGE_WEBP = image_webp.name
+    val IMAGE_AVIF = image_avif.name
+    val MESSAGE_HTTP = message_http.name
+    val MESSAGE_IMDN_XML = message_imdn_xml.name
+    val MESSAGE_PARTIANL = message_partianl.name
+    val MESSAGE_RFC822 = message_rfc822.name
+    val MULTIPART_MIXED = multipart_mixed.name
+    val MULTIPART_ALTERNATIVE = multipart_alternative.name
+    val MULTIPART_RELATED = multipart_related.name
+    val MULTIPART_FORM_DATA = multipart_form_data.name
+    val MULTIPART_SIGNED = multipart_signed.name
+    val MULTIPART_ENCRYPTED = multipart_encrypted.name
+    val TEXT_CSS = text_css.name
+    val TEXT_HTML = text_html.name
+    val TEXT_PLAIN = text_plain.name
+    val TEXT_XML = text_xml.name
+    val TEXT_XSL = text_xsl.name
+    val TEXT_EVENT_STREAM = text_event_stream.name
+    val TEXT_CSV = text_csv.name
+    val TEXT_TSV = text_tsv.name
+    val TEXT_XSV = text_xsv.name
+    val TEXT_LCSV = text_lcsv.name
+    val TEXT_LTSV = text_ltsv.name
+    val TEXT_LXSV = text_lxsv.name
+  }
 }

@@ -13,6 +13,7 @@ import javax.xml.transform.dom._
 import com.asamioffice.goldenport.xml.UXML
 import org.goldenport.exception.RAISE
 import org.goldenport.Strings
+import org.goldenport.util.StringUtils
 import org.goldenport.xml.{XmlSource, XmlUtils}
 
 /*
@@ -31,7 +32,8 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version Mar.  1, 2020
  *  version Nov. 29, 2020
  *  version Jan.  1, 2021
- * @version Apr.  3, 2021
+ *  version Apr.  3, 2021
+ * @version Mar. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -806,8 +808,7 @@ object DomUtils {
 
   private def _to_element(p: Element): XElem = {
     val tagname = p.getTagName
-    val prefix = p.getPrefix
-    val label = localName(p)
+    val (prefix, label) = _prefix_label(p)
     val ns = p.getNamespaceURI
     val attrs = _to_attributes(attributes(p))
     val scope = TopScope // TODO
@@ -815,6 +816,13 @@ object DomUtils {
     val minimizeempty = false
     new XElem(prefix, label, attrs, scope, minimizeempty, cs: _*)
   }
+
+  // for nekohtml
+  private def _prefix_label(p: Element): (String, String) =
+    Option(p.getPrefix).map(x => (x, localName(p))).getOrElse {
+      val (prefix, label) = StringUtils.getPrefixBody(p.getTagName)
+      (prefix getOrElse null, label)
+    }
 
   private def _to_attributes(ps: List[Attr]): MetaData = ps match {
     case Nil => Null
