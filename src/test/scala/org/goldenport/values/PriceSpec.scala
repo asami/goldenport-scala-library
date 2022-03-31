@@ -8,7 +8,7 @@ import spire.math.Rational
 /*
  * @since   Jun. 29, 2018
  *  version Dec. 22, 2020
- * @version Mar. 26, 2022
+ * @version Mar. 31, 2022
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -17,7 +17,7 @@ class PriceSpec extends WordSpec with Matchers with GivenWhenThen {
 
   "PriceIncludingTax" should {
     "createByPercent" in {
-      PriceIncludingTax.createByPercent(BigDecimal(500), 8) should be(PriceIncludingTax(BigDecimal(500), Rational(2, 25)))
+      PriceIncludingTax.createByPercent(BigDecimal(500), 8) should be(PriceIncludingTax.createByRate(BigDecimal(500), BigDecimal("0.08")))
     }
     "calc 1" in {
       val price = PriceIncludingTax.createByPercent(9000, 10)
@@ -70,7 +70,7 @@ class PriceSpec extends WordSpec with Matchers with GivenWhenThen {
       }
       "createByTax" in {
         val price = PriceIncludingTax.createByTax(11100, 1000)
-        println(price)
+        // println(price)
         price.taxRate should be(BigDecimal(0.1))
       }
     }
@@ -78,6 +78,20 @@ class PriceSpec extends WordSpec with Matchers with GivenWhenThen {
       "createByRate" in {
         val price = PriceExcludingTax.createByRate(1000, 0.1)
         price.taxRate should be(BigDecimal(0.1))
+      }
+    }
+  }
+
+  "Plus" should {
+    "PriceIncludingTax" which {
+      "Ambiguous" in {
+        val a = PriceIncludingTax.createByRate(1000, BigDecimal("0.1"))
+        val b = PriceIncludingTax.createByRate(1000, Rational("11/100"))
+        // println(s"a: $a")
+        // println(s"b: $b")
+        // println(s"s: ${a + b}")
+        val c = a + b
+        c should be(PriceIncludingTax.createByRate(2000, "1/10"))
       }
     }
   }
