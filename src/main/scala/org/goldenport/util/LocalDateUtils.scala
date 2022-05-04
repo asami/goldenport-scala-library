@@ -11,7 +11,8 @@ import com.github.nscala_time.time.Imports._
  *  version Aug. 29, 2017
  *  version May. 23, 2018
  *  version Jun. 14, 2018
- * @version Oct. 10, 2018
+ *  version Oct. 10, 2018
+ * @version Apr. 20, 2022
  * @author  ASAMI, Tomoharu
  */
 object LocalDateUtils {
@@ -98,4 +99,8 @@ object LocalDateUtils {
     require (startage <= endage, "start should be less equal than end")
     (base.minusYears(endage + 1).plusDays(1), base.minusYears(startage))
   }
+
+  //
+  def isSameMonth(lhs: LocalDate, rhs: LocalDate): Boolean =
+    lhs.getYear == rhs.getYear && lhs.getMonthOfYear == rhs.getMonthOfYear
 }

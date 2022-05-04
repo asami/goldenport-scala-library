@@ -5,6 +5,7 @@ import java.net.URL
 import java.nio.charset.Charset
 import java.util.{Locale, TimeZone, Currency, ResourceBundle}
 import com.typesafe.config.{Config => HoconConfig, ConfigFactory}
+import org.goldenport.context.DateTimeContext
 import org.goldenport.i18n.I18NContext
 import org.goldenport.i18n.CalendarFormatter
 import org.goldenport.i18n.EmptyResourceBundle
@@ -29,10 +30,12 @@ import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperation
  *  version May. 16, 2020
  *  version Jan. 24, 2021
  *  version Oct.  2, 2021
- * @version Feb. 28, 2022
+ *  version Feb. 28, 2022
+ * @version Apr.  4, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Config(
+  dateTimeContext: DateTimeContext,
   i18n: I18NContext,
   homeDirectory: Option[File],
   workDirectory: Option[File],
@@ -150,6 +153,7 @@ object Config {
     val newline = System.lineSeparator()
     val locale = Locale.getDefault()
     val timezone = TimeZone.getDefault()
+    val dateTimeContext = DateTimeContext.now(timezone)
     val currency = Currency.getInstance(locale)
     val calenderformatters = CalendarFormatter.Factory.default
     val stringformatter = StringFormatter.default
@@ -159,6 +163,7 @@ object Config {
     val tmpdir = Option(System.getProperty("java.io.tmpdir")).map(x => new File(x))
     val projectdir = None // TODO
     Config(
+      dateTimeContext,
       I18NContext(
         charset,
         None,

@@ -4,6 +4,7 @@ import scala.util.control.NonFatal
 import scala.concurrent.duration._
 import scala.xml.NodeSeq
 import java.util.Date
+import java.util.TimeZone
 import java.sql.Timestamp
 import java.io.File
 import java.net.{URL, URI}
@@ -36,7 +37,8 @@ import org.goldenport.i18n.StringFormatter
  *  version Nov.  5, 2021
  *  version Jan. 30, 2022
  *  version Feb. 24, 2022
- * @version Mar.  9, 2022
+ *  version Mar.  9, 2022
+ * @version May.  3, 2022
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -205,13 +207,21 @@ object AnyUtils {
       case s: String => DateUtils.parse(s)
     }
   }
-  def toDateTime(x: Any): DateTime = RAISE.notImplementedYetDefect
-  def toLocalDate(x: Any): LocalDate = RAISE.notImplementedYetDefect
+  def toDateTime(x: Any): DateTime = x match {
+    case m: DateTime => m
+  }
+  def toLocalDate(x: Any): LocalDate = x match {
+    case m: LocalDate => m
+  }
   def toLocalTime(x: Any): LocalTime = {
     x match {
       case v: LocalTime => v
       case s: String => LocalTime.parse(s)
     }
+  }
+  def toUnixTime(tz: TimeZone, x: Any): Long = x match {
+    case m: Long => m
+    case m: DateTime => m.getMillis
   }
   def toFiniteDuration(x: Any): FiniteDuration = x match {
     case m: FiniteDuration => m

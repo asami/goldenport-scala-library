@@ -23,7 +23,9 @@ import org.goldenport.context.Consequence
  *  version Dec. 29, 2018
  *  version Sep. 25, 2019
  *  version Jan. 27, 2022
- * @version Feb. 19, 2022
+ *  version Feb. 19, 2022
+ *  version Apr. 20, 2022
+ * @version May.  2, 2022
  * @author  ASAMI, Tomoharu
  */
 object DateTimeUtils {
@@ -35,7 +37,7 @@ object DateTimeUtils {
   val isoUtcFormatter = isoFormatter.withZoneUTC
   val isoJstFormatter = isoFormatter.withZone(jodajst)
   val isoJstParser = ISODateTimeFormat.dateTimeParser.withZone(jodajst)
-  val basicFormattter = ISODateTimeFormat.basicDate.withZoneUTC // yyyyMMdd'T'HHmmss.SSSZ
+  val basicFormattter = ISODateTimeFormat.basicDateTime.withZoneUTC // yyyyMMdd'T'HHmmss.SSSZ
   val basicFormattterJst = basicFormattter.withZone(jodajst)
   val simpleFormatter = DateTimeFormat.forPattern("yyyyMMdd HHmmss").withZoneUTC
   val simpleFormatterJst = simpleFormatter.withZone(jodajst)
@@ -327,6 +329,17 @@ object DateTimeUtils {
   def endOfLastDayOfThisMonth(p: DateTime): DateTime =
     startOfFirstDayOfNextMonth(p).minusMillis(1)
 
+  def startOfFirstDayOfNextYear(p: DateTime): DateTime =
+    p.plusYears(1).withDayOfMonth(1).withDayOfYear(1).withTimeAtStartOfDay
+
+  def startOfFirstDayOfThisYear(p: DateTime): DateTime =
+    p.withDayOfMonth(1).withDayOfYear(1).withTimeAtStartOfDay
+
+  def endOfLastDayOfThisYear(p: DateTime): DateTime =
+    startOfFirstDayOfNextYear(p).minusMillis(1)
+
+  def startOfToday(p: DateTime): DateTime = p.withTimeAtStartOfDay
+
   /*
    * Count
    */
@@ -341,5 +354,9 @@ object DateTimeUtils {
 
   def countOfYearsPassed(start: DateTime, end: DateTime): Int =
     LocalDateTimeUtils.countOfYearsPassed(start.toLocalDateTime, end.withZone(start.getZone).toLocalDateTime)
+
+  //
+  def isSameMonth(lhs: DateTime, rhs: DateTime): Boolean =
+    LocalDateUtils.isSameMonth(lhs.toLocalDate, rhs.toLocalDate)
 }
 

@@ -18,7 +18,8 @@ import org.goldenport.parser.{ParseMessage}
  *  version Nov. 30, 2021
  *  version Dec.  5, 2021
  *  version Jan. 30, 2022
- * @version Mar. 10, 2022
+ *  version Mar. 10, 2022
+ * @version Apr.  3, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -41,6 +42,8 @@ sealed trait Consequence[+T] {
 
   def take: T
 
+  def getException: Option[Throwable]
+
   def takeOrInvalidArgumentFault(message: String): T = get getOrElse Conclusion.invalidArgumentFault(message).RAISE
 
   def takeOrIllegalConfigurationDefect(name: String): T = get getOrElse Conclusion.config.illegalConfigurationDefect(name).RAISE
@@ -52,6 +55,7 @@ object Consequence {
     conclusion: Conclusion = Conclusion.Ok
   ) extends Consequence[T] {
     def toOption: Option[T] = Some(result)
+    def getException: Option[Throwable] = None
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
     def map[U](f: T => U): Consequence[U] = copy(result = f(result))
     def flatMap[U](f: T => Consequence[U]): Consequence[U] = f(result).add(conclusion)
@@ -63,6 +67,7 @@ object Consequence {
     conclusion: Conclusion = Conclusion.InternalServerError
   ) extends Consequence[T] {
     def toOption: Option[T] = None
+    def getException: Option[Throwable] = Some(conclusion.toException)
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
     def map[U](f: T => U): Consequence[U] = this.asInstanceOf[Error[U]]
     def flatMap[U](f: T => Consequence[U]): Consequence[U] = this.asInstanceOf[Consequence[U]]

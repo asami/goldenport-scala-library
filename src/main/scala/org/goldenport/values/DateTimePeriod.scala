@@ -34,7 +34,9 @@ import org.goldenport.values.IntervalFactory.{BoundsKind, CloseOpen, CloseClose}
  *  version Sep. 10, 2020
  *  version Jan. 24, 2021
  *  version Feb. 28, 2021
- * @version Feb. 17, 2022
+ *  version Feb. 17, 2022
+ *  version Apr. 21, 2022
+ * @version May.  2, 2022
  * @author  ASAMI, Tomoharu
  */
 case class DateTimePeriod( // TODO DateTimeInterval (java8 time)
@@ -431,11 +433,27 @@ object DateTimePeriod {
     (dt.getYear, dt.getMonthOfYear, dt.getDayOfMonth)
   }
 
+  def inclusiveExclusive(start: DateTime, end: DateTime): DateTimePeriod =
+    DateTimePeriod(Some(start), Some(end), true, false)
+
   def atOrAbove(year: Int, month: Int, day: Int, hour: Int, minute:Int, second:Int, tz: DateTimeZone): DateTimePeriod =
     DateTimePeriod(Some(new DateTime(year, month, day, hour, minute, second, tz)), None)
 
   def atOrAboveJst(year: Int, month: Int, day: Int): DateTimePeriod =
     DateTimePeriod(Some(new DateTime(year, month, day, 0, 0, jodajst)), None)
+
+
+  def thisMonth(p: DateTime): DateTimePeriod = {
+    val start = DateTimeUtils.startOfFirstDayOfThisMonth(p)
+    val end = DateTimeUtils.startOfFirstDayOfNextMonth(p)
+    DateTimePeriod.inclusiveExclusive(start, end)
+  }
+
+  def lastOneMonthDayBoundary(p: DateTime): DateTimePeriod = {
+    val end = DateTimeUtils.startOfToday(p)
+    val start = end.minusMonths(1)
+    DateTimePeriod.inclusiveExclusive(start, end)
+  }
 
   /*
    * Caution: Timezone depends running environment.

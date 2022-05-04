@@ -5,11 +5,15 @@ import org.goldenport.RAISE
 import org.goldenport.util.StringUtils
 
 /*
+ * See org.goldenport.incident.Incident
+ * See org.goldenport.context.Incident
+ * 
  * @since   Mar. 12, 2021
  *  version Mar. 27, 2021
  *  version Apr. 29, 2021
  *  version May. 27, 2021
- * @version Jan. 20, 2022
+ *  version Jan. 20, 2022
+ * @version Apr.  3, 2022
  * @author  ASAMI, Tomoharu
  */
 case class DetailCode(

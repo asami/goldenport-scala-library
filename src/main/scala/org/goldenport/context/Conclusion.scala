@@ -20,7 +20,8 @@ import org.goldenport.util.ExceptionUtils
  *  version Nov. 15, 2021
  *  version Dec.  5, 2021
  *  version Jan. 20, 2022
- * @version Feb. 18, 2022
+ *  version Feb. 18, 2022
+ * @version Apr.  3, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -64,7 +65,7 @@ case class Conclusion(
     strategy // CAUTION
   )
 
-  def toException = throw new ConclusionException(this)
+  def toException: Exception = new ConclusionException(this)
   def RAISE: Nothing = throw toException
 
   def isSuccess: Boolean = code.isSuccess
