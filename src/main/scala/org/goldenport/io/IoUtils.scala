@@ -23,7 +23,8 @@ import org.goldenport.bag.ClobBag
  *  version Jun.  3, 2020
  *  version Apr.  4, 2021
  *  version Feb. 26, 2022
- * @version Mar.  6, 2022
+ *  version Mar.  6, 2022
+ * @version May. 23, 2022
  * @author  ASAMI, Tomoharu
  */
 object IoUtils {
@@ -70,22 +71,40 @@ object IoUtils {
   def toText(in: ResourceHandle, codec: Codec): String = toText(in.openInputStream, codec)
 
   def copy(in: InputStream, out: OutputStream): Unit =
-    UIO.stream2stream(in, out)
+    _copy_stream(in, out)
 
   def copyClose(in: InputStream, out: OutputStream): Unit =
     for {
       i <- resource.managed(in)
       o <- resource.managed(out)
     } {
-      UIO.stream2stream(i, o)
+      _copy_stream(i, o)
     }
 
   def copyCloseIn(in: InputStream, out: OutputStream): Unit =
     for {
       i <- resource.managed(in)
     } {
-      UIO.stream2stream(i, out)
+      _copy_stream(i, out)
     }
+
+  // private def _copy_stream(in: InputStream, out: OutputStream): Unit = {
+  //   val buf = new Array[Byte](8192)
+  //   var cont = true
+  //   while (cont) {
+  //     val n = in.read(buf)
+  //     if (n > 0) {
+  //       println(s"""_copy_stream: ${new String(buf, 0, n, "UTF-8")}""")
+  //       out.write(buf, 0, n)
+  //     } else {
+  //       out.flush()
+  //       cont = false
+  //     }
+  //   }
+  // }
+
+  private def _copy_stream(in: InputStream, out: OutputStream): Unit =
+      UIO.stream2stream(in, out)
 
   def copyClose(in: Reader, out: Writer): Unit =
     for {

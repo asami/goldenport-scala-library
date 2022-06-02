@@ -19,7 +19,8 @@ import org.goldenport.parser.{ParseMessage}
  *  version Dec.  5, 2021
  *  version Jan. 30, 2022
  *  version Mar. 10, 2022
- * @version Apr.  3, 2022
+ *  version Apr.  3, 2022
+ * @version May. 31, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -94,6 +95,7 @@ object Consequence {
   // Generic error derived from HTTP
   def badRequest[T](p: String): Consequence[T] = badRequest(I18NString(p))
   def badRequest[T](p: I18NString): Consequence[T] = error(400, p)
+  def badRequest[T](p: Throwable): Consequence[T] = error(400, p)
   def unauthorized[T](p: String): Consequence[T] = unauthorized(I18NString(p))
   def unauthorized[T](en: String, ja: String): Consequence[T] = unauthorized(I18NString(en, ja))
   def unauthorized[T](p: I18NString): Consequence[T] = error(401, p)
@@ -129,6 +131,7 @@ object Consequence {
   //
   def error[T](code: Int, p: String): Consequence[T] = error(code, I18NString(p))
   def error[T](code: Int, p: I18NString): Consequence[T] = Error(Conclusion.error(code, p))
+  def error[T](code: Int, e: Throwable): Consequence[T] = Error(Conclusion.error(code, e))
   def error[T](e: Throwable): Consequence[T] = e match {
     case m: IllegalArgumentException => badRequest(m.getMessage)
     case m: SecurityException => unauthorized(m.getMessage)
@@ -148,6 +151,9 @@ object Consequence {
 
   def successOrInvalidTokenFault[T](name: String, p: Option[T]): Consequence[T] =
     p.map(success).getOrElse(invalidTokenFault(name))
+
+  def successOrBadRequestFault[T](p: Option[T])(e: => Throwable): Consequence[T] =
+    p.map(success).getOrElse(badRequest(e))
 
   def invalidArgumentFault[T](p: String): Consequence[T] = invalidArgumentFault(I18NMessage(p))
   def invalidArgumentFault[T](p: String, arg: Any, args: Any*): Consequence[T] = Error(Conclusion.invalidArgumentFault(I18NMessage(p, args +: args)))

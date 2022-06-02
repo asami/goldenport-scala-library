@@ -8,6 +8,9 @@ import org.joda.time._
 import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
 import org.goldenport.RAISE
 import org.goldenport.context.Consequence
+import org.goldenport.context.{DateTimeContext => LibDateTimeContext}
+import org.goldenport.extension.IRecord
+import org.goldenport.i18n.LocaleUtils
 
 /*
  * TODO unify org.goldenport.record.util.DateTimeUtils
@@ -25,7 +28,8 @@ import org.goldenport.context.Consequence
  *  version Jan. 27, 2022
  *  version Feb. 19, 2022
  *  version Apr. 20, 2022
- * @version May.  2, 2022
+ *  version May.  2, 2022
+ * @version Jun.  2, 2022
  * @author  ASAMI, Tomoharu
  */
 object DateTimeUtils {
@@ -47,6 +51,9 @@ object DateTimeUtils {
     sdf.setTimeZone(gmt)
     sdf
   }
+
+  def toIsoDateTimeString(dt: DateTime)(implicit ctx: LibDateTimeContext): String =
+    toIsoDateTimeString(dt, ctx.dateTimeZone)
 
   def toIsoDateTimeString(dt: DateTime, tz: DateTimeZone): String = {
     toIsoDateTimeString(dt.getMillis, tz)
@@ -143,7 +150,7 @@ object DateTimeUtils {
     def dt(x: DateTime) = toNaturalStringJst(x)
     (start, end) match {
       case (Some(s), Some(e)) => Some(s"${dt(s)} 〜 ${dt(e)}")
-      case (Some(s), None) => Some(s"{dt(s)} 〜")
+      case (Some(s), None) => Some(s"${dt(s)} 〜")
       case (None, Some(e)) => Some(s"〜 ${dt(e)}")
       case (None, None) => None
     }
@@ -309,6 +316,43 @@ object DateTimeUtils {
   def httpDateTimeString(dt: DateTime): String = {
     httpDateTimeFormat.format(dt.getMillis)
   }
+
+  /*
+   * Record
+   */
+  def toRecord(p: DateTime, ctx: LibDateTimeContext): IRecord = toRecord(p, ctx.dateTimeZone)
+
+  def toRecord(p: DateTime, tz: DateTimeZone): IRecord = toRecord(p.withZone(tz))
+
+  def toRecord(p: DateTime): IRecord = {
+    val zone = p.getZone.toTimeZone
+    val ut = p.getMillis
+    val offset = zone.getOffset(ut)
+    val osign = if (offset >= 0) "+" else "-"
+    val aoffset = scala.math.abs(offset) / 1000
+    val ohour = aoffset / (60 * 60)
+    val ominute = aoffset % (60 * 60) / 60
+    IRecord.data(
+      "year" -> p.getYear,
+      "month" -> p.getMonthOfYear,
+      "day" -> p.getDayOfMonth,
+      "hour" -> p.getHourOfDay,
+      "minute" -> p.getMinuteOfHour,
+      "second" -> p.getSecondOfMinute,
+      "millis" -> p.getMillisOfSecond,
+      "timezone" -> IRecord.data(
+        "ID" -> zone.getID,
+        "name" -> zone.getDisplayName(false, TimeZone.LONG, LocaleUtils.C),
+        "short-name" -> zone.getDisplayName(false, TimeZone.SHORT, LocaleUtils.C),
+        "offset" -> IRecord.data(
+          "sign" -> osign,
+          "hour" -> ohour,
+          "minute" -> ominute
+        )
+      )
+    )
+  }
+        
 
   /*
    * DateTimeZone

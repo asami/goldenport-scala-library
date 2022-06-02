@@ -33,7 +33,8 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version Nov. 29, 2020
  *  version Jan.  1, 2021
  *  version Apr.  3, 2021
- * @version Mar. 28, 2022
+ *  version Mar. 28, 2022
+ * @version May.  6, 2022
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -470,7 +471,9 @@ object DomUtils {
   }
 
   def localName(element: Element): String =
-    Option(element.getLocalName) getOrElse element.getTagName
+    Option(element.getLocalName) orElse Option(element.getTagName) getOrElse ""
+
+  def localNameLowerCase(element: Element): String = localName(element).toLowerCase
 
   def htmlElements(node: Node, localname: String): List[Element] =
     htmlElements(children(node), localname)
@@ -525,14 +528,14 @@ object DomUtils {
   def elementsVectorByLocalNameIC(node: Node, localname: String): Vector[Element] =
     childrenIndexedSeq(node).collect {
       case m: Element => m
-    }.filter(x => localname.equalsIgnoreCase(x.getLocalName)).toVector
+    }.filter(x => localname.equalsIgnoreCase(localName(x))).toVector
 
   def elementsVectorByLocalNameIC(node: Node, localname: String, localname2: String, localnames: String*): Vector[Element] = {
     val names = (localnames.toVector :+ localname :+ localname2).map(_.toLowerCase)
     childrenIndexedSeq(node).collect {
       case m: Element => m
     }.filter(x =>
-      names.contains(Option(x.getLocalName).map(_.toLowerCase).getOrElse(""))
+      names.contains(localNameLowerCase(x))
     ).toVector
   }
 
@@ -763,6 +766,12 @@ object DomUtils {
     for (i <- 0 until p.getLength) {
       _distill_text(p.item(i), builder)
     }
+    builder.toString
+  }
+
+  def distillText(p: Element): String = {
+    val builder = new StringBuilder
+    _distill_text(p, builder)
     builder.toString
   }
 

@@ -21,7 +21,8 @@ import org.goldenport.util.ExceptionUtils
  *  version Dec.  5, 2021
  *  version Jan. 20, 2022
  *  version Feb. 18, 2022
- * @version Apr.  3, 2022
+ *  version Apr.  3, 2022
+ * @version May. 31, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -148,6 +149,9 @@ object Conclusion {
   def error(code: Int, p: I18NMessage): Conclusion = Conclusion(
     StatusCode(code),
     Some(p)
+  )
+  def error(code: Int, e: Throwable): Conclusion = Conclusion(
+    StatusCode(code), exception = Some(e)
   )
 
   def argumentFault(ps: Seq[ArgumentFault]): Conclusion = {

@@ -41,7 +41,8 @@ import org.goldenport.parser.ParseResult
  *  version Dec. 31, 2021
  *  version Jan. 24, 2022
  *  version Feb. 17, 2022
- * @version Mar. 25, 2022
+ *  version Mar. 25, 2022
+ * @version May. 24, 2022
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -111,6 +112,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def parseAsObjectList[T](key: String, f: Config => ParseResult[T]): ParseResult[List[T]] = HoconUtils.parseAsObjectList(config, key, f)
 
   def cString(key: String): Consequence[String] = HoconUtils.consequenceString(config, key)
+  def cStringOption(key: String): Consequence[Option[String]] = HoconUtils.consequenceStringOption(config, key)
   def cBigDecimal(key: String): Consequence[BigDecimal] = HoconUtils.consequenceBigDecimal(config, key)
   def cRational(key: String): Consequence[Rational] = HoconUtils.consequenceRational(config, key)
   def cRationalOption(key: String): Consequence[Option[Rational]] = HoconUtils.consequenceRationalOption(config, key)
