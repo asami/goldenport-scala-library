@@ -13,7 +13,8 @@ import org.goldenport.util.ExceptionUtils
  *  version May. 30, 2021
  *  version Jun. 20, 2021
  *  version Jan. 20, 2022
- * @version Mar.  6, 2022
+ *  version Mar.  6, 2022
+ * @version Jun. 13, 2022
  * @author  ASAMI, Tomoharu
  */
 case class StatusCode(
@@ -36,6 +37,14 @@ case class StatusCode(
       this
     else
       copy(code = InternalServerError.code, detail = detail.map(_.forConfig))
+
+  def toPayload: StatusCode.Payload = StatusCode.Payload(
+    code,
+    detail.map(_.toPayload),
+    application,
+    messageOption.map(_.toPayload),
+    externalService.map(_.toPayload)
+  )
 }
 
 object StatusCode {
@@ -90,6 +99,23 @@ object StatusCode {
   final val PreCondition = InternalServerError.withDetail(DetailCode.PreCondition)
   final val PreConditionState = InternalServerError.withDetail(DetailCode.PreConditionState)
   final val PostCondition = InternalServerError.withDetail(DetailCode.PostCondition)
+
+  @SerialVersionUID(1L)
+  case class Payload(
+    code: Int,
+    detail: Option[DetailCode.Payload],
+    application: Option[Int],
+    messageOption: Option[I18NMessage.Payload],
+    externalService: Option[StatusCode.Payload]
+  ) {
+    def restore: StatusCode = StatusCode(
+      code,
+      detail.map(_.restore),
+      application,
+      messageOption.map(_.restore),
+      externalService.map(_.restore)
+    )
+  }
 
   def message(code: Int): I18NMessage = {
     val a = Strings.httpstatus.take(code)

@@ -4,6 +4,7 @@ import scalaz._, Scalaz._
 import scala.util.Try
 import scala.util.control.NonFatal
 import java.util.Date
+import java.util.TimeZone
 import java.text.SimpleDateFormat
 import java.sql.Timestamp
 import com.github.nscala_time.time.Imports._
@@ -39,7 +40,7 @@ import org.goldenport.extension.IRecord
  *  version Feb. 17, 2022
  *  version Apr. 21, 2022
  *  version May. 20, 2022
- * @version Jun.  2, 2022
+ * @version Jun. 17, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait DateTimePeriod { // TODO DateTimeInterval (java8 time)
@@ -563,7 +564,21 @@ sealed trait DateTimePeriod { // TODO DateTimeInterval (java8 time)
     }
   }
 
-  def literal(implicit ctx: DateTimeContext): String = {
+  def literal(): String = {
+    def prefix = if (isStartInclusive) MARK_START_CLOSE else MARK_START_OPEN
+    def postfix = if (isEndInclusive) MARK_END_CLOSE else MARK_END_OPEN
+    val s = start match {
+      case Some(s) => prefix + DateTimeUtils.toIsoDateTimeString(s)
+      case None => ""
+    }
+    val e = end match {
+      case Some(s) => DateTimeUtils.toIsoDateTimeString(s) + postfix
+      case None => ""
+    }
+    s + "~" + e
+  }
+
+  def literal(ctx: DateTimeContext): String = {
     def prefix = if (isStartInclusive) MARK_START_CLOSE else MARK_START_OPEN
     def postfix = if (isEndInclusive) MARK_END_CLOSE else MARK_END_OPEN
     val s = start match {
@@ -588,7 +603,28 @@ sealed trait DateTimePeriod { // TODO DateTimeInterval (java8 time)
     }
   }
 
-  def toRecord(implicit ctx: DateTimeContext): IRecord = {
+  def toRecord(): IRecord = {
+    val t = Vector("text" -> literal())
+    val s = start match {
+      case Some(s) =>
+        val r = DateTimeUtils.toRecord(s) + IRecord.data(
+          "inclusive" -> isStartInclusive
+        )
+        Vector("start" -> r)
+      case None => Vector.empty
+    }
+    val e = end match {
+      case Some(s) =>
+        val r = DateTimeUtils.toRecord(s) + IRecord.data(
+          "inclusive" -> isEndInclusive
+        )
+        Vector("end" -> r)
+      case None => Vector.empty
+    }
+    IRecord.create(t ++ s ++ e)
+  }
+
+  def toRecord(ctx: DateTimeContext): IRecord = {
     val t = Vector("text" -> literal(ctx))
     val s = start match {
       case Some(s) =>
@@ -857,6 +893,15 @@ object DateTimePeriod {
 
   def inclusiveExclusive(start: DateTime, end: DateTime): DateTimePeriod =
     DateTimePeriod(Some(start), Some(end), true, false)
+
+  def closeOpen(start: DateTime, end: DateTime): DateTimePeriod =
+    DateTimePeriod(Some(start), Some(end), true, false)
+
+  def closeOpen(start: Timestamp, end: Timestamp, tz: TimeZone): DateTimePeriod = {
+    val s = DateTimeUtils.toDateTime(start, tz)
+    val e = DateTimeUtils.toDateTime(end, tz)
+    closeOpen(s, e)
+  }
 
   def atOrAbove(year: Int, month: Int, day: Int, hour: Int, minute:Int, second:Int, tz: DateTimeZone): DateTimePeriod =
     DateTimePeriod(Some(new DateTime(year, month, day, hour, minute, second, tz)), None)
@@ -1292,7 +1337,7 @@ object DateTimePeriod {
     def datetimeParse(s: String): DateTime = parseDateTime(s, dateTimeZone)
 
     def parseDateTime(s: String, tz: DateTimeZone): DateTime =
-      DateTimeUtils.parseIsoDateTime(s, tz)
+      DateTimeUtils.parseDateTime(s, tz)
   }
 
   private def gmt = DateTimeUtils.gmt

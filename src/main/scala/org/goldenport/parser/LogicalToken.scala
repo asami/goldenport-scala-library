@@ -36,7 +36,8 @@ import LogicalTokens.Context
  *  version Jan. 30, 2021
  *  version Feb. 14, 2021
  *  version Mar. 24, 2021
- * @version Apr. 21, 2021
+ *  version Apr. 21, 2021
+ * @version Jun. 17, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalToken {
@@ -398,10 +399,10 @@ object DateTimeToken extends LogicalTokens.SimpleTokenizer {
     DateTimeToken(p, Some(location))
 
   def apply(context: Context, s: String, location: Option[ParseLocation]): DateTimeToken =
-    DateTimeToken(DateTimeUtils.parseIsoDateTimeJst(s), location) // TODO
+    DateTimeToken(DateTimeUtils.parseDateTimeJst(s), location) // TODO
 
   def apply(context: Context, s: String, location: ParseLocation): DateTimeToken =
-    DateTimeToken(DateTimeUtils.parseIsoDateTimeJst(s), Some(location)) // TODO
+    DateTimeToken(DateTimeUtils.parseDateTimeJst(s), Some(location)) // TODO
 
   def apply(y: Int, m: Int, d: Int, h: Int, mi: Int, s: Int, tz: DateTimeZone, location: ParseLocation): DateTimeToken =
     DateTimeToken(new DateTime(y, m, d, h, mi, s, tz), Some(location))

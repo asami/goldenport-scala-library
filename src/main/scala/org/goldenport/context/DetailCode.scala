@@ -13,7 +13,8 @@ import org.goldenport.util.StringUtils
  *  version Apr. 29, 2021
  *  version May. 27, 2021
  *  version Jan. 20, 2022
- * @version Apr.  3, 2022
+ *  version Apr.  3, 2022
+ * @version Jun. 13, 2022
  * @author  ASAMI, Tomoharu
  */
 case class DetailCode(
@@ -42,12 +43,26 @@ case class DetailCode(
     category = SystemError,
     site = ConfigSite
   )
+
+  def toPayload: DetailCode.Payload = DetailCode.Payload(
+    category.name,
+    site.name,
+    incident.name,
+    application.map(_.toPayload),
+    reaction.toPayload
+  )
 }
 
 object DetailCode {
   sealed trait Category {
     def code: Int
     def name: String
+  }
+  object Category {
+    val elements = Vector(Success, ArgumentError, ResultError, StateError, ServiceError, SystemError)
+
+    def get(p: String): Option[Category] = elements.find(_.name == p)
+    def apply(p: String): Category = get(p) getOrElse ServiceError
   }
   case object Success extends Category {
     def code: Int = 0
@@ -89,6 +104,12 @@ object DetailCode {
   sealed trait Site {
     def code: Int
     def name: String
+  }
+  object Site {
+    val elements = Vector(SystemSite, SubSystemSite, DatabaseSite, NetworkSite, FileSite, EntitySite, RuleSite, PrincipalSite, SessionSite, PluginSite, OperationSite, ServiceSite, ComponentSite, ArgumentSite, ConfigSite, ExternalServiceSite, ExternalApplicationSite, ExternalEntitySite)
+
+    def get(p: String): Option[Site] = elements.find(_.name == p)
+    def apply(p: String): Site = get(p) getOrElse SystemSite
   }
   case object SystemSite extends Site {
     def code: Int = 1
@@ -166,6 +187,12 @@ object DetailCode {
   sealed trait Incident {
     def code: Int
     def name: String
+  }
+  object Incident {
+    val elements = Vector(HighLoad, SyntaxError, FormatError, Invalid, Duplicate, Missing, Redundant, Immutable, NotFound, Existed, Deleted, TooMany, Inconsistent, AuthenticationError, Unauthorized, Conflict, IoError, Malfunction, Unsupported, LogicDefect, ConfigurationDefect, UnsupportedDefect, NotImplementedYetDefect, InvariantDefect, PreConditionStateDefect, PreConditionDefect, PostConditionDefect)
+
+    def get(p: String): Option[Incident] = elements.find(_.name == p)
+    def apply(p: String): Incident = get(p) getOrElse LogicDefect
   }
   case object HighLoad extends Incident {
     def code: Int = 1
@@ -284,11 +311,16 @@ object DetailCode {
     }
     def code: Int = stakeholder.code * 10 + action.code
     def name: String = s"${stakeholder.name}-${action.name}"
+
+    def toPayload = Reaction.Payload(stakeholder.name, action.name)
   }
   object Reaction {
     implicit val reactionInstance: Order[Reaction] with Show[Reaction] = new Order[Reaction] with Show[Reaction] {
       def order(lhs: Reaction, rhs: Reaction): Ordering = Ordering.fromInt(lhs compare rhs)
     }
+
+    val stackholders = Vector(Client, ApplicationManager, ApplicationAdministrator, SystemAdministrator, SystemDeveloper)
+    val actions = Vector(Input, Retry, Config, Recover)
 
     sealed trait Stakeholder extends Ordered[Stakeholder] {
       def code: Int
@@ -340,11 +372,25 @@ object DetailCode {
 
     val ClientInput = Reaction(Client, Input)
     val SystemDefect = Reaction(SystemDeveloper, Recover)
+
+  @SerialVersionUID(1L)
+    case class Payload(
+      stackholder: String,
+      action: String
+    ) {
+      def restore: Reaction = {
+        val s = stackholders.find(_.name == stackholder).getOrElse(SystemDeveloper)
+        val a = actions.find(_.name == action).getOrElse(Recover)
+        Reaction(s, a)
+      }
+    }
   }
 
   sealed trait ApplicationCode {
     def code: Int
     def name: String
+
+    def toPayload = ApplicationCode.ApplicationCodeImpl(code, name)
   }
   object ApplicationCode {
     case class ApplicationCodeImpl(code: Int, name: String) extends ApplicationCode
@@ -367,6 +413,22 @@ object DetailCode {
   val PreCondition = DetailCode(ServiceError, OperationSite, PreConditionDefect, Reaction.SystemDefect)
   val PreConditionState = DetailCode(ServiceError, OperationSite, PreConditionStateDefect, Reaction.SystemDefect)
   val PostCondition = DetailCode(ServiceError, OperationSite, PostConditionDefect, Reaction.SystemDefect)
+
+  case class Payload(
+    category: String,
+    site: String,
+    incident: String,
+    application: Option[ApplicationCode.ApplicationCodeImpl],
+    reaction: Reaction.Payload
+  ) {
+    def restore: DetailCode = {
+      val c = Category(category)
+      val s = Site(site)
+      val i = Incident(incident)
+      val r = reaction.restore
+      DetailCode(c, s, i, r)
+    }
+  }
 
   def apply(category: Category, site: Site, incident: Incident, reaction: Reaction): DetailCode =
     DetailCode(category, site, incident, None, reaction)

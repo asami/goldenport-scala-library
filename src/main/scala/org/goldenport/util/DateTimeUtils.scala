@@ -29,7 +29,7 @@ import org.goldenport.i18n.LocaleUtils
  *  version Feb. 19, 2022
  *  version Apr. 20, 2022
  *  version May.  2, 2022
- * @version Jun.  2, 2022
+ * @version Jun. 17, 2022
  * @author  ASAMI, Tomoharu
  */
 object DateTimeUtils {
@@ -52,8 +52,8 @@ object DateTimeUtils {
     sdf
   }
 
-  def toIsoDateTimeString(dt: DateTime)(implicit ctx: LibDateTimeContext): String =
-    toIsoDateTimeString(dt, ctx.dateTimeZone)
+  def toIsoDateTimeString(dt: DateTime): String =
+    toIsoDateTimeString(dt, dt.getZone)
 
   def toIsoDateTimeString(dt: DateTime, tz: DateTimeZone): String = {
     toIsoDateTimeString(dt.getMillis, tz)
@@ -169,10 +169,11 @@ object DateTimeUtils {
   // Parser
   def parseIsoDateTime(s: String, tz: DateTimeZone): DateTime = {
     val a = Try(
-      if (tz == jodajst)
-        isoJstParser.parseDateTime(s)
-      else
-        ISODateTimeFormat.dateTimeParser.withZone(tz).parseDateTime(s)
+      // if (tz == jodajst)
+      //   isoJstParser.withOffsetParsed().parseDateTime(s)
+      // else
+      //   ISODateTimeFormat.dateTimeParser.withOffsetParsed().withZone(tz).parseDateTime(s)
+      ISODateTimeFormat.dateTimeParser.withOffsetParsed().withZone(tz).parseDateTime(s)
     )
     a match {
       case Success(s) => s
@@ -189,6 +190,25 @@ object DateTimeUtils {
     }
   }
 
+  def parseIsoDateTimeJst(s: String): DateTime = {
+    parseIsoDateTime(s, jodajst)
+  }
+
+  def parseDateTime(s: String, tz: DateTimeZone): DateTime = {
+    val r = ".*T.*[+-].*".r
+    if (r.findFirstMatchIn(s).isEmpty)
+      parseIsoDateTime(s, tz)
+    else
+      _parse_datetime(s)
+  }
+
+  private def _parse_datetime(s: String): DateTime = 
+    ISODateTimeFormat.dateTimeParser.withOffsetParsed().parseDateTime(s)
+
+  def parseDateTimeJst(s: String): DateTime = {
+    parseDateTime(s, jodajst)
+  }
+
   def consequenceDateTimeWithContext(s: String)(implicit ctx: org.goldenport.context.DateTimeContext): Consequence[DateTime] =
     consequenceDateTime(s, ctx.dateTimeZone)
 
@@ -196,12 +216,8 @@ object DateTimeUtils {
     consequenceDateTime(s, jodajst) // TODO
 
   def consequenceDateTime(s: String, tz: DateTimeZone): Consequence[DateTime] = Consequence(
-    parseIsoDateTime(s, tz)
+    parseDateTime(s, tz)
   )
-
-  def parseIsoDateTimeJst(s: String): DateTime = {
-    parseIsoDateTime(s, jodajst)
-  }
 
   // Convert
   def toDateTime(dt: java.util.Date, tz: DateTimeZone): DateTime =
@@ -332,6 +348,7 @@ object DateTimeUtils {
     val aoffset = scala.math.abs(offset) / 1000
     val ohour = aoffset / (60 * 60)
     val ominute = aoffset % (60 * 60) / 60
+    val omark = f"$osign$ohour%02d$ominute%02d"
     IRecord.data(
       "year" -> p.getYear,
       "month" -> p.getMonthOfYear,
@@ -345,6 +362,7 @@ object DateTimeUtils {
         "name" -> zone.getDisplayName(false, TimeZone.LONG, LocaleUtils.C),
         "short-name" -> zone.getDisplayName(false, TimeZone.SHORT, LocaleUtils.C),
         "offset" -> IRecord.data(
+          "mark" -> omark,
           "sign" -> osign,
           "hour" -> ohour,
           "minute" -> ominute

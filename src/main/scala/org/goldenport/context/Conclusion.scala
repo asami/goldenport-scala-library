@@ -2,10 +2,12 @@ package org.goldenport.context
 
 import scalaz._, Scalaz._
 import java.util.Locale
+import org.goldenport.exception.GoldenportException
 import org.goldenport.i18n.I18NString
 import org.goldenport.i18n.I18NMessage
 import org.goldenport.trace._
 import org.goldenport.util.ExceptionUtils
+import org.goldenport.util.AnyUtils
 
 /*
  * See org.goldenport.record.v2.Conclusion.
@@ -22,7 +24,8 @@ import org.goldenport.util.ExceptionUtils
  *  version Jan. 20, 2022
  *  version Feb. 18, 2022
  *  version Apr.  3, 2022
- * @version May. 31, 2022
+ *  version May. 31, 2022
+ * @version Jun. 14, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -31,10 +34,13 @@ case class Conclusion(
   errors: ErrorMessages = ErrorMessages.empty,
   warnings: WarningMessages = WarningMessages.empty,
   exception: Option[Throwable] = None,
+  exceptionData: Option[Conclusion.Payload.ExceptionData] = None,
   faults: Faults = Faults.empty,
   trace: Trace = Trace.empty,
   strategy: Conclusion.Strategy = Conclusion.Strategy.none
 ) {
+  import Conclusion._
+
   def messageI18N: I18NMessage = messageI18NOption orElse _errors_message orElse _warnings_message orElse exception.map(x => I18NMessage(x.getMessage)) orElse faults.getMessageI18N getOrElse code.message
 
   private def _errors_message: Option[I18NMessage] = errors.toOption.map(_.toI18NMessage)
@@ -61,6 +67,7 @@ case class Conclusion(
     errors + rhs.errors,
     warnings + rhs.warnings,
     exception, // CAUTION
+    exceptionData, // CAUTION
     faults, // CAUTION
     trace, // CAUTION
     strategy // CAUTION
@@ -72,6 +79,18 @@ case class Conclusion(
   def isSuccess: Boolean = code.isSuccess
 
   def forConfig: Conclusion = if (isSuccess) this else copy(code = code.forConfig)
+
+  def toPayload: Payload = Payload(
+    code.toPayload,
+    messageI18NOption.map(_.toPayload),
+    errors.toPayload,
+    warnings.toPayload,
+    exception.map(Payload.ExceptionPayload),
+    exceptionData.map(_.toPayload),
+    faults.toPayload,
+    trace.toPayload,
+    strategy.toPayload
+  )
 }
 
 object Conclusion {
@@ -91,12 +110,26 @@ object Conclusion {
   case class Strategy(
     cache: CacheStrategy = CacheStrategy.none,
     reaction: ReactionStrategy = ReactionStrategy.none
-  )
+  ) {
+    def toPayload = Strategy.Payload(cache.name, reaction.name)
+  }
   object Strategy {
     val none = Strategy()
     val input = Strategy(reaction = ReactionStrategy.InputReaction)
     val retry = Strategy(reaction = ReactionStrategy.RetryReaction)
     val escalate = Strategy(reaction = ReactionStrategy.EscalateReaction)
+
+    @SerialVersionUID(1L)
+    case class Payload(
+      cache: String,
+      reaction: String
+    ) {
+      def restore: Strategy = {
+        val c = CacheStrategy.get(cache) getOrElse CacheStrategy.NoneCache
+        val r = ReactionStrategy.get(reaction) getOrElse ReactionStrategy.EscalateReaction
+        Strategy(c, r)
+      }
+    }
 
     def make(faults: Faults): Strategy = {
       case class Z(reaction: DetailCode.Reaction) {
@@ -253,6 +286,12 @@ object Conclusion {
     Conclusion(status, faults)
   }
 
+  def unmarshallingDefect(message: String): Conclusion = {
+    val status = StatusCode.NoReach
+    val faults = Faults(UnmarshallingDefect(message))
+    Conclusion(status, faults)
+  }
+
   def unsupportedOperationFault(message: String): Conclusion = {
     val detail = DetailCode.Argument
     val status = StatusCode.BadRequest.withDetail(detail)
@@ -326,6 +365,52 @@ object Conclusion {
       val status = StatusCode.InternalServerError.withDetail(detail)
       val faults = Faults(IllegalConfigurationDefect(msg))
       Conclusion(status, faults)
+    }
+  }
+
+  @SerialVersionUID(1L)
+  case class Payload(
+    code: StatusCode.Payload,
+    messageI18NOption: Option[I18NMessage.Payload],
+    errors: ErrorMessages.Payload,
+    warnings: WarningMessages.Payload,
+    exception: Option[Payload.ExceptionPayload],
+    exceptionData: Option[Payload.ExceptionData.Payload],
+    faults: Faults.Payload,
+    trace: Trace.Payload,
+    strategy: Conclusion.Strategy.Payload,
+    properties: Map[String, Any] = Map.empty
+  ) {
+    def reconstitute(): Conclusion = {
+      Conclusion(
+        code.restore,
+        messageI18NOption.map(_.restore),
+        errors.restore,
+        warnings.restore,
+        exception.map(_.restore),
+        exceptionData.map(_.restore),
+        faults.restore,
+        trace.restore,
+        strategy.restore
+      )
+    }
+  }
+  object Payload {
+    @SerialVersionUID(1L)
+    case class ExceptionPayload(e: Throwable) {
+      def restore: Throwable = e
+    }
+
+    class PayloadException(o: AnyRef) extends GoldenportException(AnyUtils.toShow(o)) {
+    }
+
+    trait ExceptionData {
+      def toPayload: ExceptionData.Payload
+    }
+    object ExceptionData {
+      trait Payload {
+        def restore: ExceptionData
+      }
     }
   }
 }

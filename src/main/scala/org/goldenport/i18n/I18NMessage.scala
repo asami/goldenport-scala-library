@@ -15,7 +15,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Jun.  1, 2020
  *  version Mar. 27, 2021
  *  version Jun. 20, 2021
- * @version Feb.  9, 2022
+ *  version Feb.  9, 2022
+ * @version Jun. 13, 2022
  * @author  ASAMI, Tomoharu
  */
 case class I18NMessage(
@@ -189,12 +190,22 @@ case class I18NMessage(
   } catch {
     case NonFatal(e) => s"I18NMessage(${_c}): $e"
   }
+
+  def toPayload = I18NMessage.Payload(c, parameters.toVector)
 }
 
 object I18NMessage {
   implicit def I18NMessageMonoid = new Monoid[I18NMessage] {
     def zero = empty
     def append(lhs: I18NMessage, rhs: => I18NMessage) = lhs concat rhs
+  }
+
+  @SerialVersionUID(1L)
+  case class Payload(
+    c: String,
+    parameters: Vector[Any]
+  ) {
+    def restore: I18NMessage = I18NMessage(c, c, c, Map.empty, parameters)
   }
 
   val empty = I18NMessage("")

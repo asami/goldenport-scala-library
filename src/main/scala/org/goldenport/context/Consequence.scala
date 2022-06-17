@@ -7,6 +7,7 @@ import org.goldenport.i18n.I18NString
 import org.goldenport.i18n.I18NMessage
 import org.goldenport.parser.{ParseResult, ParseSuccess, ParseFailure, EmptyParseResult}
 import org.goldenport.parser.{ParseMessage}
+import org.goldenport.util.AnyUtils
 
 /*
  * See org.goldenport.record.v2.ConclusionResult.
@@ -20,7 +21,8 @@ import org.goldenport.parser.{ParseMessage}
  *  version Jan. 30, 2022
  *  version Mar. 10, 2022
  *  version Apr.  3, 2022
- * @version May. 31, 2022
+ *  version May. 31, 2022
+ * @version Jun. 14, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -30,7 +32,12 @@ sealed trait Consequence[+T] {
   def map[U](f: T => U): Consequence[U]
   // Consequence is not Monad. Just to use 'for' comprehension in Scala syntax suger.
   def flatMap[U](f: T => Consequence[U]): Consequence[U]
+  def mapConclusion(f: Conclusion => Conclusion): Consequence[T]
   def forConfig: Consequence[T]
+
+  def toPayload(): Consequence.Payload
+  def toPayload(f: T => Any): Consequence.Payload
+  def toPayload(f: (Conclusion => Conclusion.Payload, T => Any)): Consequence.Payload
 
   // def getMessage: Option[String] = conclusion.getMessage
   def message: String = conclusion.message
@@ -60,8 +67,14 @@ object Consequence {
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
     def map[U](f: T => U): Consequence[U] = copy(result = f(result))
     def flatMap[U](f: T => Consequence[U]): Consequence[U] = f(result).add(conclusion)
+    def mapConclusion(f: Conclusion => Conclusion): Consequence[T] = copy(conclusion = f(conclusion))
     def take = result
     def forConfig: Consequence[T] = if (conclusion.isSuccess) this else copy(conclusion = conclusion.forConfig)
+
+    def toPayload() = Payload(conclusion.toPayload, Some(result), Map.empty)
+    def toPayload(f: T => Any) = Payload(conclusion.toPayload, Some(f(result)), Map.empty)
+    def toPayload(f: (Conclusion => Conclusion.Payload, T => Any)): Consequence.Payload =
+      Payload(f._1(conclusion), Some(f._2(result)), Map.empty)
   }
 
   case class Error[+T](
@@ -72,8 +85,14 @@ object Consequence {
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
     def map[U](f: T => U): Consequence[U] = this.asInstanceOf[Error[U]]
     def flatMap[U](f: T => Consequence[U]): Consequence[U] = this.asInstanceOf[Consequence[U]]
+    def mapConclusion(f: Conclusion => Conclusion): Consequence[T] = copy(conclusion = f(conclusion))
     def take = RAISE
     def forConfig: Consequence[T] = if (conclusion.isSuccess) this else copy(conclusion = conclusion.forConfig)
+
+    def toPayload() = Payload(conclusion.toPayload, None, Map.empty)
+    def toPayload(f: T => Any) = Payload(conclusion.toPayload, None, Map.empty)
+    def toPayload(f: (Conclusion => Conclusion.Payload, T => Any)): Consequence.Payload =
+      Payload(f._1(conclusion), None, Map.empty)
 
     def RAISE: Nothing = throw new ConsequenceException(this)
   }
@@ -105,6 +124,7 @@ object Consequence {
   def forbidden[T](p: I18NString): Consequence[T] = error(403, p)
   def notFound[T](p: String): Consequence[T] = notFound(I18NString(p))
   def notFound[T](p: I18NString): Consequence[T] = error(404, p)
+  def notFound[T](p: Throwable): Consequence[T] = error(404, p)
   def methodNotAllowed[T](p: String): Consequence[T] = methodNotAllowed(I18NString(p))
   def methodNotAllowed[T](p: I18NString): Consequence[T] = error(405, p)
   def notAcceptable[T](p: String): Consequence[T] = notAcceptable(I18NString(p))
@@ -129,6 +149,7 @@ object Consequence {
   def gatewayTimeout[T](p: I18NString): Consequence[T] = error(504, p)
 
   //
+  def error[T](c: Conclusion): Consequence[T] = Error(c)
   def error[T](code: Int, p: String): Consequence[T] = error(code, I18NString(p))
   def error[T](code: Int, p: I18NString): Consequence[T] = Error(Conclusion.error(code, p))
   def error[T](code: Int, e: Throwable): Consequence[T] = Error(Conclusion.error(code, e))
@@ -179,12 +200,23 @@ object Consequence {
 
   def syntaxErrorFault[T](messages: Seq[Message]): Consequence[T] = Error(Conclusion.syntaxErrorFault(messages))
 
+  def unmarshallingDefect[T](p: String): Consequence[T] = Error(Conclusion.unmarshallingDefect(p))
+
   //
   def execute[T](body: => T): Consequence[T] = try {
     Success(body)
   } catch {
     case NonFatal(e) => error(e)
   }
+
+  def executeOption[T](p: => Option[T])(c: => Conclusion): Consequence[T] =
+    for {
+      x <- Consequence(p)
+      r <- x match {
+        case Some(s) => Consequence.success(s)
+        case None => Consequence.error(c)
+      }
+    } yield r
 
   def executeOrMissingPropertyFault[T](name: String)(p: => Option[T]): Consequence[T] =
     execute(p).flatMap {
@@ -268,5 +300,42 @@ object Consequence {
       case m: ParseFailure[_] => Error(_conclusion_config_error(m))
       case m: EmptyParseResult[_] => Error(_conclusion_config_error(m))
     }
+  }
+
+  @SerialVersionUID(1L)
+  case class Payload(
+    conclusion: Conclusion.Payload,
+    content: Option[Any],
+    properties: Map[String, String]
+  ) {
+    // def reconstitute[T](p: Payload => Consequence[T]): Consequence[T] = {
+    //   val c = conclusion.reconstitute()
+    //   if (c.isSuccess) {
+    //     for {
+    //       a <- p(this)
+    //       r <- Consequence.Success(a, c)
+    //     } yield r
+    //   } else {
+    //       Consequence.Error(c)
+    //     }
+    // }
+
+    def reconstitute[T](p: PartialFunction[Any, Consequence[T]]): Consequence[T] = {
+      val c = conclusion.reconstitute()
+      if (c.isSuccess) {
+        content match {
+          case Some(s) => p.lift(s) match {
+            case Some(ss) => ss
+            case None => Consequence.unmarshallingDefect(AnyUtils.toString(s))
+          }
+          case None => Consequence.unmarshallingDefect(AnyUtils.toString("No content"))
+        }
+      } else {
+        Consequence.Error(c)
+      }
+    }
+
+    def mapConclusion(f: Conclusion.Payload => Conclusion.Payload): Payload =
+      copy(conclusion = f(conclusion))
   }
 }

@@ -21,7 +21,8 @@ import Fault._
  *  version Nov. 15, 2021
  *  version Jan. 28, 2022
  *  version Feb.  1, 2022
- * @version Mar.  6, 2022
+ *  version Mar.  6, 2022
+ * @version Jun. 13, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -33,6 +34,13 @@ sealed trait Fault extends Incident {
   def implicitStatusCode: StatusCode
 
   def RAISE: Nothing = throw new FaultException(this)
+
+  def toPayload: Fault.Payload = Fault.Payload(
+    name,
+    message.toPayload,
+    reaction.toPayload,
+    implicitStatusCode.toPayload
+  )
 }
 
 sealed trait Parameters1 extends { self: Fault =>
@@ -72,6 +80,32 @@ object Fault {
   val KEY_VALUE = 'value
   val KEY_MESSAGE = 'message
   val KEY_LOCAL_MESSAGE = 'local_message
+
+  case class Payload(
+    name: String,
+    message: I18NMessage.Payload,
+    reaction: DetailCode.Reaction.Payload,
+    implicitStatusCode: StatusCode.Payload
+  ) {
+    def restore: Fault = RemoteFault(
+      name,
+      message.restore,
+      reaction.restore,
+      implicitStatusCode.restore
+    )
+  }
+
+  case class RemoteFault(
+    override val name: String,
+    message: I18NMessage,
+    reaction: DetailCode.Reaction,
+    implicitStatusCode: StatusCode
+  ) extends Fault {
+    def properties(locale: Locale): IRecord = IRecord.dataS(
+      KEY_NAME -> name,
+      KEY_MESSAGE -> message(locale)
+    )
+  }
 }
 
 trait ValueDomainFault extends Fault {
@@ -163,7 +197,7 @@ object InvalidArgumentFault {
   private def _message(key: String, ps: Iterable[Fault]): I18NMessage = {
     ps.toVector.map(_.message).concatenate
   }
-  // .map(_.message).list.mkString(";")))) * @version Mar.  6, 2022
+  // .map(_.message).list.mkString(";")))) * @version Jun. 13, 2022
 }
 
 case class MissingArgumentFault(
@@ -409,6 +443,34 @@ object IllegalConfigurationDefect {
   }
 }
 
+case class UnmarshallingDefect(
+  parameters: Seq[String] = Nil,
+  messageTemplate: I18NTemplate = UnmarshallingDefect.template
+) extends PropertyFault {
+  def implicitStatusCode: StatusCode = StatusCode.BadRequest
+
+  def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
+
+  def properties(locale: Locale): IRecord = IRecord.dataS(
+    KEY_NAME -> name,
+    KEY_PARAMETERS -> parameters,
+    KEY_MESSAGE -> message(),
+    KEY_LOCAL_MESSAGE -> message(locale)
+  )
+}
+object UnmarshallingDefect {
+  val template = I18NTemplate("Unmarshalling error: {0}")
+
+  def apply(p: String): UnmarshallingDefect =
+    UnmarshallingDefect(messageTemplate = I18NTemplate(p))
+
+  def apply(p: I18NString): UnmarshallingDefect =
+    UnmarshallingDefect(messageTemplate = I18NTemplate(p))
+
+  def apply(p: I18NMessage): UnmarshallingDefect =
+    UnmarshallingDefect(messageTemplate = I18NTemplate(p))
+}
+
 case class Faults(faults: Vector[Fault] = Vector.empty) {
   def getMessage: Option[String] = toI18NStringONev.map(x =>
     x.list.map(_.en).mkString(";")
@@ -438,8 +500,17 @@ case class Faults(faults: Vector[Fault] = Vector.empty) {
     headOption.getOrElse(StatusCode.InternalServerError)
 
   private def _is_strong(lhs: StatusCode, rhs: StatusCode): Boolean = lhs.code >= rhs.code
+
+  def toPayload = Faults.Payload(faults.map(_.toPayload))
 }
 object Faults {
+  @SerialVersionUID(1L)
+  case class Payload(
+    faults: Vector[Fault.Payload]
+  ) {
+    def restore: Faults = Faults(faults.map(_.restore))
+  }
+
   val empty = Faults()
 
   def apply(p: Fault, ps: Fault*): Faults = Faults((p +: ps).toVector)
