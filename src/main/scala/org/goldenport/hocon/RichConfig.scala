@@ -42,7 +42,8 @@ import org.goldenport.parser.ParseResult
  *  version Jan. 24, 2022
  *  version Feb. 17, 2022
  *  version Mar. 25, 2022
- * @version May. 24, 2022
+ *  version May. 24, 2022
+ * @version Jul. 13, 2022
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -118,6 +119,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def cRationalOption(key: String): Consequence[Option[Rational]] = HoconUtils.consequenceRationalOption(config, key)
   def cAsConfig(key: String): Consequence[Config] = HoconUtils.consequenceAsConfig(config, key)
   def cAsConfigList(key: String): Consequence[List[Config]] = HoconUtils.consequenceAsConfigList(config, key)
+  def cEagerStringList(key: String): Consequence[List[String]] = Consequence(HoconUtils.getEagerStringList(config, key) getOrElse Nil)
 
   def consequenceBoolean(key: String): Consequence[Boolean] = HoconUtils.consequenceBoolean(config, key)
   def consequenceBoolean(key: String, default: Boolean): Consequence[Boolean] = HoconUtils.consequenceBoolean(config, key, default)

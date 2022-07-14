@@ -22,7 +22,8 @@ import org.goldenport.util.AnyUtils
  *  version Mar. 10, 2022
  *  version Apr.  3, 2022
  *  version May. 31, 2022
- * @version Jun. 14, 2022
+ *  version Jun. 14, 2022
+ * @version Jul. 13, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -46,7 +47,8 @@ sealed trait Consequence[+T] {
 
   def isSuccess: Boolean = conclusion.isSuccess
 
-  def get = toOption
+  def get: Option[T] = toOption
+  def getOrElse[TT >: T](e: => TT): TT = get getOrElse e
 
   def take: T
 
