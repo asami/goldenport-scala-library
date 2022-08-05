@@ -23,7 +23,8 @@ import org.goldenport.util.AnyUtils
  *  version Apr.  3, 2022
  *  version May. 31, 2022
  *  version Jun. 14, 2022
- * @version Jul. 13, 2022
+ *  version Jul. 27, 2022
+ * @version Aug.  3, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -50,6 +51,9 @@ sealed trait Consequence[+T] {
   def get: Option[T] = toOption
   def getOrElse[TT >: T](e: => TT): TT = get getOrElse e
 
+  def onSuccess[TT >: T](p: T => TT): Consequence[TT]
+  def onError[TT >: T](p: T => TT): Consequence[TT]
+
   def take: T
 
   def getException: Option[Throwable]
@@ -70,6 +74,8 @@ object Consequence {
     def map[U](f: T => U): Consequence[U] = copy(result = f(result))
     def flatMap[U](f: T => Consequence[U]): Consequence[U] = f(result).add(conclusion)
     def mapConclusion(f: Conclusion => Conclusion): Consequence[T] = copy(conclusion = f(conclusion))
+    def onSuccess[TT >: T](p: T => TT): Consequence[TT] = ???
+    def onError[TT >: T](p: T => TT): Consequence[TT] = ???
     def take = result
     def forConfig: Consequence[T] = if (conclusion.isSuccess) this else copy(conclusion = conclusion.forConfig)
 
@@ -88,6 +94,8 @@ object Consequence {
     def map[U](f: T => U): Consequence[U] = this.asInstanceOf[Error[U]]
     def flatMap[U](f: T => Consequence[U]): Consequence[U] = this.asInstanceOf[Consequence[U]]
     def mapConclusion(f: Conclusion => Conclusion): Consequence[T] = copy(conclusion = f(conclusion))
+    def onSuccess[TT >: T](p: T => TT): Consequence[TT] = ???
+    def onError[TT >: T](p: T => TT): Consequence[TT] = ???
     def take = RAISE
     def forConfig: Consequence[T] = if (conclusion.isSuccess) this else copy(conclusion = conclusion.forConfig)
 
