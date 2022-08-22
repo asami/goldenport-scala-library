@@ -5,7 +5,8 @@ package org.goldenport
  *  version May. 29, 2021
  *  version Jun. 13, 2021
  *  version Oct. 31, 2021
- * @version Nov. 28, 2021
+ *  version Nov. 28, 2021
+ * @version Aug. 22, 2022
  * @author  ASAMI, Tomoharu
  */
 package object statemachine {
@@ -35,4 +36,24 @@ package object statemachine {
   val STATE_VALUE_INIT = 0
   val STATE_VALUE_FINAL = 999999999
   val STATE_VALUE_UNDEFINED = -1
+  val STATE_VALUE_CANCELED = 10
+  val STATE_VALUE_SUSPENDED = 20
+  val STATE_VALUE_RUNNING = 101
+  val STATE_VALUE_CONFIRMING = 102
+  val STATE_VALUE_CONFIRMED = 103
+  val STATE_VALUE_REJECTED = 201
+  val STATE_VALUE_DELIVERING = 501
+  val STATE_VALUE_DELIVERED = 502
+
+  val STATE_NAME_INIT = PROP_STATE_INIT
+  val STATE_NAME_FINAL = PROP_STATE_FINAL
+  val STATE_NAME_CANCELED = "canceled"
+  val STATE_NAME_SUSPENDED = "suspended"
+  val STATE_NAME_RUNNING = "running"
+  val STATE_NAME_CONFIRMING = "confirming"
+  val STATE_NAME_CONFIRMED = "confirmed"
+  val STATE_NAME_REJECTED = "rejected"
+  val STATE_NAME_DELIVERING = "delivering"
+  val STATE_NAME_DELIVERED = "delivered"
+
 }

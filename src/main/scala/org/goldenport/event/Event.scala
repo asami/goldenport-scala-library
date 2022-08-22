@@ -5,7 +5,8 @@ import org.goldenport.collection.NonEmptyVector
 /*
  * @since   Jan.  4, 2021
  *  version May. 29, 2021
- * @version Jun. 14, 2021
+ *  version Jun. 14, 2021
+ * @version Aug. 22, 2022
  * @author  ASAMI, Tomoharu
  */
 trait Event {
@@ -48,6 +49,12 @@ case class SignalEvent(
   signal: Signal,
   content: Event.Content = Event.Content.empty
 ) extends Event {
+}
+object SignalEvent {
+  def create(p: Signal): SignalEvent = {
+    val c = EventClazz(p.name)
+    SignalEvent(c, p)
+  }
 }
 
 case class TimeEvent(

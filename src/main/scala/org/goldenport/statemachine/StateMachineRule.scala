@@ -17,7 +17,8 @@ import org.goldenport.event.EventClazz
  *  version Sep. 26, 2021
  *  version Oct. 29, 2021
  *  version Nov. 28, 2021
- * @version Dec.  5, 2021
+ *  version Dec.  5, 2021
+ * @version Aug. 22, 2022
  * @author  ASAMI, Tomoharu
  */
 case class StateMachineRule(
@@ -72,19 +73,23 @@ object StateMachineRule {
 
   case class RuleAndStateClass(rule: StateMachineRule, state: StateClass)
 
-  case class StateValue(name: String, value: Int)
+  // case class StateValue(name: String, value: Int)
 
-  private val _default_state_values = Vector(
-    StateValue("init", STATE_VALUE_INIT),
-    StateValue("final", STATE_VALUE_FINAL),
-    StateValue("canceled", 10),
-    StateValue("suspended", 20),
-    StateValue("running", 101),
-    StateValue("confirming", 102),
-    StateValue("confirmed", 103),
-    StateValue("rejected", 201),
-    StateValue("delivering", 501),
-    StateValue("delivered", 502)
+  // private val _default_state_values = Vector(
+  //   StateValue("init", STATE_VALUE_INIT),
+  //   StateValue("final", STATE_VALUE_FINAL),
+  //   StateValue("canceled", 10),
+  //   StateValue("suspended", 20),
+  //   StateValue("running", 101),
+  //   StateValue("confirming", 102),
+  //   StateValue("confirmed", 103),
+  //   StateValue("rejected", 201),
+  //   StateValue("delivering", 501),
+  //   StateValue("delivered", 502)
+  // )
+
+  def create(states: Seq[StateClass]): StateMachineRule = StateMachineRule(
+    states = states.toList
   )
 
   def parse(p: String): ParseResult[StateMachineRule] = Builder().build(p)
@@ -101,7 +106,7 @@ object StateMachineRule {
      val kind: StateMachineKind = StateMachineKind.Plain,
      val valueStrategy: Builder.ValueStrategy = Builder.ValueStrategy.Auto
   ) {
-     private var _state_values = _default_state_values.map(x => x.name -> x).toMap
+     private var _state_values = StateClass.predefinedStateValues
 
      def build(rule: String): ParseResult[StateMachineRule] = {
        val hocon = ConfigFactory.parseString(rule)
@@ -176,7 +181,7 @@ object StateMachineRule {
     }
 
     private def _value_auto(name: String): Int =
-      _state_values.get(name).map(_.value) getOrElse STATE_VALUE_UNDEFINED
+      _state_values.get(name) getOrElse STATE_VALUE_UNDEFINED
 
     private def _activity(p: Hocon, key: String): ParseResult[Activity] =
       for {

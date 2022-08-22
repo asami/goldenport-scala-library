@@ -9,7 +9,8 @@ import org.goldenport.event.CallEvent
  *  version Jun. 11, 2021
  *  version Jul.  9, 2021
  *  version Sep. 26, 2021
- * @version Nov. 28, 2021
+ *  version Nov. 28, 2021
+ * @version Aug. 22, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Transition(
@@ -24,8 +25,8 @@ case class Transition(
 }
 
 case class Transitions(
-  call: Vector[Transition],
-  global: Vector[Transition]
+  call: Vector[Transition] = Vector.empty,
+  global: Vector[Transition] = Vector.empty
 ) {
   def accept(p: Parcel): Consequence[Boolean] = Consequence(
     if (p.event.isInstanceOf[CallEvent])
