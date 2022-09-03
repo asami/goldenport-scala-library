@@ -22,7 +22,8 @@ import Fault._
  *  version Jan. 28, 2022
  *  version Feb.  1, 2022
  *  version Mar.  6, 2022
- * @version Jun. 13, 2022
+ *  version Jun. 13, 2022
+ * @version Sep.  1, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -78,6 +79,7 @@ object Fault {
   val KEY_PARAMETER = 'parameter
   val KEY_PARAMETERS = 'parameters
   val KEY_VALUE = 'value
+  val KEY_VALUES = 'values
   val KEY_MESSAGE = 'message
   val KEY_LOCAL_MESSAGE = 'local_message
 
@@ -197,7 +199,7 @@ object InvalidArgumentFault {
   private def _message(key: String, ps: Iterable[Fault]): I18NMessage = {
     ps.toVector.map(_.message).concatenate
   }
-  // .map(_.message).list.mkString(";")))) * @version Jun. 13, 2022
+  // .map(_.message).list.mkString(";")))) * @version Sep.  1, 2022
 }
 
 case class MissingArgumentFault(
@@ -216,20 +218,20 @@ object MissingArgumentFault {
   val template = I18NTemplate("Mising Argument: {0}")
 }
 
-case class TooManyArgumentFault(
-  parameters: Seq[String] = Nil,
-  messageTemplate: I18NTemplate = TooManyArgumentFault.template
+case class TooManyArgumentsFault(
+  values: Seq[Any] = Nil,
+  messageTemplate: I18NTemplate = TooManyArgumentsFault.template
 ) extends ArgumentFault {
-  def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
+  def message = messageTemplate.toI18NMessage(values.map(AnyUtils.toShow).mkString(";"))
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
     KEY_NAME -> name,
-    KEY_PARAMETERS -> parameters,
+    KEY_VALUES -> values,
     KEY_MESSAGE -> message(),
     KEY_LOCAL_MESSAGE -> message(locale)
   )
 }
-object TooManyArgumentFault {
+object TooManyArgumentsFault {
   val template = I18NTemplate("Too many arguments: {0}")
 }
 

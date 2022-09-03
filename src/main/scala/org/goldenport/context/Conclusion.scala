@@ -25,7 +25,8 @@ import org.goldenport.util.AnyUtils
  *  version Feb. 18, 2022
  *  version Apr.  3, 2022
  *  version May. 31, 2022
- * @version Jun. 14, 2022
+ *  version Jun. 14, 2022
+ * @version Sep.  1, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -216,6 +217,13 @@ object Conclusion {
     val detail = DetailCode.Argument
     val status = StatusCode.BadRequest.withDetail(detail)
     val faults = Faults(MissingArgumentFault(names))
+    Conclusion(status, faults)
+  }
+
+  def tooManyArgumentsFault(values: Seq[Any]): Conclusion = {
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(TooManyArgumentsFault(values))
     Conclusion(status, faults)
   }
 

@@ -6,7 +6,8 @@ import org.goldenport.context.Consequence
  * @since   Jan.  4, 2021
  *  version May. 29, 2021
  *  version Jun. 29, 2021
- * @version Oct. 24, 2021
+ *  version Oct. 24, 2021
+ * @version Sep.  2, 2022
  * @author  ASAMI, Tomoharu
  */
 case class State(
@@ -23,6 +24,8 @@ case class State(
 
   def accept(p: Parcel): Consequence[Boolean] = clazz.accept(this, p)
   def transit(sm: StateMachine, p: Parcel): Consequence[Option[(State, Transition, Parcel)]] = clazz.transit(sm, this, p)
+
+  def checkChageState(sm: StateMachine, p: Int): Boolean = clazz.checkChageState(sm, this, p)
 }
 
 object State {

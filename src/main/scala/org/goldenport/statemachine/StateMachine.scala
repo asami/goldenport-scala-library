@@ -16,7 +16,9 @@ import org.goldenport.statemachine.StateMachineRule.RuleAndStateClass
  *  version Oct. 31, 2021
  *  version Nov. 29, 2021
  *  version Dec.  5, 2021
- * @version Mar. 19, 2022
+ *  version Mar. 19, 2022
+ *  version Aug. 30, 2022
+ * @version Sep.  2, 2022
  * @author  ASAMI, Tomoharu
  */
 class StateMachine(
@@ -26,7 +28,7 @@ class StateMachine(
   import StateMachine._
 
   val id = CompactUuid.generateString
-  def name = clazz.name
+  def name: String = clazz.name
   def kind = clazz.kind
   def value = state.value
   def status = state.status
@@ -112,6 +114,8 @@ class StateMachine(
       _statemachine_rule_stack = Stack(p)
     else
       _statemachine_rule_stack = _statemachine_rule_stack.push(p) // TODO nest
+
+  def checkChangeState(p: Int): Boolean = state.checkChageState(this, p)
 }
 
 object StateMachine {

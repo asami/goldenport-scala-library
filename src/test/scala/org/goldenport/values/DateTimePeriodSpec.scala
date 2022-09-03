@@ -6,13 +6,22 @@ import org.scalatest._
 
 /*
  * @since   May. 19, 2022
- * @version May. 20, 2022
+ *  version May. 20, 2022
+ * @version Aug. 25, 2022
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
 class DateTimePeriodSpec extends WordSpec with Matchers with GivenWhenThen {
   def datetimeperiod(s: String) = DateTimePeriod.parse(s)
 
+  "parse" should {
+    "parse" which {
+      "parse" in {
+        val x = datetimeperiod("~2022-09-01T00:00:00)")
+        println(x)
+      }
+    }
+  }
   "<" should {
     "<" which {
       "open-close" in {

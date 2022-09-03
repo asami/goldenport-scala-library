@@ -24,7 +24,8 @@ import org.goldenport.util.AnyUtils
  *  version May. 31, 2022
  *  version Jun. 14, 2022
  *  version Jul. 27, 2022
- * @version Aug.  3, 2022
+ *  version Aug.  3, 2022
+ * @version Sep.  3, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -180,11 +181,16 @@ object Consequence {
 
   // Specific error with detail code.
 
+  def successOrInvalidArgumentFault[T](key: String, value: Any, p: Option[T]): Consequence[T] =
+    p.map(success).getOrElse(invalidArgumentFault(key, value))
+
   def successOrInvalidTokenFault[T](name: String, p: Option[T]): Consequence[T] =
     p.map(success).getOrElse(invalidTokenFault(name))
 
   def successOrBadRequestFault[T](p: Option[T])(e: => Throwable): Consequence[T] =
     p.map(success).getOrElse(badRequest(e))
+
+  def invalidArgumentFault[T](key: String, value: Any): Consequence[T] = invalidArgumentFault(s"$key: ${AnyUtils.toShow(value)}")
 
   def invalidArgumentFault[T](p: String): Consequence[T] = invalidArgumentFault(I18NMessage(p))
   def invalidArgumentFault[T](p: String, arg: Any, args: Any*): Consequence[T] = Error(Conclusion.invalidArgumentFault(I18NMessage(p, args +: args)))
@@ -192,6 +198,9 @@ object Consequence {
 
   def missingArgumentFault[T](p: String, ps: String*): Consequence[T] = missingArgumentFault(p +: ps)
   def missingArgumentFault[T](ps: Seq[String]): Consequence[T] = Error(Conclusion.missingArgumentFault(ps))
+
+  def tooManyArgumentsFault[T](p: Any, ps: Any*): Consequence[T] = tooManyArgumentsFault(p +: ps)
+  def tooManyArgumentsFault[T](ps: Seq[Any]): Consequence[T] = Error(Conclusion.tooManyArgumentsFault(ps))
 
   def invalidPropertyFault[T](p: String): Consequence[T] = invalidPropertyFault(I18NMessage(p))
   def invalidPropertyFault[T](p: String, arg: Any, args: Any*): Consequence[T] = Error(Conclusion.invalidPropertyFault(I18NMessage(p, args +: args)))

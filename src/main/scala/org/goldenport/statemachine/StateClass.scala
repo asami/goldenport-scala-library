@@ -9,7 +9,8 @@ import org.goldenport.values.PathName
  *  version Jun. 29, 2021
  *  version Oct. 24, 2021
  *  version Nov. 28, 2021
- * @version Aug. 22, 2022
+ *  version Aug. 22, 2022
+ * @version Sep.  3, 2022
  * @author  ASAMI, Tomoharu
  */
 case class StateClass(
@@ -41,6 +42,12 @@ case class StateClass(
   //       (s.state, t, p)
   //     }
   //   )
+
+  def checkChageState(
+    sm: StateMachine,
+    state: State,
+    p: Int
+  ): Boolean = transitions.checkChageState(sm, state, p)
 }
 
 object StateClass {
@@ -85,13 +92,11 @@ object StateClass {
 
   val predefinedStateValues = predefinedStates.map(x => x.name -> x.value).toMap
 
-  def create(name: String): StateClass = create(name, predefinedStateValues(name))
+  def apply(name: String, value: Int, transitions: Transitions): StateClass =
+    StateClass(name, value, None, transitions)
+
+  def create(name: String): StateClass = apply(name, predefinedStateValues(name))
 
   def create(name: String, transitions: Transitions): StateClass = 
-    create(name, predefinedStateValues(name), transitions)
-
-  def create(name: String, value: Int): StateClass = StateClass(name, value)
-
-  def create(name: String, value: Int, transitions: Transitions): StateClass =
-    StateClass(name, value, transitions = transitions)
+    apply(name, predefinedStateValues(name), transitions)
 }

@@ -16,7 +16,8 @@ import org.goldenport.statemachine.StateMachineRule.RuleAndStateClass
  *  version Oct. 29, 2021
  *  version Nov. 29, 2021
  *  version Dec.  5, 2021
- * @version Jan. 20, 2022
+ *  version Jan. 20, 2022
+ * @version Sep.  3, 2022
  * @author  ASAMI, Tomoharu
  */
 trait StateMachineLogic {
@@ -29,10 +30,10 @@ trait StateMachineLogic {
   def newState(p: StateClass): State = State(p)
 
   def reconstitute(p: Int): Consequence[RuleAndStateClass] =
-    Consequence.successOrMissingPropertyFault(p.toString, rule.findState(p))
+    Consequence.successOrInvalidArgumentFault("state", p, rule.findState(p))
 
   def reconstitute(p: String): Consequence[RuleAndStateClass] =
-    Consequence.successOrMissingPropertyFault(p, rule.findState(p))
+    Consequence.successOrInvalidArgumentFault("state", p, rule.findState(p))
 
   // def reconstitute(p: Int): Consequence[State] =
   //   Consequence.successOrMissingPropertyFault(p.toString, rule.findState(p).map(x => State(x.state)))
