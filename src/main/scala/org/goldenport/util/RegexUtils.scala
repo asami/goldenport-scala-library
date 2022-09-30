@@ -3,11 +3,13 @@ package org.goldenport.util
 import scalaz._, Scalaz._
 import scala.util.matching.Regex
 import scala.util.matching.Regex.Match
+import org.goldenport.context.Consequence
 import org.goldenport.parser._
 
 /*
  * @since   Jan. 19, 2021
- * @version Mar. 24, 2021
+ *  version Mar. 24, 2021
+ * @version Sep. 26, 2022
  * @author  ASAMI, Tomoharu
  */
 object RegexUtils {
@@ -93,5 +95,30 @@ object RegexUtils {
     getStrings(p, is) match {
       case Some(s) => s.traverse(_.traverse(NumberUtils.parseDouble))
       case None => ParseResult.error("No match")
+    }
+
+
+  def cAsString(p: Match, i: Int): Consequence[String] =
+    Option(p.group(i)) match {
+      case Some(s) => Consequence.success(s)
+      case None => Consequence.success("")
+    }
+
+  def cGetString(p: Match, i: Int): Consequence[Option[String]] =
+    Option(p.group(i)) match {
+      case Some(s) => Consequence.success(Some(s))
+      case None => Consequence.success(None)
+    }
+
+  def cAsInt(p: Match, i: Int): Consequence[Int] =
+    Option(p.group(i)) match {
+      case Some(s) => NumberUtils.consequenceInt(s)
+      case None => Consequence.missingPropertyFault(s"Rexex($i)")
+    }
+
+  def cGetInt(p: Match, i: Int): Consequence[Option[Int]] =
+    Option(p.group(i)) match {
+      case Some(s) => NumberUtils.consequenceInt(s).map(Some.apply)
+      case None => Consequence.success(None)
     }
 }

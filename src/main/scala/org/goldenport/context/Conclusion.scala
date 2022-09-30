@@ -26,7 +26,7 @@ import org.goldenport.util.AnyUtils
  *  version Apr.  3, 2022
  *  version May. 31, 2022
  *  version Jun. 14, 2022
- * @version Sep.  1, 2022
+ * @version Sep. 26, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -178,6 +178,9 @@ object Conclusion {
 
   def make(p: Faults): Conclusion = Conclusion(p.guessStatusCode, p)
 
+  def error(code: Int): Conclusion = Conclusion(StatusCode(code))
+  def error(code: Int, msg: Option[String]): Conclusion =
+    msg.fold(error(code))(error(code, _))
   def error(code: Int, p: String): Conclusion = error(code, I18NMessage(p))
   def error(code: Int, p: I18NString): Conclusion = error(code, p.toI18NMessage)
   def error(code: Int, p: I18NMessage): Conclusion = Conclusion(

@@ -8,6 +8,7 @@ import java.util.TimeZone
 import java.sql.Timestamp
 import java.io.File
 import java.net.{URL, URI}
+import play.api.libs.json.JsValue
 import java.util.concurrent.TimeUnit
 import org.joda.time._
 import com.asamioffice.goldenport.io.UURL
@@ -38,18 +39,21 @@ import org.goldenport.i18n.StringFormatter
  *  version Jan. 30, 2022
  *  version Feb. 24, 2022
  *  version Mar.  9, 2022
- * @version May.  3, 2022
+ *  version May.  3, 2022
+ * @version Sep. 27, 2022
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
   def toString(x: Any): String = {
     x match {
+      case m: String => m
       case v: Timestamp => DateTimeUtils.toIsoDateTimeStringJst(v)
       case v: Symbol => v.name
       case m: NodeSeq => m.toString
-      case m: Seq[_] => m.map(toEmbed(_)).mkString(",")
-      case m: Array[_] => m.map(toEmbed(_)).mkString(",")
+      case m: Seq[_] => m.map(toString(_)).mkString(",")
+      case m: Array[_] => m.map(toString(_)).mkString(",")
       case m: Showable => m.print
+      case m: JsValue => m.toString
       case m: MonthDay => f"${m.getMonthOfYear}%02d-${m.getDayOfMonth}%02d"
       case _ => x.toString
     }
