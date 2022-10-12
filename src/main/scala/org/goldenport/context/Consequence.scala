@@ -25,7 +25,8 @@ import org.goldenport.util.AnyUtils
  *  version Jun. 14, 2022
  *  version Jul. 27, 2022
  *  version Aug.  3, 2022
- * @version Sep.  3, 2022
+ *  version Sep.  3, 2022
+ * @version Oct. 12, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -218,6 +219,10 @@ object Consequence {
   def syntaxErrorFault[T](message: String): Consequence[T] = Error(Conclusion.syntaxErrorFault(message))
 
   def syntaxErrorFault[T](messages: Seq[Message]): Consequence[T] = Error(Conclusion.syntaxErrorFault(messages))
+
+  def formatErrorFault[T](message: String): Consequence[T] = Error(Conclusion.formatErrorFault(message))
+
+  def formatErrorFault[T](messages: Seq[Message]): Consequence[T] = Error(Conclusion.formatErrorFault(messages))
 
   def unmarshallingDefect[T](p: String): Consequence[T] = Error(Conclusion.unmarshallingDefect(p))
 

@@ -26,7 +26,8 @@ import org.goldenport.util.AnyUtils
  *  version Apr.  3, 2022
  *  version May. 31, 2022
  *  version Jun. 14, 2022
- * @version Sep. 26, 2022
+ *  version Sep. 26, 2022
+ * @version Oct. 12, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -37,6 +38,7 @@ case class Conclusion(
   exception: Option[Throwable] = None,
   exceptionData: Option[Conclusion.Payload.ExceptionData] = None,
   faults: Faults = Faults.empty,
+  data: Option[Any] = None,
   trace: Trace = Trace.empty,
   strategy: Conclusion.Strategy = Conclusion.Strategy.none
 ) {
@@ -70,6 +72,7 @@ case class Conclusion(
     exception, // CAUTION
     exceptionData, // CAUTION
     faults, // CAUTION
+    data, // CAUTION
     trace, // CAUTION
     strategy // CAUTION
   )
@@ -89,6 +92,7 @@ case class Conclusion(
     exception.map(Payload.ExceptionPayload),
     exceptionData.map(_.toPayload),
     faults.toPayload,
+    data,
     trace.toPayload,
     strategy.toPayload
   )
@@ -284,16 +288,30 @@ object Conclusion {
   }
 
   def syntaxErrorFault(message: String): Conclusion = {
-    val detail = DetailCode.Argument
+    val detail = DetailCode.Argument // TODO
     val status = StatusCode.BadRequest.withDetail(detail)
     val faults = Faults(SyntaxErrorFault(message))
     Conclusion(status, faults)
   }
 
   def syntaxErrorFault(messages: Seq[Message]): Conclusion = {
-    val detail = DetailCode.Argument
+    val detail = DetailCode.Argument // TODO
     val status = StatusCode.BadRequest.withDetail(detail)
     val faults = Faults(SyntaxErrorFault(messages))
+    Conclusion(status, faults)
+  }
+
+  def formatErrorFault(message: String): Conclusion = {
+    val detail = DetailCode.Argument // TODO
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(FormatErrorFault(message))
+    Conclusion(status, faults)
+  }
+
+  def formatErrorFault(messages: Seq[Message]): Conclusion = {
+    val detail = DetailCode.Argument // TODO
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(FormatErrorFault(messages))
     Conclusion(status, faults)
   }
 
@@ -388,6 +406,7 @@ object Conclusion {
     exception: Option[Payload.ExceptionPayload],
     exceptionData: Option[Payload.ExceptionData.Payload],
     faults: Faults.Payload,
+    data: Option[Any],
     trace: Trace.Payload,
     strategy: Conclusion.Strategy.Payload,
     properties: Map[String, Any] = Map.empty
@@ -401,6 +420,7 @@ object Conclusion {
         exception.map(_.restore),
         exceptionData.map(_.restore),
         faults.restore,
+        data,
         trace.restore,
         strategy.restore
       )

@@ -23,7 +23,8 @@ import Fault._
  *  version Feb.  1, 2022
  *  version Mar.  6, 2022
  *  version Jun. 13, 2022
- * @version Sep.  1, 2022
+ *  version Sep.  1, 2022
+ * @version Oct. 12, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -199,7 +200,7 @@ object InvalidArgumentFault {
   private def _message(key: String, ps: Iterable[Fault]): I18NMessage = {
     ps.toVector.map(_.message).concatenate
   }
-  // .map(_.message).list.mkString(";")))) * @version Sep.  1, 2022
+  // .map(_.message).list.mkString(";")))) * @version Oct. 12, 2022
 }
 
 case class MissingArgumentFault(
@@ -382,6 +383,25 @@ object SyntaxErrorFault {
     SyntaxErrorFault(messageTemplate = ps.toVector.map(_.toI18NMessage).concatenate.toI18NTemplate)
 
   def parameter(p: Any, ps: Any*): SyntaxErrorFault = SyntaxErrorFault(p +: ps.toList)
+}
+
+case class FormatErrorFault(
+  parameters: Seq[Any] = Nil,
+  messageTemplate: I18NTemplate = FormatErrorFault.template
+) extends ArgumentFault with MessageTemplateImpl {
+}
+object FormatErrorFault {
+  val template = I18NTemplate("Format error: {0}")
+
+  def apply(p: String): FormatErrorFault = parameter(p)
+
+  def apply(p: I18NString): FormatErrorFault =
+    FormatErrorFault(messageTemplate = I18NTemplate(p))
+
+  def apply(ps: Seq[Message]): FormatErrorFault =
+    FormatErrorFault(messageTemplate = ps.toVector.map(_.toI18NMessage).concatenate.toI18NTemplate)
+
+  def parameter(p: Any, ps: Any*): FormatErrorFault = FormatErrorFault(p +: ps.toList)
 }
 
 case class UnsupportedOperationFault(
