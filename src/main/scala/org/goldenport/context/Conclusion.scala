@@ -27,11 +27,12 @@ import org.goldenport.util.AnyUtils
  *  version May. 31, 2022
  *  version Jun. 14, 2022
  *  version Sep. 26, 2022
- * @version Oct. 12, 2022
+ *  version Oct. 26, 2022
+ * @version Nov.  2, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
-  code: StatusCode,
+  status: StatusCode,
   messageI18NOption: Option[I18NMessage] = None,
   errors: ErrorMessages = ErrorMessages.empty,
   warnings: WarningMessages = WarningMessages.empty,
@@ -44,7 +45,8 @@ case class Conclusion(
 ) {
   import Conclusion._
 
-  def messageI18N: I18NMessage = messageI18NOption orElse _errors_message orElse _warnings_message orElse exception.map(x => I18NMessage(x.getMessage)) orElse faults.getMessageI18N getOrElse code.message
+  def code: Int = status.code
+  def messageI18N: I18NMessage = messageI18NOption orElse _errors_message orElse _warnings_message orElse exception.map(x => I18NMessage(x.getMessage)) orElse faults.getMessageI18N getOrElse status.message
 
   private def _errors_message: Option[I18NMessage] = errors.toOption.map(_.toI18NMessage)
 
@@ -63,9 +65,10 @@ case class Conclusion(
   def withTrace(p: TraceHandle): Conclusion = withTrace(p.ctx)
   def withTrace(p: TraceContext): Conclusion = withTrace(p.toTrace)
   def withTrace(p: Trace): Conclusion = copy(trace = p)
+  def withData(p: Any): Conclusion = copy(data = Some(p))
 
   def +(rhs: Conclusion): Conclusion = Conclusion(
-    code,
+    status,
     messageI18NOption,
     errors + rhs.errors,
     warnings + rhs.warnings,
@@ -80,12 +83,12 @@ case class Conclusion(
   def toException: Exception = new ConclusionException(this)
   def RAISE: Nothing = throw toException
 
-  def isSuccess: Boolean = code.isSuccess
+  def isSuccess: Boolean = status.isSuccess
 
-  def forConfig: Conclusion = if (isSuccess) this else copy(code = code.forConfig)
+  def forConfig: Conclusion = if (isSuccess) this else copy(status = status.forConfig)
 
   def toPayload: Payload = Payload(
-    code.toPayload,
+    status.toPayload,
     messageI18NOption.map(_.toPayload),
     errors.toPayload,
     warnings.toPayload,
@@ -241,6 +244,9 @@ object Conclusion {
     Conclusion(status, faults)
   }
 
+  def invalidPropertyFault(key: String, value: Any): Conclusion =
+    invalidPropertyFault(s"$key: $value")
+
   def invalidPropertyFault(message: String): Conclusion = invalidPropertyFault(I18NMessage(message))
 
   def invalidPropertyFault(message: I18NMessage): Conclusion = {
@@ -335,7 +341,16 @@ object Conclusion {
     Conclusion(status, faults)
   }
 
+  def noReachDefect(message: String): Conclusion = {
+    val status = StatusCode.NoReach
+    val faults = Faults(NoReachDefect(message))
+    Conclusion(status, faults)
+  }
+
   object config {
+    def invalidPropertyFault(key: String, value: Any): Conclusion =
+      invalidPropertyFault(s"$key: ${AnyUtils.toString(value)}")
+
     def invalidPropertyFault(message: String): Conclusion = invalidPropertyFault(I18NMessage(message))
 
     def invalidPropertyFault(message: I18NMessage): Conclusion = {
@@ -390,6 +405,18 @@ object Conclusion {
     }
 
     def illegalConfigurationDefect(msg: String): Conclusion = {
+      val detail = DetailCode.Config
+      val status = StatusCode.InternalServerError.withDetail(detail)
+      val faults = Faults(IllegalConfigurationDefect(msg))
+      Conclusion(status, faults)
+    }
+
+    def capacityOverflowFault(key: String, value: Any): Conclusion = {
+      val msg = s"Capacity overflow: $key: ${AnyUtils.toString(value)}"
+      capacityOverflowFault(msg)
+    }
+
+    def capacityOverflowFault(msg: String): Conclusion = {
       val detail = DetailCode.Config
       val status = StatusCode.InternalServerError.withDetail(detail)
       val faults = Faults(IllegalConfigurationDefect(msg))

@@ -10,12 +10,14 @@ import java.io.File
 import java.net.{URL, URI}
 import play.api.libs.json.JsValue
 import java.util.concurrent.TimeUnit
-import org.joda.time._
+import org.joda.time.{Duration => _, _}
 import com.asamioffice.goldenport.io.UURL
 import org.goldenport.RAISE
 import org.goldenport.extension.Showable
+import org.goldenport.extension.IRecord
 import org.goldenport.context.Consequence
 import org.goldenport.i18n.StringFormatter
+import org.goldenport.values.DateTimePeriod
 
 /*
  * See org.goldenport.record.util.AnyUtils
@@ -40,7 +42,8 @@ import org.goldenport.i18n.StringFormatter
  *  version Feb. 24, 2022
  *  version Mar.  9, 2022
  *  version May.  3, 2022
- * @version Sep. 27, 2022
+toFiniteDuration(m.toLong) // TODO *  version Sep. 27, 2022
+toFiniteDuration(m.toLong) // TODO * @version Oct. 29, 2022
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -229,8 +232,19 @@ object AnyUtils {
   }
   def toFiniteDuration(x: Any): FiniteDuration = x match {
     case m: FiniteDuration => m
+    case m: Int => FiniteDuration(m, TimeUnit.MILLISECONDS)
     case m: Long => FiniteDuration(m, TimeUnit.MILLISECONDS)
-    case m: String => toFiniteDuration(m.toLong) // TODO
+    case m: String => NumberUtils.getLong(m).
+        map(toFiniteDuration).
+        getOrElse(Duration.create(m).asInstanceOf[FiniteDuration])
+  }
+  def toFiniteDurationMinute(x: Any): FiniteDuration = x match {
+    case m: FiniteDuration => m
+    case m: Int => FiniteDuration(m, TimeUnit.MINUTES)
+    case m: Long => FiniteDuration(m, TimeUnit.MINUTES)
+    case m: String => NumberUtils.getLong(m).
+        map(toFiniteDurationMinute).
+        getOrElse(Duration.create(m).asInstanceOf[FiniteDuration])
   }
   def toUrl(x: Any): URL = {
     x match {
@@ -246,6 +260,12 @@ object AnyUtils {
       case m: URI => m
       case m: File => m.toURI
       case s: String => new URI(s)
+    }
+  }
+  def toRecord(x: Any): IRecord = {
+    x match {
+      case m: DateTimePeriod => m.toRecord
+      case m: FiniteDuration => DurationUtils.toRecord(m)
     }
   }
 

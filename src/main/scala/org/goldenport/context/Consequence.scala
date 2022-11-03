@@ -26,11 +26,13 @@ import org.goldenport.util.AnyUtils
  *  version Jul. 27, 2022
  *  version Aug.  3, 2022
  *  version Sep.  3, 2022
- * @version Oct. 12, 2022
+ *  version Oct. 31, 2022
+ * @version Nov.  2, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
   def conclusion: Conclusion
+  def code: Int = conclusion.code
   def toOption: Option[T]
   def add(p: Conclusion): Consequence[T]
   def map[U](f: T => U): Consequence[U]
@@ -54,7 +56,7 @@ sealed trait Consequence[+T] {
   def getOrElse[TT >: T](e: => TT): TT = get getOrElse e
 
   def onSuccess[TT >: T](p: T => TT): Consequence[TT]
-  def onError[TT >: T](p: T => TT): Consequence[TT]
+  def onError[TT >: T](p: Conclusion => Consequence[TT]): Consequence[TT]
 
   def take: T
 
@@ -62,7 +64,7 @@ sealed trait Consequence[+T] {
 
   def takeOrInvalidArgumentFault(message: String): T = get getOrElse Conclusion.invalidArgumentFault(message).RAISE
 
-  def takeOrIllegalConfigurationDefect(name: String): T = get getOrElse Conclusion.config.illegalConfigurationDefect(name).RAISE
+  def takeOrIllegalConfigurationDefect(message: String): T = get getOrElse Conclusion.config.illegalConfigurationDefect(message).RAISE
 }
 
 object Consequence {
@@ -76,8 +78,8 @@ object Consequence {
     def map[U](f: T => U): Consequence[U] = copy(result = f(result))
     def flatMap[U](f: T => Consequence[U]): Consequence[U] = f(result).add(conclusion)
     def mapConclusion(f: Conclusion => Conclusion): Consequence[T] = copy(conclusion = f(conclusion))
-    def onSuccess[TT >: T](p: T => TT): Consequence[TT] = ???
-    def onError[TT >: T](p: T => TT): Consequence[TT] = ???
+    def onSuccess[TT >: T](p: T => TT): Consequence[TT] = map(p)
+    def onError[TT >: T](p: Conclusion => Consequence[TT]): Consequence[TT] = this
     def take = result
     def forConfig: Consequence[T] = if (conclusion.isSuccess) this else copy(conclusion = conclusion.forConfig)
 
@@ -96,8 +98,8 @@ object Consequence {
     def map[U](f: T => U): Consequence[U] = this.asInstanceOf[Error[U]]
     def flatMap[U](f: T => Consequence[U]): Consequence[U] = this.asInstanceOf[Consequence[U]]
     def mapConclusion(f: Conclusion => Conclusion): Consequence[T] = copy(conclusion = f(conclusion))
-    def onSuccess[TT >: T](p: T => TT): Consequence[TT] = ???
-    def onError[TT >: T](p: T => TT): Consequence[TT] = ???
+    def onSuccess[TT >: T](p: T => TT): Consequence[TT] = this
+    def onError[TT >: T](p: Conclusion => Consequence[TT]): Consequence[TT] = p(conclusion)
     def take = RAISE
     def forConfig: Consequence[T] = if (conclusion.isSuccess) this else copy(conclusion = conclusion.forConfig)
 
@@ -130,6 +132,7 @@ object Consequence {
   def unauthorized[T](p: String): Consequence[T] = unauthorized(I18NString(p))
   def unauthorized[T](en: String, ja: String): Consequence[T] = unauthorized(I18NString(en, ja))
   def unauthorized[T](p: I18NString): Consequence[T] = error(401, p)
+  def unauthorized[T](p: Throwable): Consequence[T] = error(401, p)
   def paymentRequired[T](p: String): Consequence[T] = paymentRequired(I18NString(p))
   def paymentRequired[T](p: I18NString): Consequence[T] = error(402, p)
   def forbidden[T](p: String): Consequence[T] = forbidden(I18NString(p))
@@ -151,8 +154,10 @@ object Consequence {
   def gone[T](p: I18NString): Consequence[T] = error(410, p)
   def internalServerError[T](p: String): Consequence[T] = internalServerError(I18NString(p))
   def internalServerError[T](p: I18NString): Consequence[T] = error(500, p)
+  def internalServerError[T](p: Throwable): Consequence[T] = error(500, p)
   def notImplemented[T](p: String): Consequence[T] = notImplemented(I18NString(p))
   def notImplemented[T](p: I18NString): Consequence[T] = error(501, p)
+  def notImplemented[T](p: Throwable): Consequence[T] = error(501, p)
   def badGateway[T](p: String): Consequence[T] = badGateway(I18NString(p))
   def badGateway[T](p: I18NString): Consequence[T] = error(502, p)
   def serviceUnavailable[T](p: String): Consequence[T] = serviceUnavailable(I18NString(p))
@@ -166,12 +171,12 @@ object Consequence {
   def error[T](code: Int, p: I18NString): Consequence[T] = Error(Conclusion.error(code, p))
   def error[T](code: Int, e: Throwable): Consequence[T] = Error(Conclusion.error(code, e))
   def error[T](e: Throwable): Consequence[T] = e match {
-    case m: IllegalArgumentException => badRequest(m.getMessage)
-    case m: SecurityException => unauthorized(m.getMessage)
-    case m: UnsupportedOperationException => notImplemented(m.getMessage)
-    case m: NoSuchElementException => notFound(m.getMessage)
-    case m: java.io.FileNotFoundException => notFound(m.getMessage)
-    case m => internalServerError(m.getMessage)
+    case m: IllegalArgumentException => badRequest(m)
+    case m: SecurityException => unauthorized(m)
+    case m: UnsupportedOperationException => notImplemented(m)
+    case m: NoSuchElementException => notFound(m)
+    case m: java.io.FileNotFoundException => notFound(m)
+    case m => internalServerError(m)
   }
 
   //
@@ -190,6 +195,14 @@ object Consequence {
 
   def successOrBadRequestFault[T](p: Option[T])(e: => Throwable): Consequence[T] =
     p.map(success).getOrElse(badRequest(e))
+
+  def takeOrNoReachDefect[T](message: String, p: => Option[T]): Consequence[T] =
+    Consequence.execute(p).flatMap {
+      case Some(s) => success(s)
+      case None => noReachDefect(message)
+    }
+
+  def orNoReachDefect[T](p: Option[T], message: String): Consequence[T] = p.map(success) getOrElse noReachDefect(message)
 
   def invalidArgumentFault[T](key: String, value: Any): Consequence[T] = invalidArgumentFault(s"$key: ${AnyUtils.toShow(value)}")
 
@@ -226,6 +239,8 @@ object Consequence {
 
   def unmarshallingDefect[T](p: String): Consequence[T] = Error(Conclusion.unmarshallingDefect(p))
 
+  def noReachDefect[T](message: String): Consequence[T] = Error(Conclusion.noReachDefect(message))
+
   //
   def execute[T](body: => T): Consequence[T] = try {
     Success(body)
@@ -253,6 +268,15 @@ object Consequence {
   } catch {
     case NonFatal(e) => error(e)
   }
+
+  def getOrRun[T](p: Option[T], q: => Consequence[T]): Consequence[T] =
+    p.map(success) getOrElse run(q)
+
+  def orRun[T](p: Option[T], q: => Consequence[Option[T]]): Consequence[Option[T]] =
+    p match {
+      case Some(s) => Consequence.success(Some(s))
+      case None => run(q)
+    }
 
   //
   def from[A](p: ParseResult[A]): Consequence[A] = p match {
@@ -302,10 +326,15 @@ object Consequence {
 
   // Specific error with detail code.
 
+    def successOrInvalidPropertyFault[T](name: String, value: String, p: Option[T]): Consequence[T] =
+      p.map(success).getOrElse(invalidPropertyFault(name, value))
+
     def successOrInvalidTokenFault[T](name: String, p: Option[T]): Consequence[T] =
       p.map(success).getOrElse(invalidTokenFault(name))
 
     def invalidPropertyFault[T](p: String): Consequence[T] = Error(Conclusion.config.invalidPropertyFault(p))
+
+    def invalidPropertyFault[T](key: String, value: Any): Consequence[T] = Error(Conclusion.config.invalidPropertyFault(key, value))
 
     def missingPropertyFault[T](p: String): Consequence[T] = Error(Conclusion.config.missingPropertyFault(p))
 
@@ -318,6 +347,8 @@ object Consequence {
     def valueDomainFault[T](label: String, value: String): Consequence[T] = Error(Conclusion.config.valueDomainFault(label, value))
 
     def illegalConfigurationDefect[T](p: String): Consequence[T] = Error(Conclusion.config.illegalConfigurationDefect(p))
+
+    def capacityOverflowFault[T](label: String, value: String): Consequence[T] = Error(Conclusion.config.capacityOverflowFault(label, value))
 
     def from[A](p: ParseResult[A]): Consequence[A] = p match {
       case m: ParseSuccess[_] => Success(m.ast, _conclusion_success(m))

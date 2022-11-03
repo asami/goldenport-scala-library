@@ -24,7 +24,7 @@ import Fault._
  *  version Mar.  6, 2022
  *  version Jun. 13, 2022
  *  version Sep.  1, 2022
- * @version Oct. 12, 2022
+ * @version Oct. 26, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -200,7 +200,7 @@ object InvalidArgumentFault {
   private def _message(key: String, ps: Iterable[Fault]): I18NMessage = {
     ps.toVector.map(_.message).concatenate
   }
-  // .map(_.message).list.mkString(";")))) * @version Oct. 12, 2022
+  // .map(_.message).list.mkString(";")))) * @version Oct. 26, 2022
 }
 
 case class MissingArgumentFault(
@@ -491,6 +491,34 @@ object UnmarshallingDefect {
 
   def apply(p: I18NMessage): UnmarshallingDefect =
     UnmarshallingDefect(messageTemplate = I18NTemplate(p))
+}
+
+case class NoReachDefect(
+  parameters: Seq[String] = Nil,
+  messageTemplate: I18NTemplate = NoReachDefect.template
+) extends PropertyFault {
+  def implicitStatusCode: StatusCode = StatusCode.BadRequest
+
+  def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
+
+  def properties(locale: Locale): IRecord = IRecord.dataS(
+    KEY_NAME -> name,
+    KEY_PARAMETERS -> parameters,
+    KEY_MESSAGE -> message(),
+    KEY_LOCAL_MESSAGE -> message(locale)
+  )
+}
+object NoReachDefect {
+  val template = I18NTemplate("NoReach error: {0}")
+
+  def apply(p: String): NoReachDefect =
+    NoReachDefect(messageTemplate = I18NTemplate(p))
+
+  def apply(p: I18NString): NoReachDefect =
+    NoReachDefect(messageTemplate = I18NTemplate(p))
+
+  def apply(p: I18NMessage): NoReachDefect =
+    NoReachDefect(messageTemplate = I18NTemplate(p))
 }
 
 case class Faults(faults: Vector[Fault] = Vector.empty) {

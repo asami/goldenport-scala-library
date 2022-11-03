@@ -26,6 +26,7 @@ import org.goldenport.parser.ParseResult
 import org.goldenport.util.TypesafeConfigUtils
 import org.goldenport.util.DateTimeUtils
 import org.goldenport.util.AnyUtils
+import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
 
 /*
  * Migrated from org.goldenport.util.HoconUtils.
@@ -50,7 +51,8 @@ import org.goldenport.util.AnyUtils
  *  version Dec. 31, 2021
  *  version Jan. 27, 2022
  *  version Feb. 17, 2022
- * @version Mar. 11, 2022
+ *  version Mar. 11, 2022
+ * @version Oct. 13, 2022
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -619,6 +621,22 @@ object HoconUtils {
         case m => m.unwrapped match {
           case null => Consequence.success(None)
           case m: String => Consequence.success(Some(Left(m)))
+          case m => Consequence.invalidArgumentFault(s"Not string or object: $m")
+        }
+      }
+    } else {
+      Consequence.success(None)
+    }
+
+  def consequenceStringOrConfigOrConfigListOption(p: Config, key: String): Consequence[Option[StringOrConfigOrConfigList]] =
+    if (p.hasPath(key)) {
+      val v = p.getValue(key)
+      v match {
+        case m: ConfigObject => Consequence(Some(StringOrConfigOrConfigList.C(m.toConfig)))
+        case m: ConfigList => Consequence(Some(StringOrConfigOrConfigList.CL(m.asScala.toList.map(_to_config))))
+        case m => m.unwrapped match {
+          case null => Consequence.success(None)
+          case m: String => Consequence.success(Some(StringOrConfigOrConfigList.S(m)))
           case m => Consequence.invalidArgumentFault(s"Not string or object: $m")
         }
       }

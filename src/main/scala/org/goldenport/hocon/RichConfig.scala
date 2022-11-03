@@ -43,7 +43,8 @@ import org.goldenport.parser.ParseResult
  *  version Feb. 17, 2022
  *  version Mar. 25, 2022
  *  version May. 24, 2022
- * @version Jul. 13, 2022
+ *  version Jul. 13, 2022
+ * @version Oct. 13, 2022
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -179,5 +180,12 @@ object RichConfig {
 
   object Implicits {
     implicit def enrichConfig(config: Config) = new RichConfig(config)
+  }
+
+  sealed trait StringOrConfigOrConfigList
+  object StringOrConfigOrConfigList {
+    case class S(s: String) extends StringOrConfigOrConfigList
+    case class C(c: Config) extends StringOrConfigOrConfigList
+    case class CL(cl: List[Config]) extends StringOrConfigOrConfigList
   }
 }
