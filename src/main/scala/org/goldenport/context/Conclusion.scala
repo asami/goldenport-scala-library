@@ -28,7 +28,7 @@ import org.goldenport.util.AnyUtils
  *  version Jun. 14, 2022
  *  version Sep. 26, 2022
  *  version Oct. 26, 2022
- * @version Nov.  2, 2022
+ * @version Nov.  7, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -46,7 +46,7 @@ case class Conclusion(
   import Conclusion._
 
   def code: Int = status.code
-  def messageI18N: I18NMessage = messageI18NOption orElse _errors_message orElse _warnings_message orElse exception.map(x => I18NMessage(x.getMessage)) orElse faults.getMessageI18N getOrElse status.message
+  def messageI18N: I18NMessage = messageI18NOption orElse _errors_message orElse _warnings_message orElse exception.map(x => I18NMessage(x.toString)) orElse faults.getMessageI18N getOrElse status.message
 
   private def _errors_message: Option[I18NMessage] = errors.toOption.map(_.toI18NMessage)
 

@@ -7,7 +7,8 @@ import java.math.BigInteger
  * Derived from friendly_id (https://github.com/Devskiller/friendly-id)
  * 
  * @since   Dec. 26, 2020
- * @version Dec. 27, 2020
+ *  version Dec. 27, 2020
+ * @version Nov.  4, 2022
  * @author  ASAMI, Tomoharu
  */
 case class CompactUuid(uuid: UUID) {
@@ -24,6 +25,8 @@ object CompactUuid {
   def generateString(): String = encode(UUID.randomUUID())
 
   def encode(uuid: UUID): String = url62.encode(uuid)
+
+  def encode(uuid: String): String = encode(UUID.fromString(uuid))
 
   def decode(cuuid: String): UUID = url62.decode(cuuid)
 
