@@ -28,7 +28,7 @@ import org.goldenport.util.AnyUtils
  *  version Jun. 14, 2022
  *  version Sep. 26, 2022
  *  version Oct. 26, 2022
- * @version Nov.  7, 2022
+ * @version Nov. 13, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -84,6 +84,8 @@ case class Conclusion(
   def RAISE: Nothing = throw toException
 
   def isSuccess: Boolean = status.isSuccess
+
+  def isUnauhorized: Boolean = code == StatusCode.Unauthorized.code
 
   def forConfig: Conclusion = if (isSuccess) this else copy(status = status.forConfig)
 

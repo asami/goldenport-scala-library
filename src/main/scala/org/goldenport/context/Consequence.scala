@@ -1,6 +1,7 @@
 package org.goldenport.context
 
 import scalaz._, Scalaz._
+import scala.util.{Try, Success => TrySuccess, Failure => TryFailure}
 import scala.util.control.NonFatal
 import java.util.Locale
 import org.goldenport.i18n.I18NString
@@ -27,7 +28,7 @@ import org.goldenport.util.AnyUtils
  *  version Aug.  3, 2022
  *  version Sep.  3, 2022
  *  version Oct. 31, 2022
- * @version Nov.  2, 2022
+ * @version Nov. 11, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -50,7 +51,9 @@ sealed trait Consequence[+T] {
   // def getMessage(locale: Locale): Option[String] = conclusion.getMessage(locale)
   def message(locale: Locale): String = conclusion.message(locale)
 
-  def isSuccess: Boolean = conclusion.isSuccess
+  def isSuccess: Boolean
+  def isError: Boolean = !isSuccess
+  def hasWarning: Boolean = isSuccess && !conclusion.isSuccess
 
   def get: Option[T] = toOption
   def getOrElse[TT >: T](e: => TT): TT = get getOrElse e
@@ -72,6 +75,7 @@ object Consequence {
     result: T,
     conclusion: Conclusion = Conclusion.Ok
   ) extends Consequence[T] {
+    def isSuccess: Boolean = true
     def toOption: Option[T] = Some(result)
     def getException: Option[Throwable] = None
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
@@ -92,6 +96,7 @@ object Consequence {
   case class Error[+T](
     conclusion: Conclusion = Conclusion.InternalServerError
   ) extends Consequence[T] {
+    def isSuccess: Boolean = false
     def toOption: Option[T] = None
     def getException: Option[Throwable] = Some(conclusion.toException)
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
@@ -124,6 +129,7 @@ object Consequence {
 
   def apply[T](p: => T): Consequence[T] = execute(p)
   def success[T](p: T): Consequence[T] = Success(p)
+  def warning[T](p: T, c: Conclusion): Consequence[T] = Success(p, c)
 
   // Generic error derived from HTTP
   def badRequest[T](p: String): Consequence[T] = badRequest(I18NString(p))
@@ -257,6 +263,9 @@ object Consequence {
       }
     } yield r
 
+  def getOrExecute[T](p: Option[T])(x: => T): Consequence[T] =
+    p.map(success).getOrElse(Consequence(x))
+
   def executeOrMissingPropertyFault[T](name: String)(p: => Option[T]): Consequence[T] =
     execute(p).flatMap {
       case Some(s) => Success(s)
@@ -316,6 +325,11 @@ object Consequence {
   def from[E <: Fault, A](p: ValidationNel[E, A]): Consequence[A] = p match {
     case scalaz.Success(s) => Consequence.success(s)
     case scalaz.Failure(es) => Consequence.Error(Conclusion.make(es))
+  }
+
+  def from[A](p: Try[A]): Consequence[A] = p match {
+    case TrySuccess(s) => Consequence.success(s)
+    case TryFailure(e) => error(e)
   }
 
   object config {

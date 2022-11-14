@@ -4,7 +4,7 @@ import scalaz._, Scalaz._
 
 /*
  * @since   Sep.  1, 2022
- * @version Sep.  1, 2022
+ * @version Nov. 11, 2022
  * @author  ASAMI, Tomoharu
  */
 case class ConsequenceSequence[T](

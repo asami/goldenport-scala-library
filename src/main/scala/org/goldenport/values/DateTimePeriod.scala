@@ -40,7 +40,8 @@ import org.goldenport.extension.IRecord
  *  version Feb. 17, 2022
  *  version Apr. 21, 2022
  *  version May. 20, 2022
- * @version Jun. 17, 2022
+ *  version Jun. 17, 2022
+ * @version Nov.  8, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait DateTimePeriod { // TODO DateTimeInterval (java8 time)
@@ -608,6 +609,7 @@ sealed trait DateTimePeriod { // TODO DateTimeInterval (java8 time)
     val s = start match {
       case Some(s) =>
         val r = DateTimeUtils.toRecord(s) + IRecord.data(
+          "datetime" -> DateTimeUtils.toIsoDateTimeString(s),
           "inclusive" -> isStartInclusive
         )
         Vector("start" -> r)
@@ -616,6 +618,7 @@ sealed trait DateTimePeriod { // TODO DateTimeInterval (java8 time)
     val e = end match {
       case Some(s) =>
         val r = DateTimeUtils.toRecord(s) + IRecord.data(
+          "datetime" -> DateTimeUtils.toIsoDateTimeString(s),
           "inclusive" -> isEndInclusive
         )
         Vector("end" -> r)

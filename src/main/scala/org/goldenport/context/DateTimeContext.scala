@@ -1,6 +1,7 @@
 package org.goldenport.context
 
 import java.util.TimeZone
+import java.sql.Timestamp
 import org.joda.time._
 import org.goldenport.values.LocalDateTimeInterval
 import org.goldenport.util.DateTimeUtils
@@ -14,7 +15,8 @@ import org.goldenport.util.DateTimeUtils
  *  version Nov. 13, 2021
  *  version Feb. 16, 2022
  *  version Apr.  4, 2022
- * @version May.  2, 2022
+ *  version May.  2, 2022
+ * @version Nov. 13, 2022
  * @author  ASAMI, Tomoharu
  */
 case class DateTimeContext(
@@ -30,7 +32,9 @@ case class DateTimeContext(
   def currentDay: Int = current.dayOfMonth.get
   def currentHour: Int = current.hourOfDay.get
 
-  def timestamp: Long = datetime.getMillis
+  def currentTimeMillis: Long = datetime.getMillis
+  def unixTime: Long = currentTimeMillis / 1000
+  def timestamp: Timestamp = new Timestamp(currentTimeMillis)
   def datetime: DateTime = base plus gap
   lazy val timezone: TimeZone = DateTimeUtils.dateTimeZoneToTz(dateTimeZone)
 
