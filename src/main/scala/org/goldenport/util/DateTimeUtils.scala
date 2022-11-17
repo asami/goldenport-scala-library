@@ -29,7 +29,8 @@ import org.goldenport.i18n.LocaleUtils
  *  version Feb. 19, 2022
  *  version Apr. 20, 2022
  *  version May.  2, 2022
- * @version Jun. 17, 2022
+ *  version Jun. 17, 2022
+ * @version Nov. 17, 2022
  * @author  ASAMI, Tomoharu
  */
 object DateTimeUtils {
@@ -370,7 +371,6 @@ object DateTimeUtils {
       )
     )
   }
-        
 
   /*
    * DateTimeZone

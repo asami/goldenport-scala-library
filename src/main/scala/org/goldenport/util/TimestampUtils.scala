@@ -20,7 +20,8 @@ import org.joda.time.format.ISODateTimeFormat
  *  version Jan. 19, 2017
  *  version Aug. 29, 2017
  *  version Jan. 27, 2022
- * @version Feb. 19, 2022
+ *  version Feb. 19, 2022
+ * @version Nov. 17, 2022
  * @author  ASAMI, Tomoharu
  */
 object TimestampUtils {
@@ -30,17 +31,48 @@ object TimestampUtils {
   val millisInDay: Long = millisInHour * 24
 
   private val _iso_datetime_parser = ISODateTimeFormat.dateTimeParser
-  private val _rss_datatime_format = {
+  private val _rss_datetime_format = {
     val sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.ENGLISH)
 //    sdf.setTimeZone(gmt)
     sdf
   }
 
-  def parse(s: String): Timestamp = {
-    parseIsoOption(s) orElse parseRssOption(s) getOrElse {
+  def parse(tz: DateTimeZone, s: String): Timestamp = {
+    parseLong(s) orElse parseIsoOption(tz, s) orElse parseRssOption(tz, s) getOrElse {
       throw new IllegalArgumentException(s"Illegal datetime '$s'")
     }
   }
+
+  def parseIsoOption(tz: DateTimeZone, s: String): Option[Timestamp] = {
+    Try(parseIso(tz, s)).toOption
+  }
+
+  def parseIso(tz: DateTimeZone, s: String): Timestamp = {
+    val dt = DateTimeUtils.parseIsoDateTime(s, tz)
+    val a = dt.getMillis
+    new Timestamp(a)
+  }
+
+  def parseRssOption(tz: DateTimeZone, s: String): Option[Timestamp] = {
+    Try(parseRss(tz, s)).toOption
+  }
+
+  def parseRss(tz: DateTimeZone, s: String): Timestamp = {
+    synchronized {
+      val sdf = _rss_datetime_format
+      sdf.setTimeZone(DateTimeUtils.dateTimeZoneToTz(tz))
+      val a = sdf.parse(s)
+      new Timestamp(a.getTime)
+    }
+  }
+
+  def parse(s: String): Timestamp = {
+    parseLong(s) orElse parseIsoOption(s) orElse parseRssOption(s) getOrElse {
+      throw new IllegalArgumentException(s"Illegal datetime '$s'")
+    }
+  }
+
+  def parseLong(s: String): Option[Timestamp] = NumberUtils.getLong(s).map(new Timestamp(_))
 
   def parseIsoOption(s: String): Option[Timestamp] = {
     Try(parseIso(s)).toOption
@@ -57,7 +89,7 @@ object TimestampUtils {
 
   def parseRss(s: String): Timestamp = {
     synchronized {
-      val a = _rss_datatime_format.parse(s)
+      val a = _rss_datetime_format.parse(s)
       new Timestamp(a.getTime)
     }
   }
