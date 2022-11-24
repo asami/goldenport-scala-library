@@ -42,8 +42,9 @@ import org.goldenport.values.DateTimePeriod
  *  version Feb. 24, 2022
  *  version Mar.  9, 2022
  *  version May.  3, 2022
-toFiniteDuration(m.toLong) // TODO *  version Sep. 27, 2022
-toFiniteDuration(m.toLong) // TODO * @version Oct. 29, 2022
+ *  version Sep. 27, 2022
+ *  version Oct. 29, 2022
+ * @version Nov. 23, 2022
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -205,6 +206,7 @@ object AnyUtils {
       case v: Timestamp => v
       case v: Long => new Timestamp(v)
       case s: String => TimestampUtils.parse(s)
+      case m: DateTime => TimestampUtils.toTimestamp(m)
     }
   }
   def toDate(x: Any): Date = {
@@ -313,4 +315,5 @@ object AnyUtils {
   def consequenceBigDecimal(p: Any): Consequence[BigDecimal] = Consequence(toBigDecimal(p))
   def consequenceString(p: Any): Consequence[String] = Consequence(toString(p))
   def consequenceUrl(p: Any): Consequence[URL] = Consequence(toUrl(p))
+  def consequenceDateTime(p: Any): Consequence[DateTime] = Consequence(toDateTime(p))
 }

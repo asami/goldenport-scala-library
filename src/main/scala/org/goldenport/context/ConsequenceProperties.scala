@@ -2,12 +2,13 @@ package org.goldenport.context
 
 import scalaz._, Scalaz._
 import java.net.URL
+import org.joda.time.DateTime
 import org.goldenport.value._
 import org.goldenport.util.AnyUtils
 
 /*
  * @since   Jan. 30, 2022
- * @version Jan. 30, 2022
+ * @version Nov. 23, 2022
  * @author  ASAMI, Tomoharu
  */
 trait ConsequenceProperties {
@@ -146,6 +147,15 @@ trait ConsequenceProperties {
     consequenceUrlOption(key) flatMap {
       case Some(s) => Consequence.success(s)
       case None => Consequence.success(default)
+    }
+
+  def consequenceDateTimeOption(key: String): Consequence[Option[DateTime]] =
+    get_Value(key).traverse(AnyUtils.consequenceDateTime)
+
+  def consequenceDateTime(key: String): Consequence[DateTime] =
+    consequenceDateTimeOption(key) flatMap {
+      case Some(s) => Consequence.success(s)
+      case None => Consequence.missingPropertyFault(key)
     }
 
   def consequenceTokenOption[T <: ValueInstance](key: String, f: ValueClass[T]): Consequence[Option[T]] =

@@ -28,7 +28,7 @@ import org.goldenport.util.AnyUtils
  *  version Aug.  3, 2022
  *  version Sep.  3, 2022
  *  version Oct. 31, 2022
- * @version Nov. 11, 2022
+ * @version Nov. 24, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -198,6 +198,9 @@ object Consequence {
 
   def successOrInvalidTokenFault[T](name: String, p: Option[T]): Consequence[T] =
     p.map(success).getOrElse(invalidTokenFault(name))
+
+  def successOrBadRequestFault[T](message: => String, p: Option[T]): Consequence[T] =
+    p.map(success).getOrElse(badRequest(message))
 
   def successOrBadRequestFault[T](p: Option[T])(e: => Throwable): Consequence[T] =
     p.map(success).getOrElse(badRequest(e))
