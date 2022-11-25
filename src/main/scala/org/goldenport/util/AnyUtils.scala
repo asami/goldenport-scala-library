@@ -44,7 +44,7 @@ import org.goldenport.values.DateTimePeriod
  *  version May.  3, 2022
  *  version Sep. 27, 2022
  *  version Oct. 29, 2022
- * @version Nov. 23, 2022
+ * @version Nov. 25, 2022
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -316,4 +316,15 @@ object AnyUtils {
   def consequenceString(p: Any): Consequence[String] = Consequence(toString(p))
   def consequenceUrl(p: Any): Consequence[URL] = Consequence(toUrl(p))
   def consequenceDateTime(p: Any): Consequence[DateTime] = Consequence(toDateTime(p))
+  def consequenceDuration(p: Any): Consequence[Duration] = p match {
+    case m: String => Consequence(Duration.create(m))
+    case m: Long => Consequence.success(Duration.create(m, MILLISECONDS))
+    case m: Int => Consequence.success(Duration.create(m, MILLISECONDS))
+    case m => Consequence.valueDomainFault(toString(m))
+  }
+  def consequenceFiniteDuration(p: Any): Consequence[FiniteDuration] =
+    consequenceDuration(p) flatMap {
+      case m: FiniteDuration => Consequence.success(m)
+      case m => Consequence.valueDomainFault(toString(toString(m)))
+    }
 }

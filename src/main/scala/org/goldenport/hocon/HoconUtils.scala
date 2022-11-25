@@ -52,7 +52,8 @@ import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
  *  version Jan. 27, 2022
  *  version Feb. 17, 2022
  *  version Mar. 11, 2022
- * @version Oct. 13, 2022
+ *  version Oct. 13, 2022
+ * @version Nov. 25, 2022
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -195,11 +196,17 @@ object HoconUtils {
     else
       None
 
-  def getDuration(config: Config, key: String): Option[FiniteDuration] =
-    TypesafeConfigUtils.getDuration(key)(config)
+  def getDuration(config: Config, key: String): Option[Duration] =
+    consequenceDurationOption(config, key).take
 
-  def getDurationByMinute(config: Config, key: String): Option[FiniteDuration] =
-    TypesafeConfigUtils.getDurationByMinute(key)(config)
+  def getDurationByMinute(config: Config, key: String): Option[Duration] =
+    consequenceDurationByMinuteOption(config, key).take
+
+  def getFiniteDuration(config: Config, key: String): Option[FiniteDuration] =
+    consequenceFiniteDurationOption(config, key).take
+
+  def getFiniteDurationByMinute(config: Config, key: String): Option[FiniteDuration] =
+    consequenceFiniteDurationByMinuteOption(config, key).take
 
   def getConfigList(config: Config, key: String): Option[List[Config]] =
     if (config.hasPath(key))
@@ -558,6 +565,150 @@ object HoconUtils {
 
   def consequenceUrlOption(p: Config, key: String): Consequence[Option[URL]] =
     consequenceStringOption(p, key).flatMap(x => Consequence(x.map(UURL.getURLFromFileOrURLName)))
+
+  def consequenceMillisecondsOption(config: Config, key: String): Consequence[Option[Long]] =
+    if (config.hasPath(key))
+      Consequence(config.getDuration(key, MILLISECONDS)).map(Some(_))
+    else
+      Consequence(None)
+
+  def consequenceSeconds(config: Config, key: String): Consequence[Option[Long]] =
+    if (config.hasPath(key))
+      Consequence(config.getDuration(key, SECONDS)).map(Some(_))
+    else
+      Consequence(None)
+
+  def consequenceMinutesOption(config: Config, key: String): Consequence[Option[Long]] =
+    if (config.hasPath(key))
+      Consequence(config.getDuration(key, MINUTES)).map(Some(_))
+    else
+      Consequence(None)
+
+  def consequenceHoursOption(config: Config, key: String): Consequence[Option[Long]] =
+    if (config.hasPath(key))
+      Consequence(config.getDuration(key, HOURS)).map(Some(_))
+    else
+      Consequence(None)
+
+  def consequenceDaysOption(config: Config, key: String): Consequence[Option[Long]] =
+    if (config.hasPath(key))
+      Consequence(config.getDuration(key, DAYS)).map(Some(_))
+    else
+      Consequence(None)
+
+  def consequenceDuration(p: Config, key: String): Consequence[Duration] =
+    for {
+      a <- consequenceDurationOption(p, key)
+      r <- Consequence.successOrMissingPropertyFault(key, a)
+    } yield r
+
+  def consequenceDurationOption(p: Config, key: String): Consequence[Option[Duration]] = {
+    def getstring = AnyUtils.consequenceDuration(p.getString(key)).map(Option(_))
+    def getlong = Consequence(p.getLong(key).milliseconds).map(Option(_))
+    def getms = consequenceMillisecondsOption(p, key).map(_.map(_.milliseconds))
+    if (p.hasPath(key))
+      (getstring orElse getlong orElse getms)
+    else
+      Consequence.success(None)
+  }
+
+  def consequenceDurationByMinute(config: Config, key: String): Consequence[Duration] =
+    for {
+      a <- consequenceDurationByMinuteOption(config, key)
+      r <- Consequence.successOrMissingPropertyFault(key, a)
+    } yield r
+
+  def consequenceDurationByMinuteOption(config: Config, key: String): Consequence[Option[Duration]] = {
+    def getstring = AnyUtils.consequenceDuration(config.getString(key)).map(Option(_))
+    def getlong = Consequence(config.getLong(key).minutes).map(Option(_))
+    def getms = consequenceMinutesOption(config, key).map(_.map(_.minutes))
+    if (config.hasPath(key))
+      (getstring orElse getlong orElse getms)
+    else
+      Consequence.success(None)
+  }
+
+  def consequenceDurationByHour(config: Config, key: String): Consequence[Duration] =
+    for {
+      a <- consequenceDurationByHourOption(config, key)
+      r <- Consequence.successOrMissingPropertyFault(key, a)
+    } yield r
+
+  def consequenceDurationByHourOption(config: Config, key: String): Consequence[Option[Duration]] = {
+    def getstring = AnyUtils.consequenceDuration(config.getString(key)).map(Option(_))
+    def getlong = Consequence(config.getLong(key).seconds).map(Option(_))
+    def getms = consequenceHoursOption(config, key).map(_.map(_.hours))
+    if (config.hasPath(key))
+      (getstring orElse getlong orElse getms)
+    else
+      Consequence.success(None)
+  }
+
+  def consequenceDurationByDay(config: Config, key: String): Consequence[Duration] =
+    for {
+      a <- consequenceDurationByDayOption(config, key)
+      r <- Consequence.successOrMissingPropertyFault(key, a)
+    } yield r
+
+  def consequenceDurationByDayOption(config: Config, key: String): Consequence[Option[Duration]] = {
+    def getstring = AnyUtils.consequenceDuration(config.getString(key)).map(Option(_))
+    def getlong = Consequence(config.getLong(key).seconds).map(Option(_))
+    def getms = consequenceDaysOption(config, key).map(_.map(_.days))
+    if (config.hasPath(key))
+      (getstring orElse getlong orElse getms)
+    else
+      Consequence.success(None)
+  }
+
+  def consequenceFiniteDuration(p: Config, key: String): Consequence[FiniteDuration] =
+    Consequence.successOrMissingPropertyFault(key, getFiniteDuration(p, key))
+
+  def consequenceFiniteDurationOption(p: Config, key: String): Consequence[Option[FiniteDuration]] =
+    Consequence.success(getFiniteDuration(p, key))
+
+  def consequenceFiniteDurationByMinute(p: Config, key: String): Consequence[FiniteDuration] =
+    for {
+      a <- consequenceFiniteDurationByMinuteOption(p, key)
+      r <- Consequence.successOrMissingPropertyFault(key, a)
+    } yield r
+
+  def consequenceFiniteDurationByMinuteOption(p: Config, key: String): Consequence[Option[FiniteDuration]] =
+    for {
+      a <- consequenceDurationByMinuteOption(p, key)
+      r <- _option_finitduration(key, a)
+    } yield r
+
+  private def _option_finitduration(key: String, p: Option[Duration]) = p match {
+    case Some(s) => s match {
+      case m: FiniteDuration => Consequence.success(Some(m))
+      case m => Consequence.invalidArgumentFault(key, AnyUtils.toString(m))
+    }
+    case None => Consequence.success(None)
+  }
+
+  def consequenceFiniteDurationByHour(p: Config, key: String): Consequence[FiniteDuration] =
+    for {
+      a <- consequenceFiniteDurationByHourOption(p, key)
+      r <- Consequence.successOrMissingPropertyFault(key, a)
+    } yield r
+
+  def consequenceFiniteDurationByHourOption(p: Config, key: String): Consequence[Option[FiniteDuration]] =
+    for {
+      a <- consequenceDurationByHourOption(p, key)
+      r <- _option_finitduration(key, a)
+    } yield r
+
+  def consequenceFiniteDurationByDay(p: Config, key: String): Consequence[FiniteDuration] =
+    for {
+      a <- consequenceFiniteDurationByDayOption(p, key)
+      r <- Consequence.successOrMissingPropertyFault(key, a)
+    } yield r
+
+  def consequenceFiniteDurationByDayOption(p: Config, key: String): Consequence[Option[FiniteDuration]] =
+    for {
+      a <- consequenceDurationByDayOption(p, key)
+      r <- _option_finitduration(key, a)
+    } yield r
 
   def consequenceDateTimeWithContext(p: Config, key: String)(implicit ctx: DateTimeContext): Consequence[DateTime] =
     getString(p, key) match {

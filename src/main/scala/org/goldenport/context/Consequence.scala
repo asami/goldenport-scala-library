@@ -28,13 +28,14 @@ import org.goldenport.util.AnyUtils
  *  version Aug.  3, 2022
  *  version Sep.  3, 2022
  *  version Oct. 31, 2022
- * @version Nov. 24, 2022
+ * @version Nov. 25, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
   def conclusion: Conclusion
   def code: Int = conclusion.code
   def toOption: Option[T]
+  def toTry: Try[T]
   def add(p: Conclusion): Consequence[T]
   def map[U](f: T => U): Consequence[U]
   // Consequence is not Monad. Just to use 'for' comprehension in Scala syntax suger.
@@ -58,6 +59,8 @@ sealed trait Consequence[+T] {
   def get: Option[T] = toOption
   def getOrElse[TT >: T](e: => TT): TT = get getOrElse e
 
+  def orElse[TT >: T](p: => Consequence[TT]): Consequence[TT]
+
   def onSuccess[TT >: T](p: T => TT): Consequence[TT]
   def onError[TT >: T](p: Conclusion => Consequence[TT]): Consequence[TT]
 
@@ -77,11 +80,13 @@ object Consequence {
   ) extends Consequence[T] {
     def isSuccess: Boolean = true
     def toOption: Option[T] = Some(result)
+    def toTry: Try[T] = Try(result)
     def getException: Option[Throwable] = None
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
     def map[U](f: T => U): Consequence[U] = copy(result = f(result))
     def flatMap[U](f: T => Consequence[U]): Consequence[U] = f(result).add(conclusion)
     def mapConclusion(f: Conclusion => Conclusion): Consequence[T] = copy(conclusion = f(conclusion))
+    def orElse[TT >: T](p: => Consequence[TT]): Consequence[TT] = this
     def onSuccess[TT >: T](p: T => TT): Consequence[TT] = map(p)
     def onError[TT >: T](p: Conclusion => Consequence[TT]): Consequence[TT] = this
     def take = result
@@ -98,11 +103,13 @@ object Consequence {
   ) extends Consequence[T] {
     def isSuccess: Boolean = false
     def toOption: Option[T] = None
+    def toTry: Try[T] = TryFailure(conclusion.toException)
     def getException: Option[Throwable] = Some(conclusion.toException)
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
     def map[U](f: T => U): Consequence[U] = this.asInstanceOf[Error[U]]
     def flatMap[U](f: T => Consequence[U]): Consequence[U] = this.asInstanceOf[Consequence[U]]
     def mapConclusion(f: Conclusion => Conclusion): Consequence[T] = copy(conclusion = f(conclusion))
+    def orElse[TT >: T](p: => Consequence[TT]): Consequence[TT] = p
     def onSuccess[TT >: T](p: T => TT): Consequence[TT] = this
     def onError[TT >: T](p: Conclusion => Consequence[TT]): Consequence[TT] = p(conclusion)
     def take = RAISE
