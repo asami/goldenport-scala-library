@@ -44,7 +44,7 @@ import org.goldenport.values.DateTimePeriod
  *  version May.  3, 2022
  *  version Sep. 27, 2022
  *  version Oct. 29, 2022
- * @version Nov. 25, 2022
+ * @version Nov. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -133,6 +133,8 @@ object AnyUtils {
       case v: Int => v
       case v: Long => v
       case v: Number => v.longValue // TODO validation
+      case m: FiniteDuration => m.toMillis
+      case m: DateTime => m.getMillis
       case v => toString(v).toLong
     }
   }

@@ -12,7 +12,8 @@ import org.goldenport.util.StringUtils
  *  version May. 19, 2019
  *  version Feb. 15, 2021
  *  version May. 16, 2021
- * @version Dec. 31, 2021
+ *  version Dec. 31, 2021
+ * @version Nov. 27, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalBlock {
@@ -103,6 +104,8 @@ case class LogicalSection(
   def sections = blocks.sections
 }
 object LogicalSection {
+  val empty = LogicalSection("", LogicalBlocks.empty)
+
   def apply(title: String, blocks: LogicalBlocks): LogicalSection =
     LogicalSection(I18NElement(title), blocks)
 

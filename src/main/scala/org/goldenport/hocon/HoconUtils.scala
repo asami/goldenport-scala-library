@@ -53,7 +53,7 @@ import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
  *  version Feb. 17, 2022
  *  version Mar. 11, 2022
  *  version Oct. 13, 2022
- * @version Nov. 25, 2022
+ * @version Nov. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -602,6 +602,12 @@ object HoconUtils {
       r <- Consequence.successOrMissingPropertyFault(key, a)
     } yield r
 
+  def consequenceDuration(p: Config, key: String, d: Duration): Consequence[Duration] =
+    for {
+      a <- consequenceDurationOption(p, key)
+      r <- Consequence.success(d)
+    } yield r
+
   def consequenceDurationOption(p: Config, key: String): Consequence[Option[Duration]] = {
     def getstring = AnyUtils.consequenceDuration(p.getString(key)).map(Option(_))
     def getlong = Consequence(p.getLong(key).milliseconds).map(Option(_))
@@ -616,6 +622,12 @@ object HoconUtils {
     for {
       a <- consequenceDurationByMinuteOption(config, key)
       r <- Consequence.successOrMissingPropertyFault(key, a)
+    } yield r
+
+  def consequenceDurationByMinute(config: Config, key: String, d: Duration): Consequence[Duration] =
+    for {
+      a <- consequenceDurationByMinuteOption(config, key)
+      r <- Consequence.success(d)
     } yield r
 
   def consequenceDurationByMinuteOption(config: Config, key: String): Consequence[Option[Duration]] = {
@@ -634,6 +646,12 @@ object HoconUtils {
       r <- Consequence.successOrMissingPropertyFault(key, a)
     } yield r
 
+  def consequenceDurationByHour(config: Config, key: String, d: Duration): Consequence[Duration] =
+    for {
+      a <- consequenceDurationByHourOption(config, key)
+      r <- Consequence.success(d)
+    } yield r
+
   def consequenceDurationByHourOption(config: Config, key: String): Consequence[Option[Duration]] = {
     def getstring = AnyUtils.consequenceDuration(config.getString(key)).map(Option(_))
     def getlong = Consequence(config.getLong(key).seconds).map(Option(_))
@@ -650,6 +668,12 @@ object HoconUtils {
       r <- Consequence.successOrMissingPropertyFault(key, a)
     } yield r
 
+  def consequenceDurationByDay(config: Config, key: String, d: Duration): Consequence[Duration] =
+    for {
+      a <- consequenceDurationByDayOption(config, key)
+      r <- Consequence.success(d)
+    } yield r
+
   def consequenceDurationByDayOption(config: Config, key: String): Consequence[Option[Duration]] = {
     def getstring = AnyUtils.consequenceDuration(config.getString(key)).map(Option(_))
     def getlong = Consequence(config.getLong(key).seconds).map(Option(_))
@@ -663,6 +687,9 @@ object HoconUtils {
   def consequenceFiniteDuration(p: Config, key: String): Consequence[FiniteDuration] =
     Consequence.successOrMissingPropertyFault(key, getFiniteDuration(p, key))
 
+  def consequenceFiniteDuration(p: Config, key: String, d: FiniteDuration): Consequence[FiniteDuration] =
+    consequenceFiniteDurationOption(p, key).map(_.getOrElse(d))
+
   def consequenceFiniteDurationOption(p: Config, key: String): Consequence[Option[FiniteDuration]] =
     Consequence.success(getFiniteDuration(p, key))
 
@@ -671,6 +698,9 @@ object HoconUtils {
       a <- consequenceFiniteDurationByMinuteOption(p, key)
       r <- Consequence.successOrMissingPropertyFault(key, a)
     } yield r
+
+  def consequenceFiniteDurationByMinute(p: Config, key: String, d: FiniteDuration): Consequence[FiniteDuration] =
+    consequenceFiniteDurationByMinuteOption(p, key).map(_ getOrElse d)
 
   def consequenceFiniteDurationByMinuteOption(p: Config, key: String): Consequence[Option[FiniteDuration]] =
     for {
@@ -692,6 +722,9 @@ object HoconUtils {
       r <- Consequence.successOrMissingPropertyFault(key, a)
     } yield r
 
+  def consequenceFiniteDurationByHour(p: Config, key: String, d: FiniteDuration): Consequence[FiniteDuration] =
+    consequenceFiniteDurationByHourOption(p, key).map(_ getOrElse d)
+
   def consequenceFiniteDurationByHourOption(p: Config, key: String): Consequence[Option[FiniteDuration]] =
     for {
       a <- consequenceDurationByHourOption(p, key)
@@ -702,6 +735,12 @@ object HoconUtils {
     for {
       a <- consequenceFiniteDurationByDayOption(p, key)
       r <- Consequence.successOrMissingPropertyFault(key, a)
+    } yield r
+
+  def consequenceFiniteDurationByDay(p: Config, key: String, d: FiniteDuration): Consequence[FiniteDuration] =
+    for {
+      a <- consequenceFiniteDurationByDayOption(p, key)
+      r <- Consequence.success(d)
     } yield r
 
   def consequenceFiniteDurationByDayOption(p: Config, key: String): Consequence[Option[FiniteDuration]] =
