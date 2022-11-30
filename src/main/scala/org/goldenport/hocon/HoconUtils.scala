@@ -53,7 +53,7 @@ import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
  *  version Feb. 17, 2022
  *  version Mar. 11, 2022
  *  version Oct. 13, 2022
- * @version Nov. 28, 2022
+ * @version Nov. 29, 2022
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -605,7 +605,7 @@ object HoconUtils {
   def consequenceDuration(p: Config, key: String, d: Duration): Consequence[Duration] =
     for {
       a <- consequenceDurationOption(p, key)
-      r <- Consequence.success(d)
+      r <- Consequence.success(a getOrElse d)
     } yield r
 
   def consequenceDurationOption(p: Config, key: String): Consequence[Option[Duration]] = {
@@ -627,7 +627,7 @@ object HoconUtils {
   def consequenceDurationByMinute(config: Config, key: String, d: Duration): Consequence[Duration] =
     for {
       a <- consequenceDurationByMinuteOption(config, key)
-      r <- Consequence.success(d)
+      r <- Consequence.success(a getOrElse d)
     } yield r
 
   def consequenceDurationByMinuteOption(config: Config, key: String): Consequence[Option[Duration]] = {
@@ -649,7 +649,7 @@ object HoconUtils {
   def consequenceDurationByHour(config: Config, key: String, d: Duration): Consequence[Duration] =
     for {
       a <- consequenceDurationByHourOption(config, key)
-      r <- Consequence.success(d)
+      r <- Consequence.success(a getOrElse d)
     } yield r
 
   def consequenceDurationByHourOption(config: Config, key: String): Consequence[Option[Duration]] = {
@@ -671,7 +671,7 @@ object HoconUtils {
   def consequenceDurationByDay(config: Config, key: String, d: Duration): Consequence[Duration] =
     for {
       a <- consequenceDurationByDayOption(config, key)
-      r <- Consequence.success(d)
+      r <- Consequence.success(a getOrElse d)
     } yield r
 
   def consequenceDurationByDayOption(config: Config, key: String): Consequence[Option[Duration]] = {
@@ -740,7 +740,7 @@ object HoconUtils {
   def consequenceFiniteDurationByDay(p: Config, key: String, d: FiniteDuration): Consequence[FiniteDuration] =
     for {
       a <- consequenceFiniteDurationByDayOption(p, key)
-      r <- Consequence.success(d)
+      r <- Consequence.success(a getOrElse d)
     } yield r
 
   def consequenceFiniteDurationByDayOption(p: Config, key: String): Consequence[Option[FiniteDuration]] =
