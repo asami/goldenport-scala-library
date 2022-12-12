@@ -13,10 +13,13 @@ import org.goldenport.collection.VectorMap
  *  version Oct. 18, 2020
  *  version Mar. 28, 2021
  *  version Mar. 19, 2022
- * @version Jun.  2, 2022
+ *  version Jun.  2, 2022
+ * @version Dec. 12, 2022
  * @author  ASAMI, Tomoharu
  */
-trait IRecord extends Showable {
+trait IRecord extends Showable { // PartialFunction[String, Any] with 
+  def isDefinedAt(key: String): Boolean = get(key).isDefined
+  def apply(key: String): Any = get(key).get
   def keys: List[String] = keyNames
   def keySymbols: List[Symbol]
   def keyNames: List[String]

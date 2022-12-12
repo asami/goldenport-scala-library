@@ -10,27 +10,40 @@ import org.joda.time.format.ISODateTimeFormat
 import org.goldenport.parser._
 import org.goldenport.value._
 import org.goldenport.i18n.LocaleUtils
+import org.goldenport.i18n.FormatterContext
 
 /*
  * @since   May.  1, 2022
- * @version May.  3, 2022
+ *  version May.  3, 2022
+ * @version Dec. 10, 2022
  * @author  ASAMI, Tomoharu
  */
 trait DateTimeFormatter {
+  def format(p: LocalDateTime): String
   def format(p: DateTime): String
+  def format(p: java.util.Date): String = format(p.getTime)
+  def format(p: java.sql.Date): String
+  def format(p: java.sql.Timestamp): String = format(p.getTime)
   def format(p: Long): String
 }
 
 trait JavaDateTimeFormatter extends DateTimeFormatter with DateTimeFormatter.JavaFormatter {
+  def format(p: LocalDateTime): String = format(p.toDateTime(dateTimeZone))
+  def format(p: java.sql.Date): String = format(new DateTime(p.getTime, effectiveDatabaseDateTimeZone))
 }
 
 object DateTimeFormatter {
   trait JavaFormatter {
-    def tz: TimeZone
+    def context: FormatterContext
+
+    def timezone = context.timezone
+    def dateTimeZone = context.dateTimeZone
+    def effectiveDatabaseTimeZone = context.effectiveDatabaseTimeZone
+    def effectiveDatabaseDateTimeZone = context.effectiveDatabaseDateTimeZone
 
     private def _sdf(p: DateTimeZone): DateFormat = java_Sdf(DateTimeUtils.dateTimeZoneToTz(p))
 
-    private def _sdf_tz = java_Sdf(tz)
+    private def _sdf_tz = java_Sdf(timezone)
 
     // thread unsafe
     protected def java_Sdf(p: TimeZone): DateFormat
@@ -40,11 +53,11 @@ object DateTimeFormatter {
   }
 
   trait JodaFormatterBase {
-    def tz: TimeZone
+    def timezone: TimeZone
 
     private def _sdf(p: DateTimeZone): JodaDateTimeFormatter = joda_Sdf(DateTimeUtils.dateTimeZoneToTz(p))
 
-    private def _sdf_tz = joda_Sdf(tz)
+    private def _sdf_tz = joda_Sdf(timezone)
 
     // thread safe
     protected def joda_Sdf(p: TimeZone): JodaDateTimeFormatter
@@ -112,6 +125,7 @@ object DateTimeFormatter {
     case class Pattern(pattern: String) extends Style {
       val name = "pattern"
     }
+    val 月日時分 = Pattern("yyyy年M月d日H時m分s秒")
 
     override def get(p: String): Option[Style] =
       super.get(p).orElse(Some(Pattern(p)))
@@ -128,41 +142,78 @@ object DateTimeFormatter {
   }
 
   case class NamedJavaFormatter(
-    locale: Locale,
-    tz: TimeZone,
+    context: FormatterContext,
     dateStyle: Int,
     timeStyle: Int
   ) extends JavaDateTimeFormatter {
+    def tz = context.timezone
+
     protected def java_Sdf(p: TimeZone) = {
-      val sdf = DateFormat.getDateTimeInstance(dateStyle, timeStyle, locale)
+      val sdf = DateFormat.getDateTimeInstance(dateStyle, timeStyle, context.locale)
       sdf.setTimeZone(p)
       sdf
     }
   }
+  object NamedJavaFormatter {
+    def apply(
+      l: Locale,
+      tz: TimeZone,
+      dateStyle: Int,
+      timeStyle: Int
+    ): NamedJavaFormatter = NamedJavaFormatter(
+      FormatterContext(l, tz),
+      dateStyle,
+      timeStyle
+    )
+  }
 
   case class PatternJavaFormatter(
-    locale: Locale,
-    tz: TimeZone,
+    context: FormatterContext,
     pattern: String
   ) extends JavaDateTimeFormatter {
+    def tz = context.timezone
+
     protected def java_Sdf(p: TimeZone) = {
       val sdf = new SimpleDateFormat(pattern)
       sdf.setTimeZone(p)
       sdf
     }
   }
+  object PatternJavaFormatter {
+    def apply(
+      l: Locale,
+      tz: TimeZone,
+      pattern: String
+    ): PatternJavaFormatter = PatternJavaFormatter(FormatterContext(l, tz), pattern)
+  }
 
   case class DateFormatFormatter(format: DateFormat) extends DateTimeFormatter {
+    def format(p: LocalDateTime): String = format.format(p)
     def format(p: DateTime) = format.format(p.getMillis)
+    def format(p: java.sql.Date): String = format.format(p)
     def format(p: Long) = format.format(p)
   }
 
   case class JodaFormatter(
-    locale: Locale,
-    tz: TimeZone,
+    context: FormatterContext,
     formatter: JodaDateTimeFormatter
   ) extends DateTimeFormatter with JodaFormatterBase {
+    def timezone = context.timezone
+    def dateTimeZone = context.dateTimeZone
+    def effectiveDatabaseTimeZone = context.effectiveDatabaseTimeZone
+    def effectiveDatabaseDateTimeZone = context.effectiveDatabaseDateTimeZone
+
     protected def joda_Sdf(p: TimeZone) = formatter.withZone(DateTimeUtils.tzToDateTimeZone(p))
+
+    def format(p: LocalDateTime): String = format(p.toDateTime(dateTimeZone))
+    def format(p: java.sql.Date): String = format(new DateTime(p.getTime, effectiveDatabaseDateTimeZone))
+  }
+  object JodaFormatter {
+    def apply(
+      l: Locale,
+      tz: TimeZone,
+      formatter: JodaDateTimeFormatter
+    ): JodaFormatter = JodaFormatter(FormatterContext(l, tz), formatter)
   }
 
   val default = _natural(Locale.ENGLISH, DateTimeUtils.gmt)
@@ -185,6 +236,11 @@ object DateTimeFormatter {
     val style = Style(name)
     create(locale, tz, style)
   }
+
+  def create(
+    style: Style
+  )(implicit ctx: FormatterContext): DateTimeFormatter =
+    create(ctx.locale, ctx.timezone)
 
   def create(
     locale: Locale,
@@ -219,9 +275,9 @@ object DateTimeFormatter {
     tz: TimeZone
   ) =
     if (LocaleUtils.isJapanese(locale))
-      PatternJavaFormatter(locale, tz, "M月d日H時m分")
+      PatternJavaFormatter(FormatterContext(locale, tz), "M月d日H時m分")
     else
-      NamedJavaFormatter(locale, tz, DateFormat.MEDIUM, DateFormat.MEDIUM)
+      NamedJavaFormatter(FormatterContext(locale, tz), DateFormat.MEDIUM, DateFormat.MEDIUM)
 
   private def _natural_year(
     locale: Locale,
@@ -231,4 +287,18 @@ object DateTimeFormatter {
       PatternJavaFormatter(locale, tz, "yyyy年M月d日H時m分")
     else
       NamedJavaFormatter(locale, tz, DateFormat.MEDIUM, DateFormat.MEDIUM)
+
+  def format(
+    style: Style,
+    p: Any
+  )(implicit ctx: FormatterContext): String = {
+    val f = create(ctx.locale, ctx.timezone, style)
+    p match {
+      case m: LocalDateTime => f.format(m)
+      case m: DateTime => f.format(m)
+      case m: java.sql.Timestamp => f.format(m)
+      case m: Long => f.format(m)
+      case m: String => format(style, DateTimeUtils.makeForFormatting(m))
+    }
+  }
 }

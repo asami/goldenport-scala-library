@@ -9,6 +9,9 @@ import scala.collection.JavaConverters._
 import java.net.{URL, URI}
 import java.io.File
 import org.joda.time.DateTime
+import org.joda.time.LocalDateTime
+import org.joda.time.LocalDate
+import org.joda.time.LocalTime
 import spire.math.Rational
 import com.typesafe.config._
 import org.goldenport.Strings
@@ -45,7 +48,8 @@ import org.goldenport.parser.ParseResult
  *  version May. 24, 2022
  *  version Jul. 13, 2022
  *  version Oct. 13, 2022
- * @version Nov. 28, 2022
+ *  version Nov. 28, 2022
+ * @version Dec. 12, 2022
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -172,6 +176,12 @@ case class RichConfig(config: Config) extends AnyVal {
   def consequenceDateTimeOption(key: String): Consequence[Option[DateTime]] = HoconUtils.consequenceDateTimeOption(config, key)
   def consequenceDateTimeWithContext(key: String)(implicit ctx: DateTimeContext): Consequence[DateTime] = HoconUtils.consequenceDateTimeWithContext(config, key)
   def consequenceDateTimeOptionWithContext(key: String)(implicit ctx: DateTimeContext): Consequence[Option[DateTime]] = HoconUtils.consequenceDateTimeOptionWithContext(config, key)
+  def consequenceLocalDateTime(key: String): Consequence[LocalDateTime] = HoconUtils.consequenceLocalDateTime(config, key)
+  def consequenceLocalDateTimeOption(key: String): Consequence[Option[LocalDateTime]] = HoconUtils.consequenceLocalDateTimeOption(config, key)
+  def consequenceLocalDate(key: String): Consequence[LocalDate] = HoconUtils.consequenceLocalDate(config, key)
+  def consequenceLocalDateOption(key: String): Consequence[Option[LocalDate]] = HoconUtils.consequenceLocalDateOption(config, key)
+  def consequenceLocalTime(key: String): Consequence[LocalTime] = HoconUtils.consequenceLocalTime(config, key)
+  def consequenceLocalTimeOption(key: String): Consequence[Option[LocalTime]] = HoconUtils.consequenceLocalTimeOption(config, key)
 
   def consequenceToken[T <: ValueInstance](key: String, f: ValueClass[T]): Consequence[T] =
     HoconUtils.consequenceToken(config, key, f)

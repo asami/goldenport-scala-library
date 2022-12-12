@@ -28,7 +28,8 @@ import org.goldenport.util.AnyUtils
  *  version Jun. 14, 2022
  *  version Sep. 26, 2022
  *  version Oct. 26, 2022
- * @version Nov. 25, 2022
+ *  version Nov. 25, 2022
+ * @version Dec. 12, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -37,7 +38,7 @@ case class Conclusion(
   errors: ErrorMessages = ErrorMessages.empty,
   warnings: WarningMessages = WarningMessages.empty,
   exception: Option[Throwable] = None,
-  exceptionData: Option[Conclusion.Payload.ExceptionData] = None,
+  exceptionData: Option[Conclusion.ExceptionData] = None,
   faults: Faults = Faults.empty,
   data: Option[Any] = None,
   trace: Trace = Trace.empty,
@@ -46,7 +47,7 @@ case class Conclusion(
   import Conclusion._
 
   def code: Int = status.code
-  def messageI18N: I18NMessage = messageI18NOption orElse _errors_message orElse _warnings_message orElse exception.map(x => I18NMessage(x.toString)) orElse faults.getMessageI18N getOrElse status.message
+  def messageI18N: I18NMessage = messageI18NOption orElse _errors_message orElse _warnings_message orElse exception.map(x => I18NMessage(x.toString)) orElse exceptionData.flatMap(_.getMessageI18N) orElse faults.getMessageI18N getOrElse status.message
 
   private def _errors_message: Option[I18NMessage] = errors.toOption.map(_.toI18NMessage)
 
@@ -426,6 +427,16 @@ object Conclusion {
     }
   }
 
+  trait ExceptionData {
+    def getMessageI18N: Option[I18NMessage]
+    def toPayload: ExceptionData.Payload
+  }
+  object ExceptionData {
+    trait Payload {
+      def restore: ExceptionData
+    }
+  }
+
   @SerialVersionUID(1L)
   case class Payload(
     code: StatusCode.Payload,
@@ -433,7 +444,7 @@ object Conclusion {
     errors: ErrorMessages.Payload,
     warnings: WarningMessages.Payload,
     exception: Option[Payload.ExceptionPayload],
-    exceptionData: Option[Payload.ExceptionData.Payload],
+    exceptionData: Option[ExceptionData.Payload],
     faults: Faults.Payload,
     data: Option[Any],
     trace: Trace.Payload,
@@ -462,15 +473,6 @@ object Conclusion {
     }
 
     class PayloadException(o: AnyRef) extends GoldenportException(AnyUtils.toShow(o)) {
-    }
-
-    trait ExceptionData {
-      def toPayload: ExceptionData.Payload
-    }
-    object ExceptionData {
-      trait Payload {
-        def restore: ExceptionData
-      }
     }
   }
 }

@@ -2,15 +2,20 @@ package org.goldenport.util
 
 import com.github.nscala_time.time.Imports._
 import org.joda.time.DateTimeConstants._
+import org.goldenport.context.Consequence
 
 /*
  * @since   Jan.  2, 2019
  *  version Jan. 23, 2021
- * @version Jan. 27, 2022
+ *  version Jan. 27, 2022
+ * @version Dec. 12, 2022
  * @author  ASAMI, Tomoharu
  */
 object LocalDateTimeUtils {
   def parse(s: String): LocalDateTime = LocalDateTime.parse(s)
+
+  def consequenceLocalDateTime(p: String): Consequence[LocalDateTime] =
+    Consequence(parse(p))
 
   def toDisplayString(p: LocalDateTime): String = p.toString
 

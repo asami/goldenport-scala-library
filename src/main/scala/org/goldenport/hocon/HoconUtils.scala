@@ -11,6 +11,9 @@ import java.util.Locale
 import java.net.{URL, URI}
 import java.io.File
 import org.joda.time.DateTime
+import org.joda.time.LocalDateTime
+import org.joda.time.LocalDate
+import org.joda.time.LocalTime
 import spire.math.Rational
 import com.typesafe.config._
 import com.asamioffice.goldenport.io.UURL
@@ -25,6 +28,9 @@ import org.goldenport.extension.IRecord
 import org.goldenport.parser.ParseResult
 import org.goldenport.util.TypesafeConfigUtils
 import org.goldenport.util.DateTimeUtils
+import org.goldenport.util.LocalDateTimeUtils
+import org.goldenport.util.LocalDateUtils
+import org.goldenport.util.LocalTimeUtils
 import org.goldenport.util.AnyUtils
 import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
 
@@ -53,7 +59,8 @@ import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
  *  version Feb. 17, 2022
  *  version Mar. 11, 2022
  *  version Oct. 13, 2022
- * @version Nov. 29, 2022
+ *  version Nov. 29, 2022
+ * @version Dec. 12, 2022
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -771,6 +778,42 @@ object HoconUtils {
     for {
       s <- consequenceStringOption(p, key)
       x <- s.traverse(DateTimeUtils.consequenceDateTime)
+    } yield x
+
+  def consequenceLocalDateTime(p: Config, key: String): Consequence[LocalDateTime] =
+    getString(p, key) match {
+      case Some(s) => LocalDateTimeUtils.consequenceLocalDateTime(s)
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceLocalDateTimeOption(p: Config, key: String): Consequence[Option[LocalDateTime]] =
+    for {
+      s <- consequenceStringOption(p, key)
+      x <- s.traverse(LocalDateTimeUtils.consequenceLocalDateTime)
+    } yield x
+
+  def consequenceLocalDate(p: Config, key: String): Consequence[LocalDate] =
+    getString(p, key) match {
+      case Some(s) => LocalDateUtils.consequenceLocalDate(s)
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceLocalDateOption(p: Config, key: String): Consequence[Option[LocalDate]] =
+    for {
+      s <- consequenceStringOption(p, key)
+      x <- s.traverse(LocalDateUtils.consequenceLocalDate)
+    } yield x
+
+  def consequenceLocalTime(p: Config, key: String): Consequence[LocalTime] =
+    getString(p, key) match {
+      case Some(s) => LocalTimeUtils.consequenceLocalTime(s)
+      case None => Consequence.missingPropertyFault(key)
+    }
+
+  def consequenceLocalTimeOption(p: Config, key: String): Consequence[Option[LocalTime]] =
+    for {
+      s <- consequenceStringOption(p, key)
+      x <- s.traverse(LocalTimeUtils.consequenceLocalTime)
     } yield x
 
   def consequenceToken[T <: ValueInstance](p: Config, key: String, f: ValueClass[T]): Consequence[T] =

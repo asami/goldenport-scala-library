@@ -26,7 +26,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Apr. 29, 2021
  *  version May. 30, 2021
  *  version Jun. 19, 2021
- * @version Feb.  1, 2022
+ *  version Feb.  1, 2022
+ * @version Dec.  8, 2022
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -147,7 +148,7 @@ case class I18NString(
     JsObject(a.toVector)
   }
 
-  def toI18NMessage: I18NMessage = I18NMessage(this)
+  def toI18NMessage: I18NMessage = I18NMessage.create(this)
   def toI18NElement: I18NElement = I18NElement(this)
 
   lazy val toJsonString: String = toJson.toString

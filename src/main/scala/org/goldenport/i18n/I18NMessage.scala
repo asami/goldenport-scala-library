@@ -16,7 +16,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Mar. 27, 2021
  *  version Jun. 20, 2021
  *  version Feb.  9, 2022
- * @version Jun. 13, 2022
+ *  version Jun. 13, 2022
+ * @version Dec.  8, 2022
  * @author  ASAMI, Tomoharu
  */
 case class I18NMessage(
@@ -210,7 +211,6 @@ object I18NMessage {
 
   val empty = I18NMessage("")
 
-  def apply(p: I18NString): I18NMessage = I18NMessage(p.c, p.en, p.ja, p.map, Vector.empty)
   def apply(en: String, ja: String): I18NMessage = I18NMessage(en, en, ja, Map.empty, Vector.empty)
   def apply(en: String, params: Seq[Any]): I18NMessage = I18NMessage(en, en, en, Map.empty, params.toVector)
   def apply(en: String, ja: String, params: Seq[Any]): I18NMessage = I18NMessage(en, en, ja, Map.empty, params.toVector)
@@ -236,6 +236,20 @@ object I18NMessage {
   }
 
   // def apply(p: RI18NMessage): I18NMessage = I18NMessage(p.en, p.ja, Map.empty, p.parameters)
+
+  def create(p: I18NString): I18NMessage = I18NMessage(_escape(p.c), _escape(p.en), _escape(p.ja), p.map.mapValues(_escape), Vector.empty)
+
+  private def _escape(s: String): String = {
+    val r = s.foldLeft(new StringBuilder()) { (z, x) =>
+      x match {
+        case '{' => z.append("'{'")
+        case '}' => z.append("'}'")
+        case c => z.append(c)
+      }
+      z
+    }
+    r.toString
+  }
 
   def create(locale: Locale, s: String): I18NMessage = {
     val a = if (LocaleUtils.isC(locale) || LocaleUtils.isEnglish(locale) || LocaleUtils.isJapanese(locale))

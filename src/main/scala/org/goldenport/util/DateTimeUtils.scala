@@ -30,7 +30,8 @@ import org.goldenport.i18n.LocaleUtils
  *  version Apr. 20, 2022
  *  version May.  2, 2022
  *  version Jun. 17, 2022
- * @version Nov. 17, 2022
+ *  version Nov. 17, 2022
+ * @version Dec. 10, 2022
  * @author  ASAMI, Tomoharu
  */
 object DateTimeUtils {
@@ -219,6 +220,11 @@ object DateTimeUtils {
   def consequenceDateTime(s: String, tz: DateTimeZone): Consequence[DateTime] = Consequence(
     parseDateTime(s, tz)
   )
+
+  def makeForFormatting(p: String): Any = {
+    val a = Try(LocalDateTimeUtils.parse(p)) orElse Try(LocalDateUtils.parse2(p))
+    a getOrElse parseDateTime(p, jodajst)
+  }
 
   // Convert
   def toDateTime(dt: java.util.Date, tz: DateTimeZone): DateTime =
