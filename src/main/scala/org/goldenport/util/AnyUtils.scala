@@ -44,7 +44,8 @@ import org.goldenport.values.DateTimePeriod
  *  version May.  3, 2022
  *  version Sep. 27, 2022
  *  version Oct. 29, 2022
- * @version Nov. 28, 2022
+ *  version Nov. 28, 2022
+ * @version Dec. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -58,6 +59,9 @@ object AnyUtils {
       case m: Array[_] => m.map(toString(_)).mkString(",")
       case m: Showable => m.print
       case m: JsValue => m.toString
+      case m: DateTime => DateTimeUtils.toDisplayString(m)
+      case m: LocalDateTime => LocalDateTimeUtils.toDisplayString(m)
+      case m: LocalTime => LocalTimeUtils.toDisplayString(m)
       case m: MonthDay => f"${m.getMonthOfYear}%02d-${m.getDayOfMonth}%02d"
       case _ => x.toString
     }

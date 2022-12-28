@@ -31,7 +31,7 @@ import org.goldenport.i18n.LocaleUtils
  *  version May.  2, 2022
  *  version Jun. 17, 2022
  *  version Nov. 17, 2022
- * @version Dec. 10, 2022
+ * @version Dec. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 object DateTimeUtils {
@@ -39,12 +39,16 @@ object DateTimeUtils {
   val jst = TimeZone.getTimeZone("JST")
   val jodagmt = DateTimeZone.forID("GMT")
   val jodajst = DateTimeZone.forID("Asia/Tokyo")
-  val isoFormatter = ISODateTimeFormat.dateTimeNoMillis()
+  val isoFormatter = ISODateTimeFormat.dateTimeNoMillis() // ??? NoMillis
   val isoUtcFormatter = isoFormatter.withZoneUTC
   val isoJstFormatter = isoFormatter.withZone(jodajst)
   val isoJstParser = ISODateTimeFormat.dateTimeParser.withZone(jodajst)
+  val isoNoMillisFormatter = ISODateTimeFormat.dateTimeNoMillis()
+  val isoNoMillisUtcFormatter = isoNoMillisFormatter.withZoneUTC
+  val isoNoMillisJstFormatter = isoNoMillisFormatter.withZone(jodajst)
   val basicFormattter = ISODateTimeFormat.basicDateTime.withZoneUTC // yyyyMMdd'T'HHmmss.SSSZ
   val basicFormattterJst = basicFormattter.withZone(jodajst)
+  val basicNoMillisFormattter = ISODateTimeFormat.basicDateTimeNoMillis
   val simpleFormatter = DateTimeFormat.forPattern("yyyyMMdd HHmmss").withZoneUTC
   val simpleFormatterJst = simpleFormatter.withZone(jodajst)
   val httpDateTimeFormat = {
@@ -85,6 +89,22 @@ object DateTimeUtils {
 
   def toIsoDateTimeStringJst(dt: Long): String = {
     toIsoDateTimeString(dt, jodajst)
+  }
+
+  def toIsoDateTimeNoMillisString(dt: DateTime): String =
+    toIsoDateTimeNoMillisString(dt, dt.getZone)
+
+  def toIsoDateTimeNoMillisString(dt: DateTime, tz: DateTimeZone): String =
+    toIsoDateTimeNoMillisString(dt.getMillis, tz)
+
+  def toIsoDateTimeNoMillisString(dt: Long, tz: DateTimeZone): String = {
+    val fmt = if (tz == jodajst)
+      isoNoMillisJstFormatter
+    else if (tz == jodagmt)
+      isoNoMillisUtcFormatter
+    else
+      isoNoMillisFormatter.withZone(tz)
+    fmt.print(dt)
   }
 
   def toBasicDateStringJst(dt: DateTime): String = {
@@ -167,6 +187,12 @@ object DateTimeUtils {
   def toSimpleStringJst(ts: java.sql.Timestamp): String = simpleFormatterJst.print(ts.getTime)
 
   def toSimpleString24Jst(dt: java.sql.Timestamp): String = RAISE.notImplementedYetDefect
+
+  def toDisplayString(p: DateTime): String =
+    if (hasMillisPart(p))
+      toIsoDateTimeString(p)
+    else
+      toIsoDateTimeNoMillisString(p)
 
   // Parser
   def parseIsoDateTime(s: String, tz: DateTimeZone): DateTime = {
@@ -426,5 +452,7 @@ object DateTimeUtils {
   //
   def isSameMonth(lhs: DateTime, rhs: DateTime): Boolean =
     LocalDateUtils.isSameMonth(lhs.toLocalDate, rhs.toLocalDate)
+
+  def hasMillisPart(p: DateTime): Boolean = p.getMillis % 1000 != 0
 }
 

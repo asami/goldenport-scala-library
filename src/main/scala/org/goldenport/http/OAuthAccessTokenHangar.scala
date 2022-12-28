@@ -5,14 +5,35 @@ import org.goldenport.util.TimedHangar
 
 /*
  * @since   Nov. 12, 2022
- * @version Nov. 15, 2022
+ *  version Nov. 15, 2022
+ * @version Dec. 27, 2022
  * @author  ASAMI, Tomoharu
  */
 class OAuthAccessTokenHangar(
-  val strategy: OAuthAccessTokenHangar.Strategy
+  initalstrategy: OAuthAccessTokenHangar.Strategy
 ) {
-  def takeAccessToken(): Consequence[String] = strategy.takeAccessToken()
-  def takeNewAccessToken(): Consequence[String] = strategy.takeNewAccessToken()
+  import OAuthAccessTokenHangar.Strategy._
+
+  private var _strategy: OAuthAccessTokenHangar.Strategy = initalstrategy
+
+  def takeAccessToken(): Consequence[String] = _strategy.takeAccessToken()
+  def takeNewAccessToken(): Consequence[String] = _strategy.takeNewAccessToken()
+
+  def resetAuthCode(
+    code: String,
+    booter: AuthorizationCodeGrant.BootParameters => Consequence[AuthorizationCodeGrant.Info],
+    refresher: AuthorizationCodeGrant.RefreshParameters => Consequence[AuthorizationCodeGrant.Info]
+  ): Consequence[Unit] = Consequence.run {
+    _strategy = new AuthorizationCodeGrant(code, booter, refresher)
+    takeAccessToken().map(_ => Unit)
+  }
+
+  def resetRefreshToken(
+    token: String,
+    refresher: AuthorizationCodeGrant.RefreshParameters => Consequence[AuthorizationCodeGrant.Info]
+  ): Consequence[Unit] = Consequence {
+    _strategy = new RefreshTokenGrant(token, refresher)
+  }
 }
 
 object OAuthAccessTokenHangar {
@@ -119,7 +140,6 @@ object OAuthAccessTokenHangar {
           case Consequence.Success(info, _) =>
             cache.setSeconds(info, info.expires_in)
             Consequence.success(info.access_token)
-
           case Consequence.Error(c) => Consequence.Error(c)
         }
     }

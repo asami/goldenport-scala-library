@@ -17,7 +17,7 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Jun. 20, 2021
  *  version Feb.  9, 2022
  *  version Jun. 13, 2022
- * @version Dec.  8, 2022
+ * @version Dec. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 case class I18NMessage(
@@ -236,6 +236,8 @@ object I18NMessage {
   }
 
   // def apply(p: RI18NMessage): I18NMessage = I18NMessage(p.en, p.ja, Map.empty, p.parameters)
+
+  def create(p: String): I18NMessage = I18NMessage(_escape(p), _escape(p), _escape(p), Map.empty, Vector.empty)
 
   def create(p: I18NString): I18NMessage = I18NMessage(_escape(p.c), _escape(p.en), _escape(p.ja), p.map.mapValues(_escape), Vector.empty)
 

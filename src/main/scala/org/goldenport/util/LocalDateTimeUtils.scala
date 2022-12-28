@@ -8,7 +8,7 @@ import org.goldenport.context.Consequence
  * @since   Jan.  2, 2019
  *  version Jan. 23, 2021
  *  version Jan. 27, 2022
- * @version Dec. 12, 2022
+ * @version Dec. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 object LocalDateTimeUtils {
@@ -17,9 +17,20 @@ object LocalDateTimeUtils {
   def consequenceLocalDateTime(p: String): Consequence[LocalDateTime] =
     Consequence(parse(p))
 
-  def toDisplayString(p: LocalDateTime): String = p.toString
+  def toString(p: LocalDateTime): String = p.toString
+
+  def toNoMillisString(p: LocalDateTime): String =
+    DateTimeUtils.isoNoMillisFormatter.print(p)
+
+  def toDisplayString(p: LocalDateTime): String =
+    if (hasMillisPart(p))
+      toString(p)
+    else
+      toNoMillisString(p)
 
   def toBasicDateString(p: LocalDateTime): String = p.toString
+
+  def hasMillisPart(p: LocalDateTime): Boolean = false // p.getMillis % 1000 != 0
 
   def dayCount(start: LocalDateTime, end: LocalDateTime): Int = {
     val a = end.toDateTime.withTimeAtStartOfDay.getMillis - start.toDateTime.withTimeAtStartOfDay.getMillis + 1

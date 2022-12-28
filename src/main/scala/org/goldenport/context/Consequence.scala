@@ -28,7 +28,8 @@ import org.goldenport.util.AnyUtils
  *  version Aug.  3, 2022
  *  version Sep.  3, 2022
  *  version Oct. 31, 2022
- * @version Nov. 27, 2022
+ *  version Nov. 27, 2022
+ * @version Dec. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -170,7 +171,16 @@ object Consequence {
 
   def apply[T](p: => T): Consequence[T] = execute(p)
   def success[T](p: T): Consequence[T] = Success(p)
+  def successStatus[T](p: T, s: Int): Consequence[T] = Success(p, Conclusion(s))
+  def successStatus[T](p: T, s: StatusCode): Consequence[T] = Success(p, Conclusion(s))
   def warning[T](p: T, c: Conclusion): Consequence[T] = Success(p, c)
+  def http[T](code: Int, p: T): Consequence[T] = {
+    val s = StatusCode(code)
+    if (s.isSuccess)
+      successStatus(p, s)
+    else
+      errorHttpBody(s, p)
+  }
 
   // Generic error derived from HTTP
   def badRequest[T](p: String): Consequence[T] = badRequest(I18NString(p))
@@ -214,6 +224,7 @@ object Consequence {
 
   //
   def error[T](c: Conclusion): Consequence[T] = Error(c)
+  def error[T](c: Conclusion, message: String): Consequence[T] = Error(c.withMessage(message))
   def error[T](code: Int, p: String): Consequence[T] = error(code, I18NString(p))
   def error[T](code: Int, p: I18NString): Consequence[T] = Error(Conclusion.error(code, p))
   def error[T](code: Int, e: Throwable): Consequence[T] = Error(Conclusion.error(code, e))
@@ -225,6 +236,12 @@ object Consequence {
     case m: java.io.FileNotFoundException => notFound(m)
     case m => internalServerError(m)
   }
+  def errorData[T](code: Int, p: Conclusion.ExceptionData): Consequence[T] = Error(Conclusion.errorData(code, p))
+  def errorData[T](s: StatusCode, p: Conclusion.ExceptionData): Consequence[T] = Error(Conclusion.errorData(s, p))
+  def errorData[T](c: Conclusion, p: Conclusion.ExceptionData): Consequence[T] = Error(c.withExceptionData(p))
+  def errorHttpBody[T](code: Int, p: Any): Consequence[T] = errorHttpBody(Conclusion(code), p)
+  def errorHttpBody[T](s: StatusCode, p: Any): Consequence[T] = errorHttpBody(Conclusion(s), p)
+  def errorHttpBody[T](c: Conclusion, p: Any): Consequence[T] = errorData(c, Conclusion.ExceptionData.HttpBody(p))
 
   //
   def successOrMissingPropertyFault[T](name: String, p: Option[T]): Consequence[T] =

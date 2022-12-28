@@ -2,6 +2,8 @@ package org.goldenport.context
 
 import scalaz._, Scalaz._
 import java.util.Locale
+import org.goldenport.RAISE
+import org.goldenport.Strings
 import org.goldenport.exception.GoldenportException
 import org.goldenport.i18n.I18NString
 import org.goldenport.i18n.I18NMessage
@@ -29,7 +31,7 @@ import org.goldenport.util.AnyUtils
  *  version Sep. 26, 2022
  *  version Oct. 26, 2022
  *  version Nov. 25, 2022
- * @version Dec. 12, 2022
+ * @version Dec. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -40,7 +42,7 @@ case class Conclusion(
   exception: Option[Throwable] = None,
   exceptionData: Option[Conclusion.ExceptionData] = None,
   faults: Faults = Faults.empty,
-  data: Option[Any] = None,
+  data: Option[Any] = None, // unused
   trace: Trace = Trace.empty,
   strategy: Conclusion.Strategy = Conclusion.Strategy.none
 ) {
@@ -66,6 +68,7 @@ case class Conclusion(
   def withTrace(p: TraceHandle): Conclusion = withTrace(p.ctx)
   def withTrace(p: TraceContext): Conclusion = withTrace(p.toTrace)
   def withTrace(p: Trace): Conclusion = copy(trace = p)
+  def withExceptionData(p: ExceptionData): Conclusion = copy(exceptionData = Some(p))
   def withData(p: Any): Conclusion = copy(data = Some(p))
 
   def +(rhs: Conclusion): Conclusion = Conclusion(
@@ -169,6 +172,8 @@ object Conclusion {
     }
   }
 
+  def apply(code: Int): Conclusion = Conclusion(StatusCode(code))
+
   def apply(status: StatusCode, faults: Faults): Conclusion = {
     val strategy = Strategy.make(faults)
     Conclusion(status, faults = faults, strategy = strategy)
@@ -200,6 +205,9 @@ object Conclusion {
   def error(code: Int, e: Throwable): Conclusion = Conclusion(
     StatusCode(code), exception = Some(e)
   )
+
+  def errorData(code: Int, p: ExceptionData): Conclusion = Conclusion(StatusCode(code), exceptionData = Some(p))
+  def errorData(s: StatusCode, p: ExceptionData): Conclusion = Conclusion(s, exceptionData = Some(p))
 
   def argumentFault(ps: Seq[ArgumentFault]): Conclusion = {
     val detail = DetailCode.Argument
@@ -434,6 +442,21 @@ object Conclusion {
   object ExceptionData {
     trait Payload {
       def restore: ExceptionData
+    }
+
+    sealed trait HttpBody extends ExceptionData {
+    }
+    object HttpBody {
+      case class BodyString(body: String) extends HttpBody with Payload {
+        def getMessageI18N: Option[I18NMessage] = Some(I18NMessage.create(s"HttpBody: ${Strings.cutstring(body)}"))
+        def toPayload: ExceptionData.Payload = this
+        def restore = this
+      }
+
+      def apply(p: Any): HttpBody = p match {
+        case m: String => BodyString(m)
+        case m => RAISE.notImplementedYetDefect
+      }
     }
   }
 
