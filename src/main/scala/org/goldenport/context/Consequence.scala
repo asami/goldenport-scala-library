@@ -29,7 +29,7 @@ import org.goldenport.util.AnyUtils
  *  version Sep.  3, 2022
  *  version Oct. 31, 2022
  *  version Nov. 27, 2022
- * @version Dec. 28, 2022
+ * @version Dec. 31, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -212,6 +212,7 @@ object Consequence {
   def internalServerError[T](p: String): Consequence[T] = internalServerError(I18NString(p))
   def internalServerError[T](p: I18NString): Consequence[T] = error(500, p)
   def internalServerError[T](p: Throwable): Consequence[T] = error(500, p)
+  def unsupportedOperation[T](p: String): Consequence[T] = Error(Conclusion.unsupportedOperationFault(p))
   def notImplemented[T](p: String): Consequence[T] = notImplemented(I18NString(p))
   def notImplemented[T](p: I18NString): Consequence[T] = error(501, p)
   def notImplemented[T](p: Throwable): Consequence[T] = error(501, p)

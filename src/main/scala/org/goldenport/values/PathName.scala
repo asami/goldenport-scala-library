@@ -22,7 +22,9 @@ import org.goldenport.util.StringUtils
  *  version Jun.  6, 2020
  *  version Mar. 15, 2021
  *  version Jun. 29, 2021
- * @version Mar.  6, 2022
+ *  version Mar.  6, 2022
+ *  version Dec. 30, 2022
+ * @version Jan.  4, 2023
  * @author  ASAMI, Tomoharu
  */
 case class PathName(
@@ -35,7 +37,10 @@ case class PathName(
   def head: String = firstComponent
   def headOption: Option[String] = components.headOption
   def tail: PathName = tailOption.get
-  def tailOption: Option[PathName] = getChild
+  def tailOption: Option[PathName] = components.tail match {
+    case Nil => None
+    case xs => Some(PathName(xs.mkString(delimiter)))
+  }
   lazy val components: List[String] = Strings.totokens(v, delimiter)
   lazy val firstComponent: String = components.headOption.getOrElse("")
   lazy val firstComponentBody: String = StringUtils.toPathnameBody(firstComponent)
@@ -65,6 +70,10 @@ case class PathName(
   lazy val getChild: Option[PathName] = components.tail match {
     case Nil => None
     case xs => Some(PathName(xs.mkString(delimiter)))
+  }
+  def getParent: Option[PathName] = components match {
+    case Nil => None
+    case xs => Some(PathName(xs.init.mkString(delimiter)))
   }
   def getSuffix: Option[String] = StringUtils.getSuffix(v) // lowercase
   def getSuffixLowerCase: Option[String] = StringUtils.getSuffixLowerCase(v)

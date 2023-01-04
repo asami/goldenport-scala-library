@@ -7,7 +7,8 @@ import org.goldenport.context.{DateTimeContext => CDateTimeContext}
 
 /*
  * @since   Nov. 13, 2022
- * @version Nov. 13, 2022
+ *  version Nov. 13, 2022
+ * @version Jan.  4, 2023
  * @author  ASAMI, Tomoharu
  */
 class TimedHangar[T](
@@ -64,7 +65,11 @@ object TimedHangar {
       current: DateTime,
       ts: Timestamp,
       duration: Duration
-    ): Boolean = current.getMillis <= ts.getTime + duration.toMillis
+    ): Boolean =
+      if (duration == Duration.Inf)
+        true
+      else
+        current.getMillis <= ts.getTime + duration.toMillis
   }
   object Slot {
     case class Empty[T]() extends Slot[T] {
