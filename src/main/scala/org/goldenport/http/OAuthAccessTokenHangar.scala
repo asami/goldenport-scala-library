@@ -6,7 +6,8 @@ import org.goldenport.util.TimedHangar
 /*
  * @since   Nov. 12, 2022
  *  version Nov. 15, 2022
- * @version Dec. 27, 2022
+ *  version Dec. 27, 2022
+ * @version Jan. 10, 2023
  * @author  ASAMI, Tomoharu
  */
 class OAuthAccessTokenHangar(
@@ -23,23 +24,59 @@ class OAuthAccessTokenHangar(
     code: String,
     booter: AuthorizationCodeGrant.BootParameters => Consequence[AuthorizationCodeGrant.Info],
     refresher: AuthorizationCodeGrant.RefreshParameters => Consequence[AuthorizationCodeGrant.Info]
-  ): Consequence[Unit] = Consequence.run {
+  ): Consequence[String] = Consequence.run {
     _strategy = new AuthorizationCodeGrant(code, booter, refresher)
-    takeAccessToken().map(_ => Unit)
+    takeNewAccessToken()
   }
 
   def resetRefreshToken(
     token: String,
     refresher: AuthorizationCodeGrant.RefreshParameters => Consequence[AuthorizationCodeGrant.Info]
-  ): Consequence[Unit] = Consequence {
+  ): Consequence[String] = {
     _strategy = new RefreshTokenGrant(token, refresher)
+    refreshRefreshToken()
   }
+
+  def refreshRefreshToken(): Consequence[String] = _strategy.refreshRefreshToken()
 }
 
 object OAuthAccessTokenHangar {
   sealed trait Strategy {
-    def takeAccessToken(): Consequence[String]
-    def takeNewAccessToken(): Consequence[String]
+    import Strategy.AuthorizationCodeGrant._
+
+    val cache = TimedHangar.create[Info]()
+
+    def refreshDriver: RefreshParameters => Consequence[Info]
+
+    protected def execute_Boot(): Consequence[String]
+
+    def takeAccessToken(): Consequence[String] =
+      Consequence.getOrRun(cache.get.map(_.access_token), takeNewAccessToken)
+
+    def takeNewAccessToken(): Consequence[String] =
+      cache.getDeprecated match {
+        case Some(s) => refreshDriver(RefreshParameters(s.refresh_token)) match {
+          case Consequence.Success(info, _) => apply_info(info)
+          case Consequence.Error(c) => Consequence.Error(c)
+        }
+        case None => execute_Boot()
+      }
+
+    protected final def apply_info(info: Info): Consequence[String] = {
+      cache.setSeconds(info, info.expires_in)
+      Consequence.success(info.access_token)
+    }
+
+    def refreshRefreshToken(): Consequence[String] = {
+      val a = cache.get orElse cache.getDeprecated
+      a match {
+        case Some(s) => refreshDriver(RefreshParameters(s.refresh_token)) match {
+          case Consequence.Success(info, _) => apply_info(info)
+          case Consequence.Error(c) => Consequence.Error(c)
+        }
+        case None => execute_Boot()
+      }
+    }
   }
   object Strategy {
     class AuthorizationCodeGrant(
@@ -49,30 +86,11 @@ object OAuthAccessTokenHangar {
     ) extends Strategy {
       import AuthorizationCodeGrant._
 
-      val cache = TimedHangar.create[Info]()
-
-      def takeAccessToken(): Consequence[String] =
-        Consequence.getOrRun(cache.get.map(_.access_token), takeNewAccessToken)
-
-      def takeNewAccessToken(): Consequence[String] =
-        cache.getDeprecated match {
-          case Some(s) => refreshDriver(RefreshParameters(s.refresh_token)) match {
-            case Consequence.Success(info, _) => _apply_info(info)
-            case Consequence.Error(c) => _execute_boot()
-          }
-          case None => _execute_boot()
-        }
-
-      private def _execute_boot(): Consequence[String] =
+      protected def execute_Boot(): Consequence[String] =
         bootDriver(BootParameters(authorizationCode)) match {
-          case Consequence.Success(info, _) => _apply_info(info)
+          case Consequence.Success(info, _) => apply_info(info)
           case Consequence.Error(c) => Consequence.error(c)
         }
-
-      private def _apply_info(info: Info): Consequence[String] = {
-        cache.setSeconds(info, info.expires_in)
-        Consequence.success(info.access_token)
-      }
     }
     object AuthorizationCodeGrant {
       case class BootParameters(
@@ -96,51 +114,25 @@ object OAuthAccessTokenHangar {
     ) extends Strategy {
       import AuthorizationCodeGrant._
 
-      val cache = TimedHangar.create[Info]()
-
-      def takeAccessToken(): Consequence[String] =
-        Consequence.getOrRun(cache.get.map(_.access_token), takeNewAccessToken)
-
-      def takeNewAccessToken(): Consequence[String] =
-        cache.getDeprecated match {
-          case Some(s) => refreshDriver(RefreshParameters(s.refresh_token)) match {
-            case Consequence.Success(info, _) => _apply_info(info)
-            case Consequence.Error(c) => Consequence.Error(c)
-          }
-          case None => _execute_boot()
-        }
-
-      private def _execute_boot(): Consequence[String] =
+      protected def execute_Boot(): Consequence[String] =
         refreshDriver(RefreshParameters(refreshToken)) match {
-          case Consequence.Success(info, _) => _apply_info(info)
+          case Consequence.Success(info, _) => apply_info(info)
           case Consequence.Error(c) => Consequence.Error(c)
         }
-
-      private def _apply_info(info: Info): Consequence[String] = {
-        cache.setSeconds(info, info.expires_in)
-        Consequence.success(info.access_token)
-      }
     }
     object RefreshTokenGrant {
     }
 
     class ClientCredentialGrant(
       val parameters: ClientCredentialGrant.Parameters,
-      val driver: ClientCredentialGrant.Parameters => Consequence[ClientCredentialGrant.Info]
-    ) extends Strategy {
+      val bootDriver: ClientCredentialGrant.Parameters => Consequence[AuthorizationCodeGrant.Info],
+      val refreshDriver: AuthorizationCodeGrant.RefreshParameters => Consequence[AuthorizationCodeGrant.Info]) extends Strategy {
       import ClientCredentialGrant._
 
-      val cache = TimedHangar.create[ClientCredentialGrant.Info]()
-
-      def takeAccessToken(): Consequence[String] =
-        Consequence.getOrRun(cache.get.map(_.access_token), takeNewAccessToken)
-
-      def takeNewAccessToken(): Consequence[String] = 
-        driver(parameters) match {
-          case Consequence.Success(info, _) =>
-            cache.setSeconds(info, info.expires_in)
-            Consequence.success(info.access_token)
-          case Consequence.Error(c) => Consequence.Error(c)
+      protected def execute_Boot(): Consequence[String] =
+        bootDriver(parameters) match {
+          case Consequence.Success(info, _) => apply_info(info)
+          case Consequence.Error(c) => Consequence.error(c)
         }
     }
     object ClientCredentialGrant {
@@ -149,11 +141,11 @@ object OAuthAccessTokenHangar {
         clientSecrete: String
       )
 
-      case class Info(
-        access_token: String,
-        expires_in: Int,
-        token_type: String
-      )
+      // case class Info(
+      //   access_token: String,
+      //   expires_in: Int,
+      //   token_type: String
+      // )
     }
   }
 
@@ -177,9 +169,10 @@ object OAuthAccessTokenHangar {
   def clientCredentialGrant(
     clientid: String,
     clientsecret: String,
-    driver: Strategy.ClientCredentialGrant.Parameters => Consequence[Strategy.ClientCredentialGrant.Info]
+    driver: Strategy.ClientCredentialGrant.Parameters => Consequence[Strategy.AuthorizationCodeGrant.Info],
+    refreshDriver: Strategy.AuthorizationCodeGrant.RefreshParameters => Consequence[Strategy.AuthorizationCodeGrant.Info]
   ): OAuthAccessTokenHangar = {
-    val s = new Strategy.ClientCredentialGrant(Strategy.ClientCredentialGrant.Parameters(clientid, clientsecret), driver)
+    val s = new Strategy.ClientCredentialGrant(Strategy.ClientCredentialGrant.Parameters(clientid, clientsecret), driver, refreshDriver)
     new OAuthAccessTokenHangar(s)
   }
 }
