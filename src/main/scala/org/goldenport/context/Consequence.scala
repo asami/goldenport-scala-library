@@ -9,6 +9,7 @@ import org.goldenport.i18n.I18NMessage
 import org.goldenport.parser.{ParseResult, ParseSuccess, ParseFailure, EmptyParseResult}
 import org.goldenport.parser.{ParseMessage}
 import org.goldenport.util.AnyUtils
+import org.goldenport.extension.IRecord
 
 /*
  * See org.goldenport.record.v2.ConclusionResult.
@@ -29,7 +30,8 @@ import org.goldenport.util.AnyUtils
  *  version Sep.  3, 2022
  *  version Oct. 31, 2022
  *  version Nov. 27, 2022
- * @version Dec. 31, 2022
+ *  version Dec. 31, 2022
+ * @version Jan. 10, 2023
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -37,6 +39,10 @@ sealed trait Consequence[+T] {
   def code: Int = conclusion.code
   def toOption: Option[T]
   def toTry: Try[T]
+  def some: Consequence[Option[T]]
+  def none: Consequence[Option[T]]
+  def unit: Consequence[Unit]
+  def asError[U]: Consequence[U]
   def add(p: Conclusion): Consequence[T]
   def map[U](f: T => U): Consequence[U]
   // Consequence is not Monad. Just to use 'for' comprehension in Scala syntax suger.
@@ -89,6 +95,10 @@ object Consequence {
     def isSuccess: Boolean = true
     def toOption: Option[T] = Some(result)
     def toTry: Try[T] = Try(result)
+    def some: Consequence[Option[T]] = copy(result = Some(result))
+    def none: Consequence[Option[T]] = copy(result = None)
+    def unit: Consequence[Unit] = copy(result = Unit)
+    def asError[U]: Consequence[U] = Consequence.noReachDefect("Force error in as operation.")
     def getException: Option[Throwable] = None
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
     def map[U](f: T => U): Consequence[U] = copy(result = f(result))
@@ -119,6 +129,10 @@ object Consequence {
     def isSuccess: Boolean = false
     def toOption: Option[T] = None
     def toTry: Try[T] = TryFailure(conclusion.toException)
+    def some: Consequence[Option[T]] = this.asInstanceOf[Consequence[Option[T]]]
+    def none: Consequence[Option[T]] = this.asInstanceOf[Consequence[Option[T]]]
+    def unit: Consequence[Unit] = this.asInstanceOf[Consequence[Unit]]
+    def asError[U]: Consequence[U] = this.asInstanceOf[Consequence[U]]
     def getException: Option[Throwable] = Some(conclusion.toException)
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
     def map[U](f: T => U): Consequence[U] = this.asInstanceOf[Error[U]]
@@ -171,6 +185,8 @@ object Consequence {
 
   def apply[T](p: => T): Consequence[T] = execute(p)
   def success[T](p: T): Consequence[T] = Success(p)
+  def some[T, U](p: U)(implicit ev: <:<[T, Option[U]]): Consequence[T] = Success(Some(p).asInstanceOf[T])
+  def none[T, U](implicit ev: <:<[T, Option[U]]): Consequence[T] = Success(None.asInstanceOf[T])
   def successStatus[T](p: T, s: Int): Consequence[T] = Success(p, Conclusion(s))
   def successStatus[T](p: T, s: StatusCode): Consequence[T] = Success(p, Conclusion(s))
   def warning[T](p: T, c: Conclusion): Consequence[T] = Success(p, c)
@@ -240,6 +256,7 @@ object Consequence {
   def errorData[T](code: Int, p: Conclusion.ExceptionData): Consequence[T] = Error(Conclusion.errorData(code, p))
   def errorData[T](s: StatusCode, p: Conclusion.ExceptionData): Consequence[T] = Error(Conclusion.errorData(s, p))
   def errorData[T](c: Conclusion, p: Conclusion.ExceptionData): Consequence[T] = Error(c.withExceptionData(p))
+  def errorData[T](c: Conclusion, p: IRecord): Consequence[T] = Error(c.withDataRecord(p))
   def errorHttpBody[T](code: Int, p: Any): Consequence[T] = errorHttpBody(Conclusion(code), p)
   def errorHttpBody[T](s: StatusCode, p: Any): Consequence[T] = errorHttpBody(Conclusion(s), p)
   def errorHttpBody[T](c: Conclusion, p: Any): Consequence[T] = errorData(c, Conclusion.ExceptionData.HttpBody(p))

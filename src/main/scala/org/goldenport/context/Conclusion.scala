@@ -2,11 +2,13 @@ package org.goldenport.context
 
 import scalaz._, Scalaz._
 import java.util.Locale
+import play.api.libs.json._
 import org.goldenport.RAISE
 import org.goldenport.Strings
 import org.goldenport.exception.GoldenportException
 import org.goldenport.i18n.I18NString
 import org.goldenport.i18n.I18NMessage
+import org.goldenport.extension.IRecord
 import org.goldenport.trace._
 import org.goldenport.util.ExceptionUtils
 import org.goldenport.util.AnyUtils
@@ -31,7 +33,8 @@ import org.goldenport.util.AnyUtils
  *  version Sep. 26, 2022
  *  version Oct. 26, 2022
  *  version Nov. 25, 2022
- * @version Dec. 28, 2022
+ *  version Dec. 28, 2022
+ * @version Jan. 10, 2023
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -70,6 +73,7 @@ case class Conclusion(
   def withTrace(p: Trace): Conclusion = copy(trace = p)
   def withExceptionData(p: ExceptionData): Conclusion = copy(exceptionData = Some(p))
   def withData(p: Any): Conclusion = copy(data = Some(p))
+  def withDataRecord(p: IRecord): Conclusion = copy(exceptionData = Some(ExceptionData(p)))
 
   def +(rhs: Conclusion): Conclusion = Conclusion(
     status,
@@ -437,6 +441,8 @@ object Conclusion {
 
   trait ExceptionData {
     def getMessageI18N: Option[I18NMessage]
+    def getIRecord: Option[IRecord] = None
+    def getJson: Option[JsValue] = None
     def toPayload: ExceptionData.Payload
   }
   object ExceptionData {
@@ -453,11 +459,31 @@ object Conclusion {
         def restore = this
       }
 
+      case class BodyJson(json: JsValue) extends HttpBody with Payload {
+        def getMessageI18N: Option[I18NMessage] = None
+        override def getJson = Some(json)
+        def toPayload: ExceptionData.Payload = this
+        def restore = this
+      }
+
       def apply(p: Any): HttpBody = p match {
         case m: String => BodyString(m)
         case m => RAISE.notImplementedYetDefect
       }
     }
+
+    case class DataRecord(record: IRecord) extends ExceptionData {
+      def getMessageI18N: Option[I18NMessage] = None
+      override def getIRecord: Option[IRecord] = Some(record)
+      def toPayload: ExceptionData.Payload = DataRecord.DataRecordPayload(record.toMap)
+    }
+    object DataRecord {
+      case class DataRecordPayload(record: Map[String, Any]) extends Payload {
+        def restore = DataRecord(IRecord.create(record))
+      }
+    }
+
+    def apply(p: IRecord): ExceptionData = DataRecord(p)
   }
 
   @SerialVersionUID(1L)
