@@ -34,7 +34,7 @@ import org.goldenport.util.AnyUtils
  *  version Oct. 26, 2022
  *  version Nov. 25, 2022
  *  version Dec. 28, 2022
- * @version Jan. 10, 2023
+ * @version Jan. 20, 2023
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -208,6 +208,15 @@ object Conclusion {
   )
   def error(code: Int, e: Throwable): Conclusion = Conclusion(
     StatusCode(code), exception = Some(e)
+  )
+  def error(code: Int, msg: String, e: Throwable): Conclusion = Conclusion(
+    StatusCode(code), exception = Some(e)
+  )
+  def error(code: Int, msg: I18NString, e: Throwable): Conclusion = Conclusion(
+    StatusCode(code), Some(msg.toI18NMessage), exception = Some(e)
+  )
+  def error(code: Int, msg: I18NMessage, e: Throwable): Conclusion = Conclusion(
+    StatusCode(code), Some(msg), exception = Some(e)
   )
 
   def errorData(code: Int, p: ExceptionData): Conclusion = Conclusion(StatusCode(code), exceptionData = Some(p))

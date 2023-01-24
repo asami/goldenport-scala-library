@@ -45,7 +45,8 @@ import org.goldenport.values.DateTimePeriod
  *  version Sep. 27, 2022
  *  version Oct. 29, 2022
  *  version Nov. 28, 2022
- * @version Dec. 28, 2022
+ *  version Dec. 28, 2022
+ * @version Jan. 16, 2023
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -224,9 +225,11 @@ object AnyUtils {
   }
   def toDateTime(x: Any): DateTime = x match {
     case m: DateTime => m
+    case m: String => DateTime.parse(m)
   }
   def toLocalDate(x: Any): LocalDate = x match {
     case m: LocalDate => m
+    case m: String => LocalDate.parse(m)
   }
   def toLocalTime(x: Any): LocalTime = {
     x match {

@@ -1,13 +1,14 @@
 package org.goldenport.http
 
 import org.goldenport.context.Consequence
+import org.goldenport.extension.IRecord
 import org.goldenport.util.TimedHangar
 
 /*
  * @since   Nov. 12, 2022
  *  version Nov. 15, 2022
  *  version Dec. 27, 2022
- * @version Jan. 10, 2023
+ * @version Jan. 12, 2023
  * @author  ASAMI, Tomoharu
  */
 class OAuthAccessTokenHangar(
@@ -38,11 +39,15 @@ class OAuthAccessTokenHangar(
   }
 
   def refreshRefreshToken(): Consequence[String] = _strategy.refreshRefreshToken()
+
+  def diagnostic(): Consequence[IRecord] = _strategy.diagnostic()
 }
 
 object OAuthAccessTokenHangar {
   sealed trait Strategy {
     import Strategy.AuthorizationCodeGrant._
+
+    def name: String
 
     val cache = TimedHangar.create[Info]()
 
@@ -77,6 +82,15 @@ object OAuthAccessTokenHangar {
         case None => execute_Boot()
       }
     }
+
+    def diagnostic(): Consequence[IRecord] = Consequence(
+      IRecord.data(
+        "name" -> name,
+        "token" -> _token
+      )
+    )
+
+    private def _token = cache.get.map(_.diagnostic).getOrElse("empty")
   }
   object Strategy {
     class AuthorizationCodeGrant(
@@ -85,6 +99,8 @@ object OAuthAccessTokenHangar {
       val refreshDriver: AuthorizationCodeGrant.RefreshParameters => Consequence[AuthorizationCodeGrant.Info]
     ) extends Strategy {
       import AuthorizationCodeGrant._
+
+      val name = "authorization-code-grant"
 
       protected def execute_Boot(): Consequence[String] =
         bootDriver(BootParameters(authorizationCode)) match {
@@ -105,7 +121,14 @@ object OAuthAccessTokenHangar {
         expires_in: Int,
         refresh_token: String,
         token_type: String
-      )
+      ) {
+        def diagnostic = IRecord.data(
+          "access_token" -> access_token,
+          "expires_in" -> expires_in,
+          "refresh_token" -> refresh_token,
+          "token_type" -> token_type
+        )
+      }
     }
 
     class RefreshTokenGrant(
@@ -113,6 +136,8 @@ object OAuthAccessTokenHangar {
       val refreshDriver: AuthorizationCodeGrant.RefreshParameters => Consequence[AuthorizationCodeGrant.Info]
     ) extends Strategy {
       import AuthorizationCodeGrant._
+
+      val name = "refresh-token-grant"
 
       protected def execute_Boot(): Consequence[String] =
         refreshDriver(RefreshParameters(refreshToken)) match {
@@ -128,6 +153,8 @@ object OAuthAccessTokenHangar {
       val bootDriver: ClientCredentialGrant.Parameters => Consequence[AuthorizationCodeGrant.Info],
       val refreshDriver: AuthorizationCodeGrant.RefreshParameters => Consequence[AuthorizationCodeGrant.Info]) extends Strategy {
       import ClientCredentialGrant._
+
+      val name = "client-credential-grant"
 
       protected def execute_Boot(): Consequence[String] =
         bootDriver(parameters) match {

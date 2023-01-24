@@ -31,7 +31,7 @@ import org.goldenport.extension.IRecord
  *  version Oct. 31, 2022
  *  version Nov. 27, 2022
  *  version Dec. 31, 2022
- * @version Jan. 10, 2023
+ * @version Jan. 20, 2023
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -245,6 +245,9 @@ object Consequence {
   def error[T](code: Int, p: String): Consequence[T] = error(code, I18NString(p))
   def error[T](code: Int, p: I18NString): Consequence[T] = Error(Conclusion.error(code, p))
   def error[T](code: Int, e: Throwable): Consequence[T] = Error(Conclusion.error(code, e))
+  def error[T](code: Int, msg: String, e: Throwable): Consequence[T] = error(code, I18NString(msg), e)
+  def error[T](code: Int, msg: I18NString, e: Throwable): Consequence[T] = Error(Conclusion.error(code, msg, e))
+  def error[T](code: Int, msg: I18NMessage, e: Throwable): Consequence[T] = Error(Conclusion.error(code, msg, e))
   def error[T](e: Throwable): Consequence[T] = e match {
     case m: IllegalArgumentException => badRequest(m)
     case m: SecurityException => unauthorized(m)
