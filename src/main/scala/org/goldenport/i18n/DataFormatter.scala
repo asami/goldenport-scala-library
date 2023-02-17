@@ -2,6 +2,7 @@ package org.goldenport.i18n
 
 import org.joda.time._
 import org.goldenport.RAISE
+import org.goldenport.context.Consequence
 import org.goldenport.context.DateTimeContext
 import org.goldenport.values.PathName
 import org.goldenport.value._
@@ -15,7 +16,8 @@ import org.goldenport.util.DateTimeFormatter
 
 /*
  * @since   Dec.  9, 2022
- * @version Dec. 11, 2022
+ *  version Dec. 11, 2022
+ * @version Feb. 17, 2023
  * @author  ASAMI, Tomoharu
  */
 case class DataFormatter(
@@ -71,6 +73,22 @@ object DataFormatter {
       ),
       datatype.standard
     )
+    val web = Policy(
+      Map(
+        Directive.Date -> DateFormat.Web,
+        Directive.Time -> TimeFormat.Web,
+        Directive.DateTime -> DateTimeFormat.Web
+      ),
+      datatype.standard
+    )
+    val webNatural = Policy(
+      Map(
+        Directive.Date -> DateFormat.WebNatural,
+        Directive.Time -> TimeFormat.WebNatural,
+        Directive.DateTime -> DateTimeFormat.WebNatural
+      ),
+      datatype.standard
+    )
     val application_ja = Policy(
       Map(
         Directive.Date -> Format.月日,
@@ -79,6 +97,13 @@ object DataFormatter {
       ),
       datatype.standard
     )
+
+    def get(name: String): Option[Policy] = Option(name) collect {
+      case "iso" => iso
+      case "web" => web
+      case "web-natural" => webNatural
+      case "application-ja" => application_ja
+    }
   }
 
   sealed trait Directive extends NamedValueInstance {
@@ -110,17 +135,87 @@ object DataFormatter {
 
     protected def date_style: DateFormatter.Style
   }
+  object DateFormat {
+    case object Web extends DateFormat {
+      val name = "web"
+
+      protected def date_style: DateFormatter.Style = DateFormatter.Style.Web
+    }
+    case object WebNatural extends DateFormat {
+      val name = "web-natural"
+
+      protected def date_style: DateFormatter.Style = DateFormatter.Style.WebNatural
+    }
+
+    def parse(p: String): Consequence[DateFormat] =
+      DateFormatter.Style.get(p) match {
+        case Some(s) => Consequence.success(Format.StyleDateFormat(s))
+        case None => p match {
+          case "web" => Consequence.success(Web)
+          case "web-natural" => Consequence.success(WebNatural)
+          case "月日" => Consequence.success(Format.月日)
+          case m => Consequence.success(Format.StyleDateFormat(DateFormatter.Style.Pattern(m)))
+        }
+      }
+  }
   sealed trait TimeFormat extends Format {
     def format(p: Any)(implicit ctx: FormatterContext): String =
       TimeFormatter.format(time_style, p)
 
     protected def time_style: TimeFormatter.Style
   }
+  object TimeFormat {
+    case object Web extends TimeFormat {
+      val name = "web"
+
+      protected def time_style: TimeFormatter.Style = TimeFormatter.Style.Web
+    }
+    case object WebNatural extends TimeFormat {
+      val name = "web-natural"
+
+      protected def time_style: TimeFormatter.Style = TimeFormatter.Style.WebNatural
+    }
+
+    def parse(p: String): Consequence[TimeFormat] =
+      TimeFormatter.Style.get(p) match {
+        case Some(s) => Consequence.success(Format.StyleTimeFormat(s))
+        case None => p match {
+          case "web" => Consequence.success(Web)
+          case "web-natural" => Consequence.success(WebNatural)
+          case "時分" => Consequence.success(Format.時分)
+          case "時分秒" => Consequence.success(Format.時分秒)
+          case m => Consequence.success(Format.StyleTimeFormat(TimeFormatter.Style.Pattern(m)))
+        }
+      }
+  }
   sealed trait DateTimeFormat extends Format {
     def format(p: Any)(implicit ctx: FormatterContext): String =
       DateTimeFormatter.format(datetime_style, p)
 
     protected def datetime_style: DateTimeFormatter.Style
+  }
+  object DateTimeFormat {
+    case object Web extends DateTimeFormat {
+      val name = "web"
+
+      protected def datetime_style: DateTimeFormatter.Style = DateTimeFormatter.Style.Web
+    }
+    case object WebNatural extends DateTimeFormat {
+      val name = "web-natural"
+
+      protected def datetime_style: DateTimeFormatter.Style = DateTimeFormatter.Style.WebNatural
+    }
+
+    def parse(p: String): Consequence[DateTimeFormat] =
+      DateTimeFormatter.Style.get(p) match {
+        case Some(s) => Consequence.success(Format.StyleDateTimeFormat(s))
+        case None => p match {
+          case "web" => Consequence.success(Web)
+          case "web-natural" => Consequence.success(WebNatural)
+          case "月日時分" => Consequence.success(Format.月日時分)
+          case m => Consequence.success(Format.StyleDateTimeFormat(DateTimeFormatter.Style.Pattern(m)))
+        }
+      }
   }
 
   object Format extends EnumerationClass[Format] {
@@ -139,6 +234,12 @@ object DataFormatter {
       protected def date_style: DateFormatter.Style = DateFormatter.Style.月日
     }
 
+    case class StyleDateFormat(style: DateFormatter.Style) extends DateFormat {
+      def name = style.name
+
+      protected def date_style: DateFormatter.Style = style
+    }
+
     // See org.goldenport.util.TimeFormatter
     case object 時分 extends TimeFormat {
       val name = "時分"
@@ -152,11 +253,23 @@ object DataFormatter {
       protected def time_style: TimeFormatter.Style = TimeFormatter.Style.時分秒
     }
 
+    case class StyleTimeFormat(style: TimeFormatter.Style) extends TimeFormat {
+      def name = style.name
+
+      protected def time_style: TimeFormatter.Style = style
+    }
+
     // See org.goldenport.util.DateTimeFormatter
     case object 月日時分 extends DateTimeFormat {
       val name = "月日時分"
 
       protected def datetime_style: DateTimeFormatter.Style = DateTimeFormatter.Style.月日時分
+    }
+
+    case class StyleDateTimeFormat(style: DateTimeFormatter.Style) extends DateTimeFormat {
+      def name = style.name
+
+      protected def datetime_style: DateTimeFormatter.Style = style
     }
 
     object Iso {

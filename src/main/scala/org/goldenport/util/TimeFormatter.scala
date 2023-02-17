@@ -14,7 +14,8 @@ import org.goldenport.i18n.FormatterContext
 /*
  * @since   May.  2, 2022
  *  version May.  3, 2022
- * @version Dec. 10, 2022
+ *  version Dec. 10, 2022
+ * @version Feb. 17, 2023
  * @author  ASAMI, Tomoharu
  */
 trait TimeFormatter {
@@ -75,6 +76,12 @@ object TimeFormatter {
     }
     case object Natural extends Style {
       val name = "natural"
+    }
+    case object Web extends Style {
+      val name = "web"
+    }
+    case object WebNatural extends Style {
+      val name = "web-natural"
     }
     case class Pattern(pattern: String) extends Style {
       val name = "pattern"
@@ -197,6 +204,8 @@ object TimeFormatter {
       case Style.IsoFull => JodaFormatter(locale, tz, ISODateTimeFormat.time)
       case Style.IsoBasic => JodaFormatter(locale, tz, ISODateTimeFormat.basicTimeNoMillis)
       case Style.IsoBasicFull => JodaFormatter(locale, tz, ISODateTimeFormat.basicTime)
+      case Style.Web => PatternJavaFormatter(locale, tz, "HH:mm:ss")
+      case Style.WebNatural => PatternJavaFormatter(locale, tz, "HH:mm")
       case Style.Simple => PatternJavaFormatter(locale, tz, "HHmmss")
       case Style.Natural => _natural(locale, tz)
       case Style.Pattern(pattern) => PatternJavaFormatter(locale, tz, pattern)
