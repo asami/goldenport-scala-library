@@ -11,6 +11,7 @@ import org.goldenport.i18n.CalendarFormatter
 import org.goldenport.i18n.EmptyResourceBundle
 import org.goldenport.i18n.StringFormatter
 import org.goldenport.hocon.RichConfig
+import org.goldenport.hocon.HoconUtils
 import org.goldenport.log.{LogConfig, LogLevel}
 import org.goldenport.recorder.{Recorder, StandardRecorder}
 import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperations}
@@ -31,7 +32,8 @@ import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperation
  *  version Jan. 24, 2021
  *  version Oct.  2, 2021
  *  version Feb. 28, 2022
- * @version Apr.  4, 2022
+ *  version Apr.  4, 2022
+ * @version Jan. 30, 2023
  * @author  ASAMI, Tomoharu
  */
 case class Config(
@@ -86,8 +88,15 @@ object Config {
   }
 
   def build(appname: String, args: Array[String]): Config = {
-    val hocon = _build(appname)
-    // TODO args
+    val hocon0 = _build(appname)
+    val specparams = List(
+      spec.Parameter.property("mode")
+    )
+    val parser = spec.Request(specparams)
+    val req = Request(appname)
+    val (parsed, remainder) = parser.parse(req, args)
+    val props = HoconUtils.createHocon(parsed.toPropertyMap)
+    val hocon = props.withFallback(hocon0)
     _create(hocon)
   }
 

@@ -31,7 +31,7 @@ import org.goldenport.extension.IRecord
  *  version Oct. 31, 2022
  *  version Nov. 27, 2022
  *  version Dec. 31, 2022
- * @version Jan. 20, 2023
+ * @version Jan. 25, 2023
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -197,6 +197,11 @@ object Consequence {
     else
       errorHttpBody(s, p)
   }
+
+  private val _unit = Consequence.success(Unit)
+  def unit[T] = _unit.asInstanceOf[Consequence[T]]
+  private val _none = Consequence.success(None)
+  def none[T] = _none.asInstanceOf[Consequence[T]]
 
   // Generic error derived from HTTP
   def badRequest[T](p: String): Consequence[T] = badRequest(I18NString(p))

@@ -4,6 +4,7 @@ import java.net.URL
 import org.goldenport.RAISE
 import org.goldenport.Strings
 import org.goldenport.context.Consequence
+import org.goldenport.extension.IRecord
 
 /*
  * @since   Oct.  4, 2018
@@ -14,7 +15,8 @@ import org.goldenport.context.Consequence
  *  version May. 19, 2020
  *  version Apr. 25, 2021
  *  version Jan. 30, 2022
- * @version Feb.  1, 2022
+ *  version Feb.  1, 2022
+ * @version Jan. 30, 2023
  * @author  ASAMI, Tomoharu
  */
 case class Request(
@@ -53,6 +55,11 @@ case class Request(
 
   def consequenceArg1UrlOption: Consequence[Option[URL]] =
     Consequence(arguments.headOption.map(_.asUrl))
+
+  def toPropertyMap: Map[String, Any] =
+    properties.foldLeft(Map.empty[String, Any])((z, x) => z + (x.name -> x.value.value))
+
+  def toPropertyRecord: IRecord = IRecord.create(toPropertyMap)
 }
 
 object Request {
