@@ -3,12 +3,13 @@ package org.goldenport.i18n
 import java.util.Locale
 import java.util.TimeZone
 import org.goldenport.context.DateTimeContext
+import org.goldenport.util.AnyUtils
 
 /*
  * See org.goldenport.context.FormatContext
  * 
  * @since   Dec. 10, 2022
- * @version Dec. 10, 2022
+ * @version Feb. 20, 2023
  * @author  ASAMI, Tomoharu
  */
 case class FormatterContext(
@@ -20,6 +21,8 @@ case class FormatterContext(
   def locale = i18n.locale
   def effectiveDatabaseTimeZone = i18n.effectiveDatabaseTimeZone
   def effectiveDatabaseDateTimeZone = i18n.effectiveDatabaseDateTimeZone
+
+  def toString(p: Any): String = AnyUtils.toString(p)
 }
 
 object FormatterContext {

@@ -17,7 +17,7 @@ import org.goldenport.util.DateTimeFormatter
 /*
  * @since   Dec.  9, 2022
  *  version Dec. 11, 2022
- * @version Feb. 17, 2023
+ * @version Feb. 20, 2023
  * @author  ASAMI, Tomoharu
  */
 case class DataFormatter(
@@ -26,7 +26,9 @@ case class DataFormatter(
 ) {
   import DataFormatter.{Directive, Format}
 
-  def format(p: Any): String = DataFormatter.format(p)
+  def format(p: Any): String = policy.datatypes.lift(p).
+    map(format(_, p)).
+    getOrElse(DataFormatter.format(p))
 
   def format(directive: Option[Directive], p: Any): String =
     directive.map(format(_, p)).getOrElse(format(p))
@@ -47,16 +49,23 @@ case class DataFormatter(
 object DataFormatter {
   object datatype {
     val standard: PartialFunction[Any, Directive] = {
+      case m: Double => Directive.Double
+      case m: BigDecimal => Directive.BigDecimal
       case m: DateTime => Directive.DateTime
+      case m: LocalDateTime => Directive.DateTime
+      case m: LocalDate => Directive.Date
+      case m: LocalTime => Directive.Time
       case m: java.sql.Timestamp => Directive.DateTime
       case m: java.sql.Date => Directive.DateTime
       case m: java.util.Date => Directive.DateTime
     }
     val mysql: PartialFunction[Any, Directive] = {
-      case m: DateTime => Directive.DateTime
-      case m: java.sql.Timestamp => Directive.DateTime
-      case m: java.sql.Date => Directive.Date
-      case m: java.util.Date => Directive.Date
+      val a: PartialFunction[Any, Directive] = {
+        case m: java.sql.Timestamp => Directive.DateTime
+        case m: java.sql.Date => Directive.Date
+        case m: java.util.Date => Directive.Date
+      }
+      a orElse standard
     }
   }
 
@@ -65,12 +74,17 @@ object DataFormatter {
     datatypes: PartialFunction[Any, Directive]
   )
   object Policy {
+    private val _primitive_map = Map(
+      Directive.Double -> DoubleFormat.Standard,
+      Directive.BigDecimal -> BigDecimalFormat.Standard
+    )
+
     val iso = Policy(
       Map(
         Directive.Date -> Format.Iso.Date,
         Directive.Time -> Format.Iso.Time,
         Directive.DateTime -> Format.Iso.DateTime
-      ),
+      ) ++ _primitive_map,
       datatype.standard
     )
     val web = Policy(
@@ -78,7 +92,7 @@ object DataFormatter {
         Directive.Date -> DateFormat.Web,
         Directive.Time -> TimeFormat.Web,
         Directive.DateTime -> DateTimeFormat.Web
-      ),
+      ) ++ _primitive_map,
       datatype.standard
     )
     val webNatural = Policy(
@@ -86,7 +100,7 @@ object DataFormatter {
         Directive.Date -> DateFormat.WebNatural,
         Directive.Time -> TimeFormat.WebNatural,
         Directive.DateTime -> DateTimeFormat.WebNatural
-      ),
+      ) ++ _primitive_map,
       datatype.standard
     )
     val application_ja = Policy(
@@ -94,7 +108,7 @@ object DataFormatter {
         Directive.Date -> Format.月日,
         Directive.Time -> Format.時分,
         Directive.DateTime -> Format.月日時分
-      ),
+      ) ++ _primitive_map,
       datatype.standard
     )
 
@@ -109,8 +123,14 @@ object DataFormatter {
   sealed trait Directive extends NamedValueInstance {
   }
   object Directive extends EnumerationClass[Directive] {
-    val elements = Vector(Date, Time, DateTime)
+    val elements = Vector(Double, BigDecimal, Date, Time, DateTime)
 
+    case object Double extends Directive {
+      val name = "double"
+    }
+    case object BigDecimal extends Directive {
+      val name = "bigdecimal"
+    }
     case object Date extends Directive {
       val name = "date"
     }
@@ -217,6 +237,27 @@ object DataFormatter {
         }
       }
   }
+  sealed trait DoubleFormat extends Format {
+    def format(p: Any)(implicit ctx: FormatterContext): String
+  }
+  object DoubleFormat {
+    case object Standard extends DoubleFormat {
+      val name = "standard"
+
+      def format(p: Any)(implicit ctx: FormatterContext): String = ctx.toString(p)
+    }
+  }
+
+  sealed trait BigDecimalFormat extends Format {
+    def format(p: Any)(implicit ctx: FormatterContext): String
+  }
+  object BigDecimalFormat {
+    case object Standard extends BigDecimalFormat {
+      val name = "standard"
+
+      def format(p: Any)(implicit ctx: FormatterContext): String = ctx.toString(p)
+    }
+  }
 
   object Format extends EnumerationClass[Format] {
     val elements = Vector()
@@ -224,7 +265,7 @@ object DataFormatter {
     case object ToString extends Format {
       val name = "string"
 
-      def format(p: Any)(implicit ctx: FormatterContext): String = AnyUtils.toString(p)
+      def format(p: Any)(implicit ctx: FormatterContext): String = ctx.toString(p)
     }
 
     // See org.goldenport.util.DateFormatter
