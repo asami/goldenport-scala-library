@@ -41,7 +41,8 @@ import org.goldenport.extension.IRecord
  *  version Apr. 21, 2022
  *  version May. 20, 2022
  *  version Jun. 17, 2022
- * @version Nov.  8, 2022
+ *  version Nov.  8, 2022
+ * @version Feb. 24, 2023
  * @author  ASAMI, Tomoharu
  */
 sealed trait DateTimePeriod { // TODO DateTimeInterval (java8 time)
@@ -794,7 +795,7 @@ object DateTimePeriod {
     ): EndOnly = EndOnly(DateTimeInclusive(e))
   }
 
-  case class Just (
+  case class Just(
     dateTime: DateTime
   ) extends DateTimePeriod {
     val start: Option[DateTime] = Some(dateTime)
@@ -860,9 +861,12 @@ object DateTimePeriod {
           }
         else
           StartEnd(l, r, si, ei)
-      case (Some(l), None) => StartOnly(l, si)
-      case (None, Some(r)) => EndOnly(r, ei)
-      case (None, None) => Whole
+      case (Some(l), None) =>
+        StartOnly(l, si)
+      case (None, Some(r)) =>
+        EndOnly(r, ei)
+      case (None, None) =>
+        Whole
     }
 
   def apply(s: Option[DateTime], e: Option[DateTime]): DateTimePeriod =
@@ -953,6 +957,12 @@ object DateTimePeriod {
     p: String
   ): DateTimePeriod = Builder(DateTimeContext(now, tz), kind).fromExpression(p)
 
+  def parseNonEmpty(ctx: DateTimeContext, p: String): DateTimePeriod =
+    Builder(ctx, acceptEmpty = false, acceptJust = false).fromExpression(p)
+
+  def parseFill(ctx: DateTimeContext, p: String): DateTimePeriod =
+    Builder(ctx, acceptEmpty = false, acceptJust = false, acceptEmptyStart = false, acceptEmptyEnd = false).fromExpression(p)
+
   /*
    * Caution: Timezone depends running environment.
    */
@@ -960,7 +970,11 @@ object DateTimePeriod {
 
   case class Builder(
     context: DateTimeContext,
-    kind: BoundsKind = CloseClose
+    kind: BoundsKind = CloseClose,
+    acceptEmpty: Boolean = true,
+    acceptJust: Boolean = true,
+    acceptEmptyStart: Boolean = true,
+    acceptEmptyEnd: Boolean = true
   ) {
     import RichDateTime.Implicits._
 
@@ -985,7 +999,7 @@ object DateTimePeriod {
       end: Option[String],
       inclusive: Boolean
     ): DateTimePeriod = {
-      DateTimePeriod(
+      _create(
         start.map(toDateTime),
         end.map(toDateTime),
         isStartInclusive,
@@ -999,12 +1013,66 @@ object DateTimePeriod {
       low: Boolean,
       high: Boolean
     ): DateTimePeriod = {
-      DateTimePeriod(
+      _create(
         start.map(toDateTime),
         end.map(toDateTime),
         low,
         high
       )
+    }
+
+    private def _create(
+      s: Option[DateTime],
+      e: Option[DateTime]
+    ): DateTimePeriod = _create(s, e, isStartInclusive, isEndInclusive)
+
+    private def _create(
+      s: Option[DateTime],
+      e: Option[DateTime],
+      si: Boolean,
+      ei: Boolean
+    ): DateTimePeriod = {
+      val a = DateTimePeriod(s, e, si, ei)
+      _check(a) match {
+        case Some(error) => RAISE.invalidArgumentFault(error)
+        case None => a
+      }
+    }
+
+    private def _check(p: DateTimePeriod): Option[String] = {
+      val a = if (!acceptEmpty && p == Empty)
+        Some("Empty interval")
+      else if (!acceptJust && p.isInstanceOf[Just])
+        Some("Just interval")
+      else
+        (acceptEmptyStart, acceptEmptyEnd) match {
+          case (true, true) => None
+          case (true, false) =>
+            if (p.end.isEmpty)
+              Some("Missing end.")
+            else
+              None
+          case (false, true) =>
+            if (p.start.isEmpty)
+              Some("Missing start.")
+            else
+              None
+          case (false, false) =>
+            if (p.start.isEmpty && p.end.isEmpty)
+              Some("Missing both start and end.")
+            else
+              None
+        }
+      a orElse {
+        p match {
+          case StartEnd(s, e) =>
+            if (s.dateTime > e.dateTime)
+              Some("Start is later than end.")
+            else
+              None
+          case _ => None
+        }
+      }
     }
 
     def toDateTime(
@@ -1066,17 +1134,17 @@ object DateTimePeriod {
       val dt = RichDateTime(base)
       val tz = dt.toRichDateTimeZone
       def year(y: Int) = {
-        DateTimePeriod(
+        _create(
           Some(tz.yearFirst(y)),
           Some(tz.yearLast(y)))
       }
       def yearmonth(y: Int, m: Int) = {
-        DateTimePeriod(
+        _create(
           Some(tz.monthFirst(y, m)),
           Some(tz.monthLast(y, m)))
       }
       def yearmonthday(y: Int, m: Int, d: Int) = {
-        DateTimePeriod(
+        _create(
           Some(tz.dayFirst(y, m, d)),
           Some(tz.dayLast(y, m, d)))
       }
@@ -1085,7 +1153,7 @@ object DateTimePeriod {
         case "year" => year(base.getYear)
         case "month" => yearmonth(base.getYear, base.getMonthOfYear)
         case "day" => yearmonthday(base.getYear, base.getMonthOfYear, base.getDayOfMonth)
-        case KEY_DAY_PRESISE_TIME => DateTimePeriod(Some(base), Some(base.plusDays(1).minusMillis(1)))
+        case KEY_DAY_PRESISE_TIME => _create(Some(base), Some(base.plusDays(1).minusMillis(1)))
         case Year(y) => year(y.toInt)
         case YearMonth(y, m) => yearmonth(y.toInt, m.toInt)
         case YearMonthDay(y, m, d) => yearmonthday(y.toInt, m.toInt, d.toInt)
@@ -1095,7 +1163,7 @@ object DateTimePeriod {
         case "year" => year(base.getYear).plusYears(n)
         case "month" => yearmonth(base.getYear, base.getMonthOfYear).plusMonths(n)
         case "day" => yearmonthday(base.getYear, base.getMonthOfYear, base.getDayOfMonth).plusDays(n)
-        case KEY_DAY_PRESISE_TIME => DateTimePeriod(Some(base), Some(base.plusDays(n).minusMillis(1)))
+        case KEY_DAY_PRESISE_TIME => _create(Some(base), Some(base.plusDays(n).minusMillis(1)))
         case Year(y) => year(y.toInt).plusYears(n)
         case YearMonth(y, m) => yearmonth(y.toInt, m.toInt).plusMonths(n)
         case YearMonthDay(y, m, d) => yearmonthday(y.toInt, m.toInt, d.toInt).plusDays(n)
@@ -1105,7 +1173,7 @@ object DateTimePeriod {
         case "year" => year(base.getYear).minusYears(n)
         case "month" => yearmonth(base.getYear, base.getMonthOfYear).minusMonths(n)
         case "day" => yearmonthday(base.getYear, base.getMonthOfYear, base.getDayOfMonth).minusDays(n)
-        case KEY_DAY_PRESISE_TIME => DateTimePeriod(Some(base.minusDays(n)), Some(base.minusDays(n - 1).minusMillis(1)))
+        case KEY_DAY_PRESISE_TIME => _create(Some(base.minusDays(n)), Some(base.minusDays(n - 1).minusMillis(1)))
         case Year(y) => year(y.toInt).minusYears(n)
         case YearMonth(y, m) => yearmonth(y.toInt, m.toInt).minusMonths(n)
         case YearMonthDay(y, m, d) => yearmonthday(y.toInt, m.toInt, d.toInt).minusDays(n)
@@ -1226,7 +1294,11 @@ object DateTimePeriod {
           case _ => (a, isEndInclusive)
         }
 //        println(s"pre body: $s, $a, $b)")
-        body(false, b, isstartinclusive, isendinclusive)
+        val r = body(false, b, isstartinclusive, isendinclusive)
+        _check(r) match {
+          case Some(error) => RAISE.invalidArgumentFault(s"$error: $s")
+          case None => r
+        }
       }
     }
 
@@ -1241,7 +1313,7 @@ object DateTimePeriod {
     def yearly(
       year: Int
     ): DateTimePeriod = {
-      DateTimePeriod(
+      _create(
         Some(datetimeYearFirst(year)),
         Some(datetimeYearLast(year)))
     }
@@ -1254,13 +1326,13 @@ object DateTimePeriod {
       val (year, month) = effectiveYearMonth(currentYear, currentMonth, currentDay)
       val start = new DateTime(year, month, 1, 0, 0, dateTimeZone)
       val end = new DateTime(year, month, 1, 0, 0, dateTimeZone).plusMonths(1).minusDays(1)
-      DateTimePeriod(Some(start), Some(end))
+      _create(Some(start), Some(end))
     }
 
     def monthly(
       year: Int, month: Int
     ): DateTimePeriod = {
-      DateTimePeriod(
+      _create(
         Some(datetimeMonthFirst(year, month)),
         Some(datetimeMonthLast(year, month)))
     }
@@ -1276,7 +1348,7 @@ object DateTimePeriod {
     def weekly(
       year: Int, week: Int
     ): DateTimePeriod = {
-      DateTimePeriod(
+      _create(
         Some(datetimeWeekFirst(year, week)),
         Some(datetimeWeekLast(year, week)))
     }
@@ -1289,13 +1361,13 @@ object DateTimePeriod {
       val (year, month, day) = effectiveYearMonthDay(dateTimeZone)(currentYear, currentMonth, currentDay, currentHour)
       val start = new DateTime(year, month, day, 0, 0, dateTimeZone)
       val end = new DateTime(year, month, day, 0, 0, dateTimeZone).plusDays(1).minusMillis(1)
-      DateTimePeriod(Some(start), Some(end))
+      _create(Some(start), Some(end))
     }
 
     def daily(
       year: Int, month: Int, day: Int
     ): DateTimePeriod = {
-      DateTimePeriod(
+      _create(
         Some(datetimeDayFirst(year, month, day)),
         Some(datetimeDayLast(year, month, day)))
     }
