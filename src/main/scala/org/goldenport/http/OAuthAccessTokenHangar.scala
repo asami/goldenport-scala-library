@@ -8,7 +8,8 @@ import org.goldenport.util.TimedHangar
  * @since   Nov. 12, 2022
  *  version Nov. 15, 2022
  *  version Dec. 27, 2022
- * @version Jan. 12, 2023
+ *  version Jan. 12, 2023
+ * @version Mar.  1, 2023
  * @author  ASAMI, Tomoharu
  */
 class OAuthAccessTokenHangar(
@@ -58,14 +59,7 @@ object OAuthAccessTokenHangar {
     def takeAccessToken(): Consequence[String] =
       Consequence.getOrRun(cache.get.map(_.access_token), takeNewAccessToken)
 
-    def takeNewAccessToken(): Consequence[String] =
-      cache.getDeprecated match {
-        case Some(s) => refreshDriver(RefreshParameters(s.refresh_token)) match {
-          case Consequence.Success(info, _) => apply_info(info)
-          case Consequence.Error(c) => Consequence.Error(c)
-        }
-        case None => execute_Boot()
-      }
+    def takeNewAccessToken(): Consequence[String] = _refresh(cache.getDeprecated)
 
     protected final def apply_info(info: Info): Consequence[String] = {
       cache.setSeconds(info, info.expires_in)
@@ -73,15 +67,21 @@ object OAuthAccessTokenHangar {
     }
 
     def refreshRefreshToken(): Consequence[String] = {
-      val a = cache.get orElse cache.getDeprecated
-      a match {
-        case Some(s) => refreshDriver(RefreshParameters(s.refresh_token)) match {
-          case Consequence.Success(info, _) => apply_info(info)
-          case Consequence.Error(c) => Consequence.Error(c)
+      val info = cache.get orElse cache.getDeprecated
+      _refresh(info)
+    }
+
+    private def _refresh(info: Option[Info]) =
+      info match {
+        case Some(s) => s.refresh_token match {
+          case Some(token) => refreshDriver(RefreshParameters(token)) match {
+            case Consequence.Success(info, _) => apply_info(info)
+            case Consequence.Error(c) => Consequence.Error(c)
+          }
+          case None => execute_Boot()
         }
         case None => execute_Boot()
       }
-    }
 
     def diagnostic(): Consequence[IRecord] = Consequence(
       IRecord.data(
@@ -119,14 +119,15 @@ object OAuthAccessTokenHangar {
       case class Info(
         access_token: String,
         expires_in: Int,
-        refresh_token: String,
+        refresh_token: Option[String],
         token_type: String
       ) {
         def diagnostic = IRecord.data(
           "access_token" -> access_token,
           "expires_in" -> expires_in,
-          "refresh_token" -> refresh_token,
           "token_type" -> token_type
+        ) + IRecord.dataOption(
+          "refresh_token" -> refresh_token
         )
       }
     }
@@ -148,13 +149,13 @@ object OAuthAccessTokenHangar {
     object RefreshTokenGrant {
     }
 
-    class ClientCredentialGrant(
-      val parameters: ClientCredentialGrant.Parameters,
-      val bootDriver: ClientCredentialGrant.Parameters => Consequence[AuthorizationCodeGrant.Info],
+    class ClientCredentialsGrant(
+      val parameters: ClientCredentialsGrant.Parameters,
+      val bootDriver: ClientCredentialsGrant.Parameters => Consequence[AuthorizationCodeGrant.Info],
       val refreshDriver: AuthorizationCodeGrant.RefreshParameters => Consequence[AuthorizationCodeGrant.Info]) extends Strategy {
-      import ClientCredentialGrant._
+      import ClientCredentialsGrant._
 
-      val name = "client-credential-grant"
+      val name = "client-credentials-grant"
 
       protected def execute_Boot(): Consequence[String] =
         bootDriver(parameters) match {
@@ -162,7 +163,7 @@ object OAuthAccessTokenHangar {
           case Consequence.Error(c) => Consequence.error(c)
         }
     }
-    object ClientCredentialGrant {
+    object ClientCredentialsGrant {
       case class Parameters(
         clientId: String,
         clientSecrete: String
@@ -193,13 +194,22 @@ object OAuthAccessTokenHangar {
     new OAuthAccessTokenHangar(s)
   }
 
-  def clientCredentialGrant(
+  def clientCredentialsGrant(
     clientid: String,
     clientsecret: String,
-    driver: Strategy.ClientCredentialGrant.Parameters => Consequence[Strategy.AuthorizationCodeGrant.Info],
+    driver: Strategy.ClientCredentialsGrant.Parameters => Consequence[Strategy.AuthorizationCodeGrant.Info]
+  ): OAuthAccessTokenHangar = clientCredentialsGrant(clientid, clientsecret, driver, _none_refresh_driver)
+
+  def clientCredentialsGrant(
+    clientid: String,
+    clientsecret: String,
+    driver: Strategy.ClientCredentialsGrant.Parameters => Consequence[Strategy.AuthorizationCodeGrant.Info],
     refreshDriver: Strategy.AuthorizationCodeGrant.RefreshParameters => Consequence[Strategy.AuthorizationCodeGrant.Info]
   ): OAuthAccessTokenHangar = {
-    val s = new Strategy.ClientCredentialGrant(Strategy.ClientCredentialGrant.Parameters(clientid, clientsecret), driver, refreshDriver)
+    val s = new Strategy.ClientCredentialsGrant(Strategy.ClientCredentialsGrant.Parameters(clientid, clientsecret), driver, refreshDriver)
     new OAuthAccessTokenHangar(s)
   }
+
+  private def _none_refresh_driver(p: Strategy.AuthorizationCodeGrant.RefreshParameters): Consequence[Strategy.AuthorizationCodeGrant.Info] =
+    Consequence.unsupportedOperation("No refresh token handling")
 }
