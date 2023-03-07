@@ -17,7 +17,8 @@ import org.goldenport.util.DateTimeFormatter
 /*
  * @since   Dec.  9, 2022
  *  version Dec. 11, 2022
- * @version Feb. 20, 2023
+ *  version Feb. 20, 2023
+ * @version Mar.  7, 2023
  * @author  ASAMI, Tomoharu
  */
 case class DataFormatter(
@@ -72,7 +73,15 @@ object DataFormatter {
   case class Policy(
     directives: PartialFunction[Directive, Format],
     datatypes: PartialFunction[Any, Directive]
-  )
+  ) {
+    def withDirectives(p: PartialFunction[Directive, Format]) = copy(directives = p)
+    def appendDirectives(p: PartialFunction[Directive, Format]) = copy(directives = directives orElse p)
+    def prependDirectives(p: PartialFunction[Directive, Format]) = copy(directives = p orElse directives)
+    def withDatatypes(p: PartialFunction[Any, Directive]) = copy(datatypes = p)
+    def appendDatatyps(p: PartialFunction[Any, Directive]) = copy(datatypes = datatypes orElse p)
+    def prependDatatyps(p: PartialFunction[Any, Directive]) = copy(datatypes = p orElse datatypes)
+
+  }
   object Policy {
     private val _primitive_map = Map(
       Directive.Double -> DoubleFormat.Standard,

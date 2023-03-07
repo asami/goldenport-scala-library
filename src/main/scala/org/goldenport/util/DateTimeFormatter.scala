@@ -16,7 +16,8 @@ import org.goldenport.i18n.FormatterContext
  * @since   May.  1, 2022
  *  version May.  3, 2022
  *  version Dec. 10, 2022
- * @version Feb. 17, 2023
+ *  version Feb. 17, 2023
+ * @version Mar.  7, 2023
  * @author  ASAMI, Tomoharu
  */
 trait DateTimeFormatter {
@@ -302,6 +303,8 @@ object DateTimeFormatter {
       case m: LocalDateTime => f.format(m)
       case m: DateTime => f.format(m)
       case m: java.sql.Timestamp => f.format(m)
+      case m: java.sql.Date => f.format(m)
+      case m: java.util.Date => f.format(m)
       case m: Long => f.format(m)
       case m: String => format(style, DateTimeUtils.makeForFormatting(m))
     }
