@@ -26,7 +26,8 @@ import com.asamioffice.goldenport.text.UString
  *  version Sep.  8, 2020
  *  version Apr. 15, 2021
  *  version May. 30, 2021
- * @version Mar. 30, 2022
+ *  version Mar. 30, 2022
+ * @version Apr. 18, 2023
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -234,7 +235,7 @@ object Strings {
   }
 
   def blankp(s: String): Boolean =
-    s == null || s.length == 0 || s.forall(_ == ' ')
+    s == null || s.length == 0 || s.forall(x => x == ' ' || x == '\t')
 
   def blankp(s: Option[String]): Boolean = {
     s.map(blankp) getOrElse true

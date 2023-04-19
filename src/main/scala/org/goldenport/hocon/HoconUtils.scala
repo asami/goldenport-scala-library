@@ -60,7 +60,8 @@ import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
  *  version Mar. 11, 2022
  *  version Oct. 13, 2022
  *  version Nov. 29, 2022
- * @version Dec. 12, 2022
+ *  version Dec. 12, 2022
+ * @version Apr. 10, 2023
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -692,13 +693,19 @@ object HoconUtils {
   }
 
   def consequenceFiniteDuration(p: Config, key: String): Consequence[FiniteDuration] =
-    Consequence.successOrMissingPropertyFault(key, getFiniteDuration(p, key))
+    for {
+      x <- consequenceFiniteDurationOption(p, key)
+      r <- Consequence.successOrMissingPropertyFault(key, x)
+    } yield r
 
   def consequenceFiniteDuration(p: Config, key: String, d: FiniteDuration): Consequence[FiniteDuration] =
     consequenceFiniteDurationOption(p, key).map(_.getOrElse(d))
 
   def consequenceFiniteDurationOption(p: Config, key: String): Consequence[Option[FiniteDuration]] =
-    Consequence.success(getFiniteDuration(p, key))
+    for {
+      a <- consequenceDurationOption(p, key)
+      r <- _option_finitduration(key, a)
+    } yield r
 
   def consequenceFiniteDurationByMinute(p: Config, key: String): Consequence[FiniteDuration] =
     for {

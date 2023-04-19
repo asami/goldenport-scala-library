@@ -16,7 +16,8 @@ import org.goldenport.util.DateTimeUtils
  *  version Feb. 16, 2022
  *  version Apr.  4, 2022
  *  version May.  2, 2022
- * @version Nov. 13, 2022
+ *  version Nov. 13, 2022
+ * @version Apr.  6, 2023
  * @author  ASAMI, Tomoharu
  */
 case class DateTimeContext(
@@ -87,6 +88,22 @@ object DateTimeContext {
   def create(tz: DateTimeZone, y: Int, m: Int, d: Int, h: Int, mi: Int): DateTimeContext = {
     val base = DateTime.now(tz)
     val a = new DateTime(y, m, d, h, mi, tz)
+    DateTimeContext(base, new Period(base, a), tz)
+  }
+
+  def create(tz: DateTimeZone, ts: Long): DateTimeContext = {
+    val base = DateTime.now(tz)
+    val a = new DateTime(ts, tz)
+    DateTimeContext(base, new Period(base, a), tz)
+  }
+
+  def create(
+    tz: DateTimeZone,
+    basets: Long,
+    appts: Long
+  ): DateTimeContext = {
+    val base = new DateTime(basets, tz)
+    val a = new DateTime(appts, tz)
     DateTimeContext(base, new Period(base, a), tz)
   }
 }

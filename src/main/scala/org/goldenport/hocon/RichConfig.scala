@@ -49,7 +49,8 @@ import org.goldenport.parser.ParseResult
  *  version Jul. 13, 2022
  *  version Oct. 13, 2022
  *  version Nov. 28, 2022
- * @version Dec. 12, 2022
+ *  version Dec. 12, 2022
+ * @version Apr.  4, 2023
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -120,9 +121,23 @@ case class RichConfig(config: Config) extends AnyVal {
   def parseObjectList[T](key: String, f: Config => ParseResult[T]): ParseResult[List[T]] = HoconUtils.parseObjectList(config, key, f)
   def parseAsObjectList[T](key: String, f: Config => ParseResult[T]): ParseResult[List[T]] = HoconUtils.parseAsObjectList(config, key, f)
 
+  def cBoolean(key: String): Consequence[Boolean] = HoconUtils.consequenceBoolean(config, key)
+  def cBooleanOption(key: String): Consequence[Option[Boolean]] = HoconUtils.consequenceBooleanOption(config, key)
+  def cShort(key: String): Consequence[Short] = HoconUtils.consequenceShort(config, key)
+  def cShortOption(key: String): Consequence[Option[Short]] = HoconUtils.consequenceShortOption(config, key)
+  def cInt(key: String): Consequence[Int] = HoconUtils.consequenceInt(config, key)
+  def cIntOption(key: String): Consequence[Option[Int]] = HoconUtils.consequenceIntOption(config, key)
+  def cLong(key: String): Consequence[Long] = HoconUtils.consequenceLong(config, key)
+  def cLongOption(key: String): Consequence[Option[Long]] = HoconUtils.consequenceLongOption(config, key)
+
+  def cFloat(key: String): Consequence[Float] = HoconUtils.consequenceFloat(config, key)
+  def cFloatOption(key: String): Consequence[Option[Float]] = HoconUtils.consequenceFloatOption(config, key)
+  def cDouble(key: String): Consequence[Double] = HoconUtils.consequenceDouble(config, key)
+  def cDoubleOption(key: String): Consequence[Option[Double]] = HoconUtils.consequenceDoubleOption(config, key)
+  def cBigDecimal(key: String): Consequence[BigDecimal] = HoconUtils.consequenceBigDecimal(config, key)
+  def cBigDecimalOption(key: String): Consequence[Option[BigDecimal]] = HoconUtils.consequenceBigDecimalOption(config, key)
   def cString(key: String): Consequence[String] = HoconUtils.consequenceString(config, key)
   def cStringOption(key: String): Consequence[Option[String]] = HoconUtils.consequenceStringOption(config, key)
-  def cBigDecimal(key: String): Consequence[BigDecimal] = HoconUtils.consequenceBigDecimal(config, key)
   def cRational(key: String): Consequence[Rational] = HoconUtils.consequenceRational(config, key)
   def cRationalOption(key: String): Consequence[Option[Rational]] = HoconUtils.consequenceRationalOption(config, key)
   def cAsConfig(key: String): Consequence[Config] = HoconUtils.consequenceAsConfig(config, key)
