@@ -49,7 +49,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Apr. 10, 2021
  *  version Dec. 31, 2021
  *  version Feb. 25, 2022
- * @version Mar. 28, 2022
+ *  version Mar. 28, 2022
+ * @version Apr. 30, 2023
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -630,6 +631,14 @@ object StringUtils {
 
   def toEmbedConsole(p: String, width: Int): String =
     StringFormatter.display.embed(p, width)
+
+  def getString2(p: String, separator: String): Option[(String, String)] =
+    p.indexOf(separator) match {
+      case -1 => None
+      case n => Some((p.substring(0, n), p.substring(n + separator.length)))
+    }
+
+  def getNameDirective(p: String): Option[(String, String)] = getString2(p, "__")
 
   /*
    * List

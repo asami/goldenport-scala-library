@@ -9,7 +9,8 @@ import org.goldenport.parser._
 /*
  * @since   Jan. 19, 2021
  *  version Mar. 24, 2021
- * @version Sep. 26, 2022
+ *  version Sep. 26, 2022
+ * @version Apr. 30, 2023
  * @author  ASAMI, Tomoharu
  */
 object RegexUtils {
@@ -17,6 +18,15 @@ object RegexUtils {
     regex.findFirstMatchIn(s).flatMap(getString(_, i))
 
   def getString(p: Match, i: Int): Option[String] = Option(p.group(i))
+
+  def getString2(regex: Regex, s: String, i1: Int, i2: Int): Option[(String, String)] =
+    regex.findFirstMatchIn(s).flatMap(getString2(_, i1, i2))
+
+  def getString2(p: Match, i1: Int, i2: Int): Option[(String, String)] =
+    (Option(p.group(i1)), Option(p.group(i2))) match {
+      case (Some(l), Some(r)) => Some(l, r)
+      case _ => None
+    }
 
   def getStrings(p: Match, i: Int, is: Int*): Option[List[Option[String]]] = getStrings(p, i +: is)
 
