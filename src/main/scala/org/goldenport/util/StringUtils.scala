@@ -50,7 +50,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Dec. 31, 2021
  *  version Feb. 25, 2022
  *  version Mar. 28, 2022
- * @version Apr. 30, 2023
+ *  version Apr. 30, 2023
+ * @version Jun. 22, 2023
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -638,7 +639,7 @@ object StringUtils {
       case n => Some((p.substring(0, n), p.substring(n + separator.length)))
     }
 
-  def getNameDirective(p: String): Option[(String, String)] = getString2(p, "__")
+  def getNameDirective(p: String): Option[(String, String)] = getString2(toPathnameBody(p), "__")
 
   /*
    * List
