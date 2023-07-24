@@ -18,7 +18,8 @@ import org.goldenport.parser.ParseResult
  *  version Nov.  5, 2021
  *  version Jan. 27, 2022
  *  version Feb. 16, 2022
- * @version Mar. 19, 2022
+ *  version Mar. 19, 2022
+ * @version Jul. 22, 2023
  * @author  ASAMI, Tomoharu
  */
 object NumberUtils {
@@ -727,4 +728,11 @@ object NumberUtils {
   def round(p: BigDecimal): BigDecimal = BigDecimal(scala.math.round(p.doubleValue), p.mc)
   def floor(p: BigDecimal): BigDecimal = BigDecimal(scala.math.floor(p.doubleValue), p.mc)
   def ceil(p: BigDecimal): BigDecimal = BigDecimal(scala.math.ceil(p.doubleValue), p.mc)
+
+  // handle BigDecimal("123.000")
+  def normalizeBigDecimal(p: BigDecimal): BigDecimal =
+    if (p.toString.contains('.') && p.isValidLong)
+      BigDecimal(p.intValue)
+    else
+      p
 }

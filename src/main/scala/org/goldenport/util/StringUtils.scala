@@ -51,7 +51,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Feb. 25, 2022
  *  version Mar. 28, 2022
  *  version Apr. 30, 2023
- * @version Jun. 22, 2023
+ *  version Jun. 22, 2023
+ * @version Jul. 22, 2023
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -640,6 +641,62 @@ object StringUtils {
     }
 
   def getNameDirective(p: String): Option[(String, String)] = getString2(toPathnameBody(p), "__")
+
+  def printWithNumber(ps: Seq[(String, Int)], newline: String): String = {
+    val max = if (ps.isEmpty) 0 else ps.map(_._2).max
+    build_lines_string_with_number(ps, newline)
+  }
+
+  protected final def build_lines_string_with_number_base_zero(
+    ps: Seq[String],
+    newline: String
+  ): String = {
+    val xs = ps.zipWithIndex
+    build_lines_string_with_number(xs, newline)
+  }
+
+  protected final def build_lines_string_with_number_base_one(
+    ps: Seq[String],
+    newline: String
+  ): String = {
+    val xs = ps.zipWithIndex.map {
+      case (s, i) => (s, i + 1)
+    }
+    build_lines_string_with_number(xs, newline)
+  }
+
+  protected final def build_lines_string_with_number(
+    ps: Seq[(String, Int)],
+    newline: String
+  ): String =
+    buildLinesWithNumber(ps).mkString(newline)
+
+  def buildLinesWithNumberBaseOne(ps: Seq[(String, Int)]): Seq[String] = {
+    val xs = ps.map {
+      case (s, i) => (s, i + 1)
+    }
+    val numwidth = _number_width(xs.length)
+    xs.map(_with_number(numwidth, _))
+  }
+
+  def buildLinesWithNumber(ps: Seq[(String, Int)]): Seq[String] = {
+    val numwidth = _number_width(ps.length)
+    ps.map(_with_number(numwidth, _))
+  }
+
+  private def _with_number(w: Int, p: (String, Int)): String = {
+    val (s,n) = p
+    val num = n.toString
+    val length = num.length
+    val numpart =
+      if (length >= w)
+        num
+      else
+        (Vector.fill(w - length)(' ') ++ num.toVector).mkString
+    s"$numpart: $s"
+  }
+
+  private def _number_width(int: Long): Int = 2 // TODO
 
   /*
    * List

@@ -1,12 +1,14 @@
 package org.goldenport.cli
 
 import java.net.URL
+import org.goldenport.context._
 
 /*
  * @since   Oct.  6, 2018
  *  version Oct. 10, 2018
  *  version Feb. 18, 2019
- * @version Apr. 25, 2021
+ *  version Apr. 25, 2021
+ * @version Jul. 23, 2023
  * @author  ASAMI, Tomoharu
  */
 case class OperationCall(
@@ -19,6 +21,12 @@ case class OperationCall(
   def argumentsAsString: List[String] = request.argumentsAsString
   def argumentsAsUrl: List[URL] = request.argumentsAsUrl
   def asUrlList(p: Symbol): List[URL] = request.asUrlList(p)
+
+  def getArg1AsString: Option[String] = request.getArg1AsString
+  def getArg1AsIntOrString: Option[Either[Int, String]] = request.getArg1AsIntOrString
+
+  def consequenceArg1ListingDirectiveOption: Consequence[Option[ListingDirective]] = request.consequenceArg1ListingDirectiveOption
+  def consequenceArg1ListingDirectiveBaseOneOption: Consequence[Option[ListingDirective]] = request.consequenceArg1ListingDirectiveBaseOneOption
 }
 
 object OperationCall {

@@ -3,6 +3,7 @@ package org.goldenport.cli
 import java.io.File
 import java.net.URL
 import java.nio.charset.Charset
+import java.math.MathContext
 import java.util.{Locale, TimeZone, Currency, ResourceBundle}
 import com.typesafe.config.{Config => HoconConfig, ConfigFactory}
 import org.goldenport.context.DateTimeContext
@@ -33,12 +34,14 @@ import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperation
  *  version Oct.  2, 2021
  *  version Feb. 28, 2022
  *  version Apr.  4, 2022
- * @version Jan. 30, 2023
+ *  version Jan. 30, 2023
+ * @version Jul. 22, 2023
  * @author  ASAMI, Tomoharu
  */
 case class Config(
   dateTimeContext: DateTimeContext,
   i18n: I18NContext,
+  mathContext: MathContext,
   homeDirectory: Option[File],
   workDirectory: Option[File],
   tmpDirectory: Option[File],
@@ -163,6 +166,7 @@ object Config {
     val locale = Locale.getDefault()
     val timezone = TimeZone.getDefault()
     val dateTimeContext = DateTimeContext.now(timezone)
+    val mathcontext = MathContext.UNLIMITED // Scala default: MathContext.DECIMAL128
     val currency = Currency.getInstance(locale)
     val calenderformatters = CalendarFormatter.Factory.default
     val stringformatter = StringFormatter.default
@@ -186,6 +190,7 @@ object Config {
         stringformatter,
         bundle
       ),
+      mathcontext,
       homedir,
       workdir,
       tmpdir,

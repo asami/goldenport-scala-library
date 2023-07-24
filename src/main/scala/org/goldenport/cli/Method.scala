@@ -1,6 +1,7 @@
 package org.goldenport.cli
 
 import java.net.{URL, URI}
+import org.goldenport.RAISE
 import org.goldenport.Strings
 import org.goldenport.context.{Consequence, Conclusion}
 import org.goldenport.bag.StringBag
@@ -14,7 +15,8 @@ import Environment.AppEnvironment
  *  version Oct. 15, 2019
  *  version Jun. 18, 2021
  *  version Jan. 30, 2022
- * @version Feb.  1, 2022
+ *  version Feb.  1, 2022
+ * @version Jul. 23, 2023
  * @author  ASAMI, Tomoharu
  */
 trait Method {
@@ -55,10 +57,22 @@ trait Method {
   //   case Consequence.Error(c) => to_response(c)
   // }
 
-  protected final def to_response(p: Consequence[Response]): Response = p match {
-    case Consequence.Success(r, _) => r
+  protected final def to_response(p: Consequence[_]): Response = p match {
+    case Consequence.Success(r, _) => r match {
+      case m: Response => m
+      case m: String => Response(m)
+      case m => RAISE.notImplementedYetDefect
+    }
     case Consequence.Error(c) => to_response(c)
   }
+
+  protected final def to_response_string(p: Consequence[String]): Response =
+    to_response(p)
+
+  // protected final def _to_response(p: Consequence[Response]): Response = p match {
+  //   case Consequence.Success(r, _) => r
+  //   case Consequence.Error(c) => to_response(c)
+  // }
 
   protected final def build_lines(s: String): String = build_lines(Strings.tolines(s))
 

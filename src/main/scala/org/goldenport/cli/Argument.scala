@@ -6,6 +6,7 @@ import org.goldenport.Strings
 import org.goldenport.cli.spec.{Parameter => SpecParameter}
 import org.goldenport.context.ConsequenceValueHelper
 import org.goldenport.bag.BufferBag
+import org.goldenport.util.NumberUtils
 import org.goldenport.util.AnyUtils
 
 /*
@@ -13,7 +14,8 @@ import org.goldenport.util.AnyUtils
  *  version May. 19, 2019
  *  version Feb. 16, 2020
  *  version Apr. 25, 2021
- * @version Jan. 30, 2022
+ *  version Jan. 30, 2022
+ * @version Jul. 22, 2023
  * @author  ASAMI, Tomoharu
  */
 case class Argument(
@@ -30,9 +32,13 @@ case class Argument(
       val xs = Strings.totokens(";")
       xs.map(AnyUtils.toUrl)
   }
-  def toInputText: String = BufferBag.fromUri(value.toString).toText
 
-  
+  def asIntOrString: Either[Int, String] = NumberUtils.optionInt(value) match {
+    case Some(s) => Left(s)
+    case None => Right(asString)
+  }
+
+  def toInputText: String = BufferBag.fromUri(value.toString).toText
 }
 
 object Argument {

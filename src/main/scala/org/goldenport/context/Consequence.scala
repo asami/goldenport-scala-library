@@ -31,7 +31,8 @@ import org.goldenport.extension.IRecord
  *  version Oct. 31, 2022
  *  version Nov. 27, 2022
  *  version Dec. 31, 2022
- * @version Jan. 25, 2023
+ *  version Jan. 25, 2023
+ * @version Jul. 23, 2023
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -372,6 +373,12 @@ object Consequence {
     p match {
       case Some(s) => Consequence.success(Some(s))
       case None => run(q)
+    }
+
+  def runOrMissingPropertyFault[T](name: String)(p: => Consequence[Option[T]]): Consequence[T] =
+    run(p).flatMap {
+      case Some(s) => Success(s)
+      case None => Error(Conclusion.missingPropertyFault(name))
     }
 
   //

@@ -1,5 +1,6 @@
 package org.goldenport.cli
 
+import scalaz._, Scalaz._
 import java.net.URL
 import org.goldenport.RAISE
 import org.goldenport.Strings
@@ -16,7 +17,8 @@ import org.goldenport.extension.IRecord
  *  version Apr. 25, 2021
  *  version Jan. 30, 2022
  *  version Feb.  1, 2022
- * @version Jan. 30, 2023
+ *  version Jan. 30, 2023
+ * @version Jul. 23, 2023
  * @author  ASAMI, Tomoharu
  */
 case class Request(
@@ -41,6 +43,10 @@ case class Request(
   def argumentsAsUrl: List[URL] = arguments.map(_.asUrl)
   def arg1Url: URL = arguments.headOption.map(_.asUrl).getOrElse(RAISE.invalidArgumentFault("Missing argument"))
 
+  def getArg1AsString: Option[String] = arguments.headOption.map(_.asString)
+  def getArg1AsIntOrString: Option[Either[Int, String]] =
+    arguments.headOption.map(_.asIntOrString)
+
   def getProperty(name: String): Option[Property] = properties.find(_.name == name)
   def getProperty(name: Symbol): Option[Property] = getProperty(name.name)
   def getPropertyString(name: String): Option[String] = properties.find(_.name == name).map(_.value.asString)
@@ -55,6 +61,18 @@ case class Request(
 
   def consequenceArg1UrlOption: Consequence[Option[URL]] =
     Consequence(arguments.headOption.map(_.asUrl))
+
+  def consequenceArg1ListingDirective: Consequence[ListingDirective] =
+    Consequence.runOrMissingPropertyFault("argument1")(
+      consequenceArg1ListingDirectiveOption
+    )
+
+  def consequenceArg1ListingDirectiveOption: Consequence[Option[ListingDirective]] =
+    arguments.headOption.traverse(ListingDirective.parse)
+  def consequenceArg1ListingDirectiveBaseOneOption: Consequence[Option[ListingDirective]] =
+    arguments.headOption.traverse(ListingDirective.parseOne)
+  def consequenceArg1ListingDirectiveBaseOneTailOption: Consequence[Option[ListingDirective]] =
+    arguments.headOption.traverse(ListingDirective.parseOneTail)
 
   def toPropertyMap: Map[String, Any] =
     properties.foldLeft(Map.empty[String, Any])((z, x) => z + (x.name -> x.value.value))
