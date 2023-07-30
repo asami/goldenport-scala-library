@@ -5,16 +5,17 @@ package org.goldenport.util
  *  version Jun. 29, 2018
  *  version Jul. 16, 2018
  *  version Aug.  5, 2018
- * @version Jul. 29, 2019
+ *  version Jul. 29, 2019
+ * @version Jul. 30, 2023
  * @author  ASAMI, Tomoharu
  */
 object ListUtils {
-  def toOption[T](ps: List[T]): Option[List[T]] = ps match {
+  def toOption[T](ps: Seq[T]): Option[List[T]] = ps match {
     case Nil => None
     case xs => Some(xs)
   }
 
-  def toOptionOneOrList[T](ps: List[T]): Option[Any] = ps match {
+  def toOptionOneOrList[T](ps: Seq[T]): Option[Any] = ps match {
     case Nil => None
     case x :: Nil => Some(x)
     case xs =>  Some(xs)
