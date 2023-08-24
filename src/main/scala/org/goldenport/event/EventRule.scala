@@ -3,6 +3,7 @@ package org.goldenport.event
 import scalaz._, Scalaz._
 import com.typesafe.config.{Config => Hocon, ConfigFactory, ConfigObject}
 import org.goldenport.RAISE
+import org.goldenport.context.Showable
 import org.goldenport.parser.ParseResult
 import org.goldenport.hocon.RichConfig.Implicits._
 import org.goldenport.collection.TreeMap
@@ -10,12 +11,15 @@ import org.goldenport.collection.TreeMap
 /*
  * @since   May.  5, 2021
  *  version May. 23, 2021
- * @version Jun. 13, 2021
+ *  version Jun. 13, 2021
+ * @version Aug.  6, 2023
  * @author  ASAMI, Tomoharu
  */
 case class EventRule(
   classes: TreeMap[EventClazz] = TreeMap.empty
-) {
+) extends Showable {
+  def print: String = "???"
+
   def isEmpty: Boolean = classes.isEmpty
   def toOption: Option[EventRule] = if (isEmpty) None else Some(this)
 

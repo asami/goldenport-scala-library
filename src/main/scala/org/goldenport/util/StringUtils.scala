@@ -52,7 +52,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Mar. 28, 2022
  *  version Apr. 30, 2023
  *  version Jun. 22, 2023
- * @version Jul. 22, 2023
+ *  version Jul. 22, 2023
+ * @version Aug.  5, 2023
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -851,6 +852,8 @@ object StringUtils {
   def label(l: Option[String], name: String): String = {
     Strings.blankopt(l) getOrElse UString.capitalize(name)
   }
+
+  def capitalize(s: String): String = UString.capitalize(s)
 
   /*
    * LTSV

@@ -6,19 +6,19 @@ package org.goldenport.util
  *  version Jul. 16, 2018
  *  version Aug.  5, 2018
  *  version Jul. 29, 2019
- * @version Jul. 30, 2023
+ * @version Jul. 31, 2023
  * @author  ASAMI, Tomoharu
  */
 object ListUtils {
   def toOption[T](ps: Seq[T]): Option[List[T]] = ps match {
     case Nil => None
-    case xs => Some(xs)
+    case xs => Some(xs.toList)
   }
 
   def toOptionOneOrList[T](ps: Seq[T]): Option[Any] = ps match {
     case Nil => None
     case x :: Nil => Some(x)
-    case xs =>  Some(xs)
+    case xs =>  Some(xs.toList)
   }
 
   def buildTupleList[T](fixed: Seq[(String, T)], options: Seq[(String, Option[T])]): List[(String, T)] =

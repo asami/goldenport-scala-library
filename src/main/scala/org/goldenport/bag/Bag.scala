@@ -13,7 +13,8 @@ import scalax.io.Codec
  *  version Sep. 22, 2016
  *  version Aug. 29, 2017
  *  version May. 19, 2020
- * @version Feb.  1, 2022
+ *  version Feb.  1, 2022
+ * @version Aug.  3, 2023
  * @author  ASAMI, Tomoharu
  */
 trait Bag {
@@ -35,6 +36,8 @@ trait Bag {
 
   def getChunkBag: Option[ChunkBag]
   def createChunkBag: ChunkBag
+  def toChunkBag: ChunkBag = getChunkBag getOrElse createChunkBag
+  def toBlobBag: BlobBag = BlobBag.create(toChunkBag)
 
   def withName(p: String): ChunkBag = RAISE.unsupportedOperationFault
   def withSuffix(p: String): ChunkBag = RAISE.unsupportedOperationFault
