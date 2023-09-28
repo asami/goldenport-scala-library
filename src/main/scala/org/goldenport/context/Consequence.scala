@@ -32,7 +32,8 @@ import org.goldenport.extension.IRecord
  *  version Nov. 27, 2022
  *  version Dec. 31, 2022
  *  version Jan. 25, 2023
- * @version Jul. 23, 2023
+ *  version Jul. 23, 2023
+ * @version Sep. 27, 2023
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -162,6 +163,9 @@ object Consequence {
         else
           this
       )
+
+    def withException(e: Throwable): Error[T] = copy(conclusion = conclusion.withException(e))
+
     def take = RAISE
     def forConfig: Consequence[T] = if (conclusion.isSuccess) this else copy(conclusion = conclusion.forConfig)
 
@@ -170,7 +174,8 @@ object Consequence {
     def toPayload(f: (Conclusion => Conclusion.Payload, T => Any)): Consequence.Payload =
       Payload(f._1(conclusion), None, Map.empty)
 
-    def RAISE: Nothing = throw new ConsequenceException(this)
+    def RAISE: Nothing = throw getException.getOrElse(new ConsequenceException(this))
+    def RAISEC: Nothing = throw new ConsequenceException(this)
   }
 
   implicit object ConsequenceApplicative extends Applicative[Consequence] {
@@ -332,6 +337,8 @@ object Consequence {
   def formatErrorFault[T](messages: Seq[Message]): Consequence[T] = Error(Conclusion.formatErrorFault(messages))
 
   def unmarshallingDefect[T](p: String): Consequence[T] = Error(Conclusion.unmarshallingDefect(p))
+
+  def databaseIoFault[T](message: String): Consequence[T] = Error(Conclusion.databaseIoFault(message))
 
   def noReachDefect[T](message: String): Consequence[T] = Error(Conclusion.noReachDefect(message))
 

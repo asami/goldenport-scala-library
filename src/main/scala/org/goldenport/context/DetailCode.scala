@@ -14,7 +14,8 @@ import org.goldenport.util.StringUtils
  *  version May. 27, 2021
  *  version Jan. 20, 2022
  *  version Apr.  3, 2022
- * @version Jun. 13, 2022
+ *  version Jun. 13, 2022
+ * @version Sep. 27, 2023
  * @author  ASAMI, Tomoharu
  */
 case class DetailCode(
@@ -371,6 +372,8 @@ object DetailCode {
     }
 
     val ClientInput = Reaction(Client, Input)
+    val ApplicationError = Reaction(ApplicationAdministrator, Recover)
+    val SystemError = Reaction(SystemAdministrator, Recover)
     val SystemDefect = Reaction(SystemDeveloper, Recover)
 
   @SerialVersionUID(1L)
@@ -408,6 +411,12 @@ object DetailCode {
   val ArgumentSyntax = DetailCode(ArgumentError, ArgumentSite, SyntaxError, Reaction.ClientInput)
   val Result = DetailCode(ResultError, OperationSite, LogicDefect, Reaction.SystemDefect)
   val Config = DetailCode(SystemError, ServiceSite, ConfigurationDefect, Reaction.SystemDefect)
+  val IoDatabase = DetailCode(SystemError, DatabaseSite, IoError, Reaction.SystemError)
+  val IoFile = DetailCode(SystemError, FileSite, IoError, Reaction.SystemError)
+  val IoNetwork = DetailCode(SystemError, NetworkSite, IoError, Reaction.SystemError)
+  val IoSystem = DetailCode(SystemError, SystemSite, IoError, Reaction.SystemError)
+  val IoSubSystem = DetailCode(SystemError, SubSystemSite, IoError, Reaction.SystemError)
+
   val NoReach = DetailCode(ServiceError, OperationSite, LogicDefect, Reaction.SystemDefect)
   val Invariant = DetailCode(ServiceError, OperationSite, InvariantDefect, Reaction.SystemDefect)
   val PreCondition = DetailCode(ServiceError, OperationSite, PreConditionDefect, Reaction.SystemDefect)

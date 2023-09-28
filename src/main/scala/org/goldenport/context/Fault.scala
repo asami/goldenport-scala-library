@@ -24,7 +24,8 @@ import Fault._
  *  version Mar.  6, 2022
  *  version Jun. 13, 2022
  *  version Sep.  1, 2022
- * @version Oct. 26, 2022
+ *  version Oct. 26, 2022
+ * @version Sep. 28, 2023
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -200,7 +201,7 @@ object InvalidArgumentFault {
   private def _message(key: String, ps: Iterable[Fault]): I18NMessage = {
     ps.toVector.map(_.message).concatenate
   }
-  // .map(_.message).list.mkString(";")))) * @version Oct. 26, 2022
+  // .map(_.message).list.mkString(";"))))
 }
 
 case class MissingArgumentFault(
@@ -443,6 +444,22 @@ object UnsupportedFormatFault {
 }
 
 sealed trait IoFault extends Fault {
+  def reaction = Reaction.SystemDefect
+}
+
+case class DatabaseIoFault(
+  parameters: Seq[Any] = Nil,
+  messageTemplate: I18NTemplate = DatabaseIoFault.template
+) extends IoFault with MessageTemplateImpl {
+  def implicitStatusCode: StatusCode = StatusCode.InternalServerError
+}
+object DatabaseIoFault {
+  val template = I18NTemplate("Database I/O error: {0}")
+
+  def apply(p: I18NString): DatabaseIoFault = 
+    DatabaseIoFault(messageTemplate = I18NTemplate(p))
+
+  def parameter(p: Any, ps: Any*): DatabaseIoFault = DatabaseIoFault(p +: ps.toList)
 }
 
 case class IllegalConfigurationDefect(

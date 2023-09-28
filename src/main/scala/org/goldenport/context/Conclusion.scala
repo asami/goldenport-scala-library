@@ -34,7 +34,8 @@ import org.goldenport.util.AnyUtils
  *  version Oct. 26, 2022
  *  version Nov. 25, 2022
  *  version Dec. 28, 2022
- * @version Jan. 20, 2023
+ *  version Jan. 20, 2023
+ * @version Sep. 27, 2023
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -71,6 +72,7 @@ case class Conclusion(
   def withTrace(p: TraceHandle): Conclusion = withTrace(p.ctx)
   def withTrace(p: TraceContext): Conclusion = withTrace(p.toTrace)
   def withTrace(p: Trace): Conclusion = copy(trace = p)
+  def withException(p: Throwable): Conclusion = copy(exception = Some(p))
   def withExceptionData(p: ExceptionData): Conclusion = copy(exceptionData = Some(p))
   def withData(p: Any): Conclusion = copy(data = Some(p))
   def withDataRecord(p: IRecord): Conclusion = copy(exceptionData = Some(ExceptionData(p)))
@@ -361,6 +363,41 @@ object Conclusion {
   def unsupportedFormatFault(message: String): Conclusion = {
     val detail = DetailCode.Argument
     val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(UnsupportedFormatFault(message))
+    Conclusion(status, faults)
+  }
+
+  def databaseIoFault(message: String): Conclusion = {
+    val detail = DetailCode.IoDatabase
+    val status = StatusCode.InternalServerError.withDetail(detail)
+    val faults = Faults(UnsupportedFormatFault(message))
+    Conclusion(status, faults)
+  }
+
+  def fileIoFault(message: String): Conclusion = {
+    val detail = DetailCode.IoFile
+    val status = StatusCode.InternalServerError.withDetail(detail)
+    val faults = Faults(UnsupportedFormatFault(message))
+    Conclusion(status, faults)
+  }
+
+  def networkIoFault(message: String): Conclusion = {
+    val detail = DetailCode.IoNetwork
+    val status = StatusCode.InternalServerError.withDetail(detail)
+    val faults = Faults(UnsupportedFormatFault(message))
+    Conclusion(status, faults)
+  }
+
+  def systemIoFault(message: String): Conclusion = {
+    val detail = DetailCode.IoSystem
+    val status = StatusCode.InternalServerError.withDetail(detail)
+    val faults = Faults(UnsupportedFormatFault(message))
+    Conclusion(status, faults)
+  }
+
+  def subsystemIoFault(message: String): Conclusion = {
+    val detail = DetailCode.IoSubSystem
+    val status = StatusCode.InternalServerError.withDetail(detail)
     val faults = Faults(UnsupportedFormatFault(message))
     Conclusion(status, faults)
   }
