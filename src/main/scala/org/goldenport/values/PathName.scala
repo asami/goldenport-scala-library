@@ -24,7 +24,8 @@ import org.goldenport.util.StringUtils
  *  version Jun. 29, 2021
  *  version Mar.  6, 2022
  *  version Dec. 30, 2022
- * @version Jan.  4, 2023
+ *  version Jan.  4, 2023
+ * @version Sep. 26, 2023
  * @author  ASAMI, Tomoharu
  */
 case class PathName(
@@ -36,7 +37,7 @@ case class PathName(
   def isEmpty: Boolean = v.isEmpty
   def head: String = firstComponent
   def headOption: Option[String] = components.headOption
-  def tail: PathName = tailOption.get
+  def tail: PathName = tailOption.getOrElse(throw new IllegalStateException("Empty PathName"))
   def tailOption: Option[PathName] = components.tail match {
     case Nil => None
     case xs => Some(PathName(xs.mkString(delimiter)))
