@@ -35,7 +35,8 @@ import org.goldenport.util.AnyUtils
  *  version Nov. 25, 2022
  *  version Dec. 28, 2022
  *  version Jan. 20, 2023
- * @version Sep. 27, 2023
+ *  version Sep. 27, 2023
+ * @version Nov.  7, 2023
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -370,35 +371,35 @@ object Conclusion {
   def databaseIoFault(message: String): Conclusion = {
     val detail = DetailCode.IoDatabase
     val status = StatusCode.InternalServerError.withDetail(detail)
-    val faults = Faults(UnsupportedFormatFault(message))
+    val faults = Faults(DatabaseIoFault(message))
     Conclusion(status, faults)
   }
 
   def fileIoFault(message: String): Conclusion = {
     val detail = DetailCode.IoFile
     val status = StatusCode.InternalServerError.withDetail(detail)
-    val faults = Faults(UnsupportedFormatFault(message))
+    val faults = Faults(FileIoFault(message))
     Conclusion(status, faults)
   }
 
   def networkIoFault(message: String): Conclusion = {
     val detail = DetailCode.IoNetwork
     val status = StatusCode.InternalServerError.withDetail(detail)
-    val faults = Faults(UnsupportedFormatFault(message))
+    val faults = Faults(NetworkIoFault(message))
     Conclusion(status, faults)
   }
 
   def systemIoFault(message: String): Conclusion = {
     val detail = DetailCode.IoSystem
     val status = StatusCode.InternalServerError.withDetail(detail)
-    val faults = Faults(UnsupportedFormatFault(message))
+    val faults = Faults(SystemIoFault(message))
     Conclusion(status, faults)
   }
 
   def subsystemIoFault(message: String): Conclusion = {
     val detail = DetailCode.IoSubSystem
     val status = StatusCode.InternalServerError.withDetail(detail)
-    val faults = Faults(UnsupportedFormatFault(message))
+    val faults = Faults(SubsystemIoFault(message))
     Conclusion(status, faults)
   }
 

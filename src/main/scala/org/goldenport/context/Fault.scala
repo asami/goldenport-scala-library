@@ -25,7 +25,8 @@ import Fault._
  *  version Jun. 13, 2022
  *  version Sep.  1, 2022
  *  version Oct. 26, 2022
- * @version Sep. 28, 2023
+ *  version Sep. 28, 2023
+ * @version Nov. 11, 2023
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -259,6 +260,8 @@ case class ValueDomainResultFault(
 object ValueDomainResultFault {
   val template = I18NTemplate("Value domain fault: {0}")
 
+  def apply(p: String): ValueDomainResultFault = apply(I18NString(p))
+
   def apply(p: I18NString): ValueDomainResultFault =
     ValueDomainResultFault(messageTemplate = I18NTemplate(p))
 
@@ -288,6 +291,8 @@ case class InvalidPropertyFault(
 object InvalidPropertyFault {
   val template = I18NTemplate("Invalid property: {0}")
 
+  def apply(p: String): InvalidPropertyFault = apply(I18NString(p))
+
   def apply(p: I18NString): InvalidPropertyFault =
     InvalidPropertyFault(messageTemplate = I18NTemplate(p))
 
@@ -313,6 +318,8 @@ case class MissingPropertyFault(
 object MissingPropertyFault {
   val template = I18NTemplate("Missing property: {0}")
 
+  def apply(p: String): MissingPropertyFault = apply(I18NString(p))
+
   def apply(p: I18NString): MissingPropertyFault =
     MissingPropertyFault(messageTemplate = I18NTemplate(p))
 
@@ -330,7 +337,7 @@ object InvalidTokenFault {
 
   def apply(label: String, value: String): InvalidTokenFault = apply(value) // TODO
 
-  def apply(p: String): InvalidTokenFault = parameter(p)
+  def apply(p: String): InvalidTokenFault = apply(I18NString(p))
 
   def apply(p: I18NString): InvalidTokenFault = apply(p.toI18NMessage)
 
@@ -360,6 +367,8 @@ case class ValueDomainPropertyFault(
 object ValueDomainPropertyFault {
   val template = I18NTemplate("Value domain fault: {0}")
 
+  def apply(p: String): ValueDomainPropertyFault = apply(I18NString(p))
+
   def apply(p: I18NString): ValueDomainPropertyFault =
     ValueDomainPropertyFault(messageTemplate = I18NTemplate(p))
 
@@ -375,7 +384,7 @@ case class SyntaxErrorFault(
 object SyntaxErrorFault {
   val template = I18NTemplate("Syntax error: {0}")
 
-  def apply(p: String): SyntaxErrorFault = parameter(p)
+  def apply(p: String): SyntaxErrorFault = apply(I18NString(p))
 
   def apply(p: I18NString): SyntaxErrorFault =
     SyntaxErrorFault(messageTemplate = I18NTemplate(p))
@@ -394,7 +403,7 @@ case class FormatErrorFault(
 object FormatErrorFault {
   val template = I18NTemplate("Format error: {0}")
 
-  def apply(p: String): FormatErrorFault = parameter(p)
+  def apply(p: String): FormatErrorFault = apply(I18NString(p))
 
   def apply(p: I18NString): FormatErrorFault =
     FormatErrorFault(messageTemplate = I18NTemplate(p))
@@ -413,7 +422,7 @@ case class UnsupportedOperationFault(
 object UnsupportedOperationFault {
   val template = I18NTemplate("Unsupported operation: {0}")
 
-  def apply(p: String): UnsupportedOperationFault = parameter(p)
+  def apply(p: String): UnsupportedOperationFault = apply(I18NString(p))
 
   def apply(p: I18NString): UnsupportedOperationFault =
     UnsupportedOperationFault(messageTemplate = I18NTemplate(p))
@@ -432,7 +441,7 @@ case class UnsupportedFormatFault(
 object UnsupportedFormatFault {
   val template = I18NTemplate("Unsupported format: {0}")
 
-  def apply(p: String): UnsupportedFormatFault = parameter(p)
+  def apply(p: String): UnsupportedFormatFault = apply(I18NString(p))
 
   def apply(p: I18NString): UnsupportedFormatFault =
     UnsupportedFormatFault(messageTemplate = I18NTemplate(p))
@@ -456,10 +465,77 @@ case class DatabaseIoFault(
 object DatabaseIoFault {
   val template = I18NTemplate("Database I/O error: {0}")
 
+  def apply(p: String): DatabaseIoFault = apply(I18NString(p))
+
   def apply(p: I18NString): DatabaseIoFault = 
     DatabaseIoFault(messageTemplate = I18NTemplate(p))
 
   def parameter(p: Any, ps: Any*): DatabaseIoFault = DatabaseIoFault(p +: ps.toList)
+}
+
+case class NetworkIoFault(
+  parameters: Seq[Any] = Nil,
+  messageTemplate: I18NTemplate = NetworkIoFault.template
+) extends IoFault with MessageTemplateImpl {
+  def implicitStatusCode: StatusCode = StatusCode.InternalServerError
+}
+object NetworkIoFault {
+  val template = I18NTemplate("Network I/O error: {0}")
+
+  def apply(p: String): NetworkIoFault = apply(I18NString(p))
+
+  def apply(p: I18NString): NetworkIoFault = 
+    NetworkIoFault(messageTemplate = I18NTemplate(p))
+
+  def parameter(p: Any, ps: Any*): NetworkIoFault = NetworkIoFault(p +: ps.toList)
+}
+case class FileIoFault(
+  parameters: Seq[Any] = Nil,
+  messageTemplate: I18NTemplate = FileIoFault.template
+) extends IoFault with MessageTemplateImpl {
+  def implicitStatusCode: StatusCode = StatusCode.InternalServerError
+}
+object FileIoFault {
+  val template = I18NTemplate("File I/O error: {0}")
+
+  def apply(p: String): FileIoFault = apply(I18NString(p))
+
+  def apply(p: I18NString): FileIoFault = 
+    FileIoFault(messageTemplate = I18NTemplate(p))
+
+  def parameter(p: Any, ps: Any*): FileIoFault = FileIoFault(p +: ps.toList)
+}
+case class SystemIoFault(
+  parameters: Seq[Any] = Nil,
+  messageTemplate: I18NTemplate = SystemIoFault.template
+) extends IoFault with MessageTemplateImpl {
+  def implicitStatusCode: StatusCode = StatusCode.InternalServerError
+}
+object SystemIoFault {
+  val template = I18NTemplate("System I/O error: {0}")
+
+  def apply(p: String): SystemIoFault = apply(I18NString(p))
+
+  def apply(p: I18NString): SystemIoFault = 
+    SystemIoFault(messageTemplate = I18NTemplate(p))
+
+  def parameter(p: Any, ps: Any*): SystemIoFault = SystemIoFault(p +: ps.toList)
+}
+case class SubsystemIoFault(
+  parameters: Seq[Any] = Nil,
+  messageTemplate: I18NTemplate = SubsystemIoFault.template
+) extends IoFault with MessageTemplateImpl {
+  def implicitStatusCode: StatusCode = StatusCode.InternalServerError
+}
+object SubsystemIoFault {
+  val template = I18NTemplate("Subsystem I/O error: {0}")
+
+  def apply(p: String): SubsystemIoFault = apply(I18NString(p))
+
+  def apply(p: I18NString): SubsystemIoFault = 
+    SubsystemIoFault(messageTemplate = I18NTemplate(p))
+
+  def parameter(p: Any, ps: Any*): SubsystemIoFault = SubsystemIoFault(p +: ps.toList)
 }
 
 case class IllegalConfigurationDefect(
@@ -472,7 +548,7 @@ case class IllegalConfigurationDefect(
 object IllegalConfigurationDefect {
   val template = I18NTemplate("Illegal configuration defect: {0}")
 
-  def apply(p: String): IllegalConfigurationDefect = parameter(p)
+  def apply(p: String): IllegalConfigurationDefect = apply(I18NString(p))
 
   def apply(p: I18NString): IllegalConfigurationDefect = apply(p.toI18NMessage)
 
