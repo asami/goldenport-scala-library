@@ -12,7 +12,8 @@ import org.goldenport.parser.CommandParser
  *  version May. 16, 2020
  *  version Apr. 25, 2021
  *  version Dec. 18, 2021
- * @version Jan. 30, 2022
+ *  version Jan. 30, 2022
+ * @version Nov. 25, 2023
  * @author  ASAMI, Tomoharu
  */
 case class Engine(
@@ -30,10 +31,16 @@ case class Engine(
   }
 
   def apply(env: Environment, command: String, args: Seq[String]): Response = {
-    val qcommand = _resolve_command(command)
-    val op = services.makeRequest(qcommand, args) orElse operations.makeRequest(command, args)
-    val r = op.map(apply(env, _)).
-      getOrElse(Response.notFound(command, _get_candidates(command)))
+//    val qcommand = _resolve_command(command)
+    val req = Request(command)
+    val a: Option[Either[Response, Request]] = services.makeRequest(req, args) orElse operations.makeRequest(req, args)
+    val r = a match {
+      case Some(s) => s match {
+        case Right(req) => apply(env, req)
+        case Left(res) => res
+      }
+      case None => Response.notFound(command, _get_candidates(command))
+  }
     _output(env, r)
   }
 
@@ -75,13 +82,13 @@ case class Engine(
     _output(env, r)
   }
 
-  private def _resolve_command(name: String): String = {
-    val cmd = commandParser(name)
-    cmd match {
-      case CommandParser.Found(s) => s.name
-      case _ => name
-    }
-  }
+  // private def _resolve_command(name: String): String = {
+  //   val cmd = commandParser(name)
+  //   cmd match {
+  //     case CommandParser.Found(s) => s.name
+  //     case _ => name
+  //   }
+  // }
 
   private def _get_candidates(req: Request): Option[CommandParser.Candidates[Candidate]] =
     _get_candidates(req.service getOrElse req.operation)

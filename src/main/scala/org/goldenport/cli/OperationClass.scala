@@ -3,7 +3,8 @@ package org.goldenport.cli
 /*
  * @since   Feb. 18, 2019
  *  version Oct. 13, 2019
- * @version Feb. 16, 2020
+ *  version Feb. 16, 2020
+ * @version Nov. 25, 2023
  * @author  ASAMI, Tomoharu
  */
 trait OperationClass {
@@ -12,8 +13,8 @@ trait OperationClass {
 
   def operation(req: Request): Operation
 
-  def makeRequest(command: String, args: Seq[String]): Option[Request] =
-    specification.makeRequest(command, args)
+  def makeRequest(req: Request, args: Seq[String]): Option[Either[Response, Request]] =
+    specification.makeRequest(req, args)
 
   def accept(req: Request): Option[Operation] =
     if (specification.accept(req))

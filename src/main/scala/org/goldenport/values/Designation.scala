@@ -5,13 +5,14 @@ import org.goldenport.i18n.I18NString
 
 /*
  * @since   May.  2, 2020
- * @version Jun. 15, 2020
+ *  version Jun. 15, 2020
+ * @version Oct. 14, 2023
  * @author  ASAMI, Tomoharu
  */
 case class Designation(
   nameI18N: I18NString,
-  labelI18N: Option[I18NString],
-  termI18N: Option[I18NString]
+  labelI18N: Option[I18NString] = None,
+  termI18N: Option[I18NString] = None
 ) {
   lazy val key: Symbol = Symbol(name)
   def name = nameI18N.c
