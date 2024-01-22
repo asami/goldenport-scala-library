@@ -1,5 +1,7 @@
 package org.goldenport.value
 
+import org.goldenport.context.Consequence
+import org.goldenport.parser.ParseResult
 import org.goldenport.util.StringUtils
 
 /*
@@ -10,7 +12,9 @@ import org.goldenport.util.StringUtils
  *  version Oct. 14, 2017
  *  version Aug. 17, 2018
  *  version Sep. 24, 2018
- * @version Mar. 21, 2021
+ *  version Mar. 21, 2021
+ *  version Jun. 14, 2021
+ * @version Oct. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 trait ValueInstance {
@@ -39,6 +43,10 @@ trait ValueClass[T <: ValueInstance] {
   def takeIgnoreCase(s: String): T = getIgnoreCase(normalize_key(s)) getOrElse {
     throw new IllegalArgumentException(s"Invalid value: $s")
   }
+  def parse(s: String): ParseResult[T] = get(normalize_key(s)).
+    map(ParseResult.success).getOrElse(ParseResult.error(s"Invalid value: $s"))
+  def consequence(s: String): Consequence[T] =
+    Consequence.successOrInvalidTokenFault(s, get(normalize_key(s)))
 }
 
 trait EnumerationClass[T <: ValueInstance] extends ValueClass[T] {

@@ -24,7 +24,8 @@ import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
  *  version Aug. 29, 2017
  *  version May. 21, 2018
  *  version Jul. 20, 2018
- * @version Aug.  5, 2018
+ *  version Aug.  5, 2018
+ * @version Dec. 10, 2022
  * @author  ASAMI, Tomoharu
  */
 object DateUtils {
@@ -82,6 +83,11 @@ object DateUtils {
 
   // Date contains GMT timezone value.
   def toDateJst(v: java.sql.Timestamp): Date = toDateJst(v.getTime)
+
+  def makeForFormatting(p: String): Any = {
+    val a = Try(LocalDateTimeUtils.parse(p)) orElse Try(LocalDateUtils.parse2(p))
+    a getOrElse DateTimeUtils.parseDateTime(p, DateTimeUtils.jodagmt)
+  }
 
   /**
    * GMT

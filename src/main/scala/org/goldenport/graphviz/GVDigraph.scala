@@ -2,16 +2,18 @@ package org.goldenport.graphviz
 
 import scala.collection.mutable.ArrayBuffer
 import com.asamioffice.goldenport.text.TextBuilder
+import org.goldenport.util.AnyUtils
 
 /*
- * Jan. 14, 2009
- * Mar. 18, 2009
- * ASAMI, Tomoharu
- * @since   
- * @version May.  4, 2020
+ * @since   Jan. 14, 2009
+ *  version Mar. 18, 2009
+ *  version May.  4, 2020
+ * @version Jul. 12, 2021
  * @author  ASAMI, Tomoharu
  */
 class GVDigraph {
+  var compound: Option[Boolean] = Some(true)
+  var rankdir: Option[String] = None // Some("LR")
   val defaultGraphAttributes = new GVGraphAttributes
   val defaultNodeAttributes = new GVNodeAttributes
   val defaultEdgeAttributes = new GVEdgeAttributes
@@ -21,6 +23,17 @@ class GVDigraph {
   final def write(out: TextBuilder) {
     out.println("digraph {")
     out.indentUp()
+    out.println("newrank=true;")
+    compound.foreach { x =>
+      out.print("compond=")
+      out.print(AnyUtils.toString(x))
+      out.println(";")
+    }
+    rankdir.foreach { x =>
+      out.print("rankdir=")
+      out.print(x)
+      out.println(";")
+    }
     defaultGraphAttributes.write(out)
     defaultNodeAttributes.write(out)
     defaultEdgeAttributes.write(out)

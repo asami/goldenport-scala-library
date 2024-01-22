@@ -12,7 +12,9 @@ import org.goldenport.util.AnyUtils
  * @since   Nov. 13, 2017
  *  version Feb. 25, 2021
  *  version Mar. 28, 2021
- * @version Apr. 25, 2021
+ *  version Apr. 25, 2021
+ *  version Mar. 19, 2022
+ * @version Jun. 13, 2022
  * @author  ASAMI, Tomoharu
  */
 sealed trait Trace extends Showable {
@@ -20,7 +22,6 @@ sealed trait Trace extends Showable {
   def print = toString
   def display = print
   def show = display
-  def embed = show
   val timestamp = System.currentTimeMillis
   lazy val timestampkey = timestamp.toString.takeRight(5)
   def endTimestamp: Option[Long] = None
@@ -33,8 +34,17 @@ sealed trait Trace extends Showable {
   ) + trace_Properties
 
   protected def trace_Properties: IRecord
+
+  def toPayload: Trace.Payload = Trace.Payload(print) // TODO
 }
 object Trace {
+  @SerialVersionUID(1L)
+  case class Payload(
+    message: String
+  ) {
+    def restore: Trace = Log(message) // TODO
+  }
+
   val empty = Empty
 
   class Printer(f: Trace => String = _.print, indentWidth: Int = 2) {

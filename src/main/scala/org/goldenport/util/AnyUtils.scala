@@ -4,14 +4,20 @@ import scala.util.control.NonFatal
 import scala.concurrent.duration._
 import scala.xml.NodeSeq
 import java.util.Date
+import java.util.TimeZone
 import java.sql.Timestamp
 import java.io.File
 import java.net.{URL, URI}
+import play.api.libs.json.JsValue
 import java.util.concurrent.TimeUnit
-import org.joda.time._
+import org.joda.time.{Duration => _, _}
 import com.asamioffice.goldenport.io.UURL
 import org.goldenport.RAISE
 import org.goldenport.extension.Showable
+import org.goldenport.extension.IRecord
+import org.goldenport.context.Consequence
+import org.goldenport.i18n.StringFormatter
+import org.goldenport.values.DateTimePeriod
 
 /*
  * See org.goldenport.record.util.AnyUtils
@@ -30,18 +36,33 @@ import org.goldenport.extension.Showable
  *  version Nov. 28, 2019
  *  version Jan. 18, 2020
  *  version Jan. 23, 2021
- * @version Apr. 20, 2021
+ *  version Apr. 20, 2021
+ *  version Nov.  5, 2021
+ *  version Jan. 30, 2022
+ *  version Feb. 24, 2022
+ *  version Mar.  9, 2022
+ *  version May.  3, 2022
+ *  version Sep. 27, 2022
+ *  version Oct. 29, 2022
+ *  version Nov. 28, 2022
+ *  version Dec. 28, 2022
+ * @version Jan. 16, 2023
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
   def toString(x: Any): String = {
     x match {
+      case m: String => m
       case v: Timestamp => DateTimeUtils.toIsoDateTimeStringJst(v)
       case v: Symbol => v.name
       case m: NodeSeq => m.toString
-      case m: Seq[_] => m.map(toEmbed(_)).mkString(",")
-      case m: Array[_] => m.map(toEmbed(_)).mkString(",")
+      case m: Seq[_] => m.map(toString(_)).mkString(",")
+      case m: Array[_] => m.map(toString(_)).mkString(",")
       case m: Showable => m.print
+      case m: JsValue => m.toString
+      case m: DateTime => DateTimeUtils.toDisplayString(m)
+      case m: LocalDateTime => LocalDateTimeUtils.toDisplayString(m)
+      case m: LocalTime => LocalTimeUtils.toDisplayString(m)
       case m: MonthDay => f"${m.getMonthOfYear}%02d-${m.getDayOfMonth}%02d"
       case _ => x.toString
     }
@@ -58,10 +79,23 @@ object AnyUtils {
     case m: Showable => m.show
     case m => toString(m)
   }
-  def toEmbed(x: Any): String = x match {
-    case m: Showable => m.embed
+  def toEmbed(x: Any): String = toEmbed(x, 8)
+  def toEmbed(x: Any, width: Int): String = x match {
+    case m: Showable => m.embed(width)
+    case m => toEmbedString(toString(m), width)
+  }
+  def toEmbedCenter(x: Any, width: Int): String =
+    StringFormatter.display.enCenter(toEmbed(x, width), width)
+  def toEmbedRight(x: Any, width: Int): String =
+    StringFormatter.display.enRight(toEmbed(x, width), width)
+
+  def toEmbedString(p: String, width: Int): String = StringUtils.toEmbedConsole(p, width)
+
+  def toMarshall(p: Any): String = p match {
+    case m: Showable => m.print
     case m => toString(m)
   }
+
   def toBoolean(x: Any): Boolean = {
     x match {
       case v: Boolean => v
@@ -104,6 +138,8 @@ object AnyUtils {
       case v: Int => v
       case v: Long => v
       case v: Number => v.longValue // TODO validation
+      case m: FiniteDuration => m.toMillis
+      case m: DateTime => m.getMillis
       case v => toString(v).toLong
     }
   }
@@ -177,6 +213,7 @@ object AnyUtils {
       case v: Timestamp => v
       case v: Long => new Timestamp(v)
       case s: String => TimestampUtils.parse(s)
+      case m: DateTime => TimestampUtils.toTimestamp(m)
     }
   }
   def toDate(x: Any): Date = {
@@ -186,18 +223,39 @@ object AnyUtils {
       case s: String => DateUtils.parse(s)
     }
   }
-  def toDateTime(x: Any): DateTime = RAISE.notImplementedYetDefect
-  def toLocalDate(x: Any): LocalDate = RAISE.notImplementedYetDefect
+  def toDateTime(x: Any): DateTime = x match {
+    case m: DateTime => m
+    case m: String => DateTime.parse(m)
+  }
+  def toLocalDate(x: Any): LocalDate = x match {
+    case m: LocalDate => m
+    case m: String => LocalDate.parse(m)
+  }
   def toLocalTime(x: Any): LocalTime = {
     x match {
       case v: LocalTime => v
       case s: String => LocalTime.parse(s)
     }
   }
+  def toUnixTime(tz: TimeZone, x: Any): Long = x match {
+    case m: Long => m
+    case m: DateTime => m.getMillis
+  }
   def toFiniteDuration(x: Any): FiniteDuration = x match {
     case m: FiniteDuration => m
+    case m: Int => FiniteDuration(m, TimeUnit.MILLISECONDS)
     case m: Long => FiniteDuration(m, TimeUnit.MILLISECONDS)
-    case m: String => toFiniteDuration(m.toLong) // TODO
+    case m: String => NumberUtils.getLong(m).
+        map(toFiniteDuration).
+        getOrElse(Duration.create(m).asInstanceOf[FiniteDuration])
+  }
+  def toFiniteDurationMinute(x: Any): FiniteDuration = x match {
+    case m: FiniteDuration => m
+    case m: Int => FiniteDuration(m, TimeUnit.MINUTES)
+    case m: Long => FiniteDuration(m, TimeUnit.MINUTES)
+    case m: String => NumberUtils.getLong(m).
+        map(toFiniteDurationMinute).
+        getOrElse(Duration.create(m).asInstanceOf[FiniteDuration])
   }
   def toUrl(x: Any): URL = {
     x match {
@@ -213,6 +271,12 @@ object AnyUtils {
       case m: URI => m
       case m: File => m.toURI
       case s: String => new URI(s)
+    }
+  }
+  def toRecord(x: Any): IRecord = {
+    x match {
+      case m: DateTimePeriod => m.toRecord
+      case m: FiniteDuration => DurationUtils.toRecord(m)
     }
   }
 
@@ -241,4 +305,35 @@ object AnyUtils {
     case "" => true
     case _ => guessNumber(p)
   }
+
+  def getByte(p: Any): Option[Byte] = NumberUtils.optionByte(p)
+  def getShort(p: Any): Option[Short] = NumberUtils.optionShort(p)
+  def getInt(p: Any): Option[Int] = NumberUtils.optionInt(p)
+  def getLong(p: Any): Option[Long] = NumberUtils.optionLong(p)
+  def getFloat(p: Any): Option[Float] = NumberUtils.optionFloat(p)
+  def getDouble(p: Any): Option[Double] = NumberUtils.optionDouble(p)
+  def getBigInt(p: Any): Option[BigInt] = NumberUtils.optionBigInt(p)
+  def getBigDecimal(p: Any): Option[BigDecimal] = NumberUtils.optionBigDecimal(p)
+
+  def consequenceBoolean(p: Any): Consequence[Boolean] = Consequence(toBoolean(p))
+  def consequenceShort(p: Any): Consequence[Short] = Consequence(toShort(p))
+  def consequenceInt(p: Any): Consequence[Int] = Consequence(toInt(p))
+  def consequenceLong(p: Any): Consequence[Long] = Consequence(toLong(p))
+  def consequenceFloat(p: Any): Consequence[Float] = Consequence(toFloat(p))
+  def consequenceDouble(p: Any): Consequence[Double] = Consequence(toDouble(p))
+  def consequenceBigDecimal(p: Any): Consequence[BigDecimal] = Consequence(toBigDecimal(p))
+  def consequenceString(p: Any): Consequence[String] = Consequence(toString(p))
+  def consequenceUrl(p: Any): Consequence[URL] = Consequence(toUrl(p))
+  def consequenceDateTime(p: Any): Consequence[DateTime] = Consequence(toDateTime(p))
+  def consequenceDuration(p: Any): Consequence[Duration] = p match {
+    case m: String => Consequence(Duration.create(m))
+    case m: Long => Consequence.success(Duration.create(m, MILLISECONDS))
+    case m: Int => Consequence.success(Duration.create(m, MILLISECONDS))
+    case m => Consequence.valueDomainFault(toString(m))
+  }
+  def consequenceFiniteDuration(p: Any): Consequence[FiniteDuration] =
+    consequenceDuration(p) flatMap {
+      case m: FiniteDuration => Consequence.success(m)
+      case m => Consequence.valueDomainFault(toString(toString(m)))
+    }
 }

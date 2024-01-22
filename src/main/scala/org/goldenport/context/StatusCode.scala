@@ -1,6 +1,8 @@
 package org.goldenport.context
 
+import org.goldenport.Strings
 import org.goldenport.i18n.I18NString
+import org.goldenport.i18n.I18NMessage
 import org.goldenport.util.ExceptionUtils
 
 /*
@@ -8,22 +10,46 @@ import org.goldenport.util.ExceptionUtils
  *  version Feb. 21, 2021
  *  version Mar. 26, 2021
  *  version Apr. 10, 2021
- * @version May. 20, 2021
+ *  version May. 30, 2021
+ *  version Jun. 20, 2021
+ *  version Jan. 20, 2022
+ *  version Mar.  6, 2022
+ * @version Jun. 13, 2022
  * @author  ASAMI, Tomoharu
  */
 case class StatusCode(
-  main: Int,
+  code: Int,
   detail: Option[DetailCode] = None,
   application: Option[Int] = None, // FURTHER CONSIDERATION
-  message: Option[I18NString] = None, // FURTHER CONSIDERATION
+  messageOption: Option[I18NMessage] = None, // FURTHER CONSIDERATION
   externalService: Option[StatusCode] = None // FURTHER CONSIDERATION
 ) {
+  import StatusCode._
+
+  def message: I18NMessage = messageOption getOrElse StatusCode.message(code)
+
   def withDetail(p: DetailCode) = copy(detail = Some(p))
+
+  def isSuccess: Boolean = Ok.code <= code && code < MultipleChoices.code
+
+  def forConfig: StatusCode =
+    if (isSuccess)
+      this
+    else
+      copy(code = InternalServerError.code, detail = detail.map(_.forConfig))
+
+  def toPayload: StatusCode.Payload = StatusCode.Payload(
+    code,
+    detail.map(_.toPayload),
+    application,
+    messageOption.map(_.toPayload),
+    externalService.map(_.toPayload)
+  )
 }
 
 object StatusCode {
   /*
-   * Main
+   * Code
    */
   final val Ok = StatusCode(200)
   final val Created = StatusCode(201)
@@ -63,15 +89,38 @@ object StatusCode {
   final val GatewayTimeout = StatusCode(504)
 
   /*
-   * Main and Detail
+   * Code and Detail
    */
-  final val IllegalArugument = BadRequest // TODO
-  final val SyntaxError = BadRequest // TODO
+  final val IllegalArugument = BadRequest.withDetail(DetailCode.Argument)
+  final val SyntaxError = BadRequest.withDetail(DetailCode.ArgumentSyntax)
+  final val Config = InternalServerError.withDetail(DetailCode.Config)
   final val NoReach = InternalServerError.withDetail(DetailCode.NoReach)
   final val Invariant = InternalServerError.withDetail(DetailCode.Invariant)
   final val PreCondition = InternalServerError.withDetail(DetailCode.PreCondition)
   final val PreConditionState = InternalServerError.withDetail(DetailCode.PreConditionState)
   final val PostCondition = InternalServerError.withDetail(DetailCode.PostCondition)
+
+  @SerialVersionUID(1L)
+  case class Payload(
+    code: Int,
+    detail: Option[DetailCode.Payload],
+    application: Option[Int],
+    messageOption: Option[I18NMessage.Payload],
+    externalService: Option[StatusCode.Payload]
+  ) {
+    def restore: StatusCode = StatusCode(
+      code,
+      detail.map(_.restore),
+      application,
+      messageOption.map(_.restore),
+      externalService.map(_.restore)
+    )
+  }
+
+  def message(code: Int): I18NMessage = {
+    val a = Strings.httpstatus.take(code)
+    I18NMessage(a)
+  }
 
   /*
    * Function

@@ -21,7 +21,7 @@ import org.goldenport.util.StringUtils
  *  version Feb.  7, 2021
  *  version Mar.  2, 2021
  *  version Apr.  3, 2021
- * @version May. 10, 2021
+ * @version May. 31, 2021
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -138,6 +138,10 @@ object LogicalLines {
       val candidates = Vector('-')
       candidates.contains(c) || StringUtils.isAsciiNumberChar(c)
     }
+    def isInTable(c: Char): Boolean = {
+      val candidates = Vector('|', '│', '┃')
+      candidates.contains(c)
+    }
     def isInVerbatim(p: String): Boolean = verbatims.exists(_.isMatch(p))
     def getVerbatimMark(p: String): Option[LogicalBlock.VerbatimMark] = verbatims.toStream.flatMap(_.get(p)).headOption
   }
@@ -163,11 +167,13 @@ object LogicalLines {
       prev.map(config.isWordSeparating(_, next)).getOrElse(false)
     protected def word_separating_space(config: Config) = config.wordSeparatingSpace
     protected def is_in_list(config: Config, c: Char) = config.isInList(c)
+    protected def is_in_table(config: Config, c: Char) =config.isInTable(c)
     protected def is_in_verbatim(config: Config, line: Option[String]) =
       use_verbatim(config) && line.fold(false)(config.isInVerbatim)
 
     def location: Option[ParseLocation]
 
+    // def getFirstChar: Option[Char]
     def getLastChar: Option[Char]
     def isEmpty: Boolean = getLastChar.isEmpty
 
@@ -360,7 +366,7 @@ object LogicalLines {
       evt.next match {
         case Some('\n') => line_End_State(config, LineEndEvent(evt.location))
         case Some('\r') => line_End_State(config, LineEndEvent(evt.location))
-        case Some(c) if is_in_list(config, c) => line_End_State(config, LineEndEvent(evt.location))
+        case Some(c) if is_in_list(config, c) || is_in_table(config, c) => line_End_State(config, LineEndEvent(evt.location))
         case Some(c) if is_word_separating(config, getLastChar, c) => character_State(word_separating_space(config))
         case Some(c) => this
         case None => line_End_State(config, LineEndEvent(evt.location))

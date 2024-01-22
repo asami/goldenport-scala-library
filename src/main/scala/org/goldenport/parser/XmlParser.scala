@@ -10,7 +10,8 @@ import LogicalTokens._
  *  version Sep. 20, 2018
  *  version Jul. 16, 2019
  *  version Oct. 12, 2019
- * @version Jan. 23, 2021
+ *  version Jan. 23, 2021
+ * @version Jun. 18, 2021
  * @author  ASAMI, Tomoharu
  */
 case class XmlParser() extends Parser with LogicalTokens.ComplexTokenizer {
@@ -85,11 +86,25 @@ object XmlParser {
           )
           case _ => RAISE.notImplementedYetDefect // TODO error
         }
+        case '"' => XmlAttributeValueState(this)
         case m => copy(tag = tag :+ m)
       }
   }
   object XmlOpenState {
     def apply(parent: LogicalTokensParseState): XmlOpenState = XmlOpenState(parent, Vector.empty) // ('<'))
+  }
+
+  case class XmlAttributeValueState(
+    parent: XmlOpenState,
+    value: Vector[Char] = Vector.empty
+  ) extends LogicalTokensParseState {
+    override protected def handle_End(context: Context): Transition = RAISE.notImplementedYetDefect // TODO error
+
+    override def character_State(context: Context, evt: CharEvent): LogicalTokensParseState =
+      evt.c match {
+        case '"' => parent.addChildState(context, '"' +: value :+ '"')
+        case m => copy(value = value :+ m)
+      }
   }
 
   case class XmlCloseState(

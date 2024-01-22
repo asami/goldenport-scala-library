@@ -8,7 +8,8 @@ import org.goldenport.parser.ParseResultMatchers
 /*
  * @since   Sep. 28, 2020
  *  version Sep. 28, 2020
- * @version Oct. 12, 2020
+ *  version Oct. 12, 2020
+ * @version Jan. 21, 2022
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -59,6 +60,14 @@ class NumberRangeSpec extends WordSpec with Matchers with GivenWhenThen with Par
         val s = "北海道~東京都,福岡県~沖縄県"
         val r = NumberRange.parseLabel(parselabel, s)
         r should parse_object(CompositeRange(RepeatRange(1, 13), RepeatRange(40, 47)))
+      }
+    }
+  }
+  "RepeatRange" should {
+    "RepeatRange" which {
+      "indexes" in {
+        val range = RepeatRange(1, 3)
+        range.indexes should be(List(1, 2, 3))
       }
     }
   }

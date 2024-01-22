@@ -11,7 +11,8 @@ import org.goldenport.util.AnyRefUtils
  * @since   Sep.  5, 2020
  *  version Sep. 29, 2020
  *  version Oct. 12, 2020
- * @version Jan. 20, 2021
+ *  version Jan. 20, 2021
+ * @version Mar. 19, 2022
  * @author  ASAMI, Tomoharu
  */
 trait IntervalBase[E] extends Showable {
@@ -24,7 +25,6 @@ trait IntervalBase[E] extends Showable {
   }
   def display = print
   def show = print
-  def embed = show
 
   private def _to_bound_start(p: Bound[E]) = p match {
     case Open(a) => s"(${AnyRefUtils.toString(a)}"

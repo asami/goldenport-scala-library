@@ -5,7 +5,8 @@ package org.goldenport.tree
  *          Aug. 12, 2008
  *  version Nov. 18, 2019
  *  version Nov. 15, 2020
- * @version Feb.  2, 2021
+ *  version Feb.  2, 2021
+ * @version Dec. 29, 2022
  * @author  ASAMI, Tomoharu
  */
 class PlainTree[E](node: TreeNode[E]) extends TreeBase[E] {
@@ -14,6 +15,13 @@ class PlainTree[E](node: TreeNode[E]) extends TreeBase[E] {
   set_root(node)
 
   def this() = this(new PlainTreeNode[E]())
+
+  override protected def copy_Node(aSource: TreeNode[E], aTarget: TreeNode[E]) {
+    aTarget match {
+      case m: TreeNodeBase[_] => m.content = aSource.content
+      case m => super.copy_Node(aTarget, aTarget)
+    }
+  }
 }
 
 object PlainTree {

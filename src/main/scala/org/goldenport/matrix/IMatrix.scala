@@ -14,7 +14,8 @@ import org.goldenport.matrix.breeze.BreezeMatrix
  *  version Oct. 16, 2019
  *  version Nov. 16, 2019
  *  version Jan. 27, 2020
- * @version Feb. 26, 2020
+ *  version Feb. 26, 2020
+ * @version Mar. 19, 2022
  * @author  ASAMI, Tomoharu
  */
 trait IMatrix[T] extends Showable {
@@ -84,7 +85,6 @@ trait IMatrix[T] extends Showable {
   def print = show
   def display = s"Matrix[${width}x${height}]"
   def show = MatrixVisualizer.linearAlgebra.plainText(this)
-  def embed = display
   //
   def transpose: IMatrix[T]
   def inv(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix.inv

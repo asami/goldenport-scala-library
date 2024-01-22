@@ -13,6 +13,7 @@ import javax.xml.transform.dom._
 import com.asamioffice.goldenport.xml.UXML
 import org.goldenport.exception.RAISE
 import org.goldenport.Strings
+import org.goldenport.util.StringUtils
 import org.goldenport.xml.{XmlSource, XmlUtils}
 
 /*
@@ -31,7 +32,9 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version Mar.  1, 2020
  *  version Nov. 29, 2020
  *  version Jan.  1, 2021
- * @version Apr.  3, 2021
+ *  version Apr.  3, 2021
+ *  version Mar. 28, 2022
+ * @version May.  6, 2022
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -468,7 +471,9 @@ object DomUtils {
   }
 
   def localName(element: Element): String =
-    Option(element.getLocalName) getOrElse element.getTagName
+    Option(element.getLocalName) orElse Option(element.getTagName) getOrElse ""
+
+  def localNameLowerCase(element: Element): String = localName(element).toLowerCase
 
   def htmlElements(node: Node, localname: String): List[Element] =
     htmlElements(children(node), localname)
@@ -523,14 +528,14 @@ object DomUtils {
   def elementsVectorByLocalNameIC(node: Node, localname: String): Vector[Element] =
     childrenIndexedSeq(node).collect {
       case m: Element => m
-    }.filter(x => localname.equalsIgnoreCase(x.getLocalName)).toVector
+    }.filter(x => localname.equalsIgnoreCase(localName(x))).toVector
 
   def elementsVectorByLocalNameIC(node: Node, localname: String, localname2: String, localnames: String*): Vector[Element] = {
     val names = (localnames.toVector :+ localname :+ localname2).map(_.toLowerCase)
     childrenIndexedSeq(node).collect {
       case m: Element => m
     }.filter(x =>
-      names.contains(Option(x.getLocalName).map(_.toLowerCase).getOrElse(""))
+      names.contains(localNameLowerCase(x))
     ).toVector
   }
 
@@ -764,6 +769,12 @@ object DomUtils {
     builder.toString
   }
 
+  def distillText(p: Element): String = {
+    val builder = new StringBuilder
+    _distill_text(p, builder)
+    builder.toString
+  }
+
   private def _distill_text_dom(elem: Element): String = {
     val builder = new StringBuilder
     val a = elem.getElementsByTagName("body")
@@ -806,8 +817,7 @@ object DomUtils {
 
   private def _to_element(p: Element): XElem = {
     val tagname = p.getTagName
-    val prefix = p.getPrefix
-    val label = localName(p)
+    val (prefix, label) = _prefix_label(p)
     val ns = p.getNamespaceURI
     val attrs = _to_attributes(attributes(p))
     val scope = TopScope // TODO
@@ -815,6 +825,13 @@ object DomUtils {
     val minimizeempty = false
     new XElem(prefix, label, attrs, scope, minimizeempty, cs: _*)
   }
+
+  // for nekohtml
+  private def _prefix_label(p: Element): (String, String) =
+    Option(p.getPrefix).map(x => (x, localName(p))).getOrElse {
+      val (prefix, label) = StringUtils.getPrefixBody(p.getTagName)
+      (prefix getOrElse null, label)
+    }
 
   private def _to_attributes(ps: List[Attr]): MetaData = ps match {
     case Nil => Null

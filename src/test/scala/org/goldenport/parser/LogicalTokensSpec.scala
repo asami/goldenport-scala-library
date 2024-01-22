@@ -19,7 +19,8 @@ import org.goldenport.util.DateTimeUtils
  *  version Oct. 27, 2019
  *  version Jan. 21, 2020
  *  version Feb. 29, 2020
- * @version Jan. 22, 2021
+ *  version Jan. 22, 2021
+ * @version Jun. 17, 2022
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -57,7 +58,7 @@ class LogicalTokensSpec extends WordSpec with Matchers with GivenWhenThen {
         val s = "2018-09-09T10:11:12+09:00"
         val r = LogicalTokens.parse(s)
         r should be(LogicalTokens(
-          DateTimeToken(DateTimeUtils.parseIsoDateTimeJst(s), ParseLocation.start)
+          DateTimeToken(DateTimeUtils.parseDateTimeJst(s), ParseLocation.start)
         ))
       }
       "localdate" in {

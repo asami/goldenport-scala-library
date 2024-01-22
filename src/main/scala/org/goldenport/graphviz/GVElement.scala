@@ -5,9 +5,10 @@ import com.asamioffice.goldenport.text.TextBuilder
 
 /*
  * @since   Jan. 14, 2009
- * Mar. 19, 2009
+ *  version Mar. 19, 2009
  *  version Nov.  3, 2011
- * @version May.  4, 2020
+ *  version May.  4, 2020
+ * @version Jul. 12, 2021
  * @author  ASAMI, Tomoharu
  */
 abstract class GVElement(val id: String) extends GVAttributeHolder {
@@ -38,6 +39,7 @@ trait GVAttributeHolder {
   var bgcolor: String = ""
   var layout: String = ""
   var root: String = ""
+  var rankdir: String = ""
   //
   var arrowhead: String = ""
   var arrowtail: String = ""
@@ -65,6 +67,7 @@ trait GVAttributeHolder {
     bgcolor != "" ||
     layout != "" ||
     root != "" ||
+    rankdir != "" ||
     arrowhead != "" ||
     arrowtail != "" ||
     compound != "" ||
@@ -157,6 +160,12 @@ trait GVAttributeHolder {
       if (isExists) out.print(", ")
       out.print("root=")
       out.print(root)
+      isExists = true
+    }
+    if (rankdir != "") {
+      if (isExists) out.print(", ")
+      out.print("rankdir=")
+      out.print(rankdir)
       isExists = true
     }
     if (color != "") {
@@ -308,6 +317,11 @@ trait GVAttributeHolder {
     if (root != "") {
       out.print("root=")
       out.print(root)
+      out.println(";")
+    }
+    if (rankdir != "") {
+      out.print("rankdir=")
+      out.print(rankdir)
       out.println(";")
     }
     if (color != "") {

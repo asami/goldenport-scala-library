@@ -4,6 +4,7 @@ import java.io.{InputStream, OutputStream, File}
 import java.net.URL
 import java.nio.charset.Charset
 import scalax.io.Codec
+import com.asamioffice.goldenport.io.UURL
 import org.goldenport.Platform
 import org.goldenport.bag._
 
@@ -12,7 +13,8 @@ import org.goldenport.bag._
  * 
  * @since   Oct.  5, 2018
  *  version Oct.  8, 2018
- * @version Dec.  7, 2019
+ *  version Dec.  7, 2019
+ * @version Jul. 31, 2023
  * @author  ASAMI, Tomoharu
  */
 trait InputSource {
@@ -24,6 +26,11 @@ trait InputSource {
   def asText(charset: Option[Charset]): String = IoUtils.toText(this, charset)
   def asText(charset: Charset): String = IoUtils.toText(this, charset)
   def asText(codec: Codec): String = IoUtils.toText(this, codec)
+}
+object InputSource {
+  def apply(url: URL): InputSource = UrlInputSource(url)
+
+  def create(s: String): InputSource = UrlInputSource(UURL.getURLFromFileOrURLName(s))
 }
 
 case class StringInputSource(

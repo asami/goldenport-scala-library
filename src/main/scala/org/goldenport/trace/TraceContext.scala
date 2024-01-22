@@ -13,7 +13,8 @@ import org.goldenport.util.AnyUtils
  *  version Feb. 25, 2021
  *  version Mar. 28, 2021
  *  version Apr. 25, 2021
- * @version May. 28, 2021
+ *  version May. 28, 2021
+ * @version Mar. 19, 2022
  * @author  ASAMI, Tomoharu
  */
 class TraceContext() extends Showable {
@@ -29,9 +30,8 @@ class TraceContext() extends Showable {
   }
   def display = print
   def show = print
-  def embed = print
 
-  private def _show(p: Any) = AnyUtils.toEmbed(p)
+  private def _show(p: Any) = AnyUtils.toEmbed(p, 40)
 
   def isEmpty: Boolean = _root.isEmpty && _trace.isEmpty && _stack == Nil
 

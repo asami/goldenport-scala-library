@@ -18,7 +18,8 @@ import org.goldenport.parser.{ParseResult, ParseSuccess, ParseFailure, EmptyPars
  *  version Dec.  8, 2019
  *  version Feb. 29, 2020
  *  version Jan. 23, 2021
- * @version Mar. 28, 2021
+ *  version Mar. 28, 2021
+ * @version Mar. 19, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Lxsv(
@@ -37,7 +38,6 @@ case class Lxsv(
   }.mkString(strategy.outputDelimiter.toString)
   def display: String = print // TODO
   def show: String = print // TODO
-  def embed: String = print
 
   def valueMap: Map[Symbol, Any] = vectormap.mapValues(_.value)
 

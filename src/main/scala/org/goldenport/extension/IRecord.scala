@@ -11,18 +11,27 @@ import org.goldenport.collection.VectorMap
  *  version Sep. 23, 2019
  *  version May. 19, 2020
  *  version Oct. 18, 2020
- * @version Mar. 28, 2021
+ *  version Mar. 28, 2021
+ *  version Mar. 19, 2022
+ *  version Jun.  2, 2022
+ * @version Dec. 12, 2022
  * @author  ASAMI, Tomoharu
  */
-trait IRecord extends Showable {
+trait IRecord extends Showable { // PartialFunction[String, Any] with 
+  def isDefinedAt(key: String): Boolean = get(key).isDefined
+  def apply(key: String): Any = get(key).get
   def keys: List[String] = keyNames
   def keySymbols: List[Symbol]
   def keyNames: List[String]
   def length: Int
   def get(key: Symbol): Option[Any]
   def get(key: String): Option[Any]
-  def toMapS: Map[Symbol, Any] = keySymbols.flatMap(x => get(x).map(y => x -> y)).toMap
-  def toMap: Map[String, Any] = keyNames.flatMap(x => get(x).map(y => x -> y)).toMap
+  def toMapS: Map[Symbol, Any] = asListS.toMap
+  def toMap: Map[String, Any] = asList.toMap
+  def asVectorS: Vector[(Symbol, Any)] = asListS.toVector
+  def asVector: Vector[(String, Any)] = asList.toVector
+  def asListS: List[(Symbol, Any)] = keySymbols.flatMap(x => get(x).map(y => x -> y))
+  def asList: List[(String, Any)] = keyNames.flatMap(x => get(x).map(y => x -> y))
   def +(rhs: IRecord): IRecord
 }
 
@@ -33,7 +42,6 @@ object IRecord {
     val print = map.toString
     def display = print
     def show = print
-    def embed = print
     def keySymbols: List[Symbol] = map.keySet.toList
     def keyNames: List[String] = keySymbols.map(_.name)
     def length: Int = map.size
@@ -50,7 +58,6 @@ object IRecord {
     val print = map.toString
     def display = print
     def show = print
-    def embed = print
     def keySymbols: List[Symbol] = map.keySet.toList
     def keyNames: List[String] = keySymbols.map(_.name)
     def length: Int = map.size
@@ -59,6 +66,14 @@ object IRecord {
     def +(rhs: IRecord): IRecord = MapRecord(map ++ rhs.toMapS)
     override def toMapS = map
     override def toMap = map.map {
+      case (k, v) => k.name -> v
+    }
+    override def asVectorS = map.vector
+    override def asVector = map.vector.map {
+      case (k, v) => k.name -> v
+    }
+    override def asListS = map.list
+    override def asList = map.list.map {
       case (k, v) => k.name -> v
     }
   }

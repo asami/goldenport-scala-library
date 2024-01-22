@@ -4,6 +4,7 @@ import scalaz._, Scalaz._
 import scala.util.Try
 import scala.util.control.NonFatal
 import java.util.Date
+import java.util.TimeZone
 import java.text.SimpleDateFormat
 import java.sql.Timestamp
 import com.github.nscala_time.time.Imports._
@@ -13,10 +14,12 @@ import spire.math.interval._
 import org.goldenport.RAISE
 import org.goldenport.parser.ParseResult
 import org.goldenport.context.DateTimeContext
+import org.goldenport.collection.VectorMap
 import org.goldenport.util.{DateTimeUtils, DateUtils, AnyUtils}
 import org.goldenport.util.SpireUtils.Implicits._
 import org.goldenport.values.Week._
 import org.goldenport.values.IntervalFactory.{BoundsKind, CloseOpen, CloseClose}
+import org.goldenport.extension.IRecord
 
 /*
  * @since   Oct.  2, 2014
@@ -33,16 +36,34 @@ import org.goldenport.values.IntervalFactory.{BoundsKind, CloseOpen, CloseClose}
  *  version Sep. 18, 2019
  *  version Sep. 10, 2020
  *  version Jan. 24, 2021
- * @version Feb. 28, 2021
+ *  version Feb. 28, 2021
+ *  version Feb. 17, 2022
+ *  version Apr. 21, 2022
+ *  version May. 20, 2022
+ *  version Jun. 17, 2022
+ *  version Nov.  8, 2022
+ * @version Feb. 24, 2023
  * @author  ASAMI, Tomoharu
  */
-case class DateTimePeriod( // TODO DateTimeInterval (java8 time)
-  start: Option[DateTime],
-  end: Option[DateTime],
-  isStartInclusive: Boolean = true,
-  isEndInclusive: Boolean = true
-) {
+sealed trait DateTimePeriod { // TODO DateTimeInterval (java8 time)
   import DateTimePeriod._
+
+  def start: Option[DateTime]
+  def end: Option[DateTime]
+  def isStartInclusive: Boolean //  = true
+  def isEndInclusive: Boolean // = true
+
+  def setStartEnd(s: DateTime, e: DateTime): DateTimePeriod
+  def setStart(s: DateTime): DateTimePeriod
+  def setEnd(e: DateTime): DateTimePeriod
+
+  protected final def set_start_end(s: Option[DateTime], e: Option[DateTime]): DateTimePeriod =
+    (s, e) match {
+      case (Some(l), Some(r)) => setStartEnd(l, r)
+      case (Some(l), None) => setStart(l)
+      case (None, Some(r)) => setEnd(r)
+      case (None, None) => DateTimePeriod.Whole
+    }
 
   def toInterval: Interval[DateTime] = {
     val lower = _to_bound(start, isStartInclusive)
@@ -95,56 +116,227 @@ case class DateTimePeriod( // TODO DateTimeInterval (java8 time)
     if (end.nonEmpty)
       this
     else
-      copy(end = Some(DateTime.now(DateTimeUtils.jodajst))) // TODO TZ
+      setEnd(DateTime.now(DateTimeUtils.jodajst))
+      // copy(end = Some(DateTime.now(DateTimeUtils.jodajst))) // TODO TZ
   }
 
   def plusYears(n: Int): DateTimePeriod = {
-    copy(start = start.map(_.plusYears(n)), end = end.map(_.plusYears(n)))
+    // copy(start = start.map(_.plusYears(n)), end = end.map(_.plusYears(n)))
+    set_start_end(start.map(_.plusYears(n)), end.map(_.plusYears(n)))
   }
 
   def plusMonths(n: Int): DateTimePeriod = {
-    copy(start = start.map(_.plusMonths(n)), end = end.map(_.plusMonths(n)))
+    // copy(start = start.map(_.plusMonths(n)), end = end.map(_.plusMonths(n)))
+    set_start_end(start.map(_.plusMonths(n)), end.map(_.plusMonths(n)))
   }
 
   def plusDays(n: Int): DateTimePeriod = {
-    copy(start = start.map(_.plusDays(n)), end = end.map(_.plusDays(n)))
+    // copy(start = start.map(_.plusDays(n)), end = end.map(_.plusDays(n)))
+    set_start_end(start.map(_.plusDays(n)), end.map(_.plusDays(n)))
   }
 
   def minusYears(n: Int): DateTimePeriod = {
-    copy(start = start.map(_.minusYears(n)), end = end.map(_.minusYears(n)))
+    // copy(start = start.map(_.minusYears(n)), end = end.map(_.minusYears(n)))
+    set_start_end(start.map(_.minusYears(n)), end.map(_.minusYears(n)))
   }
 
   def minusMonths(n: Int): DateTimePeriod = {
-    copy(start = start.map(_.minusMonths(n)), end = end.map(_.minusMonths(n)))
+    // copy(start = start.map(_.minusMonths(n)), end = end.map(_.minusMonths(n)))
+    set_start_end(start.map(_.minusMonths(n)), end.map(_.minusMonths(n)))
   }
 
   def minusDays(n: Int): DateTimePeriod = {
-    copy(start = start.map(_.minusDays(n)), end = end.map(_.minusDays(n)))
+    // copy(start = start.map(_.minusDays(n)), end = end.map(_.minusDays(n)))
+    set_start_end(start.map(_.minusDays(n)), end.map(_.minusDays(n)))
   }
 
-  def intersect(rhs: DateTimePeriod): DateTimePeriod = {
-    val s = (start, rhs.start) match {
-      case (None, None) => None
-      case (Some(l), None) => Some(l)
-      case (None, Some(r)) => Some(r)
-      case (Some(l), Some(r)) => {
-        if (l.getMillis < r.getMillis) Some(r) else Some(l)
+  // def intersect(rhs: DateTimePeriod): DateTimePeriod = {
+  //   val s = (start, rhs.start) match {
+  //     case (None, None) => None
+  //     case (Some(l), None) => Some(l)
+  //     case (None, Some(r)) => Some(r)
+  //     case (Some(l), Some(r)) => {
+  //       if (l.getMillis < r.getMillis) Some(r) else Some(l)
+  //     }
+  //   }
+  //   val (e, i) = (end, rhs.end) match {
+  //     case (None, None) => (None, isEndInclusive)
+  //     case (Some(l), None) => (Some(l), isEndInclusive)
+  //     case (None, Some(r)) => (Some(r), rhs.isEndInclusive)
+  //     case (Some(l), Some(r)) => {
+  //       if (l.getMillis == r.getMillis) {
+  //         if (isEndInclusive) (Some(r), rhs.isEndInclusive)
+  //         else (Some(l), isEndInclusive)
+  //       } else if (l.getMillis < r.getMillis) (Some(l), isEndInclusive)
+  //       else (Some(r), rhs.isEndInclusive)
+  //     }
+  //   }
+  //   DateTimePeriod(s, e, i)
+  // }
+
+  // def intersect(rhs: DateTimePeriod): DateTimePeriod = {
+  //   val si = (start, rhs.start) match {
+  //     case (None, None) => (None, isStartInclusive && rhs.isStartInclusive)
+  //     case (None, Some(r)) => (Some(r), rhs.isStartInclusive)
+  //     case (Some(l), None) => (Some(l), isStartInclusive)
+  //     case (Some(l), Some(r)) => ???
+  //   }
+  //   val ei = (end, rhs.end) match {
+  //     case (None, None) => (None, isEndInclusive && rhs.isEndInclusive)
+  //     case (None, Some(r)) => (Some(r), rhs.isEndInclusive)
+  //     case (Some(l), None) => (Some(l), isEndInclusive)
+  //     case (Some(l), Some(r)) => ???
+  //   }
+  //   (si._1, ei._1) match {
+  //     case (Some(s), Some(e)) => ???
+  //     case (Some(s), None) => DateTimePeriod(Some(s), None, si._2, ei._2)
+  //     case (None, Some(e)) => DateTimePeriod(None, Some(e), si._2, ei._2)
+  //     case (None, None) => Empty
+  //   }
+  // }
+
+  def intersect(rhs: DateTimePeriod): DateTimePeriod =
+    this match {
+      case l: StartEnd => rhs match {
+        case r: StartEnd => _intersect(l, r)
+        case r: StartOnly => _intersect(l, r)
+        case r: EndOnly => _intersect(l, r)
+        case r: Just => _intersect(l, r)
+        case Whole => l
+        case Empty => Empty
+      }
+      case l: StartOnly => rhs match {
+        case r: StartEnd => _intersect(r, l)
+        case r: StartOnly => _intersect(l, r)
+        case r: EndOnly => _intersect(l, r)
+        case r: Just => _intersect(l, r)
+        case Whole => l
+        case Empty => Empty
+      }
+      case l: EndOnly => rhs match {
+        case r: StartEnd => _intersect(r, l)
+        case r: StartOnly => _intersect(r, l)
+        case r: EndOnly => _intersect(l, r)
+        case r: Just => _intersect(l, r)
+        case Whole => l
+        case Empty => Empty
+      }
+      case l: Just => rhs match {
+        case r: StartEnd => _intersect(r, l)
+        case r: StartOnly => _intersect(r, l)
+        case r: EndOnly => _intersect(r, l)
+        case r: Just => _intersect(l, r)
+        case Whole => l
+        case Empty => Empty
+      }
+      case Whole => rhs match {
+        case r: StartEnd => r
+        case r: StartOnly => r
+        case r: EndOnly => r
+        case r: Just => r
+        case Whole => this
+        case Empty => Empty
+      }
+      case Empty => rhs match {
+        case r: StartEnd => this
+        case r: StartOnly => this
+        case r: EndOnly => this
+        case r: Just => this
+        case Whole => this
+        case Empty => this
       }
     }
-    val (e, i) = (end, rhs.end) match {
-      case (None, None) => (None, isEndInclusive)
-      case (Some(l), None) => (Some(l), isEndInclusive)
-      case (None, Some(r)) => (Some(r), rhs.isEndInclusive)
-      case (Some(l), Some(r)) => {
-        if (l.getMillis == r.getMillis) {
-          if (isEndInclusive) (Some(r), rhs.isEndInclusive)
-          else (Some(l), isEndInclusive)
-        } else if (l.getMillis < r.getMillis) (Some(l), isEndInclusive)
-        else (Some(r), rhs.isEndInclusive)
-      }
+
+  private def _intersect(l: StartEnd, r: StartEnd): DateTimePeriod =
+    if (l.startDateTime == r.endDateTime) {
+      if (l.isStartInclusive && r.isEndInclusive)
+        Just(l.startDateTime)
+      else
+        Empty
+    } else if (r.startDateTime == l.endDateTime) {
+      if (r.isStartInclusive && l.isEndInclusive)
+        Just(r.startDateTime)
+      else
+        Empty
+    } else if (l.startDateTime > r.endDateTime) {
+      Empty
+    } else {
+      val s = DateTimeInclusive.max(l.startInclusive, r.startInclusive)
+      val e = DateTimeInclusive.min(l.endInclusive, r.endInclusive)
+      StartEnd(s, e)
     }
-    DateTimePeriod(s, e, i)
-  }
+
+  private def _intersect(l: StartEnd, r: StartOnly): DateTimePeriod =
+    l.setStart(DateTimeInclusive.max(l.startInclusive, r.startInclusive))
+
+  private def _intersect(l: StartEnd, r: EndOnly): DateTimePeriod =
+    l.setEnd(DateTimeInclusive.min(l.endInclusive, r.endInclusive))
+
+  private def _intersect(l: StartEnd, r: Just): DateTimePeriod =
+    if (l.isValid(r.dateTime))
+      r
+    else
+      Empty
+
+  private def _intersect(l: StartOnly, r: StartOnly): DateTimePeriod =
+    l.setStart(DateTimeInclusive.max(l.startInclusive, r.startInclusive))
+
+  private def _intersect(l: StartOnly, r: EndOnly): DateTimePeriod =
+    if (l.startInclusive == r.endInclusive)
+      Just(l.startDateTime)
+    else if (l.startDateTime > r.endDateTime)
+      Empty
+    else
+      StartEnd(l.startInclusive, r.endInclusive)
+
+  private def _intersect(l: StartOnly, r: Just): DateTimePeriod =
+    if (l.isValid(r.dateTime))
+      r
+    else
+      Empty
+
+  private def _intersect(l: EndOnly, r: EndOnly): DateTimePeriod =
+    l.setEnd(DateTimeInclusive.min(l.endInclusive, r.endInclusive))
+
+  private def _intersect(l: EndOnly, r: Just):DateTimePeriod =
+    if (l.isValid(r.dateTime))
+      r
+    else
+      Empty
+
+  private def _intersect(l: Just, r: Just): DateTimePeriod =
+    if (l.dateTime == r.dateTime)
+      l
+    else
+      Empty
+
+  def <(rhs: DateTimePeriod): Boolean =
+    (start, end) match {
+      case (None, None) => false
+      case (_, Some(le)) => (rhs.start, rhs.end) match {
+        case (None, _) => false
+        case (Some(rs), _) => (isEndInclusive, rhs.isStartInclusive) match {
+          case (true, true) => le < rs
+          case _ => le <= rs
+        }
+      }
+      case (Some(ls), _) => false
+    }
+
+  def >(rhs: DateTimePeriod): Boolean =
+    (start, end) match {
+      case (None, None) => false
+      case (Some(ls), _) => (rhs.start, rhs.end) match {
+        case (_, None) => false
+        case (_, Some(re)) => (isStartInclusive, rhs.isEndInclusive) match {
+          case (true, true) => re < ls
+          case _ => re <= ls
+        }
+      }
+      case (_, Some(le)) => false
+    }
+
+  def isConflict(rhs: DateTimePeriod): Boolean = !(<(rhs) || >(rhs))
 
   // Label
   def toDateLabel: String = {
@@ -374,15 +566,87 @@ case class DateTimePeriod( // TODO DateTimeInterval (java8 time)
     }
   }
 
+  def literal(): String = {
+    def prefix = if (isStartInclusive) MARK_START_CLOSE else MARK_START_OPEN
+    def postfix = if (isEndInclusive) MARK_END_CLOSE else MARK_END_OPEN
+    val s = start match {
+      case Some(s) => prefix + DateTimeUtils.toIsoDateTimeString(s)
+      case None => ""
+    }
+    val e = end match {
+      case Some(s) => DateTimeUtils.toIsoDateTimeString(s) + postfix
+      case None => ""
+    }
+    s + "~" + e
+  }
+
+  def literal(ctx: DateTimeContext): String = {
+    def prefix = if (isStartInclusive) MARK_START_CLOSE else MARK_START_OPEN
+    def postfix = if (isEndInclusive) MARK_END_CLOSE else MARK_END_OPEN
+    val s = start match {
+      case Some(s) => prefix + DateTimeUtils.toIsoDateTimeString(s)
+      case None => ""
+    }
+    val e = end match {
+      case Some(s) => DateTimeUtils.toIsoDateTimeString(s) + postfix
+      case None => ""
+    }
+    s + "~" + e
+  }
+
   def toNaturalJst: String = {
     DateTimeUtils.toNaturalStringJst(start, end, isEndInclusive)
   }
 
   def toPrehistory: DateTimePeriod = {
     start match {
-      case Some(s) => DateTimePeriod(None, start, false)
+      case Some(s) => DateTimePeriod.EndOnly(start, false)
       case None => DateTimePeriod.empty
     }
+  }
+
+  def toRecord(): IRecord = {
+    val t = Vector("text" -> literal())
+    val s = start match {
+      case Some(s) =>
+        val r = DateTimeUtils.toRecord(s) + IRecord.data(
+          "datetime" -> DateTimeUtils.toIsoDateTimeString(s),
+          "inclusive" -> isStartInclusive
+        )
+        Vector("start" -> r)
+      case None => Vector.empty
+    }
+    val e = end match {
+      case Some(s) =>
+        val r = DateTimeUtils.toRecord(s) + IRecord.data(
+          "datetime" -> DateTimeUtils.toIsoDateTimeString(s),
+          "inclusive" -> isEndInclusive
+        )
+        Vector("end" -> r)
+      case None => Vector.empty
+    }
+    IRecord.create(t ++ s ++ e)
+  }
+
+  def toRecord(ctx: DateTimeContext): IRecord = {
+    val t = Vector("text" -> literal(ctx))
+    val s = start match {
+      case Some(s) =>
+        val r = DateTimeUtils.toRecord(s, ctx) + IRecord.data(
+          "inclusive" -> isStartInclusive
+        )
+        Vector("start" -> r)
+      case None => Vector.empty
+    }
+    val e = end match {
+      case Some(s) =>
+        val r = DateTimeUtils.toRecord(s, ctx) + IRecord.data(
+          "inclusive" -> isEndInclusive
+        )
+        Vector("end" -> r)
+      case None => Vector.empty
+    }
+    IRecord.create(t ++ s ++ e)
   }
 }
 
@@ -404,10 +668,214 @@ object DateTimePeriod {
   val YearMonthDay = """(\d+)-(\d+)-(\d+)""".r
   val KEY_DAY_PRESISE_TIME = "dayt"
 
-  val empty = new DateTimePeriod(None, None)
+  case class DateTimeInclusive(dateTime: DateTime, isInclusive: Boolean = true) {
+    def set(p: DateTime) = copy(dateTime = p)
+  }
+  object DateTimeInclusive {
+    def max(l: DateTimeInclusive, r: DateTimeInclusive): DateTimeInclusive =
+      if (l.dateTime == r.dateTime) {
+        if (l.isInclusive)
+          r
+        else
+          l
+      } else if (l.dateTime > r.dateTime) {
+        l
+      } else {
+        r
+      }
+
+    def min(l: DateTimeInclusive, r: DateTimeInclusive): DateTimeInclusive = 
+      if (l.dateTime == r.dateTime) {
+        if (l.isInclusive)
+          r
+        else
+          l
+      } else if (l.dateTime > r.dateTime) {
+        r
+      } else {
+        l
+      }
+  }
+
+  case class StartEnd(
+    startInclusive: DateTimeInclusive,
+    endInclusive: DateTimeInclusive
+  ) extends DateTimePeriod {
+    def startDateTime = startInclusive.dateTime
+    def endDateTime = endInclusive.dateTime
+    val start: Option[DateTime] = Some(startInclusive.dateTime)
+    val end: Option[DateTime] = Some(endInclusive.dateTime)
+    def isStartInclusive: Boolean = startInclusive.isInclusive
+    def isEndInclusive: Boolean = endInclusive.isInclusive
+
+    def setStartEnd(s: DateTime, e: DateTime): DateTimePeriod =
+      copy(startInclusive = startInclusive.set(s), endInclusive = endInclusive.set(e))
+    def setStart(s: DateTime): DateTimePeriod =
+      copy(startInclusive = startInclusive.set(s))
+    def setEnd(e: DateTime): DateTimePeriod =
+      copy(endInclusive = endInclusive.set(e))
+
+    def setStart(p: DateTimeInclusive) = copy(startInclusive = p)
+    def setEnd(p: DateTimeInclusive) = copy(endInclusive = p)
+  }
+  object StartEnd {
+    def apply(
+      s: DateTime,
+      e: DateTime,
+      si: Boolean,
+      ei: Boolean
+    ): StartEnd = StartEnd(DateTimeInclusive(s, si), DateTimeInclusive(e, ei))
+
+    def apply(
+      s: DateTime,
+      e: DateTime
+    ): StartEnd = StartEnd(DateTimeInclusive(s), DateTimeInclusive(e))
+  }
+
+  case class StartOnly(
+    startInclusive: DateTimeInclusive
+  ) extends DateTimePeriod {
+    def startDateTime = startInclusive.dateTime
+    val start: Option[DateTime] = Some(startInclusive.dateTime)
+    val end: Option[DateTime] = None
+    def isStartInclusive: Boolean = startInclusive.isInclusive
+    def isEndInclusive: Boolean = true
+
+    def setStartEnd(s: DateTime, e: DateTime): DateTimePeriod =
+      StartEnd(s, e, isStartInclusive, isEndInclusive)
+    def setStart(s: DateTime): DateTimePeriod =
+      copy(startInclusive = startInclusive.set(s))
+    def setEnd(e: DateTime): DateTimePeriod =
+      StartEnd(startInclusive, DateTimeInclusive(e))
+
+    def setStart(p: DateTimeInclusive) = copy(startInclusive = p)
+  }
+  object StartOnly {
+    def apply(
+      s: DateTime,
+      si: Boolean
+    ): StartOnly = StartOnly(DateTimeInclusive(s, si))
+
+    def apply(
+      s: DateTime
+    ): StartOnly = StartOnly(DateTimeInclusive(s))
+  }
+
+  case class EndOnly (
+    endInclusive: DateTimeInclusive
+  ) extends DateTimePeriod {
+    def endDateTime = endInclusive.dateTime
+    val start: Option[DateTime] = None
+    val end: Option[DateTime] = Some(endInclusive.dateTime)
+    def isStartInclusive: Boolean = true
+    def isEndInclusive: Boolean = endInclusive.isInclusive
+
+    def setStartEnd(s: DateTime, e: DateTime): DateTimePeriod =
+      StartEnd(s, e, isStartInclusive, isEndInclusive)
+    def setStart(s: DateTime): DateTimePeriod =
+      StartEnd(DateTimeInclusive(s, isStartInclusive), endInclusive)
+    def setEnd(e: DateTime): DateTimePeriod =
+      copy(endInclusive = endInclusive.set(e))
+
+    def setEnd(p: DateTimeInclusive) = copy(endInclusive = p)
+  }
+  object EndOnly {
+    def apply(
+      e: DateTime,
+      ei: Boolean
+    ): EndOnly = EndOnly(DateTimeInclusive(e, ei))
+
+    def apply(
+      e: Option[DateTime],
+      ei: Boolean
+    ): DateTimePeriod = e.map(x => EndOnly(DateTimeInclusive(x, ei))).getOrElse(Whole)
+
+    def apply(
+      e: DateTime
+    ): EndOnly = EndOnly(DateTimeInclusive(e))
+  }
+
+  case class Just(
+    dateTime: DateTime
+  ) extends DateTimePeriod {
+    val start: Option[DateTime] = Some(dateTime)
+    val end: Option[DateTime] = Some(dateTime)
+    def isStartInclusive: Boolean = true
+    def isEndInclusive: Boolean = true
+
+    def setStartEnd(s: DateTime, e: DateTime): DateTimePeriod =
+      if (s <= dateTime && dateTime <= e)
+        this
+      else
+        Empty
+    def setStart(s: DateTime): DateTimePeriod =
+      if (s == dateTime)
+        this
+      else
+        Empty
+    def setEnd(e: DateTime): DateTimePeriod =
+      if (e == dateTime)
+        this
+      else
+        Empty
+  }
+
+  case object Whole extends DateTimePeriod {
+    val start: Option[DateTime] = None
+    val end: Option[DateTime] = None
+    def isStartInclusive: Boolean = true
+    def isEndInclusive: Boolean = true
+
+    def setStartEnd(s: DateTime, e: DateTime): DateTimePeriod =
+      StartEnd(s, e, isStartInclusive, isEndInclusive)
+    def setStart(s: DateTime): DateTimePeriod =
+      StartOnly(s, isStartInclusive)
+    def setEnd(e: DateTime): DateTimePeriod =
+      EndOnly(e, isEndInclusive)
+  }
+
+  case object Empty extends DateTimePeriod {
+    val start: Option[DateTime] = None
+    val end: Option[DateTime] = None
+    def isStartInclusive: Boolean = true
+    def isEndInclusive: Boolean = true
+
+    def setStartEnd(s: DateTime, e: DateTime): DateTimePeriod = this
+    def setStart(s: DateTime): DateTimePeriod = this
+    def setEnd(e: DateTime): DateTimePeriod = this
+  }
+
+  val empty = Empty
 
   val THREASHOLD_DAY = 1
   val THREASHOLD_HOUR = 6
+
+  def apply(s: Option[DateTime], e: Option[DateTime], si: Boolean, ei: Boolean): DateTimePeriod =
+    (s, e) match {
+      case (Some(l), Some(r)) =>
+        if (l == r)
+          if (si && ei) {
+            Just(l)
+          } else {
+            Empty
+          }
+        else
+          StartEnd(l, r, si, ei)
+      case (Some(l), None) =>
+        StartOnly(l, si)
+      case (None, Some(r)) =>
+        EndOnly(r, ei)
+      case (None, None) =>
+        Whole
+    }
+
+  def apply(s: Option[DateTime], e: Option[DateTime]): DateTimePeriod =
+    (s, e) match {
+      case (Some(l), Some(r)) => StartEnd(l, r)
+      case (Some(l), None) => StartOnly(l)
+      case (None, Some(r)) => EndOnly(r)
+      case (None, None) => Whole
+    }
 
   private def effectiveYearMonth(year: Int, month: Int, day: Int): (Int, Int) = {
     if (day <= THREASHOLD_DAY) {
@@ -430,11 +898,36 @@ object DateTimePeriod {
     (dt.getYear, dt.getMonthOfYear, dt.getDayOfMonth)
   }
 
+  def inclusiveExclusive(start: DateTime, end: DateTime): DateTimePeriod =
+    DateTimePeriod(Some(start), Some(end), true, false)
+
+  def closeOpen(start: DateTime, end: DateTime): DateTimePeriod =
+    DateTimePeriod(Some(start), Some(end), true, false)
+
+  def closeOpen(start: Timestamp, end: Timestamp, tz: TimeZone): DateTimePeriod = {
+    val s = DateTimeUtils.toDateTime(start, tz)
+    val e = DateTimeUtils.toDateTime(end, tz)
+    closeOpen(s, e)
+  }
+
   def atOrAbove(year: Int, month: Int, day: Int, hour: Int, minute:Int, second:Int, tz: DateTimeZone): DateTimePeriod =
     DateTimePeriod(Some(new DateTime(year, month, day, hour, minute, second, tz)), None)
 
   def atOrAboveJst(year: Int, month: Int, day: Int): DateTimePeriod =
     DateTimePeriod(Some(new DateTime(year, month, day, 0, 0, jodajst)), None)
+
+
+  def thisMonth(p: DateTime): DateTimePeriod = {
+    val start = DateTimeUtils.startOfFirstDayOfThisMonth(p)
+    val end = DateTimeUtils.startOfFirstDayOfNextMonth(p)
+    DateTimePeriod.inclusiveExclusive(start, end)
+  }
+
+  def lastOneMonthDayBoundary(p: DateTime): DateTimePeriod = {
+    val end = DateTimeUtils.startOfToday(p)
+    val start = end.minusMonths(1)
+    DateTimePeriod.inclusiveExclusive(start, end)
+  }
 
   /*
    * Caution: Timezone depends running environment.
@@ -446,7 +939,10 @@ object DateTimePeriod {
   def parse(tz: DateTimeZone, p: String): DateTimePeriod = parse(DateTime.now, tz, p)
 
   def parse(now: DateTime, tz: DateTimeZone, p: String): DateTimePeriod =
-    Builder(DateTimeContext(now, tz)).fromExpression(p)
+    parse(DateTimeContext(now, tz), p)
+
+  def parse(ctx: DateTimeContext, p: String): DateTimePeriod =
+    Builder(ctx).fromExpression(p)
 
   def parseJst(p: String): DateTimePeriod = parse(jodajst, p)
 
@@ -461,6 +957,12 @@ object DateTimePeriod {
     p: String
   ): DateTimePeriod = Builder(DateTimeContext(now, tz), kind).fromExpression(p)
 
+  def parseNonEmpty(ctx: DateTimeContext, p: String): DateTimePeriod =
+    Builder(ctx, acceptEmpty = false, acceptJust = false).fromExpression(p)
+
+  def parseFill(ctx: DateTimeContext, p: String): DateTimePeriod =
+    Builder(ctx, acceptEmpty = false, acceptJust = false, acceptEmptyStart = false, acceptEmptyEnd = false).fromExpression(p)
+
   /*
    * Caution: Timezone depends running environment.
    */
@@ -468,7 +970,11 @@ object DateTimePeriod {
 
   case class Builder(
     context: DateTimeContext,
-    kind: BoundsKind = CloseClose
+    kind: BoundsKind = CloseClose,
+    acceptEmpty: Boolean = true,
+    acceptJust: Boolean = true,
+    acceptEmptyStart: Boolean = true,
+    acceptEmptyEnd: Boolean = true
   ) {
     import RichDateTime.Implicits._
 
@@ -493,7 +999,7 @@ object DateTimePeriod {
       end: Option[String],
       inclusive: Boolean
     ): DateTimePeriod = {
-      DateTimePeriod(
+      _create(
         start.map(toDateTime),
         end.map(toDateTime),
         isStartInclusive,
@@ -507,12 +1013,66 @@ object DateTimePeriod {
       low: Boolean,
       high: Boolean
     ): DateTimePeriod = {
-      DateTimePeriod(
+      _create(
         start.map(toDateTime),
         end.map(toDateTime),
         low,
         high
       )
+    }
+
+    private def _create(
+      s: Option[DateTime],
+      e: Option[DateTime]
+    ): DateTimePeriod = _create(s, e, isStartInclusive, isEndInclusive)
+
+    private def _create(
+      s: Option[DateTime],
+      e: Option[DateTime],
+      si: Boolean,
+      ei: Boolean
+    ): DateTimePeriod = {
+      val a = DateTimePeriod(s, e, si, ei)
+      _check(a) match {
+        case Some(error) => RAISE.invalidArgumentFault(error)
+        case None => a
+      }
+    }
+
+    private def _check(p: DateTimePeriod): Option[String] = {
+      val a = if (!acceptEmpty && p == Empty)
+        Some("Empty interval")
+      else if (!acceptJust && p.isInstanceOf[Just])
+        Some("Just interval")
+      else
+        (acceptEmptyStart, acceptEmptyEnd) match {
+          case (true, true) => None
+          case (true, false) =>
+            if (p.end.isEmpty)
+              Some("Missing end.")
+            else
+              None
+          case (false, true) =>
+            if (p.start.isEmpty)
+              Some("Missing start.")
+            else
+              None
+          case (false, false) =>
+            if (p.start.isEmpty && p.end.isEmpty)
+              Some("Missing both start and end.")
+            else
+              None
+        }
+      a orElse {
+        p match {
+          case StartEnd(s, e) =>
+            if (s.dateTime > e.dateTime)
+              Some("Start is later than end.")
+            else
+              None
+          case _ => None
+        }
+      }
     }
 
     def toDateTime(
@@ -574,17 +1134,17 @@ object DateTimePeriod {
       val dt = RichDateTime(base)
       val tz = dt.toRichDateTimeZone
       def year(y: Int) = {
-        DateTimePeriod(
+        _create(
           Some(tz.yearFirst(y)),
           Some(tz.yearLast(y)))
       }
       def yearmonth(y: Int, m: Int) = {
-        DateTimePeriod(
+        _create(
           Some(tz.monthFirst(y, m)),
           Some(tz.monthLast(y, m)))
       }
       def yearmonthday(y: Int, m: Int, d: Int) = {
-        DateTimePeriod(
+        _create(
           Some(tz.dayFirst(y, m, d)),
           Some(tz.dayLast(y, m, d)))
       }
@@ -593,7 +1153,7 @@ object DateTimePeriod {
         case "year" => year(base.getYear)
         case "month" => yearmonth(base.getYear, base.getMonthOfYear)
         case "day" => yearmonthday(base.getYear, base.getMonthOfYear, base.getDayOfMonth)
-        case KEY_DAY_PRESISE_TIME => DateTimePeriod(Some(base), Some(base.plusDays(1).minusMillis(1)))
+        case KEY_DAY_PRESISE_TIME => _create(Some(base), Some(base.plusDays(1).minusMillis(1)))
         case Year(y) => year(y.toInt)
         case YearMonth(y, m) => yearmonth(y.toInt, m.toInt)
         case YearMonthDay(y, m, d) => yearmonthday(y.toInt, m.toInt, d.toInt)
@@ -603,7 +1163,7 @@ object DateTimePeriod {
         case "year" => year(base.getYear).plusYears(n)
         case "month" => yearmonth(base.getYear, base.getMonthOfYear).plusMonths(n)
         case "day" => yearmonthday(base.getYear, base.getMonthOfYear, base.getDayOfMonth).plusDays(n)
-        case KEY_DAY_PRESISE_TIME => DateTimePeriod(Some(base), Some(base.plusDays(n).minusMillis(1)))
+        case KEY_DAY_PRESISE_TIME => _create(Some(base), Some(base.plusDays(n).minusMillis(1)))
         case Year(y) => year(y.toInt).plusYears(n)
         case YearMonth(y, m) => yearmonth(y.toInt, m.toInt).plusMonths(n)
         case YearMonthDay(y, m, d) => yearmonthday(y.toInt, m.toInt, d.toInt).plusDays(n)
@@ -613,7 +1173,7 @@ object DateTimePeriod {
         case "year" => year(base.getYear).minusYears(n)
         case "month" => yearmonth(base.getYear, base.getMonthOfYear).minusMonths(n)
         case "day" => yearmonthday(base.getYear, base.getMonthOfYear, base.getDayOfMonth).minusDays(n)
-        case KEY_DAY_PRESISE_TIME => DateTimePeriod(Some(base.minusDays(n)), Some(base.minusDays(n - 1).minusMillis(1)))
+        case KEY_DAY_PRESISE_TIME => _create(Some(base.minusDays(n)), Some(base.minusDays(n - 1).minusMillis(1)))
         case Year(y) => year(y.toInt).minusYears(n)
         case YearMonth(y, m) => yearmonth(y.toInt, m.toInt).minusMonths(n)
         case YearMonthDay(y, m, d) => yearmonthday(y.toInt, m.toInt, d.toInt).minusDays(n)
@@ -687,6 +1247,7 @@ object DateTimePeriod {
       }
 
       def body(inclusivep: Boolean, sb: String, si: Boolean, ei: Boolean): DateTimePeriod = {
+//        println(s"body: $inclusivep, $sb, $si, $ei")
         if (!sb.contains("~")) {
           sb match {
             case Compute(x, "+", n) => plus_one(x, n.toInt)
@@ -727,12 +1288,17 @@ object DateTimePeriod {
           case _ => (s, isStartInclusive)
         }
         val (b, isendinclusive) = a.last match {
-          case MARK_START_OPEN => (a.init, false)
-          case MARK_START_CLOSE => (a.init, true)
+          case MARK_END_OPEN => (a.init, false)
+          case MARK_END_CLOSE => (a.init, true)
           case MARK_OPEN => (a.init, false)
           case _ => (a, isEndInclusive)
         }
-        body(false, b, isstartinclusive, isendinclusive)
+//        println(s"pre body: $s, $a, $b)")
+        val r = body(false, b, isstartinclusive, isendinclusive)
+        _check(r) match {
+          case Some(error) => RAISE.invalidArgumentFault(s"$error: $s")
+          case None => r
+        }
       }
     }
 
@@ -747,7 +1313,7 @@ object DateTimePeriod {
     def yearly(
       year: Int
     ): DateTimePeriod = {
-      DateTimePeriod(
+      _create(
         Some(datetimeYearFirst(year)),
         Some(datetimeYearLast(year)))
     }
@@ -760,13 +1326,13 @@ object DateTimePeriod {
       val (year, month) = effectiveYearMonth(currentYear, currentMonth, currentDay)
       val start = new DateTime(year, month, 1, 0, 0, dateTimeZone)
       val end = new DateTime(year, month, 1, 0, 0, dateTimeZone).plusMonths(1).minusDays(1)
-      DateTimePeriod(Some(start), Some(end))
+      _create(Some(start), Some(end))
     }
 
     def monthly(
       year: Int, month: Int
     ): DateTimePeriod = {
-      DateTimePeriod(
+      _create(
         Some(datetimeMonthFirst(year, month)),
         Some(datetimeMonthLast(year, month)))
     }
@@ -782,7 +1348,7 @@ object DateTimePeriod {
     def weekly(
       year: Int, week: Int
     ): DateTimePeriod = {
-      DateTimePeriod(
+      _create(
         Some(datetimeWeekFirst(year, week)),
         Some(datetimeWeekLast(year, week)))
     }
@@ -795,13 +1361,13 @@ object DateTimePeriod {
       val (year, month, day) = effectiveYearMonthDay(dateTimeZone)(currentYear, currentMonth, currentDay, currentHour)
       val start = new DateTime(year, month, day, 0, 0, dateTimeZone)
       val end = new DateTime(year, month, day, 0, 0, dateTimeZone).plusDays(1).minusMillis(1)
-      DateTimePeriod(Some(start), Some(end))
+      _create(Some(start), Some(end))
     }
 
     def daily(
       year: Int, month: Int, day: Int
     ): DateTimePeriod = {
-      DateTimePeriod(
+      _create(
         Some(datetimeDayFirst(year, month, day)),
         Some(datetimeDayLast(year, month, day)))
     }
@@ -825,13 +1391,13 @@ object DateTimePeriod {
     }
 
     def datetimeWeekFirst(year: Int, week: Int): DateTime = {
-      ???
+      RAISE.notImplementedYetDefect
     }
 
     def datetimeWeekLast(year: Int, week: Int): DateTime = {
       // val dt = new DateTime(year, month, 1, 0, 0, dateTimeZone)
       // dt.plusMonths(1).minusMillis(1)
-      ???
+      RAISE.notImplementedYetDefect
     }
 
     def datetimeDayFirst(year: Int, month: Int, day: Int): DateTime = {
@@ -846,7 +1412,7 @@ object DateTimePeriod {
     def datetimeParse(s: String): DateTime = parseDateTime(s, dateTimeZone)
 
     def parseDateTime(s: String, tz: DateTimeZone): DateTime =
-      DateTimeUtils.parseIsoDateTime(s, tz)
+      DateTimeUtils.parseDateTime(s, tz)
   }
 
   private def gmt = DateTimeUtils.gmt

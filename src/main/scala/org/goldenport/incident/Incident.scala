@@ -6,11 +6,16 @@ import org.goldenport.i18n.I18NString
 import org.goldenport.io.Retry
 
 /*
+ * See org.goldenport.context.Incident
+ * See org.goldenport.context.DetailCode.Incident
+ * 
  * @since   Jun.  7, 2019
- * @version Jun.  9, 2019
+ *  version Jun.  9, 2019
+ *  version Mar. 27, 2022
+ * @version Apr.  3, 2022
  * @author  ASAMI, Tomoharu
  */
-sealed trait Incident {
+sealed trait Incident extends org.goldenport.context.Incident {
   def start: Long
   def end: Long
   def message: Option[I18NString]
@@ -61,6 +66,17 @@ case class RetryIncident(
   }
 
   def isNoRetry = retryCount == 0
+}
+
+case class TraverseIncident(
+  start: Long,
+  end: Long,
+  key: Any,
+  target: Any,
+  result: Option[Any],
+  message: Option[I18NString],
+  exception: Option[Throwable]
+) extends Incident {
 }
 
 sealed trait StorageIoIncident extends IoIncident {

@@ -15,24 +15,42 @@ import org.goldenport.util.AnyUtils
  *  version Sep. 30, 2019
  *  version Oct. 18, 2019
  *  version Jan.  2, 2021
- * @version Feb. 20, 2021
+ *  version Feb. 20, 2021
+ *  version Feb. 28, 2022
+ * @version Dec. 10, 2022
  * @author  ASAMI, Tomoharu
  */
 case class I18NContext(
   charset: Charset,
+  charsetInputFileOption: Option[Charset],
+  charsetOutputFileOption: Option[Charset],
+  charsetConsoleOption: Option[Charset],
   newline: String,
   locale: Locale,
   timezone: TimeZone,
   currency: Currency,
   calendarFormatters: CalendarFormatter.Factory,
   stringFormatter: StringFormatter,
-  resourceBundle: ResourceBundle
+  resourceBundle: ResourceBundle,
+  databaseTimeZone: Option[TimeZone] = None
 ) {
-  lazy val datetimezone = DateTimeZone.forTimeZone(timezone)
+  lazy val dateTimeZone = DateTimeZone.forTimeZone(timezone)
+  lazy val effectiveDatabaseDateTimeZone = DateTimeZone.forTimeZone(databaseTimeZone getOrElse timezone)
   private lazy val _numberFormatter = NumberFormat.getNumberInstance(locale)
   private lazy val _intFormatter = NumberFormat.getIntegerInstance(locale)
   private lazy val _currencyFormatter = NumberFormat.getCurrencyInstance(locale)
   private lazy val _percentFormatter = NumberFormat.getPercentInstance(locale)
+
+  def effectiveDatabaseTimeZone = databaseTimeZone getOrElse timezone
+
+  def withLocalTimeZone(l: Locale, tz: TimeZone) = copy(
+    locale = l,
+    timezone = tz
+  )
+
+  def charsetInputFile = charsetInputFileOption getOrElse charset
+  def charsetOutputFile = charsetOutputFileOption getOrElse charset
+  def charsetConsole = charsetConsoleOption getOrElse charset
 
   def print(p: Any): String = p match {
     case m: Number => printNumber(m)
@@ -72,7 +90,7 @@ case class I18NContext(
 
   def formatDateTime(p: DateTime): String = formatDateTime(p.getMillis)
 
-  def formatDateTime(p: LocalDateTime): String = formatDateTime(p.toDateTime(datetimezone))
+  def formatDateTime(p: LocalDateTime): String = formatDateTime(p.toDateTime(dateTimeZone))
 
   def formatDate(p: LocalDate): String = RAISE.notImplementedYetDefect
 
@@ -156,7 +174,7 @@ case class I18NContext(
     formatter.format(p)
   }
 
-  def formatDateTime(fmt: String, p: Long): String = formatDateTime(fmt, new DateTime(p, datetimezone))
+  def formatDateTime(fmt: String, p: Long): String = formatDateTime(fmt, new DateTime(p, dateTimeZone))
 
   def formatDateTime(fmt: String, p: java.sql.Timestamp): String = formatDateTime(fmt, p.getTime)
 
@@ -164,7 +182,7 @@ case class I18NContext(
 
   def formatDateTime(fmt: String, p: DateTime): String = calendarFormatters("???").format(fmt, p)(this)
 
-  def formatDateTime(fmt: String, p: LocalDateTime): String = formatDateTime(fmt, p.toDateTime(datetimezone))
+  def formatDateTime(fmt: String, p: LocalDateTime): String = formatDateTime(fmt, p.toDateTime(dateTimeZone))
 
   def formatDate(fmt: String, p: LocalDate): String = RAISE.notImplementedYetDefect
 
@@ -189,6 +207,9 @@ object I18NContext {
     val bundle = EmptyResourceBundle
     I18NContext(
       charset,
+      None,
+      None,
+      None,
       newline,
       locale,
       timezone,
@@ -210,6 +231,9 @@ object I18NContext {
     val bundle = EmptyResourceBundle
     I18NContext(
       charset,
+      None,
+      None,
+      None,
       newline,
       locale,
       timezone,
@@ -227,6 +251,9 @@ object I18NContext {
     timezone: TimeZone
   ): I18NContext = I18NContext(
     charset,
+    None,
+    None,
+    None,
     newline,
     locale,
     timezone,
@@ -250,4 +277,7 @@ object I18NContext {
   } catch {
     case NonFatal(e) => _default_currency
   }
+
+  def apply(locale: Locale, tz: TimeZone): I18NContext =
+    default.withLocalTimeZone(locale, tz)
 }

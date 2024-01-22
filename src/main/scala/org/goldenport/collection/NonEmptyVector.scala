@@ -10,7 +10,8 @@ import org.goldenport.util.VectorUtils
  *  version May.  2, 2019
  *  version Oct. 13, 2019
  *  version Nov.  3, 2019
- * @version Apr. 18, 2020
+ *  version Apr. 18, 2020
+ * @version Jun. 20, 2021
  * @author  ASAMI, Tomoharu
  */
 case class NonEmptyVector[T](head: T, tail: Vector[T]) {
@@ -36,6 +37,7 @@ case class NonEmptyVector[T](head: T, tail: Vector[T]) {
   def ++(ps: NonEmptyVector[T]) = copy(tail = (tail :+ ps.head) ++ ps.tail)
   def ++(ps: Seq[T]) = copy(tail = (tail :+ ps.head) ++ ps.tail)
 
+  def contains(p: T): Boolean = vector.contains(p)
   def exists(f: T => Boolean): Boolean = vector.exists(f)
 
   def map[A](f: T => A): NonEmptyVector[A] =
@@ -80,8 +82,12 @@ object NonEmptyVector {
   // def apply[T](p: T, ps: T*): NonEmptyVector[T] = NonEmptyVector(p, ps.toVector)
   def apply[T](p: T): NonEmptyVector[T] = new NonEmptyVector(p, Vector.empty)
   def apply[T](p: T, ps: Seq[T]): NonEmptyVector[T] = new NonEmptyVector(p, ps.toVector)
+  def apply[T](p: NonEmptyList[T]): NonEmptyVector[T] = new NonEmptyVector(p.head, p.tail.toVector)
 
   def create[T](p: T, ps: T*): NonEmptyVector[T] = NonEmptyVector(p, ps.toVector)
+
+  def createOption[T](p: Iterable[T]): Option[NonEmptyVector[T]] =
+    p.headOption.map(x => NonEmptyVector(x, p.tail.toVector))
 
   def createOption[T](p: Seq[T]): Option[NonEmptyVector[T]] =
     p.headOption.map(x => NonEmptyVector(x, p.tail.toVector))

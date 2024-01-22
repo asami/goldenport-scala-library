@@ -1,5 +1,6 @@
 package org.goldenport.cli
 
+import scala.language.higherKinds
 import scalaz._, Scalaz._
 import scalaz.concurrent.Task
 import scalaz.stream._

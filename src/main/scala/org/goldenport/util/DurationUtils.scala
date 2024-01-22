@@ -4,11 +4,13 @@ import scala.concurrent.duration._
 import org.joda.time.{Duration => JodaDuration}
 import org.joda.time.DateTimeConstants
 import org.goldenport.parser._
+import org.goldenport.extension.IRecord
 
 /*
  * @since   Oct. 22, 2020
  *  version Feb. 14, 2021
- * @version Apr. 21, 2021
+ *  version Apr. 21, 2021
+ * @version Oct. 29, 2022
  * @author  ASAMI, Tomoharu
  */
 object DurationUtils {
@@ -56,4 +58,108 @@ object DurationUtils {
   private def _to_int(p: String) = NumberUtils.parseInt(p, 0)
 
   def hour(h: Int): JodaDuration = JodaDuration.standardHours(h)
+
+  def toRecord(p: FiniteDuration): IRecord = {
+    val millis = p.toMillis
+    val totalmillis = Some(millis)
+    val vmillis = {
+      val x = millis % 1000
+      if (x == 0) None else Some(x)
+    }
+    val second = millis / 1000
+    val vsecond = {
+      val x = second % 60
+      if (x == 0) None else Some(x)
+    }
+    val minute = second / 60
+    val vminute = {
+      val x = minute % 60
+      if (x == 0) None else Some(x)
+    }
+    val hour = minute / 60
+    val vhour = {
+      val x = hour % 24
+      if (x == 0) None else Some(x)
+    }
+    val day = hour / 24
+    val vday = if (day == 0) None else Some(day)
+    val cday = vday
+    val chour = {
+      if (vday.nonEmpty || vhour.nonEmpty)
+        Some(vhour getOrElse 0)
+      else
+        None
+    }
+    val cminute = {
+      if (vday.nonEmpty || vhour.nonEmpty || vminute.nonEmpty)
+        Some(vminute getOrElse 0)
+      else
+        None
+    }
+    val csecond = {
+      if (vday.nonEmpty || vhour.nonEmpty || vminute.nonEmpty || vsecond.nonEmpty)
+        Some(vsecond getOrElse 0)
+      else
+        None
+    }
+    val cmillis = Some(vmillis getOrElse 0)
+    val totalday = {
+      if (vmillis.isEmpty && vsecond.isEmpty && vminute.isEmpty && vhour.isEmpty && vday.nonEmpty)
+        Some(day)
+      else
+        None
+    }
+    val totalhour = {
+      if (vmillis.isEmpty && vsecond.isEmpty && vminute.isEmpty && (vhour.nonEmpty || vday.nonEmpty))
+        Some(hour)
+      else
+        None
+    }
+    val totalminute = {
+      if (vmillis.isEmpty && vsecond.isEmpty && (vminute.nonEmpty || vhour.nonEmpty || vday.nonEmpty))
+        Some(minute)
+      else
+        None
+    }
+    val totalsecond = {
+      if (vmillis.isEmpty && (vsecond.nonEmpty || vminute.nonEmpty || vhour.nonEmpty || vday.nonEmpty))
+        Some(second)
+      else
+        None
+    }
+    val text = {
+      def _day_ = if (day == 1) s"${day} day" else s"${day} days"
+      def _hour_ = if (hour == 1) s"${hour} hour" else s"${hour} hours"
+      def _minute_ = if (minute == 1) s"${minute} minute" else s"${minute} minutes"
+      def _second_ = if (second == 1) s"${second} second" else s"${second} seconds"
+      def _millis_ = if (millis == 1) s"${millis} millisecond" else s"${millis} milliseconds"
+
+      if (vmillis.isEmpty && vsecond.isEmpty && vminute.isEmpty && vhour.isEmpty && vday.nonEmpty)
+        _day_
+      else if (vmillis.isEmpty && vsecond.isEmpty && vminute.isEmpty && vhour.nonEmpty && vday.isEmpty)
+        _hour_
+      else if (vmillis.isEmpty && vsecond.isEmpty && vminute.nonEmpty && vhour.isEmpty && vday.isEmpty)
+        _minute_
+      else if (vmillis.isEmpty && vsecond.nonEmpty && vminute.isEmpty && vhour.isEmpty && vday.isEmpty)
+        _second_
+      else
+        _millis_
+    }
+    IRecord.data(
+      "text" -> text,
+      "composition" -> IRecord.dataOption(
+        "day" -> cday,
+        "hour" -> chour,
+        "minute" -> cminute,
+        "second" -> csecond,
+        "millis" -> cmillis
+      )
+    ) + IRecord.dataOption(
+      "day" -> totalday,
+      "hour" -> totalhour,
+      "minute" -> totalminute,
+      "second" -> totalsecond,
+      "millis" -> totalmillis
+    )
+  }
 }

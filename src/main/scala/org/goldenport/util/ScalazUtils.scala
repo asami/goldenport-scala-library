@@ -1,6 +1,7 @@
 package org.goldenport.util
 
 import scalaz._, Scalaz._
+import scala.util.control.NonFatal
 
 /*
  * @since   Sep. 12, 2015
@@ -10,8 +11,9 @@ import scalaz._, Scalaz._
  *  version Jul. 25, 2017
  *  version Aug. 29, 2017
  *  version Jan. 20, 2018
- * @version Oct. 15, 2018
- * @version Dec.  7, 2018
+ *  version Oct. 15, 2018
+ *  version Dec.  7, 2018
+ * @version Aug.  3, 2023
  * @author  ASAMI, Tomoharu
  */
 object ScalazUtils {
@@ -26,6 +28,12 @@ object ScalazUtils {
 
   def makeSomeNonEmptyList[T](a: T): Option[NonEmptyList[T]] =
     Some(NonEmptyList.nels(a))
+
+  def executeValidationNel[T](body: => T): ValidationNel[Throwable, T] = try {
+    Success(body)
+  } catch {
+    case NonFatal(e) => Failure(e).toValidationNel
+  }
 
   // pre-order traversal
   def toIterator[T](tree: Tree[T]) = new TreeIterator(tree)

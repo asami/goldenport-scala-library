@@ -4,6 +4,8 @@ import scalaz._, Scalaz._
 import scala.util.control.NonFatal
 import java.net.{URI, URL}
 import java.io.File
+import org.goldenport.context.Conclusion
+import org.goldenport.context.Message
 import org.goldenport.exception.SyntaxErrorFaultException
   
 /*
@@ -16,7 +18,8 @@ import org.goldenport.exception.SyntaxErrorFaultException
  *  version Oct. 14, 2020
  *  version Jan. 30, 2021
  *  version Feb.  2, 2021
- * @version May.  5, 2021
+ *  version May.  5, 2021
+ * @version Oct. 12, 2021
  * @author  ASAMI, Tomoharu
  */
 sealed trait ParseResult[+AST] {
@@ -25,7 +28,8 @@ sealed trait ParseResult[+AST] {
   def flatMap[T](f: AST => ParseResult[T]): ParseResult[T]
   def get: Option[AST] = toOption
   def take: AST = get getOrElse {
-    throw new IllegalArgumentException(messages.mkString(";"))
+    //    throw new IllegalArgumentException(messages.mkString(";"))
+    throw Conclusion.syntaxErrorFault(messages).RAISE
   }
   def errors: Vector[ErrorMessage]
   def warnings: Vector[WarningMessage]

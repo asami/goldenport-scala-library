@@ -24,7 +24,10 @@ import com.asamioffice.goldenport.text.UString
  *  version Jul.  7, 2019
  *  version Dec.  7, 2019
  *  version Sep.  8, 2020
- * @version Apr. 15, 2021
+ *  version Apr. 15, 2021
+ *  version May. 30, 2021
+ *  version Mar. 30, 2022
+ * @version Apr. 18, 2023
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -42,6 +45,7 @@ object Strings {
     val application_xml_dtd = "application/xml-dtd"
     val application_zip = "application/zip"
     val application_x_gzip = "application/x-gzip"
+    val application_x_www_form_urlencoded = "application/x-www-form-urlencoded"
     val application_excel = "application/vnd.ms-excel"
     val application_excelx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     val application_powerpoint = "application/vnd.ms-powerpoint"
@@ -58,6 +62,7 @@ object Strings {
     val image_apng = "image/apng"
     val image_webp = "image/webp"
     val image_avif = "image/avif"
+    val image_xicon = "image/x-icon"
     val message_http = "message/http"
     val message_imdn_xml = "message/imdn+xml"
     val message_partianl = "message/partial"
@@ -165,6 +170,8 @@ object Strings {
     def code(key: String): Int = {
       message.find(_._2 == key).map(_._1).get
     }
+
+    def take(code: Int): String = message.get(code) getOrElse InternalServerError
   }
 
   val delimiter = " ,;\t\n\r"
@@ -228,7 +235,7 @@ object Strings {
   }
 
   def blankp(s: String): Boolean =
-    s == null || s.length == 0 || s.forall(_ == ' ')
+    s == null || s.length == 0 || s.forall(x => x == ' ' || x == '\t')
 
   def blankp(s: Option[String]): Boolean = {
     s.map(blankp) getOrElse true

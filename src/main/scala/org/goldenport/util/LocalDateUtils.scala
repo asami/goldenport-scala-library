@@ -2,6 +2,7 @@ package org.goldenport.util
 
 import scala.util.control.NonFatal
 import com.github.nscala_time.time.Imports._
+import org.goldenport.context.Consequence
 
 /*
  * @since   Jun. 25, 2015
@@ -11,11 +12,18 @@ import com.github.nscala_time.time.Imports._
  *  version Aug. 29, 2017
  *  version May. 23, 2018
  *  version Jun. 14, 2018
- * @version Oct. 10, 2018
+ *  version Oct. 10, 2018
+ *  version Apr. 20, 2022
+ * @version Dec. 12, 2022
  * @author  ASAMI, Tomoharu
  */
 object LocalDateUtils {
+  def create(p: Long, dtz: DateTimeZone): LocalDate = new LocalDate(p, dtz)
+
   def parse(s: String): LocalDate = LocalDate.parse(s.trim)
+
+  def consequenceLocalDate(p: String): Consequence[LocalDate] =
+    Consequence(parse(p))
 
   def parseYYYYMMDD(s: String): LocalDate = {
     // println(s"parseYYYYMMDD: $s")
@@ -98,4 +106,8 @@ object LocalDateUtils {
     require (startage <= endage, "start should be less equal than end")
     (base.minusYears(endage + 1).plusDays(1), base.minusYears(startage))
   }
+
+  //
+  def isSameMonth(lhs: LocalDate, rhs: LocalDate): Boolean =
+    lhs.getYear == rhs.getYear && lhs.getMonthOfYear == rhs.getMonthOfYear
 }

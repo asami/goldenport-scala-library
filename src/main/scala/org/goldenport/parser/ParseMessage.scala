@@ -5,17 +5,20 @@ import java.net.{URI, URL}
 import java.io.File
 import org.goldenport.i18n.I18NString
 import org.goldenport.cli.Environment
+import org.goldenport.context.{Message, ErrorMessage => CErrorMessage, WarningMessage => CWarningMessage}
   
 /*
  * @since   Aug. 21, 2018
  *  version Oct. 14, 2018
  *  version Feb.  2, 2019
  *  version Sep.  6, 2020
- * @version Jan. 16, 2021
+ *  version Jan. 16, 2021
+ * @version Oct. 12, 2021
  * @author  ASAMI, Tomoharu
  */
-trait ParseMessage {
+sealed trait ParseMessage extends Message {
   def msg: I18NString
+  override def toI18NString = msg
   def location: Option[ParseLocation]
 
   def withLocation(uri: URI): ParseMessage
@@ -33,7 +36,7 @@ trait ParseMessage {
 case class ErrorMessage(
   msg: I18NString,
   location: Option[ParseLocation]
-) extends ParseMessage {
+) extends ParseMessage with CErrorMessage {
   def withLocation(uri: URI): ErrorMessage = copy(location = location.map(_.withLocation(uri)))
   def withLocation(url: URL): ErrorMessage = withLocation(url.toURI)
   def withLocation(file: File): ErrorMessage = withLocation(file.toURI)
@@ -76,7 +79,7 @@ object ErrorMessage {
 case class WarningMessage(
   msg: I18NString,
   location: Option[ParseLocation]
-) extends ParseMessage {
+) extends ParseMessage with CWarningMessage {
   def withLocation(uri: URI): WarningMessage = copy(location = location.map(_.withLocation(uri)))
   def withLocation(url: URL): WarningMessage = withLocation(url.toURI)
   def withLocation(file: File): WarningMessage = withLocation(file.toURI)

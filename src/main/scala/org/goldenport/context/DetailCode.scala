@@ -5,10 +5,17 @@ import org.goldenport.RAISE
 import org.goldenport.util.StringUtils
 
 /*
+ * See org.goldenport.incident.Incident
+ * See org.goldenport.context.Incident
+ * 
  * @since   Mar. 12, 2021
  *  version Mar. 27, 2021
  *  version Apr. 29, 2021
- * @version May. 27, 2021
+ *  version May. 27, 2021
+ *  version Jan. 20, 2022
+ *  version Apr.  3, 2022
+ *  version Jun. 13, 2022
+ * @version Sep. 27, 2023
  * @author  ASAMI, Tomoharu
  */
 case class DetailCode(
@@ -18,6 +25,8 @@ case class DetailCode(
   application: Option[DetailCode.ApplicationCode], // 2
   reaction: DetailCode.Reaction // 2
 ) {
+  import DetailCode._
+
   // 7 or 9
   def code = application.
     map(x =>
@@ -30,6 +39,19 @@ case class DetailCode(
   ).getOrElse(
     s"${category.name}-${site.name}-${incident.name}-${reaction.name}"
   )
+
+  def forConfig: DetailCode = copy(
+    category = SystemError,
+    site = ConfigSite
+  )
+
+  def toPayload: DetailCode.Payload = DetailCode.Payload(
+    category.name,
+    site.name,
+    incident.name,
+    application.map(_.toPayload),
+    reaction.toPayload
+  )
 }
 
 object DetailCode {
@@ -37,21 +59,31 @@ object DetailCode {
     def code: Int
     def name: String
   }
+  object Category {
+    val elements = Vector(Success, ArgumentError, ResultError, StateError, ServiceError, SystemError)
+
+    def get(p: String): Option[Category] = elements.find(_.name == p)
+    def apply(p: String): Category = get(p) getOrElse ServiceError
+  }
   case object Success extends Category {
     def code: Int = 0
     def name: String = "success"
   }
   sealed trait ErrorCategory extends Category {
   }
-  sealed trait ArgumentError extends ErrorCategory {
-  }
-  case object ArgumentValueError extends ArgumentError {
+  // sealed trait ArgumentError extends ErrorCategory {
+  // }
+  // case object ArgumentValueError extends ArgumentError {
+  //   def code: Int = 1
+  //   def name: String = "argumentvalue"
+  // }
+  // case object ArgumentReferenceError extends ArgumentError {
+  //   def code: Int = 2
+  //   def name: String = "argumentreference"
+  // }
+  case object ArgumentError extends ErrorCategory {
     def code: Int = 1
-    def name: String = "argumentvalue"
-  }
-  case object ArgumentReferenceError extends ArgumentError {
-    def code: Int = 2
-    def name: String = "argumentreference"
+    def name: String = "argument"
   }
   case object ResultError extends ErrorCategory {
     def code: Int = 3
@@ -65,10 +97,20 @@ object DetailCode {
     def code: Int = 7
     def name: String = "service"
   }
+  case object SystemError extends ErrorCategory {
+    def code: Int = 9
+    def name: String = "system"
+  }
 
   sealed trait Site {
     def code: Int
     def name: String
+  }
+  object Site {
+    val elements = Vector(SystemSite, SubSystemSite, DatabaseSite, NetworkSite, FileSite, EntitySite, RuleSite, PrincipalSite, SessionSite, PluginSite, OperationSite, ServiceSite, ComponentSite, ArgumentSite, ConfigSite, ExternalServiceSite, ExternalApplicationSite, ExternalEntitySite)
+
+    def get(p: String): Option[Site] = elements.find(_.name == p)
+    def apply(p: String): Site = get(p) getOrElse SystemSite
   }
   case object SystemSite extends Site {
     def code: Int = 1
@@ -146,6 +188,12 @@ object DetailCode {
   sealed trait Incident {
     def code: Int
     def name: String
+  }
+  object Incident {
+    val elements = Vector(HighLoad, SyntaxError, FormatError, Invalid, Duplicate, Missing, Redundant, Immutable, NotFound, Existed, Deleted, TooMany, Inconsistent, AuthenticationError, Unauthorized, Conflict, IoError, Malfunction, Unsupported, LogicDefect, ConfigurationDefect, UnsupportedDefect, NotImplementedYetDefect, InvariantDefect, PreConditionStateDefect, PreConditionDefect, PostConditionDefect)
+
+    def get(p: String): Option[Incident] = elements.find(_.name == p)
+    def apply(p: String): Incident = get(p) getOrElse LogicDefect
   }
   case object HighLoad extends Incident {
     def code: Int = 1
@@ -264,11 +312,16 @@ object DetailCode {
     }
     def code: Int = stakeholder.code * 10 + action.code
     def name: String = s"${stakeholder.name}-${action.name}"
+
+    def toPayload = Reaction.Payload(stakeholder.name, action.name)
   }
   object Reaction {
     implicit val reactionInstance: Order[Reaction] with Show[Reaction] = new Order[Reaction] with Show[Reaction] {
       def order(lhs: Reaction, rhs: Reaction): Ordering = Ordering.fromInt(lhs compare rhs)
     }
+
+    val stackholders = Vector(Client, ApplicationManager, ApplicationAdministrator, SystemAdministrator, SystemDeveloper)
+    val actions = Vector(Input, Retry, Config, Recover)
 
     sealed trait Stakeholder extends Ordered[Stakeholder] {
       def code: Int
@@ -319,12 +372,28 @@ object DetailCode {
     }
 
     val ClientInput = Reaction(Client, Input)
+    val ApplicationError = Reaction(ApplicationAdministrator, Recover)
+    val SystemError = Reaction(SystemAdministrator, Recover)
     val SystemDefect = Reaction(SystemDeveloper, Recover)
+
+  @SerialVersionUID(1L)
+    case class Payload(
+      stackholder: String,
+      action: String
+    ) {
+      def restore: Reaction = {
+        val s = stackholders.find(_.name == stackholder).getOrElse(SystemDeveloper)
+        val a = actions.find(_.name == action).getOrElse(Recover)
+        Reaction(s, a)
+      }
+    }
   }
 
   sealed trait ApplicationCode {
     def code: Int
     def name: String
+
+    def toPayload = ApplicationCode.ApplicationCodeImpl(code, name)
   }
   object ApplicationCode {
     case class ApplicationCodeImpl(code: Int, name: String) extends ApplicationCode
@@ -338,13 +407,37 @@ object DetailCode {
     }
   }
 
-  val Argument = DetailCode(ArgumentValueError, ArgumentSite, Invalid, Reaction.ClientInput)
+  val Argument = DetailCode(ArgumentError, ArgumentSite, Invalid, Reaction.ClientInput)
+  val ArgumentSyntax = DetailCode(ArgumentError, ArgumentSite, SyntaxError, Reaction.ClientInput)
   val Result = DetailCode(ResultError, OperationSite, LogicDefect, Reaction.SystemDefect)
+  val Config = DetailCode(SystemError, ServiceSite, ConfigurationDefect, Reaction.SystemDefect)
+  val IoDatabase = DetailCode(SystemError, DatabaseSite, IoError, Reaction.SystemError)
+  val IoFile = DetailCode(SystemError, FileSite, IoError, Reaction.SystemError)
+  val IoNetwork = DetailCode(SystemError, NetworkSite, IoError, Reaction.SystemError)
+  val IoSystem = DetailCode(SystemError, SystemSite, IoError, Reaction.SystemError)
+  val IoSubSystem = DetailCode(SystemError, SubSystemSite, IoError, Reaction.SystemError)
+
   val NoReach = DetailCode(ServiceError, OperationSite, LogicDefect, Reaction.SystemDefect)
   val Invariant = DetailCode(ServiceError, OperationSite, InvariantDefect, Reaction.SystemDefect)
   val PreCondition = DetailCode(ServiceError, OperationSite, PreConditionDefect, Reaction.SystemDefect)
   val PreConditionState = DetailCode(ServiceError, OperationSite, PreConditionStateDefect, Reaction.SystemDefect)
   val PostCondition = DetailCode(ServiceError, OperationSite, PostConditionDefect, Reaction.SystemDefect)
+
+  case class Payload(
+    category: String,
+    site: String,
+    incident: String,
+    application: Option[ApplicationCode.ApplicationCodeImpl],
+    reaction: Reaction.Payload
+  ) {
+    def restore: DetailCode = {
+      val c = Category(category)
+      val s = Site(site)
+      val i = Incident(incident)
+      val r = reaction.restore
+      DetailCode(c, s, i, r)
+    }
+  }
 
   def apply(category: Category, site: Site, incident: Incident, reaction: Reaction): DetailCode =
     DetailCode(category, site, incident, None, reaction)

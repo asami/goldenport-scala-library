@@ -20,39 +20,66 @@ import org.goldenport.util.StringUtils
  *  version Apr. 14, 2020
  *  version May. 18, 2020
  *  version Jun.  6, 2020
- * @version Mar. 15, 2021
+ *  version Mar. 15, 2021
+ *  version Jun. 29, 2021
+ *  version Mar.  6, 2022
+ *  version Dec. 30, 2022
+ *  version Jan.  4, 2023
+ * @version Sep. 26, 2023
  * @author  ASAMI, Tomoharu
  */
 case class PathName(
   v: String,
-  delimiter: String = "/"
+  delimiter: String = PathName.DELIMITER
 ) {
   override def toString() = v
 
   def isEmpty: Boolean = v.isEmpty
   def head: String = firstComponent
   def headOption: Option[String] = components.headOption
-  def tail: PathName = tailOption.get
-  def tailOption: Option[PathName] = getChild
+  def tail: PathName = tailOption.getOrElse(throw new IllegalStateException("Empty PathName"))
+  def tailOption: Option[PathName] = components.tail match {
+    case Nil => None
+    case xs => Some(PathName(xs.mkString(delimiter)))
+  }
   lazy val components: List[String] = Strings.totokens(v, delimiter)
   lazy val firstComponent: String = components.headOption.getOrElse("")
+  lazy val firstComponentBody: String = StringUtils.toPathnameBody(firstComponent)
+  lazy val lastComponent: String = components.lastOption.getOrElse("")
+  // deprecated
   lazy val lastConcreteComponent: String = {
     components.reverse.filterNot(_.contains("{")) match { // XXX "{"
       case Nil => ""
       case x :: _ => x
     }
   }
-  lazy val leaf: String = getChild.map(_.v) getOrElse ""
-  lazy val body: String = getParent.map(_.v) getOrElse ""
-  lazy val getParent: Option[PathName] =
+  def leaf: String = lastComponent
+  lazy val leafBody: String = StringUtils.toPathnameBody(leaf)
+  lazy val body: String = StringUtils.toPathnameBody(v)
+  lazy val trunk: String = getTrunk.map(_.v) getOrElse ""
+  lazy val suffix: String = getSuffix getOrElse ""
+  lazy val getTrunk: Option[PathName] =
     if (isBase)
       None
     else
-      Some(PathName(components.init))
+      Some(
+        if (isAbsolute)
+          PathName.createAbsolute(components.init)
+        else
+          PathName.createRelative(components.init)
+      )
   lazy val getChild: Option[PathName] = components.tail match {
     case Nil => None
     case xs => Some(PathName(xs.mkString(delimiter)))
   }
+  def getParent: Option[PathName] = components match {
+    case Nil => None
+    case xs => Some(PathName(xs.init.mkString(delimiter)))
+  }
+  def getSuffix: Option[String] = StringUtils.getSuffix(v) // lowercase
+  def getSuffixLowerCase: Option[String] = StringUtils.getSuffixLowerCase(v)
+  def getSuffixRaw: Option[String] = StringUtils.getSuffixRaw(v)
+  def isSuffix(p: String): Boolean = getSuffix.fold(false)(_ == p)
 
   def get(i: Int): Option[String] = components.lift(i)
 
@@ -74,11 +101,14 @@ case class PathName(
   def isOperation(p: String): Boolean = firstComponent == p
 
   def +(p: PathName): PathName = :+(p)
-  def :+(p: PathName): PathName = PathName(v, p.v)
-  def +:(p: PathName): PathName = PathName(p.v, v)
+  def :+(p: PathName): PathName = _concat_pathname(v, p.v)
+  def +:(p: PathName): PathName = _concat_pathname(p.v, v)
   def +(p: String): PathName = :+(p)
-  def :+(p: String): PathName = PathName(_concat_path(v, p))
-  def +:(p: String): PathName = PathName(_concat_path(p, v))
+  def :+(p: String): PathName = _concat_pathname(v, p)
+  def +:(p: String): PathName = _concat_pathname(p, v)
+
+
+  private def _concat_pathname(lhs: String, rhs: String) = copy(v = _concat_path(lhs, rhs))
 
   private def _concat_path(lhs: String, rhs: String) = delimiter match {
     case "/" => StringUtils.concatPath(lhs, rhs)
@@ -97,15 +127,18 @@ case class PathName(
   }
 
   def length = components.length
-  def getSuffix: Option[String] = StringUtils.getSuffix(v)
 }
 
 object PathName {
   val home = PathName("")
+  val DELIMITER = "/"
 
-  def apply(ps: List[String]): PathName = PathName(StringUtils.concatPath(ps))
-  def apply(p: String, pp: String, ps: String*): PathName = apply(p :: pp :: ps.toList)
-
-  def create(path: String): PathName = PathName(path)
-  def create(path: String, delimiter: String): PathName = PathName(path, delimiter)
+  def createAbsolute(delimiter: Char, ps: List[String]): PathName = PathName(delimiter + StringUtils.concatPath(delimiter, ps))
+  def createAbsolute(ps: List[String]): PathName = createAbsolute('/', ps)
+  def createAbsolute(p: String, pp: String, ps: String*): PathName = createAbsolute(p :: pp :: ps.toList)
+  def createRelative(delimiter: Char, ps: List[String]): PathName = PathName(StringUtils.concatPath(delimiter, ps))
+  def createRelative(ps: List[String]): PathName = createRelative('/', ps)
+  def createRelative(p: String, pp: String, ps: String*): PathName = createRelative(p :: pp :: ps.toList)
+//  def create(path: String): PathName = PathName(path)
+//  def create(path: String, delimiter: String): PathName = PathName(path, delimiter)
 }

@@ -6,10 +6,13 @@ import org.w3c.dom._
 /*
  * @since   Apr. 11, 2016
  *  version Oct. 12, 2017
- * @version May. 27, 2019
+ *  version May. 27, 2019
+ * @version May.  6, 2022
  * @author  ASAMI, Tomoharu
  */
 case class RichElement(element: Element) extends AnyVal {
+  def localName: String = DomUtils.localName(element)
+
   def isAttributeIC(name: String): Boolean = getAttributeOIC(name).isDefined
 
   def getAttributeOIC(name: String): Option[String] =
@@ -36,6 +39,8 @@ case class RichElement(element: Element) extends AnyVal {
   def elementsVectorByLocalNameIC(localname: String): Vector[Element] = DomUtils.elementsVectorByLocalNameIC(element, localname)
 
   def elementsVectorByLocalNameIC(localname: String, localname2: String, localnames: String*): Vector[Element] = DomUtils.elementsVectorByLocalNameIC(element, localname, localname2, localnames:_*)
+
+  def text: String = DomUtils.distillText(element)
 }
 
 object RichElement {

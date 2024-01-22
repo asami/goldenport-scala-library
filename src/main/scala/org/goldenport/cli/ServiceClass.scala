@@ -1,9 +1,12 @@
 package org.goldenport.cli
 
+import org.goldenport.RAISE
+
 /*
  * @since   Feb. 18, 2019
  *  version Feb. 24, 2019
- * @version Feb. 13, 2020
+ *  version Feb. 13, 2020
+ * @version Dec. 18, 2021
  * @author  ASAMI, Tomoharu
  */
 trait ServiceClass {
@@ -38,4 +41,15 @@ trait ServiceClass {
       Some(operation(req))
     else
       None
+
+  def execute(env: Environment, args: Seq[String]): Response = {
+    val req = args.toList match {
+      case Nil => defaultOperation.
+          map(x => Request.create(x.specification, Array[String]())).
+          getOrElse(RAISE.notImplementedYetDefect)
+      case x :: xs => Request(x) // TODO
+    }
+    val op = operation(req)
+    op.apply(env, req)
+  }
 }

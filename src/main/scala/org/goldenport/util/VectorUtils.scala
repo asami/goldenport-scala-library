@@ -5,7 +5,8 @@ package org.goldenport.util
  *  version Aug. 26, 2018
  *  version Dec. 27, 2018
  *  version Jul. 29, 2019
- * @version Jan. 31, 2020
+ *  version Jan. 31, 2020
+ * @version Oct.  1, 2021
  * @author  ASAMI, Tomoharu
  */
 object VectorUtils {
@@ -136,5 +137,18 @@ object VectorUtils {
       private def _is_right = !(_is_left || _is_center)
     }
     ps./:(Z())(_+_).r
+  }
+
+  def zipRightOption[A, B](pl: Seq[A], pr: Seq[B]): Vector[(A, Option[B])] = {
+    case class Z(
+      rs: List[B] = pr.toList,
+      r: Vector[(A, Option[B])] = Vector.empty
+    ) {
+      def +(rhs: A) = rs.headOption match {
+        case Some(s) => copy(rs = rs.tail, r = r :+ (rhs, Some(s)))
+        case None => copy(r = r :+ (rhs, None))
+      }
+    }
+    pl./:(Z())(_+_).r
   }
 }

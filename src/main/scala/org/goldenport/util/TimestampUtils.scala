@@ -6,6 +6,7 @@ import java.util.{Date, Locale, TimeZone}
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import org.joda.time.{DateTime, LocalDate, DateTimeZone}
+import org.joda.time.LocalDateTime
 import org.joda.time.format.ISODateTimeFormat
 
 /*
@@ -17,7 +18,10 @@ import org.joda.time.format.ISODateTimeFormat
  *  version Mar. 17, 2016
  *  version Sep.  9, 2016
  *  version Jan. 19, 2017
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ *  version Jan. 27, 2022
+ *  version Feb. 19, 2022
+ * @version Nov. 17, 2022
  * @author  ASAMI, Tomoharu
  */
 object TimestampUtils {
@@ -27,17 +31,48 @@ object TimestampUtils {
   val millisInDay: Long = millisInHour * 24
 
   private val _iso_datetime_parser = ISODateTimeFormat.dateTimeParser
-  private val _rss_datatime_format = {
+  private val _rss_datetime_format = {
     val sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.ENGLISH)
 //    sdf.setTimeZone(gmt)
     sdf
   }
 
-  def parse(s: String): Timestamp = {
-    parseIsoOption(s) orElse parseRssOption(s) getOrElse {
+  def parse(tz: DateTimeZone, s: String): Timestamp = {
+    parseLong(s) orElse parseIsoOption(tz, s) orElse parseRssOption(tz, s) getOrElse {
       throw new IllegalArgumentException(s"Illegal datetime '$s'")
     }
   }
+
+  def parseIsoOption(tz: DateTimeZone, s: String): Option[Timestamp] = {
+    Try(parseIso(tz, s)).toOption
+  }
+
+  def parseIso(tz: DateTimeZone, s: String): Timestamp = {
+    val dt = DateTimeUtils.parseIsoDateTime(s, tz)
+    val a = dt.getMillis
+    new Timestamp(a)
+  }
+
+  def parseRssOption(tz: DateTimeZone, s: String): Option[Timestamp] = {
+    Try(parseRss(tz, s)).toOption
+  }
+
+  def parseRss(tz: DateTimeZone, s: String): Timestamp = {
+    synchronized {
+      val sdf = _rss_datetime_format
+      sdf.setTimeZone(DateTimeUtils.dateTimeZoneToTz(tz))
+      val a = sdf.parse(s)
+      new Timestamp(a.getTime)
+    }
+  }
+
+  def parse(s: String): Timestamp = {
+    parseLong(s) orElse parseIsoOption(s) orElse parseRssOption(s) getOrElse {
+      throw new IllegalArgumentException(s"Illegal datetime '$s'")
+    }
+  }
+
+  def parseLong(s: String): Option[Timestamp] = NumberUtils.getLong(s).map(new Timestamp(_))
 
   def parseIsoOption(s: String): Option[Timestamp] = {
     Try(parseIso(s)).toOption
@@ -54,7 +89,7 @@ object TimestampUtils {
 
   def parseRss(s: String): Timestamp = {
     synchronized {
-      val a = _rss_datatime_format.parse(s)
+      val a = _rss_datetime_format.parse(s)
       new Timestamp(a.getTime)
     }
   }
@@ -65,6 +100,8 @@ object TimestampUtils {
   def toTimestampGmt(year: Int, month: Int, day: Int, hour: Int, minute: Int) =
     new Timestamp(DateTimeUtils.toDateTimeGmt(year, month, day, hour, minute).getMillis)
 
+  def toTimestamp(p: DateTime) = new Timestamp(p.getMillis)
+
   //
   def toLocalDate(tz: TimeZone, base: Timestamp): LocalDate = {
     new DateTime(base.getTime, DateTimeZone.forTimeZone(tz)).toLocalDate
@@ -72,6 +109,14 @@ object TimestampUtils {
 
   def toLocalDate(tz: DateTimeZone, base: Timestamp): LocalDate = {
     new DateTime(base.getTime, tz).toLocalDate
+  }
+
+  def toLocalDateTime(tz: TimeZone, base: Timestamp): LocalDateTime = {
+    new DateTime(base.getTime, DateTimeZone.forTimeZone(tz)).toLocalDateTime
+  }
+
+  def toLocalDateTime(tz: DateTimeZone, base: Timestamp): LocalDateTime = {
+    new DateTime(base.getTime, tz).toLocalDateTime
   }
 
   //
@@ -101,4 +146,52 @@ object TimestampUtils {
 
   def isIn(current: Long, target: Long, duration: Long): Boolean =
     current <= target + duration
+
+  def isInHours(ts: Timestamp, hours: Int): Boolean = isInHours(System.currentTimeMillis, ts.getTime, hours)
+
+  def isInHours(current: Long, ts: Timestamp, hours: Int): Boolean = isInHours(current, ts.getTime, hours)
+
+  def isInHours(ts: Long, hours: Int): Boolean = isInHours(System.currentTimeMillis, ts, hours)
+
+  def isInHours(current: Long, ts: Long, hours: Int): Boolean = 
+    isIn(current, ts, hours * millisInHour)
+
+  def isInMinutes(ts: Timestamp, minutes: Int): Boolean = isInMinutes(System.currentTimeMillis, ts.getTime, minutes)
+
+  def isInMinutes(current: Long, ts: Timestamp, minutes: Int): Boolean = isInMinutes(current, ts.getTime, minutes)
+
+  def isInMinutes(ts: Long, minutes: Int): Boolean = isInMinutes(System.currentTimeMillis, ts, minutes)
+
+  def isInMinutes(current: Long, ts: Long, minutes: Int): Boolean = 
+    isIn(current, ts, minutes * millisInMinute)
+
+  def isInSeconds(ts: Timestamp, seconds: Int): Boolean = isInSeconds(System.currentTimeMillis, ts.getTime, seconds)
+
+  def isInSeconds(current: Long, ts: Timestamp, seconds: Int): Boolean = isInSeconds(current, ts.getTime, seconds)
+
+  def isInSeconds(ts: Long, seconds: Int): Boolean = isInSeconds(System.currentTimeMillis, ts, seconds)
+
+  def isInSeconds(current: Long, ts: Long, seconds: Int): Boolean = 
+    isIn(current, ts, seconds * millisInSecond)
+
+  def startOfFirstDayOfNextMonth(p: Timestamp, tz: TimeZone): Timestamp =
+    toTimestamp(DateTimeUtils.startOfFirstDayOfNextMonth(DateTimeUtils.toDateTime(p, tz)))
+
+  def startOfFirstDayOfThisMonth(p: Timestamp, tz: TimeZone): Timestamp =
+    toTimestamp(DateTimeUtils.startOfFirstDayOfThisMonth(DateTimeUtils.toDateTime(p, tz)))
+
+  def endOfLastDayOfThisMonth(p: Timestamp, tz: TimeZone): Timestamp =
+    toTimestamp(DateTimeUtils.endOfLastDayOfThisMonth(DateTimeUtils.toDateTime(p, tz)))
+
+  def countOfMonthsAlmost(start: Timestamp, end: Timestamp, tz: TimeZone): Int =
+    LocalDateTimeUtils.countOfMonthsAlmost(toLocalDateTime(tz, start), toLocalDateTime(tz, end))
+
+  def countOfMonthsPassed(start: Timestamp, end: Timestamp, tz: TimeZone): Int =
+    LocalDateTimeUtils.countOfMonthsPassed(toLocalDateTime(tz, start), toLocalDateTime(tz, end))
+
+  def countOfYearsAlmost(start: Timestamp, end: Timestamp, tz: TimeZone): Int =
+    LocalDateTimeUtils.countOfYearsAlmost(toLocalDateTime(tz, start), toLocalDateTime(tz, end))
+
+  def countOfYearsPassed(start: Timestamp, end: Timestamp, tz: TimeZone): Int =
+    LocalDateTimeUtils.countOfYearsPassed(toLocalDateTime(tz, start), toLocalDateTime(tz, end))
 }

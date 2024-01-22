@@ -4,6 +4,7 @@ import scalaz._, Scalaz._
 import java.util.Locale
 import java.text.MessageFormat
 import play.api.libs.json._
+import org.goldenport.Strings
 import org.goldenport.util.{AnyUtils, AnyRefUtils}
 
 /*
@@ -24,7 +25,10 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version May.  4, 2020
  *  version Feb. 15, 2021
  *  version Apr. 29, 2021
- * @version May. 20, 2021
+ *  version May. 30, 2021
+ *  version Jun. 19, 2021
+ *  version Feb.  1, 2022
+ * @version Dec.  8, 2022
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -145,15 +149,20 @@ case class I18NString(
     JsObject(a.toVector)
   }
 
-  def toI18NMessage: I18NMessage = I18NMessage(this)
+  def toI18NMessage: I18NMessage = I18NMessage.create(this)
   def toI18NElement: I18NElement = I18NElement(this)
 
   lazy val toJsonString: String = toJson.toString
 
-  override def toString() = toJsonString
+  override def toString() = s"I18NString(${Strings.cutstring(en, 128)})"
 }
 
 object I18NString {
+  implicit def I18NStringMonoid = new Monoid[I18NString] {
+    def zero = empty
+    def append(lhs: I18NString, rhs: => I18NString) = lhs concat rhs
+  }
+
   val empty = I18NString("")
 
   def apply(en: String, ja: String): I18NString = I18NString(en, en, ja, Map.empty)
@@ -222,6 +231,11 @@ object I18NString {
     mkI18NString(ps.list.toList, infix)
 
   def mkI18NString(ps: Seq[I18NString], infix: String): I18NString = {
-    ???
+    @annotation.tailrec
+    def _go_(z: I18NString, ps: List[I18NString]): I18NString = ps match {
+      case Nil => z
+      case x :: xs => _go_(z.appendAll(infix) + x, xs)
+    }
+    _go_(empty, ps.toList)
   }
 }

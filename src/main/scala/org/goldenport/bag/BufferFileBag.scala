@@ -25,7 +25,8 @@ import org.goldenport.util.StringUtils
  *  version Sep. 17, 2018
  *  version Oct.  5, 2018
  *  version Mar. 27, 2019
- * @version May. 21, 2020
+ *  version May. 21, 2020
+ * @version Jun. 11, 2021
  * @author  ASAMI, Tomoharu
  */
 class BufferFileBag(
@@ -210,8 +211,9 @@ object BufferFileBag {
 
   def fromByteBuffer(p: ByteBuffer): BufferFileBag = {
     val bag = new BufferFileBag()
-    while (p.hasRemaining())
-      bag.write(_.write(p.get()))
+    for (out <- resource.managed(bag.openOutputStream()))
+      while (p.hasRemaining())
+        out.write(p.get())
     bag
   }
 

@@ -1,13 +1,22 @@
 package org.goldenport.cli
 
+import java.net.{URL, URI}
+import org.goldenport.RAISE
+import org.goldenport.Strings
+import org.goldenport.context.{Consequence, Conclusion}
+import org.goldenport.bag.StringBag
+import org.goldenport.bag.ChunkBag
 import org.goldenport.util.AnyRefUtils
 import Environment.AppEnvironment
-import org.goldenport.Strings
 
 /*
  * @since   Feb. 24, 2019
  *  version Mar.  6, 2019
- * @version Oct. 15, 2019
+ *  version Oct. 15, 2019
+ *  version Jun. 18, 2021
+ *  version Jan. 30, 2022
+ *  version Feb.  1, 2022
+ * @version Jul. 23, 2023
  * @author  ASAMI, Tomoharu
  */
 trait Method {
@@ -26,6 +35,44 @@ trait Method {
   protected final def to_response(p: String) = StringResponse(p)
 
   protected final def to_response_lines_string(p: String) = to_response(build_lines_string(p))
+
+  protected final def to_response_file(uri: URI, p: String) = {
+    val bag = StringBag.create(p)
+    FileResponse(bag, uri)
+  }
+
+  protected final def to_response_file(url: URL, p: String) = {
+    val bag = StringBag.create(p)
+    FileResponse(bag, url)
+  }
+
+  protected final def to_response_file(url: URL, p: ChunkBag) = FileResponse(p, url)
+
+  protected final def to_response_file(p: ChunkBag) = FileResponse(p)
+
+  protected final def to_response(p: Conclusion): Response = ConclusionResponse(p)
+
+  // protected final def to_response(p: Consequence[String]): Response = p match {
+  //   case Consequence.Success(r, _) => to_response(r)
+  //   case Consequence.Error(c) => to_response(c)
+  // }
+
+  protected final def to_response(p: Consequence[_]): Response = p match {
+    case Consequence.Success(r, _) => r match {
+      case m: Response => m
+      case m: String => Response(m)
+      case m => RAISE.notImplementedYetDefect
+    }
+    case Consequence.Error(c) => to_response(c)
+  }
+
+  protected final def to_response_string(p: Consequence[String]): Response =
+    to_response(p)
+
+  // protected final def _to_response(p: Consequence[Response]): Response = p match {
+  //   case Consequence.Success(r, _) => r
+  //   case Consequence.Error(c) => to_response(c)
+  // }
 
   protected final def build_lines(s: String): String = build_lines(Strings.tolines(s))
 

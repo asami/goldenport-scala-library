@@ -1,6 +1,7 @@
 package org.goldenport.cli
 
 import java.io._
+import java.net.URL
 import org.goldenport.monitor.Monitor
 import org.goldenport.context._
 import Environment._
@@ -14,7 +15,9 @@ import Environment._
  *  version May. 30, 2020
  *  version Nov. 23, 2020
  *  version Jan. 24, 2021
- * @version Mar. 27, 2021
+ *  version Mar. 27, 2021
+ *  version Feb. 28, 2022
+ * @version Mar.  6, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Environment(
@@ -24,12 +27,16 @@ case class Environment(
 ) {
   def recorder = config.recorder
   def charset = config.charset
+  def charsetInputFile = config.charsetInputFile
+  def charsetOutputFile = config.charsetOutputFile
+  def charsetConsole = config.charsetConsole
   def newline = config.newline
   def locale = config.locale
   def timezone = config.timezone
   def consoleCharset = config.consoleCharset
   def homeDirectory: File = config.homeDirectory getOrElse monitor.userHome
   def workDirectory: File = config.workDirectory getOrElse monitor.userDir
+  def tmpDirectory: File = config.tmpDirectory getOrElse monitor.tmpDir
   def getProjectDirectory: Option[File] = config.projectDirectory
   def outputDirectory = config.outputDirectory
   def toAppEnvironment[T <: AppEnvironment] = appEnvironment.asInstanceOf[T]
@@ -55,6 +62,10 @@ case class Environment(
     stderr.println(p)
     stderr.flush()
   }
+
+  def getAppResource(o: Object, path: String): Option[URL] = Option(o.getClass().getClassLoader().getResource(path))
+
+  def getClassResource(o: Object, path: String): Option[URL] = Option(o.getClass().getResource(path))
 }
 
 object Environment {

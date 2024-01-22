@@ -1,6 +1,7 @@
 package org.goldenport.i18n
 
 import scalaz._, Scalaz._
+import scala.util.control.NonFatal
 import java.util.{Locale, ResourceBundle}
 import java.text.MessageFormat
 import play.api.libs.json._
@@ -12,7 +13,11 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *
  * @since   Apr. 17, 2020
  *  version Jun.  1, 2020
- * @version Mar. 27, 2021
+ *  version Mar. 27, 2021
+ *  version Jun. 20, 2021
+ *  version Feb.  9, 2022
+ *  version Jun. 13, 2022
+ * @version Dec. 28, 2022
  * @author  ASAMI, Tomoharu
  */
 case class I18NMessage(
@@ -177,13 +182,35 @@ case class I18NMessage(
     }
   )
 
-  override def toString() = toJsonString
+  def toI18NTemplate: I18NTemplate = I18NTemplate(this)
+
+  override def toString() = _to_string
+
+  private lazy val _to_string = try {
+    s"I18NMessage(${_c}, ${parameters.map(AnyUtils.toEmbed)})"
+  } catch {
+    case NonFatal(e) => s"I18NMessage(${_c}): $e"
+  }
+
+  def toPayload = I18NMessage.Payload(c, parameters.toVector)
 }
 
 object I18NMessage {
+  implicit def I18NMessageMonoid = new Monoid[I18NMessage] {
+    def zero = empty
+    def append(lhs: I18NMessage, rhs: => I18NMessage) = lhs concat rhs
+  }
+
+  @SerialVersionUID(1L)
+  case class Payload(
+    c: String,
+    parameters: Vector[Any]
+  ) {
+    def restore: I18NMessage = I18NMessage(c, c, c, Map.empty, parameters)
+  }
+
   val empty = I18NMessage("")
 
-  def apply(p: I18NString): I18NMessage = I18NMessage(p.c, p.en, p.ja, p.map, Vector.empty)
   def apply(en: String, ja: String): I18NMessage = I18NMessage(en, en, ja, Map.empty, Vector.empty)
   def apply(en: String, params: Seq[Any]): I18NMessage = I18NMessage(en, en, en, Map.empty, params.toVector)
   def apply(en: String, ja: String, params: Seq[Any]): I18NMessage = I18NMessage(en, en, ja, Map.empty, params.toVector)
@@ -209,6 +236,22 @@ object I18NMessage {
   }
 
   // def apply(p: RI18NMessage): I18NMessage = I18NMessage(p.en, p.ja, Map.empty, p.parameters)
+
+  def create(p: String): I18NMessage = I18NMessage(_escape(p), _escape(p), _escape(p), Map.empty, Vector.empty)
+
+  def create(p: I18NString): I18NMessage = I18NMessage(_escape(p.c), _escape(p.en), _escape(p.ja), p.map.mapValues(_escape), Vector.empty)
+
+  private def _escape(s: String): String = {
+    val r = s.foldLeft(new StringBuilder()) { (z, x) =>
+      x match {
+        case '{' => z.append("'{'")
+        case '}' => z.append("'}'")
+        case c => z.append(c)
+      }
+      z
+    }
+    r.toString
+  }
 
   def create(locale: Locale, s: String): I18NMessage = {
     val a = if (LocaleUtils.isC(locale) || LocaleUtils.isEnglish(locale) || LocaleUtils.isJapanese(locale))

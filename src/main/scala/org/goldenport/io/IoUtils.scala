@@ -21,7 +21,10 @@ import org.goldenport.bag.ClobBag
  *  version Mar. 18, 2020
  *  version May.  4, 2020
  *  version Jun.  3, 2020
- * @version Apr.  4, 2021
+ *  version Apr.  4, 2021
+ *  version Feb. 26, 2022
+ *  version Mar.  6, 2022
+ * @version May. 23, 2022
  * @author  ASAMI, Tomoharu
  */
 object IoUtils {
@@ -67,13 +70,41 @@ object IoUtils {
   def toText(in: ResourceHandle, charset: Charset): String = toText(in.openInputStream, charset)
   def toText(in: ResourceHandle, codec: Codec): String = toText(in.openInputStream, codec)
 
+  def copy(in: InputStream, out: OutputStream): Unit =
+    _copy_stream(in, out)
+
   def copyClose(in: InputStream, out: OutputStream): Unit =
     for {
       i <- resource.managed(in)
       o <- resource.managed(out)
     } {
-      UIO.stream2stream(in, out)
+      _copy_stream(i, o)
     }
+
+  def copyCloseIn(in: InputStream, out: OutputStream): Unit =
+    for {
+      i <- resource.managed(in)
+    } {
+      _copy_stream(i, out)
+    }
+
+  // private def _copy_stream(in: InputStream, out: OutputStream): Unit = {
+  //   val buf = new Array[Byte](8192)
+  //   var cont = true
+  //   while (cont) {
+  //     val n = in.read(buf)
+  //     if (n > 0) {
+  //       println(s"""_copy_stream: ${new String(buf, 0, n, "UTF-8")}""")
+  //       out.write(buf, 0, n)
+  //     } else {
+  //       out.flush()
+  //       cont = false
+  //     }
+  //   }
+  // }
+
+  private def _copy_stream(in: InputStream, out: OutputStream): Unit =
+      UIO.stream2stream(in, out)
 
   def copyClose(in: Reader, out: Writer): Unit =
     for {
@@ -94,7 +125,40 @@ object IoUtils {
     }
 
   def toInputStream(p: String): InputStream = new StringInputStream(p)
-  def toInputStream(p: String, charset: Charset): InputStream = new StringInputStream(p, charset)
+  def toInputStream(p: String, encoding: String): InputStream = StringInputStream(p, encoding)
+  def toInputStream(p: String, charset: Charset): InputStream = StringInputStream(p, charset)
+  def toInputStream(p: String, codec: Codec): InputStream = StringInputStream(p, codec)
+
+  def write(out: OutputStream, p: String): Unit = write(out, p, Codec.UTF8)
+
+  def write(out: OutputStream, p: String, encoding: String): Unit =
+    copyCloseIn(toInputStream(p, encoding), out)
+
+  def write(out: OutputStream, p: String, charset: Option[Charset]): Unit =
+    charset.map(write(out, p, _)).getOrElse(write(out, p))
+
+  def write(out: OutputStream, p: String, charset: Charset): Unit =
+    copyCloseIn(toInputStream(p, charset), out)
+
+  def write(out: OutputStream, p: String, codec: Codec): Unit =
+    copyCloseIn(toInputStream(p, codec), out)
+
+  def write(out: OutputStream, p: URL): Unit =
+    copyCloseIn(p.openStream, out)
+
+  def writeClose(out: OutputStream, p: String): Unit = writeClose(out, p, Codec.UTF8)
+
+  def writeClose(out: OutputStream, p: String, encoding: String): Unit =
+    copyClose(toInputStream(p, encoding), out)
+
+  def writeClose(out: OutputStream, p: String, charset: Option[Charset]): Unit =
+    charset.map(writeClose(out, p, _)).getOrElse(writeClose(out, p))
+
+  def writeClose(out: OutputStream, p: String, charset: Charset): Unit =
+    copyClose(toInputStream(p, charset), out)
+
+  def writeClose(out: OutputStream, p: String, codec: Codec): Unit =
+    copyClose(toInputStream(p, codec), out)
 
   def save(url: URL, p: String, charset: Charset) {
     val file = UrlUtils.getFile(url) getOrElse RAISE.unsupportedOperationFault("Not file")

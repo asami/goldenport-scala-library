@@ -3,13 +3,16 @@ package org.goldenport.cli
 import java.io.File
 import java.net.URL
 import java.nio.charset.Charset
+import java.math.MathContext
 import java.util.{Locale, TimeZone, Currency, ResourceBundle}
 import com.typesafe.config.{Config => HoconConfig, ConfigFactory}
+import org.goldenport.context.DateTimeContext
 import org.goldenport.i18n.I18NContext
 import org.goldenport.i18n.CalendarFormatter
 import org.goldenport.i18n.EmptyResourceBundle
 import org.goldenport.i18n.StringFormatter
 import org.goldenport.hocon.RichConfig
+import org.goldenport.hocon.HoconUtils
 import org.goldenport.log.{LogConfig, LogLevel}
 import org.goldenport.recorder.{Recorder, StandardRecorder}
 import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperations}
@@ -27,19 +30,30 @@ import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperation
  *  version Mar. 12, 2020
  *  version Apr. 10, 2020
  *  version May. 16, 2020
- * @version Jan. 24, 2021
+ *  version Jan. 24, 2021
+ *  version Oct.  2, 2021
+ *  version Feb. 28, 2022
+ *  version Apr.  4, 2022
+ *  version Jan. 30, 2023
+ * @version Jul. 22, 2023
  * @author  ASAMI, Tomoharu
  */
 case class Config(
+  dateTimeContext: DateTimeContext,
   i18n: I18NContext,
+  mathContext: MathContext,
   homeDirectory: Option[File],
   workDirectory: Option[File],
+  tmpDirectory: Option[File],
   projectDirectory: Option[File],
   log: LogConfig,
   numericalOperations: INumericalOperations,
   properties: RichConfig
 ) {
   def charset: Charset = i18n.charset
+  def charsetInputFile = i18n.charsetInputFile
+  def charsetOutputFile = i18n.charsetOutputFile
+  def charsetConsole = i18n.charsetConsole
   def newline: String = i18n.newline
   def locale: Locale = i18n.locale
   def timezone: TimeZone = i18n.timezone
@@ -51,6 +65,8 @@ case class Config(
   lazy val recorder: Recorder = new StandardRecorder() // TODO upper layer
 
   def withLogLevel(p: LogLevel) = copy(log = log.withLogLevel(p))
+
+  def makeConfig(key: String): HoconConfig = properties.asConfig(key)
 }
 
 object Config {
@@ -75,8 +91,15 @@ object Config {
   }
 
   def build(appname: String, args: Array[String]): Config = {
-    val hocon = _build(appname)
-    // TODO args
+    val hocon0 = _build(appname)
+    val specparams = List(
+      spec.Parameter.property("mode")
+    )
+    val parser = spec.Request(specparams)
+    val req = Request(appname)
+    val (parsed, remainder) = parser.parse(req, args)
+    val props = HoconUtils.createHocon(parsed.toPropertyMap)
+    val hocon = props.withFallback(hocon0)
     _create(hocon)
   }
 
@@ -142,16 +165,23 @@ object Config {
     val newline = System.lineSeparator()
     val locale = Locale.getDefault()
     val timezone = TimeZone.getDefault()
+    val dateTimeContext = DateTimeContext.now(timezone)
+    val mathcontext = MathContext.UNLIMITED // Scala default: MathContext.DECIMAL128
     val currency = Currency.getInstance(locale)
     val calenderformatters = CalendarFormatter.Factory.default
     val stringformatter = StringFormatter.default
     val bundle = EmptyResourceBundle
     val homedir = Option(System.getProperty("user.home")).map(x => new File(x))
     val workdir = Option(System.getProperty("user.dir")).map(x => new File(x))
+    val tmpdir = Option(System.getProperty("java.io.tmpdir")).map(x => new File(x))
     val projectdir = None // TODO
     Config(
+      dateTimeContext,
       I18NContext(
         charset,
+        None,
+        None,
+        None,
         newline,
         locale,
         timezone,
@@ -160,8 +190,10 @@ object Config {
         stringformatter,
         bundle
       ),
+      mathcontext,
       homedir,
       workdir,
+      tmpdir,
       projectdir,
       LogConfig.empty,
       GoldenportNumericalOperations,

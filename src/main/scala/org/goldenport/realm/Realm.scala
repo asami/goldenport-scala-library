@@ -19,7 +19,8 @@ import org.goldenport.extension.Showable
  *  version Jul. 13, 2020
  *  version Oct. 11, 2020
  *  version Nov. 15, 2020
- * @version Jan.  4, 2021
+ *  version Jan.  4, 2021
+ * @version Mar. 19, 2022
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
@@ -30,7 +31,6 @@ case class Realm(
   def print: String = RAISE.notImplementedYetDefect
   def display: String = RAISE.notImplementedYetDefect
   def show: String = _tree.show
-  def embed: String = RAISE.notImplementedYetDefect
 
   def get(pathname: String): Option[Data] = _tree.getContent(pathname)
 

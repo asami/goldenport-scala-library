@@ -2,18 +2,28 @@ package org.goldenport.statemachine
 
 /*
  * @since   May.  2, 2021
- * @version May.  3, 2021
+ *  version May.  3, 2021
+ * @version Nov. 28, 2021
  * @author  ASAMI, Tomoharu
  */
 trait DoActivity {
-  def entry(p: Parcel): Parcel
-  def exit(p: Parcel): Parcel
+  def entry(sm: StateMachine, p: Parcel): Parcel
+  def exit(sm: StateMachine, p: Parcel): Parcel
 }
 
 object DoActivity {
-}
+  case object Empty extends DoActivity {
+    def entry(sm: StateMachine, p: Parcel): Parcel = p
+    def exit(sm: StateMachine, p: Parcel): Parcel = p
+  }
 
-case object NoneDoActivity extends DoActivity {
-  def entry(p: Parcel): Parcel = p
-  def exit(p: Parcel): Parcel = p
+  case class EntryExit(
+    entryActivity: Activity,
+    exitActivity: Activity
+  ) extends DoActivity {
+    def entry(sm: StateMachine, p: Parcel): Parcel = entryActivity(sm, p)
+    def exit(sm: StateMachine, p: Parcel): Parcel = exitActivity(sm, p)
+  }
+
+  def apply(entry: Activity, exit: Activity): DoActivity = EntryExit(entry, exit)
 }

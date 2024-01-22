@@ -9,6 +9,7 @@ import java.net.URLEncoder
 import com.asamioffice.goldenport.text.{UString, UPathString}
 import org.goldenport.RAISE
 import org.goldenport.Strings
+import org.goldenport.i18n.StringFormatter
 import org.goldenport.values.{PathName, Urn}
 
 /*
@@ -45,7 +46,14 @@ import org.goldenport.values.{PathName, Urn}
  *  version Jul. 29, 2020
  *  version Sep.  1, 2020
  *  version Jan.  9, 2021
- * @version Apr. 10, 2021
+ *  version Apr. 10, 2021
+ *  version Dec. 31, 2021
+ *  version Feb. 25, 2022
+ *  version Mar. 28, 2022
+ *  version Apr. 30, 2023
+ *  version Jun. 22, 2023
+ *  version Jul. 22, 2023
+ * @version Aug.  5, 2023
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -267,6 +275,10 @@ object StringUtils {
 
   def isLispSymbolChar(c: Char) = lispSymbolChars.contains(c)
 
+  def stringConsoleWidth(p: String): Int = p.map(charConsoleWidth).sum
+
+  def charConsoleWidth(p: Char): Int = if (p > 0x1000) 2 else 1 // TODO
+
   //
   def dropWhileRight(s: String, p: Char => Boolean): String =
     s.lastOption.map(l =>
@@ -294,12 +306,33 @@ object StringUtils {
     }
   }
 
-  def concatPath(path: Seq[String]): String = {
-    path.length match {
+  // def concatPath(path: Seq[String]): String = {
+  //   path.length match {
+  //     case 0 => ""
+  //     case 1 => path.head
+  //     case _ => path.tail.foldLeft(path.head)(concatPath).toString
+  //   }
+  // }
+
+  def concatPath(path: Seq[String]): String = concatPath('/', path)
+
+  def concatPath(delimiter: Char, path: Seq[String]): String = {
+    def _concat_path_(lhs: String, rhs: String) = s"${lhs}${delimiter}${escapePathComponent(delimiter, rhs)}"
+    path.filterNot(_.isEmpty).length match {
       case 0 => ""
-      case 1 => path.head
-      case _ => path.tail.foldLeft(path.head)(concatPath).toString
+      case 1 => escapePathComponent(delimiter, path.head)
+      case _ => path.tail.foldLeft(path.head)(_concat_path_)
     }
+  }
+
+  def escapePathComponent(delimiter: Char, p: String): String = {
+    val sb = new StringBuilder()
+    for (c <- p) {
+      if (c == delimiter)
+        sb.append("\\")
+        sb.append(c)
+    }
+    sb.toString
   }
 
   def isSuffix(s: String, suffix: String): Boolean = {
@@ -318,6 +351,10 @@ object StringUtils {
   def toSuffix(s: String): String = getSuffix(s).getOrElse("")
 
   def getSuffix(s: String): Option[String] = Option(UPathString.getSuffix(s)).map(_.toLowerCase)
+
+  def getSuffixLowerCase(s: String): Option[String] = getSuffix(s)
+
+  def getSuffixRaw(s: String): Option[String] = Option(UPathString.getSuffix(s))
 
   def toPathnameBody(s: String): String = UPathString.getPathnameBody(s)
 
@@ -574,7 +611,7 @@ object StringUtils {
     val b = a.map(Strings.cutstring(_, width))
     val c = b.take(size).mkString(newline)
     if (a.length > size)
-      s"$c ... (${a.length}/${p.length})"
+      s"$c$newline ... total: ${a.length} lines/${p.length} characters"
     else
       c
   }
@@ -592,6 +629,75 @@ object StringUtils {
 
   def normalizeConsoleMessageWithoutTrailingNewline(newline: String)(p: String): String =
     dropRightNewlines(normalizeConsoleMessage(newline)(p))
+
+  def forToString(p: String): String = showConsole(p, "\\n", 1)
+
+  def toEmbedConsole(p: String, width: Int): String =
+    StringFormatter.display.embed(p, width)
+
+  def getString2(p: String, separator: String): Option[(String, String)] =
+    p.indexOf(separator) match {
+      case -1 => None
+      case n => Some((p.substring(0, n), p.substring(n + separator.length)))
+    }
+
+  def getNameDirective(p: String): Option[(String, String)] = getString2(toPathnameBody(p), "__")
+
+  def printWithNumber(ps: Seq[(String, Int)], newline: String): String = {
+    val max = if (ps.isEmpty) 0 else ps.map(_._2).max
+    build_lines_string_with_number(ps, newline)
+  }
+
+  protected final def build_lines_string_with_number_base_zero(
+    ps: Seq[String],
+    newline: String
+  ): String = {
+    val xs = ps.zipWithIndex
+    build_lines_string_with_number(xs, newline)
+  }
+
+  protected final def build_lines_string_with_number_base_one(
+    ps: Seq[String],
+    newline: String
+  ): String = {
+    val xs = ps.zipWithIndex.map {
+      case (s, i) => (s, i + 1)
+    }
+    build_lines_string_with_number(xs, newline)
+  }
+
+  protected final def build_lines_string_with_number(
+    ps: Seq[(String, Int)],
+    newline: String
+  ): String =
+    buildLinesWithNumber(ps).mkString(newline)
+
+  def buildLinesWithNumberBaseOne(ps: Seq[(String, Int)]): Seq[String] = {
+    val xs = ps.map {
+      case (s, i) => (s, i + 1)
+    }
+    val numwidth = _number_width(xs.length)
+    xs.map(_with_number(numwidth, _))
+  }
+
+  def buildLinesWithNumber(ps: Seq[(String, Int)]): Seq[String] = {
+    val numwidth = _number_width(ps.length)
+    ps.map(_with_number(numwidth, _))
+  }
+
+  private def _with_number(w: Int, p: (String, Int)): String = {
+    val (s,n) = p
+    val num = n.toString
+    val length = num.length
+    val numpart =
+      if (length >= w)
+        num
+      else
+        (Vector.fill(w - length)(' ') ++ num.toVector).mkString
+    s"$numpart: $s"
+  }
+
+  private def _number_width(int: Long): Int = 2 // TODO
 
   /*
    * List
@@ -747,6 +853,8 @@ object StringUtils {
     Strings.blankopt(l) getOrElse UString.capitalize(name)
   }
 
+  def capitalize(s: String): String = UString.capitalize(s)
+
   /*
    * LTSV
    *
@@ -863,4 +971,12 @@ object StringUtils {
       Some(p.substring(prefix.length))
     else
       None
+
+  def getPrefixBody(p: String, d: String = ":"): (Option[String], String) = {
+    val i = p.indexOf(":")
+    if (i == -1)
+      (None, p)
+    else
+      (Option(p.substring(0, i)), p.substring(i + 1))
+  }
 }
