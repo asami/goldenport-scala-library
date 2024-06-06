@@ -61,13 +61,23 @@ import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
  *  version Oct. 13, 2022
  *  version Nov. 29, 2022
  *  version Dec. 12, 2022
- * @version Apr. 10, 2023
+ *  version Apr. 10, 2023
+ * @version Nov. 22, 2023
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
   val empty = ConfigFactory.empty()
 
   def parse(p: String): RichConfig = new RichConfig(ConfigFactory.parseString(p))
+
+  def parseConfig(p: String): Consequence[Config] = Consequence run (
+    try {
+      val r = ConfigFactory.parseString(p)
+      Consequence.success(r)
+    } catch {
+      case m: com.typesafe.config.ConfigException => Consequence.syntaxErrorFault(Option(m.getMessage) getOrElse p)
+    }
+  )
 
   def isDefined(config: Config, key: String): Boolean = config.hasPath(key)
 
