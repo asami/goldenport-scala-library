@@ -27,11 +27,13 @@ import com.asamioffice.goldenport.text.UString
  *  version Apr. 15, 2021
  *  version May. 30, 2021
  *  version Mar. 30, 2022
- * @version Apr. 18, 2023
+ *  version Apr. 18, 2023
+ * @version May. 30, 2024
  * @author  ASAMI, Tomoharu
  */
 object Strings {
   object mimetype {
+    // Use MimeType
     val application_atom_xml = "application/atom+xml"
     val application_ecmascript = "application/ecmascript"
     val application_json = "application/json"
@@ -63,6 +65,25 @@ object Strings {
     val image_webp = "image/webp"
     val image_avif = "image/avif"
     val image_xicon = "image/x-icon"
+    val audio_aac = "audio/aac"
+    val audio_avi = "audio/x-msvideo"
+    val audio_cda = "application/x-cdf"
+    val audio_midi = "audio/midi" // x-midi
+    val audio_mp3 = "audio/mpeg"
+    val audio_oga = "audio/ogg"
+    val audio_opus = "audio/opus"
+    val audio_wav = "audio/wav"
+    val audio_weba = "audio/weba"
+    val audio_3gp = "audio/3gpp"
+    val audio_3g2 = "audio/3gp2"
+    val video_avi = "video/x-msvideo"
+    val video_mp4 = "video/mp4"
+    val video_mpeg = "video/mpeg"
+    val video_ogv = "video/ogg"
+    val video_ts = "video/mp2t"
+    val video_webm = "video/webm"
+    val video_3gp = "video/3gpp"
+    val video_3g2 = "video/3gp2"
     val message_http = "message/http"
     val message_imdn_xml = "message/imdn+xml"
     val message_partianl = "message/partial"

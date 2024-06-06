@@ -17,7 +17,8 @@ import org.goldenport.util.StringUtils
  *  version Feb.  8, 2021
  *  version Mar.  6, 2021
  *  version Apr. 15, 2021
- * @version Mar. 30, 2022
+ *  version Mar. 30, 2022
+ * @version May. 30, 2024
  * @author  ASAMI, Tomoharu
  */
 case class MimeType(name: String) {
@@ -63,6 +64,25 @@ object MimeType {
   val image_webp = MimeType(mimetype.image_webp)
   val image_avif = MimeType(mimetype.image_avif)
   val image_xicon = MimeType(mimetype.image_xicon) // https://stackoverflow.com/questions/13827325/correct-mime-type-for-favicon-ico
+  val audio_aac = MimeType(mimetype.audio_aac)
+  val audio_avi = MimeType(mimetype.audio_avi)
+  val audio_cda = MimeType(mimetype.audio_cda)
+  val audio_midi = MimeType(mimetype.audio_midi)
+  val audio_mp3 = MimeType(mimetype.audio_mp3)
+  val audio_oga = MimeType(mimetype.audio_oga)
+  val audio_opus = MimeType(mimetype.audio_opus)
+  val audio_wav = MimeType(mimetype.audio_wav)
+  val audio_weba = MimeType(mimetype.audio_weba)
+  val audio_3gp = MimeType(mimetype.audio_3gp)
+  val audio_3g2 = MimeType(mimetype.audio_3g2)
+  val video_avi = MimeType(mimetype.video_avi)
+  val video_mp4 = MimeType(mimetype.video_mp4)
+  val video_mpeg = MimeType(mimetype.video_mpeg)
+  val video_ogv = MimeType(mimetype.video_ogv)
+  val video_ts = MimeType(mimetype.video_ts)
+  val video_webm = MimeType(mimetype.video_webm)
+  val video_3gp = MimeType(mimetype.video_3gp)
+  val video_3g2 = MimeType(mimetype.video_3g2)
   val message_http = MimeType(mimetype.message_http)
   val message_imdn_xml = MimeType(mimetype.message_imdn_xml)
   val message_partianl = MimeType(mimetype.message_partianl)
@@ -116,6 +136,25 @@ object MimeType {
   val IMAGE_APNG = image_apng
   val IMAGE_WEBP = image_webp
   val IMAGE_AVIF = image_avif
+  val AUDIO_AAC = audio_aac
+  val AUDIO_AVI = audio_avi
+  val AUDIO_CDA = audio_cda
+  val AUDIO_MIDI = audio_midi
+  val AUDIO_MP3 = audio_mp3
+  val AUDIO_OGA = audio_oga
+  val AUDIO_OPUS = audio_opus
+  val AUDIO_WAV = audio_wav
+  val AUDIO_WEBA = audio_weba
+  val AUDIO_3GP = audio_3gp
+  val AUDIO_3G2 = audio_3g2
+  val VIDEO_AVI = video_avi
+  val VIDEO_MP4 = video_mp4
+  val VIDEO_MPEG = video_mpeg
+  val VIDEO_OGV = video_ogv
+  val VIDEO_TS = video_ts
+  val VIDEO_WEBM = video_webm
+  val VIDEO_3GP = video_3gp
+  val VIDEO_3G2 = video_3g2
   val MESSAGE_HTTP = message_http
   val MESSAGE_IMDN_XML = message_imdn_xml
   val MESSAGE_PARTIANL = message_partianl
@@ -169,6 +208,25 @@ object MimeType {
     image_apng,
     image_webp,
     image_avif,
+    audio_aac,
+    audio_avi,
+    audio_cda,
+    audio_midi,
+    audio_mp3,
+    audio_oga,
+    audio_opus,
+    audio_wav,
+    audio_weba,
+    audio_3gp,
+    audio_3g2,
+    video_avi,
+    video_mp4,
+    video_mpeg,
+    video_ogv,
+    video_ts,
+    video_webm,
+    video_3gp,
+    video_3g2,
     message_http,
     message_imdn_xml,
     message_partianl,
@@ -233,6 +291,25 @@ object MimeType {
     image_apng -> "apng",
     image_webp -> "webp",
     image_avif -> "avif",
+    audio_aac -> "aac",
+//  audio_avi -> "avi",
+    audio_cda -> "cda",
+    audio_midi -> "midi",
+    audio_mp3 -> "mp3",
+    audio_oga -> "oga",
+    audio_opus -> "opus",
+    audio_wav -> "wav",
+    audio_weba -> "weba",
+//  audio_3gp -> "3gp",
+//  audio_3g2 -> "3g2",
+    video_avi -> "avi",
+    video_mp4 -> "mp4",
+    video_mpeg -> "mpeg",
+    video_ogv -> "ogv",
+    video_ts -> "ts",
+    video_webm -> "webm",
+    video_3gp -> "3gp",
+    video_3g2 -> "3g2",
     text_csv -> "csv",
     text_tsv -> "tsv",
     text_xsv -> "xsv",
@@ -249,7 +326,10 @@ object MimeType {
   lazy val suffixMimeMap = mimeSuffixMap.map {
     case (m, s) => s -> m
   } ++ Map(
-    "htm" -> text_html
+    "htm" -> text_html,
+    "jpg" -> image_jpeg,
+    "tif" -> image_tiff,
+    "mid" -> audio_midi
   )
 
   def isText(p: MimeType): Boolean = isText(p.name)
