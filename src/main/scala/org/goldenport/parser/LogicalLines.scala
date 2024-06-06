@@ -21,7 +21,8 @@ import org.goldenport.util.StringUtils
  *  version Feb.  7, 2021
  *  version Mar.  2, 2021
  *  version Apr.  3, 2021
- * @version May. 31, 2021
+ *  version May. 31, 2021
+ * @version Jun.  3, 2024
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -142,6 +143,7 @@ object LogicalLines {
       val candidates = Vector('|', '│', '┃')
       candidates.contains(c)
     }
+    def isInListLineStart(p: String): Boolean = p.startsWith("-") // TODO
     def isInVerbatim(p: String): Boolean = verbatims.exists(_.isMatch(p))
     def getVerbatimMark(p: String): Option[LogicalBlock.VerbatimMark] = verbatims.toStream.flatMap(_.get(p)).headOption
   }
@@ -162,12 +164,16 @@ object LogicalLines {
     protected def use_parenthesis(config: Config) = config.useParenthesis
     protected def use_bracket(config: Config) = config.useBracket
     protected def use_multiline(config: Config) = config.useMultiline
+    protected def use_multiline_in_list(config: Config) = use_multiline(config)
     protected def use_verbatim(config: Config) = config.useVerbatim
     protected def is_word_separating(config: Config, prev: Option[Char], next: Char) =
       prev.map(config.isWordSeparating(_, next)).getOrElse(false)
     protected def word_separating_space(config: Config) = config.wordSeparatingSpace
     protected def is_in_list(config: Config, c: Char) = config.isInList(c)
     protected def is_in_table(config: Config, c: Char) =config.isInTable(c)
+    protected def is_in_list_line_start(config: Config, line: Option[String]) =
+      line.fold(false)(config.isInListLineStart)
+    protected def is_in_list_line_start(config: Config, evt: CharEvent) = evt.c == '-'
     protected def is_in_verbatim(config: Config, line: Option[String]) =
       use_verbatim(config) && line.fold(false)(config.isInVerbatim)
 
@@ -210,9 +216,11 @@ object LogicalLines {
           case ')' if use_parenthesis(config) => handle_close_parenthesis(config, m)
           case '[' if use_bracket(config) => handle_open_bracket(config, m)
           case ']' if use_bracket(config) => handle_close_bracket(config, m)
+          case '\n' if is_in_list_line_start(config, get_Current_Line) => handle_newline_list(config, m)
           case '\n' if is_in_verbatim(config, get_Current_Line) => handle_newline_verbatim(config, m)
           case '\n' if use_multiline(config) => handle_newline_multiline(config, m)
           case '\n' => handle_newline(config, m)
+          case '\r' if is_in_list_line_start(config, get_Current_Line) => handle_carrige_return_list(config, m)
           case '\r' if is_in_verbatim(config, get_Current_Line) => handle_carrige_return_verbatim(config, m)
           case '\r' if use_multiline(config) => handle_carrige_return_multiline(config, m)
           case '\r' => handle_carrige_return(config, m)
@@ -362,15 +370,18 @@ object LogicalLines {
       else
         _newline_state_multiline(config, evt)
 
-    private def _newline_state_multiline(config: Config, evt: CharEvent): LogicalLinesParseState =
+    private def _newline_state_multiline(config: Config, evt: CharEvent): LogicalLinesParseState = {
+      def _not_use_multiline_(c: Char) = (!use_multiline_in_list(config) && is_in_list(config, c)) || is_in_table(config, c)
+      def _is_ward_separating_(c: Char) = is_word_separating(config, getLastChar, c) && !is_in_list(config, c)
       evt.next match {
         case Some('\n') => line_End_State(config, LineEndEvent(evt.location))
         case Some('\r') => line_End_State(config, LineEndEvent(evt.location))
-        case Some(c) if is_in_list(config, c) || is_in_table(config, c) => line_End_State(config, LineEndEvent(evt.location))
-        case Some(c) if is_word_separating(config, getLastChar, c) => character_State(word_separating_space(config))
+        case Some(c) if _not_use_multiline_(c) => line_End_State(config, LineEndEvent(evt.location))
+        case Some(c) if _is_ward_separating_(c) => character_State(word_separating_space(config))
         case Some(c) => this
         case None => line_End_State(config, LineEndEvent(evt.location))
       }
+    }
 
     protected final def handle_carrige_return(config: Config, evt: CharEvent): Transition =
       handle_Carrige_Return(config, evt)
@@ -406,6 +417,30 @@ object LogicalLines {
       //   )
       //   case _ => line_End_State(config, LineEndEvent(evt.location))
       // }
+
+    protected final def handle_newline_list(config: Config, evt: CharEvent): Transition =
+      handle_Newline_List(config, evt)
+
+    protected def handle_Newline_List(config: Config, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, newline_List_State(config, evt))
+
+    protected def newline_List_State(config: Config, evt: CharEvent): LogicalLinesParseState =
+      newline_List_State(evt.c)
+
+    protected def newline_List_State(c: Char): LogicalLinesParseState =
+      RAISE.notImplementedYetDefect(this, "newline_List_State")
+
+    protected final def handle_carrige_return_list(config: Config, evt: CharEvent): Transition =
+      handle_Carrige_Return_List(config, evt)
+
+    protected def handle_Carrige_Return_List(config: Config, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, carrige_Return_List_State(config, evt))
+
+    protected def carrige_Return_List_State(config: Config, evt: CharEvent): LogicalLinesParseState =
+      carrige_Return_List_State(evt.c)
+
+    protected def carrige_Return_List_State(c: Char): LogicalLinesParseState =
+      RAISE.notImplementedYetDefect(this, "carrige_Return_List_State")
 
     protected final def handle_newline_verbatim(config: Config, evt: CharEvent): Transition =
       handle_Newline_Verbatim(config, evt)
@@ -465,7 +500,11 @@ object LogicalLines {
     override protected def end_Result(config: Config) = ParseSuccess(LogicalLines.empty)
     override protected def line_End_State(config: Config, evt: LineEndEvent): LogicalLinesParseState =
       NormalState("", evt.location)
-    override protected def character_State(config: Config, evt: CharEvent) = NormalState(evt.c, evt.location)
+    override protected def character_State(config: Config, evt: CharEvent) =
+      if (is_in_list_line_start(config, evt))
+        ListState(NormalState("", evt.location), evt.c, Some(evt.location))
+      else
+        NormalState(evt.c, evt.location)
     override protected def double_Quote_State(config: Config, evt: CharEvent) =
       DoubleQuoteState(NormalState(evt.location), evt.location)
     override protected def single_Quote_State(config: Config, evt: CharEvent) =
@@ -912,6 +951,58 @@ object LogicalLines {
       parent,
       mark,
       LogicalLines.Builder(s, location)
+    )
+  }
+
+  case class ListState(
+    parent: NormalState,
+    cs: Vector[Char],
+    location: Option[ParseLocation],
+    result: LogicalLines
+  ) extends LogicalLinesParseState {
+    override protected def use_double_quote(config: Config) = false
+    override protected def use_angle_bracket(config: Config) = false
+    override protected def use_brace(config: Config) = false
+    override protected def use_parenthesis(config: Config) = false
+    override protected def use_bracket(config: Config) = false
+    override protected def use_multiline(config: Config) = false
+    override protected def use_verbatim(config: Config) = false
+
+    override protected def is_in_list_line_start(config: Config, line: Option[String]) = false
+
+    def getLastChar = cs.lastOption
+    protected def get_Current_Line = Some(cs.mkString)
+
+    override protected def end_Result(config: Config) = {
+      val r = if (cs.isEmpty)
+        result
+      else
+        result :+ LogicalLine(cs.mkString, get_location(config))
+      ParseSuccess(r)
+    }
+
+    override protected def newline_State(config: Config, evt: CharEvent): LogicalLinesParseState =
+      _line_end(config, evt)
+
+    override protected def carrige_Return_State(config: Config, evt: CharEvent): LogicalLinesParseState =
+      _line_end(config, evt)
+
+    private def _line_end(config: Config, evt: CharEvent) =
+      copy(cs = Vector.empty, result = result :+ cs.mkString)
+
+    override protected def character_State(config: Config, evt: CharEvent) =
+      copy(cs = cs :+ evt.c)
+  }
+  object ListState {
+    def apply(
+      parent: NormalState,
+      c: Char,
+      location: Option[ParseLocation]
+    ): ListState = ListState(
+      parent,
+      Vector(c),
+      location,
+      LogicalLines.empty
     )
   }
 }

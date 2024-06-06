@@ -11,7 +11,8 @@ import org.goldenport.util.VectorUtils
  *  version Oct. 13, 2019
  *  version Nov.  3, 2019
  *  version Apr. 18, 2020
- * @version Jun. 20, 2021
+ *  version Jun. 20, 2021
+ * @version Jun.  5, 2024
  * @author  ASAMI, Tomoharu
  */
 case class NonEmptyVector[T](head: T, tail: Vector[T]) {
@@ -56,17 +57,33 @@ case class NonEmptyVector[T](head: T, tail: Vector[T]) {
     else
       copy(tail = VectorUtils.mapLast(tail, f))
 
+  def update(index: Int, n: T): NonEmptyVector[T] =
+    if (index == 0)
+      updateHead(n)
+    else
+      copy(tail = VectorUtils.update(tail, index - 1, n))
+
+  def updateHead(p: T): NonEmptyVector[T] = copy(head = p)
+
+  def updateLast(p: T): NonEmptyVector[T] =
+    if (tail.isEmpty)
+      copy(head = p)
+    else
+      copy(tail = VectorUtils.updateLast(tail, p))
+
   def replace(o: T, n: T): NonEmptyVector[T] = {
     val h = if (head == o) n else head
     val t = VectorUtils.replace(tail, o, n)
     NonEmptyVector(h, t)
   }
+  @deprecated("Use updateHead instead.", "1.3.59")
   def replaceHead(p: T): NonEmptyVector[T] = copy(head = p)
+  @deprecated("Use updateLast instead.", "1.3.59")
   def replaceTail(p: T): NonEmptyVector[T] =
     if (tail.isEmpty)
       copy(head = p)
     else
-      copy(tail = VectorUtils.replaceTail(tail, p))
+      copy(tail = VectorUtils.updateLast(tail, p))
 
   def mkString(infix: String): String = vector.mkString(infix)
   def mkString(prefix: String, infix: String, postfix: String): String = vector.mkString(postfix, infix, postfix)
