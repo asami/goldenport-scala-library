@@ -6,7 +6,8 @@ package org.goldenport.util
  *  version Dec. 27, 2018
  *  version Jul. 29, 2019
  *  version Jan. 31, 2020
- * @version Oct.  1, 2021
+ *  version Oct.  1, 2021
+ * @version Jun.  5, 2024
  * @author  ASAMI, Tomoharu
  */
 object VectorUtils {
@@ -73,16 +74,32 @@ object VectorUtils {
       map(x => v.init :+ f(x)).
       getOrElse(v)
 
+  def update[T](v: Vector[T], index: Int, p: T): Vector[T] = v.updated(index, p)
+
+  def updateHead[T](v: Vector[T], p: T): Vector[T] =
+    if (v.isEmpty)
+      v
+    else
+      v.updated(0, p)
+
+  def updateLast[T](v: Vector[T], p: T): Vector[T] = 
+    if (v.isEmpty)
+      v
+    else
+      v.updated(v.length - 1, p)
+
   def replace[T](v: Vector[T], o: T, n: T): Vector[T] =
     v.map(x => if (x == o) n else x)
 
+  @deprecated("Use updateHead instead.", "1.3.59")
   def replaceHead[T](v: Vector[T], p: T): Vector[T] =
     if (v.isEmpty)
       v
     else
       v.updated(0, p)
 
-  def replaceTail[T](v: Vector[T], p: T): Vector[T] =
+  @deprecated("Use update instead.", "1.3.59")
+  def replaceTail[T](v: Vector[T], p: T): Vector[T] = 
     if (v.isEmpty)
       v
     else

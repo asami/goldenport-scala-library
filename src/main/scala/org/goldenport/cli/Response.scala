@@ -18,7 +18,8 @@ import org.goldenport.io.UriUtils
  *  version May. 24, 2020
  *  version Apr.  4, 2021
  *  version Jan. 30, 2022
- * @version Feb.  1, 2022
+ *  version Feb.  1, 2022
+ * @version Nov. 25, 2023
  * @author  ASAMI, Tomoharu
  */
 sealed trait Response {
@@ -94,15 +95,39 @@ object Response {
   ): Response = {
     val msg = candidates.
       map(cs => s"""Command '$cmd' is ambiguous: (${cs.commands.vector.map(_.name).mkString(", ")})""").
-      getOrElse(s"Command '$cmd' not found. ")
+      getOrElse(s"Command '$cmd' not found.")
     ErrorResponse(404, msg)
   }
+
+  def notFound(
+    cmd: String
+  ): Response = {
+    val msg = s"Command '$cmd' not found."
+    ErrorResponse(404, msg)
+  }
+
+  def notFound(
+    cmd: String,
+    candidates: Seq[String]
+  ): Response = {
+    val msg = s"""Command '$cmd' not found. Candidates: (${candidates.mkString(", ")})"""
+    ErrorResponse(404, msg)
+  }
+
 
   def ambiguous(
     cmd: String,
     candidates: CommandParser.Candidates[Engine.Candidate]
   ): Response = {
     val msg = s"""Command '$cmd' is ambiguous: (${candidates.commands.vector.map(_.name).mkString(", ")})"""
+    ErrorResponse(404, msg)
+  }
+
+  def ambiguous(
+    cmd: String,
+    candidates: Seq[String]
+  ): Response = {
+    val msg = s"""Command '$cmd' is ambiguous: (${candidates.mkString(", ")})"""
     ErrorResponse(404, msg)
   }
 }

@@ -5,13 +5,14 @@ import org.goldenport.Strings
 
 /*
  * @since   Sep. 18, 2018
- * @version Sep. 18, 2018
+ * @version May. 30, 2024
  * @author  ASAMI, Tomoharu
  */
 case class ContentType(
   mime: MimeType,
   charset: Option[Charset]
 ) {
+  def text: String = mime.name + charset.fold("")(x => s";charset=${x.name}")
 }
 
 object ContentType {

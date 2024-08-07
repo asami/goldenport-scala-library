@@ -16,7 +16,8 @@ import org.goldenport.log.Loggable
  *  version Apr. 25, 2020
  *  version Jan. 11, 2021
  *  version Feb. 13, 2021
- * @version May. 16, 2021
+ *  version May. 16, 2021
+ * @version Oct. 14, 2023
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -46,6 +47,8 @@ case class LogicalBlocks(
   def text = blocks.flatMap(_.getText).mkString
 
   def sections: Vector[LogicalSection] = blocks collect { case m: LogicalSection => m }
+
+  def prologue: LogicalBlocks = LogicalBlocks(blocks.takeWhile(_.isInstanceOf[LogicalSection] == false))
 }
 
 object LogicalBlocks {

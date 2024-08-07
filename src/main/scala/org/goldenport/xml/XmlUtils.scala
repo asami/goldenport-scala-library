@@ -17,10 +17,13 @@ import org.goldenport.util.{AnyUtils, SeqUtils}
  *  version Jan. 12, 2018
  *  version Feb. 18, 2018
  *  version Aug.  5, 2018
- * @version Mar. 28, 2022
+ *  version Mar. 28, 2022
+ * @version Dec. 29, 2023
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
+  val emptyNodeSeq: NodeSeq = Group(Nil)
+
   def parseNode(p: String): Node = 
     if (p.startsWith("<"))
       XML.loadString(p)
@@ -377,6 +380,8 @@ object XmlUtils {
     case m: Elem => _adjust_empty_div(m)
     case m => Some(m)
   }
+
+  def orEmptyNodeSeq(p: Option[NodeSeq]): NodeSeq = p getOrElse emptyNodeSeq
 
   def isEmptyAttributeDiv(p: Elem): Boolean = {
     val a = p.label == "div"

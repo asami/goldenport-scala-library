@@ -6,7 +6,8 @@ import org.goldenport.RAISE
  * @since   Feb. 18, 2019
  *  version Feb. 24, 2019
  *  version Feb. 13, 2020
- * @version Dec. 18, 2021
+ *  version Dec. 18, 2021
+ * @version Nov. 25, 2023
  * @author  ASAMI, Tomoharu
  */
 trait ServiceClass {
@@ -33,8 +34,8 @@ trait ServiceClass {
     r
   }
 
-  def makeRequest(command: String, args: Seq[String]): Option[Request] =
-    specification.makeRequest(command, args)
+  def makeRequest(req: Request, args: Seq[String]): Option[Either[Response, Request]] =
+    specification.makeRequest(req, args)
 
   def accept(req: Request): Option[Operation] =
     if (specification.accept(req))
@@ -43,13 +44,21 @@ trait ServiceClass {
       None
 
   def execute(env: Environment, args: Seq[String]): Response = {
-    val req = args.toList match {
-      case Nil => defaultOperation.
-          map(x => Request.create(x.specification, Array[String]())).
-          getOrElse(RAISE.notImplementedYetDefect)
-      case x :: xs => Request(x) // TODO
+    val a = args.toList match {
+      case Nil => defaultOperation match {
+        case Some(s) => Some(Right(Request.create(s.specification, Array[String]())))
+        case None => RAISE.notImplementedYetDefect // TODO
+      }
+      case x :: xs => operations.makeRequest(Request(x), xs)
     }
-    val op = operation(req)
-    op.apply(env, req)
+    a match {
+      case Some(s) => s match {
+        case Right(req) =>
+          val op = operation(req)
+          op.apply(env, req)
+        case Left(res) => res
+      }
+      case None => ???
+    }
   }
 }
