@@ -22,7 +22,7 @@ import org.goldenport.util.StringUtils
  *  version Mar.  2, 2021
  *  version Apr.  3, 2021
  *  version May. 31, 2021
- * @version Jun.  3, 2024
+ * @version Jun.  9, 2024
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -568,7 +568,9 @@ object LogicalLines {
     override protected def line_End_State(config: Config, evt: LineEndEvent): LogicalLinesParseState =
       NormalState(Vector.empty, Some(evt.location), result :+ cs.mkString)
     override protected def character_State(config: Config, evt: CharEvent) =
-      if (location.isDefined)
+      if (is_in_list_line_start(config, evt))
+        ListState(this, evt.c, Some(evt.location))
+      else if (location.isDefined)
         character_State(evt.c)
       else
         copy(cs = cs :+ evt.c, location = Some(evt.location))
@@ -988,7 +990,10 @@ object LogicalLines {
       _line_end(config, evt)
 
     private def _line_end(config: Config, evt: CharEvent) =
-      copy(cs = Vector.empty, result = result :+ cs.mkString)
+      if (cs.isEmpty)
+        parent.addLines(result :+ LogicalLine.empty)
+      else
+        copy(cs = Vector.empty, result = result :+ cs.mkString)
 
     override protected def character_State(config: Config, evt: CharEvent) =
       copy(cs = cs :+ evt.c)
