@@ -10,7 +10,8 @@ import org.goldenport.parser._
  * @since   Jan. 19, 2021
  *  version Mar. 24, 2021
  *  version Sep. 26, 2022
- * @version Apr. 30, 2023
+ *  version Apr. 30, 2023
+ * @version Oct.  9, 2024
  * @author  ASAMI, Tomoharu
  */
 object RegexUtils {
@@ -107,6 +108,10 @@ object RegexUtils {
       case None => ParseResult.error("No match")
     }
 
+  def parseNumber(p: Match, i: Int): ParseResult[Number] = getString(p, i) match {
+    case Some(s) => NumberUtils.parse(s)
+    case None => ParseResult.error("No string in regex matching")
+  }
 
   def cAsString(p: Match, i: Int): Consequence[String] =
     Option(p.group(i)) match {

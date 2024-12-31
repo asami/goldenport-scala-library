@@ -5,7 +5,8 @@ import org.goldenport.parser._
 
 /*
  * @since   Feb. 14, 2021
- * @version Apr. 21, 2021
+ *  version Apr. 21, 2021
+ * @version Oct.  9, 2024
  * @author  ASAMI, Tomoharu
  */
 object PeriodUtils {
@@ -29,6 +30,8 @@ object PeriodUtils {
   )
 
   private def _to_int(p: String) = NumberUtils.parseInt(p, 0)
+
+  def day(d: Int): Period = new Period().withDays(d)
 
   def yearMonthDay(y: Int, m: Int, d: Int): Period = new Period(y, m, 0, d, 0, 0, 0)
 }

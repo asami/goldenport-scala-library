@@ -8,7 +8,8 @@ import scala.xml._
 /*
  * @since   Oct. 11, 2019
  *  version Oct. 27, 2019
- * @version Feb. 29, 2020
+ *  version Feb. 29, 2020
+ * @version Nov. 24, 2024
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -24,6 +25,12 @@ class LxsvSpec extends WordSpec with Matchers with GivenWhenThen {
     "Lsxv" which {
       "one" in {
         create("a:1") should be(lxsv('a -> 1))
+      }
+      "underscore" in {
+        create("a_b:1") should be(lxsv(Symbol("a_b") -> 1))
+      }
+      "underscore 2" in {
+        create("a_b:1\tc_d:2") should be(ltsv(Symbol("a_b") -> 1, Symbol("c_d") -> 2))
       }
     }
     "delimiter" which {

@@ -31,7 +31,8 @@ import org.goldenport.i18n.LocaleUtils
  *  version May.  2, 2022
  *  version Jun. 17, 2022
  *  version Nov. 17, 2022
- * @version Dec. 28, 2022
+ *  version Dec. 28, 2022
+ * @version Oct. 14, 2024
  * @author  ASAMI, Tomoharu
  */
 object DateTimeUtils {
@@ -39,6 +40,10 @@ object DateTimeUtils {
   val jst = TimeZone.getTimeZone("JST")
   val jodagmt = DateTimeZone.forID("GMT")
   val jodajst = DateTimeZone.forID("Asia/Tokyo")
+  val jodaplus900 = DateTimeZone.forOffsetHours(9)
+  val jodaEst = DateTimeZone.forID("EST")
+  val jodaEuropeBerlin = DateTimeZone.forID("Europe/Berlin")
+  val jodaEuropeZurich = DateTimeZone.forID("Europe/Zurich")
   val isoFormatter = ISODateTimeFormat.dateTimeNoMillis() // ??? NoMillis
   val isoUtcFormatter = isoFormatter.withZoneUTC
   val isoJstFormatter = isoFormatter.withZone(jodajst)

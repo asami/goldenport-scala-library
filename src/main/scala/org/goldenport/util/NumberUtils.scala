@@ -19,7 +19,8 @@ import org.goldenport.parser.ParseResult
  *  version Jan. 27, 2022
  *  version Feb. 16, 2022
  *  version Mar. 19, 2022
- * @version Jul. 22, 2023
+ *  version Jul. 22, 2023
+ * @version Oct.  9, 2024
  * @author  ASAMI, Tomoharu
  */
 object NumberUtils {
@@ -116,6 +117,8 @@ object NumberUtils {
   def optionBigInt(p: Any): Option[BigInt] = consequenceBigInt(p).toOption
 
   def optionBigDecimal(p: Any): Option[BigDecimal] = consequenceBigDecimal(p).toOption
+
+  def toBigDecimal(p: Any): BigDecimal = consequenceBigDecimal(p).take
 
   def charToInt(p: Char): Int = {
     val v = p - '0'

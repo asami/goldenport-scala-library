@@ -4,21 +4,47 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest._
 import org.scalatest.matchers._
+import org.joda.time.{DateTime, DateTimeZone}
 import org.goldenport.util.DateTimeUtils
 
 /*
  * @since   Jan. 19, 2021
  *  version Jan. 23, 2021
- * @version Feb. 13, 2021
+ *  version Feb. 13, 2021
+ *  version Sep.  2, 2024
+ * @version Oct.  9, 2024
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
 class LogicalTokenSpec extends WordSpec with Matchers with GivenWhenThen {
   val context = LogicalTokens.Context.create()
   val jodajst = DateTimeUtils.jodajst
+  val tz900 = DateTimeZone.forOffsetHours(9)
   val start = ParseLocation.start
 
   def token(p: LogicalToken) = TokenizerAcceptMatcher(p)
+
+  import org.joda.time.DateTime
+
+  // def isMatch(lhs: Option[LogicalTokens], rhs: DateTimeToken): Boolean = {
+  //   val a = lhs.head.head.asInstanceOf[DateTimeToken]
+  //   println(a)
+  //   println(rhs)
+  //   println(a == rhs)
+  //   println(a.datetime == rhs.datetime)
+  //   println(a.location == rhs.location)
+  //   println(isMatch(a.datetime, rhs.datetime))
+  //   ???
+  // }
+
+  // def isMatch(lhs: DateTime, rhs: DateTime) = {
+  //   val a = lhs.getZone
+  //   val b = rhs.getZone
+  //   println(a)
+  //   println(b)
+  //   println(s"Zone: ${a == b}")
+  //   lhs.getMillis == rhs.getMillis
+  // }
 
   case class TokenizerAcceptMatcher(o: LogicalToken) extends Matcher[Option[LogicalTokens]] {
     def apply(p: Option[LogicalTokens]) = p match {
@@ -31,6 +57,14 @@ class LogicalTokenSpec extends WordSpec with Matchers with GivenWhenThen {
     }
   }
 
+  "numberpostfix" should {
+    "parse" which {
+      "plain" in {
+        val s = "5%"
+        NumberPostfixToken.accept(context, s, start) should(token(NumberPostfixToken(5, "%")))
+      }
+    }
+  }
   "complex" should {
     "parse" which {
       "plain" in {
@@ -75,7 +109,7 @@ class LogicalTokenSpec extends WordSpec with Matchers with GivenWhenThen {
     "parse" which {
       "plain" in {
         val s = "2021-01-23T14:30:00+09"
-        DateTimeToken.accept(context, s, start) should token(DateTimeToken(2021, 1, 23, 14, 30, 0, jodajst, start))
+        DateTimeToken.accept(context, s, start) should token(DateTimeToken(2021, 1, 23, 14, 30, 0, tz900, start))
       }
     }
   }
@@ -127,7 +161,7 @@ class LogicalTokenSpec extends WordSpec with Matchers with GivenWhenThen {
     "parse" which {
       "plain" in {
         val s = "2021-01-23T15:05:00+0900~"
-        DateTimeIntervalToken.accept(context, s, start) should token(DateTimeIntervalToken.atOrAbove(2021, 1, 23, 15, 5, 0, jodajst, start))
+        DateTimeIntervalToken.accept(context, s, start) should token(DateTimeIntervalToken.atOrAbove(2021, 1, 23, 15, 5, 0, tz900, start))
       }
     }
   }

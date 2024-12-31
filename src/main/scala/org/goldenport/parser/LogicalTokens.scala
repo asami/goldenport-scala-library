@@ -23,7 +23,9 @@ import org.goldenport.context.DateTimeContext
  *  version Mar.  1, 2020
  *  version Jan. 30, 2021
  *  version Apr. 21, 2021
- * @version Jun. 17, 2021
+ *  version Jun. 17, 2021
+ *  version Sep.  7, 2024
+ * @version Oct. 22, 2024
  * @author  ASAMI, Tomoharu
  */
 case class LogicalTokens(
@@ -108,6 +110,7 @@ object LogicalTokens {
     simpleTokenizers: Vector[SimpleTokenizer],
     complexTokenizers: Vector[ComplexTokenizer],
     useSingleQuoteToken: Boolean,
+    useAtom: Boolean,
     isDebug: Boolean,
     isLocation: Boolean
   ) extends ParseConfig {
@@ -142,7 +145,7 @@ object LogicalTokens {
       true,
       true,
       Vector(
-        NumberToken,
+        NumberToken, NumberPostfixToken,
         ComplexToken, RationalToken,
         IntervalToken, RangeToken,
         LocalDateToken, LocalDateTimeToken, LocalTimeToken, DateTimeToken, MonthDayToken,
@@ -154,6 +157,7 @@ object LogicalTokens {
       ),
       Vector(JsonParser(), XmlParser()),
       false,
+      true,
       false,
       true
     )
@@ -162,21 +166,22 @@ object LogicalTokens {
     val debug = default.copy(isDebug = true)
     val xsv = default.copy(
       "".toVector,
-      " \t,;&".toVector
+      " \t,;&".toVector,
+      useAtom = false
     )
-    val csv = default.copy(
+    val csv = xsv.copy(
       "".toVector,
       ",".toVector
     )
-    val tsv = default.copy(
+    val tsv = xsv.copy(
       "".toVector,
       "\t".toVector
     )
-    val scsv = default.copy(
+    val scsv = xsv.copy(
       "".toVector,
       ";".toVector
     )
-    val ssv = default.copy(
+    val ssv = xsv.copy(
       "".toVector,
       " \t".toVector
     )
@@ -213,7 +218,7 @@ object LogicalTokens {
     protected def use_Double_Quote = true
     protected def use_Single_Quote = true
     protected def use_Bracket = true
-    protected def use_Dollar = true
+    protected def use_Dollar(c: Context, p: CharEvent) = true
     protected def use_Comment = true
 
     def apply(context: Context, evt: ParseEvent): Transition = {
@@ -255,7 +260,7 @@ object LogicalTokens {
             case '\'' if use_Single_Quote => handle_single_quote(context, m)
             case '[' if use_Bracket => handle_open_bracket(context, m)
             case ']' if use_Bracket => handle_close_bracket(context, m)
-            case '$' if use_Dollar => handle_dollar(context, m)
+            case '$' if use_Dollar(context, m) => handle_dollar(context, m)
             case '/' if use_Comment && context.isCComment(m) => handle_c_comment(context, m)
             case '/' if use_Comment && context.isCppComment(m) => handle_cpp_comment(context, m)
             case c if context.isSpace(c) => handle_space(context, m)
@@ -423,7 +428,13 @@ object LogicalTokens {
     protected final def to_tokens(context: Context, p: Vector[Char], l: ParseLocation): LogicalTokens = to_tokens(context, p.mkString, l)
 
     protected final def to_tokens(context: Context, p: String, l: ParseLocation): LogicalTokens =
-      context.getTokens(context, p, l) getOrElse LogicalTokens(AtomToken(p, l))
+      context.getTokens(context, p, l) getOrElse LogicalTokens(_to_atom_or_string(context, p, l))
+
+    private def _to_atom_or_string(context: Context, p: String, l: ParseLocation) =
+      if (context.config.useAtom)
+        AtomToken(p, l)
+      else
+        RawStringToken(p, l)
 
     // XXX
     // protected final def handle_open_angle_bracket(config: Config, evt: CharEvent): Transition =
@@ -523,12 +534,12 @@ object LogicalTokens {
   }
 
   trait RawLogicalTokensParseState extends LogicalTokensParseState {
-    override val use_Tokenizer = false
-    override val use_Delimiter = false
-    override val use_Double_Quote = false
-    override val use_Single_Quote = false
-    override val use_Bracket = false
-    override val use_Dollar = false
+    override protected val use_Tokenizer = false
+    override protected val use_Delimiter = false
+    override protected val use_Double_Quote = false
+    override protected val use_Single_Quote = false
+    override protected val use_Bracket = false
+    override protected def use_Dollar(c: Context, p: CharEvent) = false
   }
 
   trait ChildLogicalTokensParseState extends LogicalTokensParseState {
@@ -584,11 +595,11 @@ object LogicalTokens {
 
   // can use terminal character to handle token end.
   trait WithTerminalLogicalTokensParseState extends LogicalTokensParseState {
-    override val use_Tokenizer = false
-    override val use_Delimiter = false
-    override val use_Double_Quote = false
-    override val use_Single_Quote = false
-    override val use_Bracket = false
+    override protected val use_Tokenizer = false
+    override protected val use_Delimiter = false
+    override protected val use_Double_Quote = false
+    override protected val use_Single_Quote = false
+    override protected val use_Bracket = false
     // override val use_Dollar = false ???
   }
 
@@ -596,11 +607,11 @@ object LogicalTokens {
   trait WithoutTerminalLogicalTokensParseState extends ChildLogicalTokensParseState {
     def parent: LogicalTokensParseState
 
-    override val use_Tokenizer = false
-    override val use_Delimiter = true
-    override val use_Double_Quote = false
-    override val use_Single_Quote = false
-    override val use_Bracket = false
+    override protected val use_Tokenizer = false
+    override protected val use_Delimiter = true
+    override protected val use_Double_Quote = false
+    override protected val use_Single_Quote = false
+    override protected val use_Bracket = false
     // override val use_Dollar = false ???
 
     override protected def space_State(context: Context, evt: CharEvent): LogicalTokensParseState =
@@ -678,7 +689,7 @@ object LogicalTokens {
     override protected def use_Delimiter = false
     override protected def use_Single_Quote = false
     override protected def use_Bracket = false
-    override protected def use_Dollar = false
+    override protected def use_Dollar(c: Context, p: CharEvent) = false
     override protected def use_Comment = false
 
     protected def to_Token(): CommentToken
@@ -736,8 +747,11 @@ object LogicalTokens {
     override protected def use_Delimiter = false
     override protected def use_Single_Quote = false
     override protected def use_Bracket = false
-    override protected def use_Dollar = false
+    override protected def use_Dollar(c: Context, p: CharEvent) = false
     override protected def use_Comment = false
+
+    private def _is_raw = prefix.fold(false)(_ == "raw")
+    private def _is_not_raw = !_is_raw
 
     override def addChildState(context: Context, p: Vector[Char]): LogicalTokensParseState =
       copy(text = text ++ p)
@@ -749,7 +763,7 @@ object LogicalTokens {
 
     override protected def character_State(context: Context, evt: CharEvent): LogicalTokensParseState = {
       // println(s"DoubleQuoteState#double_Quote_State: $evt")
-      if (evt.c == '\\')
+      if (evt.c == '\\' && _is_not_raw)
         StringQuoteEscapeState(this)
       else
         copy(text = text :+ evt.c)
@@ -788,7 +802,7 @@ object LogicalTokens {
     override protected def use_Delimiter = false
     override protected def use_Double_Quote = false
     override protected def use_Bracket = false
-    override protected def use_Dollar = false
+    override protected def use_Dollar(c: Context, p: CharEvent) = false
     override protected def use_Comment = false
 
     override def addChildState(context: Context, p: Vector[Char]): LogicalTokensParseState =
@@ -821,7 +835,7 @@ object LogicalTokens {
     override protected def use_Delimiter = false
     override protected def use_Single_Quote = false
     override protected def use_Bracket = false
-    override protected def use_Dollar = false
+    override protected def use_Dollar(c: Context, p: CharEvent) = false
     override protected def use_Comment = false
 
     override protected def line_End_State(context: Context, evt: LineEndEvent): LogicalTokensParseState =
@@ -1147,12 +1161,12 @@ object LogicalTokens {
     location: ParseLocation,
     isLxsv: Option[Boolean] = None
   ) extends ChildLogicalTokensParseState {
-    override val use_Tokenizer = true
-    override val use_Delimiter = true
-    override val use_Double_Quote = true
-    override val use_Single_Quote = false
-    override val use_Bracket = true
-    override val use_Dollar = false
+    override protected val use_Tokenizer = true
+    override protected val use_Delimiter = true
+    override protected val use_Double_Quote = true
+    override protected val use_Single_Quote = false
+    override protected val use_Bracket = true
+    override protected def use_Dollar(c: Context, p: CharEvent) = false
 
     def tokens(context: Context): LogicalTokens = isLxsv.collect {
       case true => LogicalTokens(LxsvToken(cs.mkString, location))
@@ -1224,6 +1238,8 @@ object LogicalTokens {
     tokens: LogicalTokens,
     location: ParseLocation
   ) extends StringLiteralLogicalTokensParseState {
+    override protected def use_Dollar(c: Context, p: CharEvent) = p.next.fold(false)(x => !c.isSpace(x))
+
     private def _flush(context: Context): NormalState = {
       if (cs.isEmpty)
         this

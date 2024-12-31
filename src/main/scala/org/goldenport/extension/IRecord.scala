@@ -14,7 +14,8 @@ import org.goldenport.collection.VectorMap
  *  version Mar. 28, 2021
  *  version Mar. 19, 2022
  *  version Jun.  2, 2022
- * @version Dec. 12, 2022
+ *  version Dec. 12, 2022
+ * @version Nov. 14, 2024
  * @author  ASAMI, Tomoharu
  */
 trait IRecord extends Showable { // PartialFunction[String, Any] with 
@@ -77,6 +78,8 @@ object IRecord {
       case (k, v) => k.name -> v
     }
   }
+
+  def create(p: VectorMap[Symbol, Any]): IRecord = VectorMapRecord(p)
 
   def createS(ps: Seq[(Symbol, Any)]): IRecord = VectorMapRecord(VectorMap(ps))
 

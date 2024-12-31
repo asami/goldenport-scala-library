@@ -14,7 +14,9 @@ import org.goldenport.util.VectorUtils
  *  version Oct. 12, 2019
  *  version Apr.  7, 2020
  *  version Sep. 10, 2020
- * @version Apr. 12, 2021
+ *  version Apr. 12, 2021
+ *  version Sep. 10, 2024
+ * @version Nov. 14, 2024
  * @author  ASAMI, Tomoharu
  */
 sealed trait VectorMap[K, +V] extends Map[K, V] {
@@ -33,13 +35,20 @@ sealed trait VectorMap[K, +V] extends Map[K, V] {
   def toValueList: List[V] = vector.map(_._2).toList
   lazy val valueList: List[V] = toValueList
   def takeVectorMap(p: Int): VectorMap[K, V]
+
   def update[W >: V](k: K, v: W): VectorMap[K, W] = update(k -> v)
   def update[W >: V](p: (K, W)): VectorMap[K, W]
   def update[W >: V](p: Map[K, W]): VectorMap[K, W]
+
   def append[W >: V](k: K, v: W): VectorMap[K, W] = append(k -> v)
   def append[W >: V](p: (K, W)): VectorMap[K, W] = remove(p._1).update(p)
+  def append[W >: V](ps: Seq[(K, W)]): VectorMap[K, W] =
+    ps.foldLeft(this)((z, x) => z.append(x.asInstanceOf[(K, V)]))
+  def append[W >: V](p: VectorMap[K, W]): VectorMap[K, W] = append(p.toVector)
+
   def prepend[W >: V](k: K, v: W): VectorMap[K, W] = prepend(k -> v)
   def prepend[W >: V](p: (K, W)): VectorMap[K, W] = RAISE.notImplementedYetDefect
+
   def remove(k: K): VectorMap[K, V]
 
   protected def create_Map[W >:V](ps: Vector[(K, W)]): VectorMap[K, W]

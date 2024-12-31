@@ -6,7 +6,8 @@ import org.goldenport.io.MimeType
 
 /*
  * @since   Apr.  4, 2021
- * @version Feb.  1, 2022
+ *  version Feb.  1, 2022
+ * @version Oct.  8, 2024
  * @author  ASAMI, Tomoharu
  */
 class ClobBag(
@@ -22,6 +23,11 @@ class ClobBag(
   override def size: Long = bag.size
   override def getSize = bag.getSize
   override def isEmpty = bag.isEmpty
+
+  def isSame(p: ClobBag): Boolean =
+    size == p.size && isSame(p.toText)
+
+  def isSame(p: String): Boolean = bag.toText == p
 }
 
 object ClobBag {

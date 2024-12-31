@@ -10,7 +10,8 @@ import org.goldenport.values.NumberRange
  * @since   Jul.  7, 2019
  *  version Aug. 24, 2019
  *  version Sep. 16, 2019
- * @version Feb. 26, 2020
+ *  version Feb. 26, 2020
+ * @version Oct. 18, 2024
  * @author  ASAMI, Tomoharu
  */
 case class Tsv(matrix: VectorRowColumnMatrix[String]) extends IMatrix[String] {
@@ -28,4 +29,5 @@ case class Tsv(matrix: VectorRowColumnMatrix[String]) extends IMatrix[String] {
   def appendColumn(ps: Seq[String]): IMatrix[String] = RAISE.unsupportedOperationFault
   def appendColumns(ps: IMatrix[String]): IMatrix[String] = RAISE.unsupportedOperationFault
   def transpose: IMatrix[String] = RAISE.notImplementedYetDefect
+  def map[A](p: String => A): IMatrix[A] = RAISE.notImplementedYetDefect
 }

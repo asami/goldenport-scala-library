@@ -17,7 +17,8 @@ import org.goldenport.util.DateTimeUtils
  *  version Apr.  4, 2022
  *  version May.  2, 2022
  *  version Nov. 13, 2022
- * @version Apr.  6, 2023
+ *  version Apr.  6, 2023
+ * @version Oct. 14, 2024
  * @author  ASAMI, Tomoharu
  */
 case class DateTimeContext(
@@ -81,6 +82,32 @@ object DateTimeContext {
     val dt = DateTime.now
     DateTimeContext(dt, Period.ZERO, dt.getZone)
   }
+
+  def nowJst(): DateTimeContext = {
+    val dt = DateTime.now
+    DateTimeContext(dt, Period.ZERO, DateTimeUtils.jodajst)
+  }
+
+  def nowEst(): DateTimeContext = {
+    val dt = DateTime.now
+    DateTimeContext(dt, Period.ZERO, DateTimeUtils.jodaEst)
+  }
+
+  def nowGmt(): DateTimeContext = {
+    val dt = DateTime.now
+    DateTimeContext(dt, Period.ZERO, DateTimeUtils.jodagmt)
+  }
+
+  def nowEuropeBerlin(): DateTimeContext = {
+    val dt = DateTime.now
+    DateTimeContext(dt, Period.ZERO, DateTimeUtils.jodaEuropeBerlin)
+  }
+
+  def nowEuropeZurich(): DateTimeContext = {
+    val dt = DateTime.now
+    DateTimeContext(dt, Period.ZERO, DateTimeUtils.jodaEuropeZurich)
+  }
+
 
   def create(y: Int, m: Int, d: Int, h: Int, mi: Int): DateTimeContext = 
     create(DateTime.now.getZone, y, m, d, h, mi)

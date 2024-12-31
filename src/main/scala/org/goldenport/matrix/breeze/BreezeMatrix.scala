@@ -15,7 +15,8 @@ import org.goldenport.values.NumberRange
  *  version Jul. 16, 2019
  *  version Aug. 25, 2019
  *  version Sep. 16, 2019
- * @version Feb. 26, 2020
+ *  version Feb. 26, 2020
+ * @version Oct. 18, 2024
  * @author  ASAMI, Tomoharu
  */
 case class BreezeMatrix(matrix: Matrix[Double]) extends IMatrix[Double] {
@@ -50,6 +51,7 @@ case class BreezeMatrix(matrix: Matrix[Double]) extends IMatrix[Double] {
   def inv: IMatrix[Double] = BreezeMatrix(linalg.inv(denseMatrix))
   def det: Double = linalg.det(denseMatrix)
   def rank: Int = linalg.rank(denseMatrix)
+  def map[A](p: Double => A): IMatrix[A] = RAISE.notImplementedYetDefect
 }
 
 object BreezeMatrix {

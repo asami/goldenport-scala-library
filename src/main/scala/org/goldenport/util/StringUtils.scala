@@ -53,7 +53,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Apr. 30, 2023
  *  version Jun. 22, 2023
  *  version Jul. 22, 2023
- * @version Aug.  5, 2023
+ *  version Aug.  5, 2023
+ * @version Sep.  5, 2024
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -238,6 +239,9 @@ object StringUtils {
       s.forall(isI18NIdentifierChar)
 
   def isI18NIdentifierChar(c: Char) =
+    safeI18NCharBlocks.contains(UnicodeBlock.of(c))
+
+  def isSeperationLanguageChar(c: Char) =
     safeI18NCharBlocks.contains(UnicodeBlock.of(c))
 
   // JEXL

@@ -8,16 +8,18 @@ import org.goldenport.i18n.I18NElement
 /*
  * @since   Sep. 22, 2018
  *  version Feb.  2, 2019
- * @version Feb. 13, 2021
+ *  version Feb. 13, 2021
+ * @version Oct. 26, 2024
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLine(
   text: String,
+  physicalLines: List[String],
   location: Option[ParseLocation] = None
 ) {
   import LogicalLine._
   def getSectionTitle: Option[SectionTitle] = SectionTitle.get(text)
-  def getSectionUnderline: Option[SectionUnderline] = SectionUnderline.get(text)
+  def getSectionUnderline: Option[SectionUnderline] = SectionUnderline.get(physicalLines)
   def isEmptyLine: Boolean = Strings.blankp(text)
 }
 
@@ -27,10 +29,17 @@ object LogicalLine {
 
   val empty = LogicalLine("")
 
+  def apply(text: String): LogicalLine = LogicalLine(text, List(text))
+
   def apply(
     text: String,
     location: ParseLocation
-  ): LogicalLine = LogicalLine(text, Some(location))
+  ): LogicalLine = LogicalLine(text, List(text), Some(location))
+
+  def apply(
+    text: String,
+    location: Option[ParseLocation]
+  ): LogicalLine = LogicalLine(text, List(text), location)
 
   def start(text: String) = LogicalLine(text, ParseLocation.start)
 
@@ -74,14 +83,18 @@ object LogicalLine {
 
   // TITLE
   // =====
-  case class SectionUnderline(mark: String)
+  case class SectionUnderline(mark: String, title: String)
   object SectionUnderline {
-    def get(p: String): Option[SectionUnderline] =
-      p.headOption.filter(sectionUnderlineMarks.contains).flatMap(c =>
-        if (p.trim.distinct == c.toString)
-          Some(SectionUnderline(c.toString))
-        else
-          None
-      )
+    def get(ps: List[String]): Option[SectionUnderline] =
+      ps match {
+        case Nil => None
+        case t :: x :: Nil => x.headOption.flatMap { c =>
+          if (sectionUnderlineMarks.contains(c) && x.tail.forall(sectionUnderlineMarks.contains))
+            Some(SectionUnderline(c.toString, t))
+          else
+            None
+        }
+        case _ => None
+      }
   }
 }
