@@ -6,6 +6,7 @@ import scala.util.control.NonFatal
 import Character.UnicodeBlock
 import java.net.{URL, URI}
 import java.net.URLEncoder
+import java.nio.file.{Paths, Path}
 import com.asamioffice.goldenport.text.{UString, UPathString}
 import org.goldenport.RAISE
 import org.goldenport.Strings
@@ -54,7 +55,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Jun. 22, 2023
  *  version Jul. 22, 2023
  *  version Aug.  5, 2023
- * @version Sep.  5, 2024
+ *  version Sep.  5, 2024
+ * @version Mar. 17, 2025
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -154,6 +156,11 @@ object StringUtils {
     '$', '@'
   ) ++ numericalSymbols
 
+  def jananeseKanaCharBlocks = Vector(
+    UnicodeBlock.HIRAGANA,
+    UnicodeBlock.KATAKANA
+  )
+
   val safeJapaneseCharBlocks = Vector(
     UnicodeBlock.HIRAGANA,
     UnicodeBlock.KATAKANA,
@@ -198,6 +205,8 @@ object StringUtils {
   def isSafeAsciiChar(c: Char) = c != 0x5c && (0x20 <= c && c <= 0x7e)
   def isAsciiAlphabetChar(c: Char) =
     ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
+  def isAsciiAlphabetUpperChar(c: Char) =
+    'A' <= c && c <= 'Z'
   def isAsciiNumberChar(c: Char) = '0' <= c && c <= '9'
   def isAsciiAlphabetNumberChar(c: Char) =
     isAsciiAlphabetChar(c) || isAsciiNumberChar(c)
@@ -243,6 +252,9 @@ object StringUtils {
 
   def isSeperationLanguageChar(c: Char) =
     safeI18NCharBlocks.contains(UnicodeBlock.of(c))
+
+  def isKana(c: Char) =
+    jananeseKanaCharBlocks.contains(UnicodeBlock.of(c))
 
   // JEXL
   def isScriptIdentifier(s: String) = s.headOption.
@@ -584,6 +596,13 @@ object StringUtils {
     else
       p + "/"
 
+  def getRelativePath(from: String, to: String): String = {
+    val fromPath: Path = Paths.get(from).toAbsolutePath.normalize()
+    val toPath: Path = Paths.get(to).toAbsolutePath.normalize()
+    val fromDir: Path = if (from.endsWith("/")) fromPath else fromPath.getParent
+    fromDir.relativize(toPath).toString
+  }
+
   def print(p: String, newline: String): String = {
     val a = Strings.tolines(p)
     val c = a.mkString(newline)
@@ -704,12 +723,40 @@ object StringUtils {
   private def _number_width(int: Long): Int = 2 // TODO
 
   /*
+   * Array
+   */
+  def splitNormalizedToArray(delimiter: String, p: String): Array[String] =
+    p.split(delimiter).map(_.trim).filter(_.nonEmpty)
+
+  def splitNormalizedToArray(delimiter: Char, p: String): Array[String] =
+    splitNormalizedToArray(delimiter.toString, p)
+
+  /*
    * List
    */
   def eagerCommaForm(p: String): List[String] =
     Strings.totokens(p, ",").map(_.trim).filter(Strings.notblankp)
 
   def eagerCommaForm(ps: List[String]): List[String] = ps.flatMap(eagerCommaForm)
+
+  def eagerMagicForm(p: String): List[String] = MagicSequence.toList(p)
+
+  def eagerMagicForm(ps: Seq[String]): List[String] = ps.toList.flatMap(eagerMagicForm)
+
+  def splitNormalizedToList(delimiter: String, p: String): List[String] =
+    splitNormalizedToArray(delimiter, p).toList
+
+  def splitNormalizedToList(delimiter: Char, p: String): List[String] =
+    splitNormalizedToList(delimiter.toString, p)
+
+  /*
+   * Vector
+   */
+  def splitNormalizedToVector(delimiter: String, p: String): Vector[String] =
+    splitNormalizedToArray(delimiter, p).toVector
+
+  def splitNormalizedToVector(delimiter: Char, p: String): Vector[String] =
+    splitNormalizedToVector(delimiter.toString, p)
 
   /*
    * Int

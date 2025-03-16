@@ -19,7 +19,9 @@ import org.goldenport.log.Loggable
  *  version May. 16, 2021
  *  version Oct. 14, 2023
  *  version Oct. 26, 2024
- * @version Nov. 23, 2024
+ *  version Nov. 23, 2024
+ *  version Jan.  1, 2025
+ * @version Feb.  7, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -121,12 +123,12 @@ object LogicalBlocks {
     val raw = Config(false, true, false, LogicalLines.Config.raw, verbatimEmpty)
     val debug = Config(true, true, false, LogicalLines.Config.raw, verbatimEmpty)
     val noLocation = Config(false, false, false, LogicalLines.Config.raw, verbatimEmpty)
-    val easytext = Config(false, true, false, LogicalLines.Config.easytext, verbatimDefault)
-    val easyhtml = easytext.copy(linesConfig = LogicalLines.Config.easyhtml)
+    val easyText = Config(false, true, false, LogicalLines.Config.easyText, verbatimDefault)
+    val easyHtml = easyText.copy(linesConfig = LogicalLines.Config.easyHtml)
     // script
     val expression = Config(false, false, true, LogicalLines.Config.script, verbatimEmpty)
     val script = Config(false, true, true, LogicalLines.Config.script, verbatimEmpty)
-    val literaturemodel = easyhtml.copy(linesConfig = LogicalLines.Config.literaturemodel)
+    val literateModel = easyHtml.copy(linesConfig = LogicalLines.Config.literateModel)
 
     val default = raw
   }
@@ -338,7 +340,7 @@ object LogicalBlocks {
         blocks
       else
         blocks :+ LogicalBlock(cs)
-      LogicalSection(title.toI18NElement, a, location)
+      LogicalSection(title.toI18NElement, a, Some(title.mark), location)
     }
 
     private def _flush_state = if (cs.isEmpty)

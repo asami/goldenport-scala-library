@@ -14,7 +14,8 @@ import org.goldenport.util.VectorUtils
  *  version Apr. 18, 2020
  *  version Jun. 20, 2021
  *  version Jun.  5, 2024
- * @version Nov.  2, 2024
+ *  version Nov.  2, 2024
+ * @version Feb.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 case class NonEmptyVector[T](head: T, tailVector: Vector[T]) {
@@ -103,6 +104,7 @@ case class NonEmptyVector[T](head: T, tailVector: Vector[T]) {
     else
       copy(tailVector = VectorUtils.updateLast(tailVector, p))
 
+  def mkString(): String = vector.mkString
   def mkString(infix: String): String = vector.mkString(infix)
   def mkString(prefix: String, infix: String, postfix: String): String = vector.mkString(postfix, infix, postfix)
 }

@@ -4,7 +4,8 @@ package org.goldenport.cli
  * @since   Feb. 18, 2019
  *  version Oct. 13, 2019
  *  version Feb. 16, 2020
- * @version Nov. 25, 2023
+ *  version Nov. 25, 2023
+ * @version Mar. 15, 2025
  * @author  ASAMI, Tomoharu
  */
 trait OperationClass {

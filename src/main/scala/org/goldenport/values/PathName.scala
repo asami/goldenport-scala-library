@@ -25,7 +25,8 @@ import org.goldenport.util.StringUtils
  *  version Mar.  6, 2022
  *  version Dec. 30, 2022
  *  version Jan.  4, 2023
- * @version Sep. 26, 2023
+ *  version Sep. 26, 2023
+ * @version Mar.  9, 2025
  * @author  ASAMI, Tomoharu
  */
 case class PathName(
@@ -141,4 +142,7 @@ object PathName {
   def createRelative(p: String, pp: String, ps: String*): PathName = createRelative(p :: pp :: ps.toList)
 //  def create(path: String): PathName = PathName(path)
 //  def create(path: String, delimiter: String): PathName = PathName(path, delimiter)
+
+  def getRelativePath(from: PathName, to: PathName): PathName =
+    PathName(StringUtils.getRelativePath(from.v, to.v))
 }

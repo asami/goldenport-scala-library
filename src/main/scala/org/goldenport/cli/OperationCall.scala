@@ -8,7 +8,8 @@ import org.goldenport.context._
  *  version Oct. 10, 2018
  *  version Feb. 18, 2019
  *  version Apr. 25, 2021
- * @version Jul. 23, 2023
+ *  version Jul. 23, 2023
+ * @version Feb.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 case class OperationCall(
@@ -27,6 +28,7 @@ case class OperationCall(
 
   def consequenceArg1ListingDirectiveOption: Consequence[Option[ListingDirective]] = request.consequenceArg1ListingDirectiveOption
   def consequenceArg1ListingDirectiveBaseOneOption: Consequence[Option[ListingDirective]] = request.consequenceArg1ListingDirectiveBaseOneOption
+  def consequenceArg1ListingDirectiveBaseOneTailOption: Consequence[Option[ListingDirective]] = request.consequenceArg1ListingDirectiveBaseOneTailOption
 }
 
 object OperationCall {

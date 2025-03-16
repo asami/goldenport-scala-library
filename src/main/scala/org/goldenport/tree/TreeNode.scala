@@ -3,6 +3,7 @@ package org.goldenport.tree
 import scala.xml.Node
 import scalaz._
 import Scalaz._
+import org.goldenport.context.Showable
 import org.goldenport.realm.Realm
 import org.goldenport.values.PathName
 import org.goldenport.util.StringUtils
@@ -14,10 +15,12 @@ import org.goldenport.util.StringUtils
  *  version Nov. 18, 2019
  *  version Oct. 11, 2020
  *  version Nov. 15, 2020
- * @version Jan.  1, 2021
+ *  version Jan.  1, 2021
+ *  version Feb. 23, 2025
+ * @version Mar.  9, 2025
  * @author  ASAMI, Tomoharu
  */
-trait TreeNode[E] {
+trait TreeNode[E] extends Showable.Control {
   type TreeNode_TYPE <: TreeNode[E]
 
   def name: String
@@ -25,8 +28,10 @@ trait TreeNode[E] {
   def title_=(s: String)
   def content: E
   def content_=(aContent: E)
+  def getContent: Option[E] = Option(content)
   def parent: TreeNode_TYPE
   def parent_=(aParent: TreeNode[E]): Unit // visibility
+  def getParent: Option[TreeNode_TYPE] = Option(parent)
   def facade: Tree[E]
   def facade_=(aFacade: Tree[E]): Unit // visibility
   def isModified: Boolean
@@ -35,12 +40,14 @@ trait TreeNode[E] {
   def isContainer: Boolean
   def isLeaf: Boolean
   def isEmpty: Boolean
+  def isVoid: Boolean
   def length: Int
   def children: Seq[TreeNode_TYPE]
   def indexOf(node: TreeNode[E]): Int
   def getChild(index: Int): TreeNode_TYPE
   def getChild(name: String): Option[TreeNode_TYPE]
   def setChild(name: String): TreeNode_TYPE
+  def setChild(name: String, content: E): TreeNode_TYPE
   def addChild(): TreeNode_TYPE
   def addChild(child: TreeNode[E]): TreeNode_TYPE
   def addChildren(parent: TreeNode[E]): Unit
@@ -86,10 +93,20 @@ trait TreeNode[E] {
 }
 
 object TreeNode {
-  lazy val _empty = new PlainTreeNode()
+  lazy val _empty: TreeNode[_] = new PlainTreeNode()
   def empty[T <: Realm.Data](): TreeNode[T] = _empty.asInstanceOf[TreeNode[T]]
 
-//  def cloneNode[T](p: TreeNode[T]): TreeNode[T] = ???
+  def create[E](name: String, content: E): TreeNode[E] = {
+    val r = new PlainTreeNode[E](name)
+    r.content = content
+    r
+  }
+
+  def createContentNode[E](content: E): TreeNode[E] =
+    PlainTreeNode.createContentNode(content, Nil)
+
+  def createContentNode[E](content: E, children: Seq[TreeNode[E]]): TreeNode[E] =
+    PlainTreeNode.createContentNode(content, children)
 }
 
 // class TreeNodeShow[E] extends Show[TreeNode[E]] {

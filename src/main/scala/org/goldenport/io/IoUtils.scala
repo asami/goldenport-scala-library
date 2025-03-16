@@ -1,5 +1,6 @@
 package org.goldenport.io
 
+import scala.util.Try
 import java.io._
 import java.nio.charset.Charset
 import java.net.{URL, URI}
@@ -24,7 +25,9 @@ import org.goldenport.bag.ClobBag
  *  version Apr.  4, 2021
  *  version Feb. 26, 2022
  *  version Mar.  6, 2022
- * @version May. 23, 2022
+ *  version May. 23, 2022
+ *  version Feb. 23, 2025
+ * @version Mar. 14, 2025
  * @author  ASAMI, Tomoharu
  */
 object IoUtils {
@@ -200,6 +203,22 @@ object IoUtils {
     }
   }
 
+  def save(file: File, infile: File) {
+    ensureParentDirectory(file)
+    copyClose(new FileInputStream(infile), new FileOutputStream(file))
+  }
+
+  def save(file: File, in: InputSource) {
+    ensureParentDirectory(file)
+    copyClose(in.openInputStream, new FileOutputStream(file))
+  }
+
+  def save(out: OutputSink, in: InputSource) {
+    out match {
+      case FileOutputSink(file) => save(file, in)
+    }
+  }
+
   def ensureParentDirectory(p: File) {
     Option(p.getParentFile).map(ensureDirectory)
   }
@@ -207,6 +226,43 @@ object IoUtils {
   def ensureDirectory(p: File) {
     p.mkdirs
   }
+
+  def isSame(sink: OutputSink, source: InputSource): Boolean =
+    getIsSame(sink, source) getOrElse false
+
+  def getIsSame(sink: OutputSink, source: InputSource): Option[Boolean] =
+    sink.getOpenInputStream.map(isSameClose(_, source.openInputStream))
+
+  def isSameClose(lhs: InputStream, rhs: InputStream): Boolean = try {
+    val ls = toBufferedInputStream(lhs)
+    val rs = toBufferedInputStream(rhs)
+    var byte1 = ls.read()
+    var byte2 = rs.read()
+    while (byte1 != -1 && byte2 != -1 && byte1 == byte2) {
+      byte1 = ls.read()
+      byte2 = rs.read()
+    }
+    ls.close()
+    rs.close()
+    byte1 == byte2
+  } catch {
+    case e: Throwable =>
+      Try(lhs.close)
+      Try(rhs.close)
+      throw e
+  }
+
+  def toBufferedInputStream(in: InputStream): BufferedInputStream =
+    in match {
+      case m: BufferedInputStream => m
+      case m => new BufferedInputStream(m)
+    }
+
+  def toBufferedOutputStream(in: OutputStream): BufferedOutputStream =
+    in match {
+      case m: BufferedOutputStream => m
+      case m => new BufferedOutputStream(m)
+    }
 
   def descendants(p: File): Vector[File] = {
     case class Z(

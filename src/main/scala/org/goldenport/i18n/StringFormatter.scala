@@ -6,7 +6,8 @@ import org.goldenport.util.StringUtils
 /*
  * @since   Jan.  2, 2021
  *  version Feb. 25, 2022
- * @version Mar. 19, 2022
+ *  version Mar. 19, 2022
+ * @version Mar.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 case class StringFormatter() {
@@ -199,7 +200,8 @@ object StringFormatter {
 
     def embed(p: String, width: Int): String = {
       val a = escapeDisplay(p)
-      shrink(a, width, 3)
+      val tail = (width / 2) - 2
+      shrink(a, width, tail)
     }
 
     def escapeDisplay(s: String): String =

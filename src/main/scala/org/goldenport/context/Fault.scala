@@ -6,6 +6,7 @@ import org.goldenport.i18n.{I18NString, I18NTemplate, I18NMessage}
 import org.goldenport.extension.IRecord
 import org.goldenport.collection.NonEmptyVector
 import org.goldenport.context.DetailCode.Reaction
+import org.goldenport.cli.spec
 import org.goldenport.util.StringUtils
 import org.goldenport.util.AnyUtils
 import Fault._
@@ -26,7 +27,8 @@ import Fault._
  *  version Sep.  1, 2022
  *  version Oct. 26, 2022
  *  version Sep. 28, 2023
- * @version Nov. 11, 2023
+ *  version Nov. 11, 2023
+ * @version Mar. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -119,6 +121,9 @@ trait ValueDomainFault extends Fault {
 object ValueDomainFault {
   def apply(p: I18NString): ValueDomainFault = ValueDomainValueFault(p)
   def apply(p: String): ValueDomainFault = ValueDomainValueFault(p)
+  def apply(labal: String, value: String): ValueDomainValueFault = ValueDomainValueFault(value, I18NTemplate(labal))
+  def apply(name: String, datatype: spec.DataType, value: Any) =
+    ValueDomainDatatypeFault(name, datatype, AnyUtils.toString(value))
 }
 
 case class ValueDomainValueFault(
@@ -161,6 +166,32 @@ object ValueDomainMultiplicityFault {
 
   def apply(p: I18NString): ValueDomainMultiplicityFault =
     ValueDomainMultiplicityFault(messageTemplate = I18NTemplate(p))
+}
+
+case class ValueDomainDatatypeFault(
+  key: String,
+  datatype: spec.DataType,
+  value: String = "",
+  messageTemplate: I18NTemplate = ValueDomainDatatypeFault.template
+) extends ValueDomainFault {
+  def implicitStatusCode: StatusCode = StatusCode.BadRequest
+
+  def message = messageTemplate.toI18NMessage(key, datatype, value)
+
+  def properties(locale: Locale): IRecord = IRecord.dataS(
+    KEY_NAME -> name,
+    KEY_VALUE -> value,
+    KEY_MESSAGE -> message(locale)
+  )
+}
+object ValueDomainDatatypeFault {
+  val template = I18NTemplate("Invalid value {1}[{2}]: {3}")
+
+  def apply(key: String, datatype: spec.DataType, value: Any): ValueDomainDatatypeFault =
+    new ValueDomainDatatypeFault(key, datatype, AnyUtils.toEmbed(value))
+
+  // def apply(p: I18NString): ValueDomainDatatypeFault =
+  //   ValueDomainDatatypeFault(messageTemplate = I18NTemplate(p))
 }
 
 sealed trait ArgumentFault extends Fault {
@@ -219,6 +250,8 @@ case class MissingArgumentFault(
 }
 object MissingArgumentFault {
   val template = I18NTemplate("Mising Argument: {0}")
+
+  def apply(p: String): MissingArgumentFault = MissingArgumentFault(List(p))
 }
 
 case class TooManyArgumentsFault(
@@ -412,6 +445,25 @@ object FormatErrorFault {
     FormatErrorFault(messageTemplate = ps.toVector.map(_.toI18NMessage).concatenate.toI18NTemplate)
 
   def parameter(p: Any, ps: Any*): FormatErrorFault = FormatErrorFault(p +: ps.toList)
+}
+
+case class UnfoldResourceFault(
+  parameters: Seq[Any] = Nil,
+  messageTemplate: I18NTemplate = UnfoldResourceFault.template
+) extends ArgumentFault with MessageTemplateImpl {
+}
+object UnfoldResourceFault {
+  val template = I18NTemplate("Unfold resource: {0}")
+
+  def apply(p: String): UnfoldResourceFault = apply(I18NString(p))
+
+  def apply(p: I18NString): UnfoldResourceFault =
+    UnfoldResourceFault(messageTemplate = I18NTemplate(p))
+
+  def apply(ps: Seq[Message]): UnfoldResourceFault =
+    UnfoldResourceFault(messageTemplate = ps.toVector.map(_.toI18NMessage).concatenate.toI18NTemplate)
+
+  def parameter(p: Any, ps: Any*): UnfoldResourceFault = UnfoldResourceFault(p +: ps.toList)
 }
 
 case class UnsupportedOperationFault(
@@ -642,9 +694,19 @@ case class Faults(faults: Vector[Fault] = Vector.empty) {
     map(_.implicitStatusCode).sortWith(_is_strong).
     headOption.getOrElse(StatusCode.InternalServerError)
 
+  def +(p: Faults) = copy(faults = faults ++ p.faults)
+
+  def add(p: Fault) = copy(faults = faults :+ p)
+
+  def :+(p: Fault) = add(p)
+
   private def _is_strong(lhs: StatusCode, rhs: StatusCode): Boolean = lhs.code >= rhs.code
 
   def toPayload = Faults.Payload(faults.map(_.toPayload))
+
+  def RAISE_IF_FAILURE: Unit =
+    if (faults.nonEmpty)
+      InvalidArgumentFault("Invalid Arguments", faults).RAISE
 }
 object Faults {
   @SerialVersionUID(1L)

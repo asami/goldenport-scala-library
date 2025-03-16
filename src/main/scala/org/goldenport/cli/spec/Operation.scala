@@ -8,7 +8,8 @@ import org.goldenport.cli.{Response => CliResponse}
  *  version Oct. 10, 2018
  *  version Feb. 24, 2019
  *  version Feb. 15, 2020
- * @version Nov. 25, 2023
+ *  version Nov. 25, 2023
+ * @version Mar. 15, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Operation(
