@@ -6,7 +6,7 @@ import org.goldenport.RAISE
  * @since   Nov. 14, 2020
  *  version Nov. 15, 2020
  *  version Jan.  1, 2021
- * @version Mar. 15, 2025
+ * @version Mar. 31, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeTransformer[A, B] {
@@ -37,19 +37,19 @@ trait TreeTransformer[A, B] {
 
   protected def make_tree_node(p: TreeNode[A]): List[TreeNode[B]] =
     rule.getTargetName(p).map { name =>
-      println(s"make_tree_node: $name")
+      // println(s"make_tree_node: $name")
       make_node_or_control(p.name, name, p)
     }.getOrElse {
       p.getContent.fold {
         if (p.children.isEmpty) {
-          println(s"make_tree_node Nil: ${p.name}")
+          // println(s"make_tree_node Nil: ${p.name}")
           Nil
         } else {
-          println(s"make_tree_node A: ${p.name}")
+          // println(s"make_tree_node A: ${p.name}")
           make_node_or_control(p)
         }
       } { x =>
-        println(s"make_tree_node B: ${p.name}")
+        // println(s"make_tree_node B: ${p.name}")
         make_node_or_control(p)
       }
     }
@@ -60,11 +60,17 @@ trait TreeTransformer[A, B] {
       case Directive.Empty() => Nil
       case Directive.AsIs() => List(p.asInstanceOf[TreeNode[B]])
       case Directive.Default() =>
-        if (p.isContainer) {
-          val r = _create_node(oldname, newname, p)
-          List(r)
-        } else {
-          Nil
+        p.getContent match {
+          case Some(s) => 
+            val r = _create_node(oldname, newname, p, s)
+            List(r)
+          case None => 
+            if (p.isContainer) {
+              val r = _create_node(oldname, newname, p)
+              List(r)
+            } else {
+              Nil
+            }
         }
       case m: Directive.LeafContent[B] => List(_create_leaf(p, m.content))
       case m: Directive.Content[B] => List(_create_node(p, m.content))
@@ -80,10 +86,10 @@ trait TreeTransformer[A, B] {
 
   protected def make_node(oldname: String, newname: String, p: TreeNode[A]): Directive[B] =
     p.getContent.fold {
-      println(s"a: $p")
+      // println(s"a: $p")
       make_Node(oldname, newname, p)
     } { x =>
-      println(s"b: $p, $x")
+      // println(s"b: $p, $x")
       make_Node(oldname, newname, p, x)
     }
 
@@ -107,12 +113,17 @@ trait TreeTransformer[A, B] {
 
   protected def make_Node(oldname: String, newname: String, node: TreeNode[A]): Directive[B] = make_Node(node)
 
-  protected def make_Node(oldname: String, newname: String, node: TreeNode[A], content: A): Directive[B] = make_Node(node, content)
+  protected def make_Node(oldname: String, newname: String, node: TreeNode[A], content: A): Directive[B] = make_Node(node)
+
+  private def _create_node(oldname: String, newname: String, p: TreeNode[A], content: A): TreeNode[B] = {
+    val xs = p.children.flatMap(make_tree_node)
+    val c: Option[B] = make_content(oldname, newname, content)
+    create_tree_node(newname, c, xs)
+  }
 
   private def _create_node(oldname: String, newname: String, p: TreeNode[A]): TreeNode[B] = {
     val xs = p.children.flatMap(make_tree_node)
-    val c: Option[B] = make_content(oldname, newname, p.content)
-    create_tree_node(newname, c, xs)
+    create_tree_node(newname, None, xs)
   }
 
   protected def make_content(oldname: String, newname: String, p: A): Option[B] =
@@ -155,10 +166,10 @@ trait TreeTransformer[A, B] {
 
   protected def make_node(p: TreeNode[A]): Directive[B] =
     p.getContent.fold {
-      println(s"a: $p")
+      // println(s"a: $p")
       make_Node(p)
     } { x =>
-      println(s"b: $p, $x")
+      // println(s"b: $p, $x")
       make_Node(p, x)
     }
 

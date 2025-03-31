@@ -22,14 +22,17 @@ import com.asamioffice.goldenport.io.UURL
  *  version Oct. 27, 2015
  *  version Sep. 22, 2016
  *  version Aug. 29, 2017
- * @version Oct.  5, 2018
+ *  version Oct.  5, 2018
+ * @version Mar. 19, 2025
  * @author  ASAMI, Tomoharu
  */
 class FileBag(
   val file: DefaultPath = FileBag._create_temp_path(),
   override val getCodec: Option[Codec] = None
-) extends ChunkBag {
+) extends ChunkBag with FilenameMimeFeature {
   private def _file = file
+
+  protected def uri_Name = file.path
 
   override def openInputStream(): BufferedInputStream = {
     val in = _file.inputStream.open().get

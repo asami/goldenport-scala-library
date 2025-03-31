@@ -2,6 +2,7 @@ package org.goldenport.realm
 
 import scalaz.{Tree => ZTree}
 import scala.util.Try
+import scala.util.matching.Regex
 import java.io.File
 import java.io.FileInputStream
 import java.io.BufferedInputStream
@@ -19,6 +20,7 @@ import org.goldenport.io.InputSource
 import org.goldenport.io.IoUtils
 import org.goldenport.values.PathName
 import org.goldenport.util.StringUtils
+import org.goldenport.util.RegexUtils
 
 /*
  * @since   Dec. 12, 2019
@@ -31,7 +33,7 @@ import org.goldenport.util.StringUtils
  *  version Jan.  4, 2021
  *  version Mar. 19, 2022
  *  version Feb. 25, 2025
- * @version Mar. 15, 2025
+ * @version Mar. 30, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
@@ -332,11 +334,25 @@ object Realm {
         cursor.set(name, _to_text(p))
       else if (_is_binary(suffix))
         cursor.set(name, _to_binary(p))
+      else if (_is_include(name))
+        cursor.set(name, _to_binary(p))
+      else if (_is_strict)
+        Unit
+      else if (!_is_exclude(name))
+        cursor.set(name, _to_binary(p))
     }
 
     private def _is_text(suffix: String) = config.textSuffixes.contains(suffix)
 
     private def _is_binary(suffix: String) = config.binarySuffixes.contains(suffix)
+
+    private def _is_strict = config.isStrict
+
+    private def _is_include(filename: String) =
+      config.includeFiles.exists(RegexUtils.isWholeMatch(_, filename))
+
+    private def _is_exclude(filename: String) =
+      config.excludeFiles.exists(RegexUtils.isWholeMatch(_, filename))
 
     private def _to_text(p: File) = StringData(IoUtils.toText(p))
 
@@ -348,18 +364,29 @@ object Realm {
   }
   object Builder {
     case class Config(
-      textSuffixes: Set[String] = Set("dox", "md", "markdown", "org", "html"),
-      binarySuffixes: Set[String] = Set("png", "jpg", "jpeg", "gif", "apng", "webp", "avif", "css", "js")
+      isStrict: Boolean = false,
+      textSuffixes: Set[String] = Set("dox", "md", "markdown", "org", "html", "jade", "pub", "ssp", "scaml", "mustache"),
+      binarySuffixes: Set[String] = Set(
+        "png", "jpg", "jpeg", "gif", "apng", "webp", "svg", "avif", "css", "js",
+        "woff2", "woff", "ttf", "eof"
+      ),
+      includeFiles: Set[Regex] = Set(),
+      excludeFiles: Set[Regex] = Set(
+        ".*~$".r,
+        ".*.bak$".r
+      )
     )
     object Config {
-      val empty = Config()
+      val default = Config()
     }
 
-    def apply(): Builder = new Builder(Config.empty)
+    def apply(): Builder = new Builder(Config.default)
 
-    def apply(root: File): Builder = new Builder(Config.empty, Some(root))
+    def apply(root: File): Builder = new Builder(Config.default, Some(root))
 
     def setup(root: File): Builder = apply().setup(root)
+
+    def setup(config: Config, root: File): Builder = new Builder(config).setup(root)
 
     // def setup(root: File): Builder = {
     //   val builder = apply(root)
@@ -426,4 +453,17 @@ object Realm {
   def create(directory: File): Realm = Builder.setup(directory).build()
   def create(directory: Path): Realm = create(directory.toFile)
   def create(directory: String): Realm = create(new File(directory))
+
+  def create(
+    config: Builder.Config,
+    directory: File
+  ): Realm = Builder.setup(config, directory).build()
+  def create(
+    config: Builder.Config,
+    directory: Path
+  ): Realm = create(config, directory.toFile)
+  def create(
+    config: Builder.Config,
+    directory: String
+  ): Realm = create(config, new File(directory))
 }

@@ -18,29 +18,62 @@ import org.goldenport.util.{AnyUtils, SeqUtils}
  *  version Feb. 18, 2018
  *  version Aug.  5, 2018
  *  version Mar. 28, 2022
- * @version Dec. 29, 2023
+ *  version Dec. 29, 2023
+ * @version Mar. 28, 2025
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
   val emptyNodeSeq: NodeSeq = Group(Nil)
 
+  val htmlEntities = Map(
+    "&nbsp;" -> "\u00A0", // Non-breaking space
+    "&copy;" -> "\u00A9", // © Copyright
+    "&reg;"  -> "\u00AE", // ® Registered trademark
+    "&trade;" -> "\u2122", // ™ Trademark
+    "&euro;" -> "\u20AC", // € Euro
+    "&pound;" -> "\u00A3", // £ Pound
+    "&yen;"   -> "\u00A5", // ¥ Yen
+    "&cent;"  -> "\u00A2", // ¢ Cent
+    "&sect;"  -> "\u00A7", // § Section
+    "&para;"  -> "\u00B6", // ¶ Paragraph
+    "&times;" -> "\u00D7", // × Multiplication
+    "&divide;" -> "\u00F7" // ÷ Division
+  )
+
+  def loadString(p: String): Node = {
+    val s = _resolve_entity_reference(p)
+    XML.loadString(s)
+  }
+
+  private def _resolve_entity_reference(p: String) =
+    htmlEntities.foldLeft(p) { case (str, (entity, unicode)) =>
+      str.replace(entity, unicode)
+    }
+
   def parseNode(p: String): Node = 
     if (p.startsWith("<"))
-      XML.loadString(p)
+      loadString(p)
     else
       Text(p)
 
   def parseNodeSeq(p: String): NodeSeq = 
     if (p.startsWith("<"))
-      XML.loadString(p)
-    else try {
-      val s = s"<div>$p</div>"
-      val x = XML.loadString(s)
-      Group(x.child)
-    } catch {
-      case NonFatal(e) =>
-        Text(p)
-    }
+      try {
+        loadString(p)
+      } catch {
+        case NonFatal(e) => _parse_node_seq(p)
+      }
+    else
+      _parse_node_seq(p)
+
+  private def _parse_node_seq(p: String): NodeSeq = try {
+    val s = s"<div>$p</div>"
+    val x = loadString(s)
+    Group(x.child)
+  } catch {
+    case NonFatal(e) =>
+      Text(p)
+  }
 
   def makeString(p: String): String = try {
     parseNodeSeq(p).text
@@ -112,7 +145,7 @@ object XmlUtils {
   }
 
   def findFirstElementByLabel(label: String, s: String): Option[Elem] = {
-    (XML.loadString(s) \\ label).headOption.asInstanceOf[Option[Elem]]
+    (loadString(s) \\ label).headOption.asInstanceOf[Option[Elem]]
   }
 
   def tagName(p: Elem): String =

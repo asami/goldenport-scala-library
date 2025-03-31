@@ -11,10 +11,14 @@ import org.goldenport.parser._
  *  version Mar. 24, 2021
  *  version Sep. 26, 2022
  *  version Apr. 30, 2023
- * @version Oct.  9, 2024
+ *  version Oct.  9, 2024
+ * @version Mar. 30, 2025
  * @author  ASAMI, Tomoharu
  */
 object RegexUtils {
+  def isWholeMatch(regex: Regex, p: String): Boolean =
+    regex.pattern.matcher(p).matches()
+
   def getString(regex: Regex, s: String, i: Int): Option[String] =
     regex.findFirstMatchIn(s).flatMap(getString(_, i))
 

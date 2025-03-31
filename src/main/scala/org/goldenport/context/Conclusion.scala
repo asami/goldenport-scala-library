@@ -38,7 +38,7 @@ import org.goldenport.util.AnyUtils
  *  version Jan. 20, 2023
  *  version Sep. 27, 2023
  *  version Nov.  7, 2023
- * @version Mar.  2, 2025
+ * @version Mar. 29, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -94,7 +94,12 @@ case class Conclusion(
   )
 
   def toException: Throwable = exception getOrElse new ConclusionException(this)
+
+  def toConclusionException: Throwable = new ConclusionException(this)
+
   def RAISE: Nothing = throw toException
+
+  def RAISEC: Nothing = throw toConclusionException
 
   def isSuccess: Boolean = status.isSuccess
 
