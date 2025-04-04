@@ -6,7 +6,8 @@ import org.goldenport.RAISE
  * @since   Nov. 14, 2020
  *  version Nov. 15, 2020
  *  version Jan.  1, 2021
- * @version Mar. 31, 2025
+ *  version Mar. 31, 2025
+ * @version Apr.  3, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeTransformer[A, B] {
@@ -74,6 +75,8 @@ trait TreeTransformer[A, B] {
         }
       case m: Directive.LeafContent[B] => List(_create_leaf(p, m.content))
       case m: Directive.Content[B] => List(_create_node(p, m.content))
+      case m: Directive.LeafNode[B] => List(_create_leaf(m.name, m.content))
+      case m: Directive.NameNode[B] => List(_create_node_children(m.name, m.content, m.children))
       case m: Directive.Node[B] => m.node match {
         case ControlTreeNode.Empty() => Nil
         case ControlTreeNode.AsIs(mm) => List(mm)
@@ -144,6 +147,8 @@ trait TreeTransformer[A, B] {
         }
       case m: Directive.LeafContent[B] => List(_create_leaf(p, m.content))
       case m: Directive.Content[B] => List(_create_node(p, m.content))
+      case m: Directive.LeafNode[B] => List(_create_leaf(m.name, m.content))
+      case m: Directive.NameNode[B] => List(_create_node_children(m.name, m.content, m.children))
       case m: Directive.Node[B] => m.node match {
         case ControlTreeNode.Empty() => Nil
         case ControlTreeNode.AsIs(mm) => List(mm)
@@ -195,6 +200,9 @@ trait TreeTransformer[A, B] {
   private def _create_leaf(p: TreeNode[A], content: B): TreeNode[B] =
     create_tree_node(p.name, Some(content), Nil)
 
+  private def _create_leaf(name: String, content: B): TreeNode[B] =
+    create_tree_node(name, Some(content), Nil)
+
   private def _create_node(p: TreeNode[A]): TreeNode[B] = {
     val xs = p.children.flatMap(make_tree_node)
     val c: Option[B] = make_content(p.content)
@@ -202,8 +210,17 @@ trait TreeTransformer[A, B] {
   }
 
   private def _create_node(p: TreeNode[A], content: B): TreeNode[B] = {
-    val xs = p.children.flatMap(make_tree_node)
+    val xs = p.children.toList.flatMap(make_tree_node)
     create_tree_node(p.name, Some(content), xs)
+  }
+
+  private def _create_node(name: String, content: B, children: Seq[TreeNode[A]]): TreeNode[B] = {
+    val xs = children.toList.flatMap(make_tree_node)
+    create_tree_node(name, Some(content), xs)
+  }
+
+  private def _create_node_children(name: String, content: B, children: Seq[TreeNode[B]]): TreeNode[B] = {
+    create_tree_node(name, Some(content), children)
   }
 
   protected def make_Node(node: TreeNode[A]): Directive[B] = Directive.Default[B]
@@ -256,6 +273,8 @@ object TreeTransformer {
     case class Default[T]() extends Directive[T]
     case class LeafContent[T](content: T) extends Directive[T]
     case class Content[T](content: T) extends Directive[T]
+    case class LeafNode[T](name: String, content: T) extends Directive[T]
+    case class NameNode[T](name: String, content: T, children: List[TreeNode[T]]) extends Directive[T]
     case class Node[T](node: TreeNode[T]) extends Directive[T]
     object Node {
       def create[T](p: T): Node[T] = Node(TreeNode.createContentNode(p))

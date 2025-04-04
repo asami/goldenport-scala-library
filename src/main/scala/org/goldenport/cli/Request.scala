@@ -25,7 +25,8 @@ import org.goldenport.extension.IRecord
  *  version Feb.  1, 2022
  *  version Jan. 30, 2023
  *  version Jul. 23, 2023
- * @version Mar. 16, 2025
+ *  version Mar. 16, 2025
+ * @version Apr.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Request(
@@ -85,6 +86,16 @@ case class Request(
   def cFile(p: spec.Parameter): Consequence[File] = for {
     x <- cAny(p)
     r <- p.cFile(x)
+  } yield r
+
+  def cFiles(p: spec.Parameter): Consequence[List[File]] = for {
+    xs <- cAnyList(p)
+    r <- xs.traverse(p.cFile)
+  } yield r
+
+  def cFileOption(p: spec.Parameter): Consequence[Option[File]] = for {
+    x <- cAnyOption(p)
+    r <- x.traverse(p.cFile)
   } yield r
 
   def cConfig(p: spec.Parameter): Consequence[Hocon] = for {

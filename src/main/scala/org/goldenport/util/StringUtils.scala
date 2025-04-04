@@ -56,7 +56,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Jul. 22, 2023
  *  version Aug.  5, 2023
  *  version Sep.  5, 2024
- * @version Mar. 17, 2025
+ *  version Mar. 17, 2025
+ * @version Apr.  3, 2025
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -371,6 +372,8 @@ object StringUtils {
   def getSuffixLowerCase(s: String): Option[String] = getSuffix(s)
 
   def getSuffixRaw(s: String): Option[String] = Option(UPathString.getSuffix(s))
+
+  def changeSuffix(s: String, suffix: String): String = toPathnameBody(s) + "." + suffix
 
   def toPathnameBody(s: String): String = UPathString.getPathnameBody(s)
 

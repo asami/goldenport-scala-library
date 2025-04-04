@@ -33,7 +33,8 @@ import org.goldenport.util.RegexUtils
  *  version Jan.  4, 2021
  *  version Mar. 19, 2022
  *  version Feb. 25, 2025
- * @version Mar. 30, 2025
+ *  version Mar. 30, 2025
+ * @version Apr.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
@@ -76,6 +77,7 @@ case class Realm(
     }
   }
 
+  // complement
   def merge(pathname: String, view: Realm): Realm = Realm(Tree.mergeClone(this._tree, pathname, view._tree))
 
   def +(p: Realm): Realm = Realm(Tree.mergeClone(this._tree, p._tree))

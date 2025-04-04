@@ -17,7 +17,8 @@ import org.goldenport.util.MagicSequence
  *  version Oct.  8, 2018
  *  version Feb. 16, 2020
  *  version Jan. 30, 2023
- * @version Mar. 17, 2025
+ *  version Mar. 17, 2025
+ * @version Apr.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Parameter(
@@ -244,7 +245,10 @@ case class Parameter(
       case Multiplicity.ZeroOne =>
         RAISE.notImplementedYetDefect
       case Multiplicity.OneMore =>
-        RAISE.notImplementedYetDefect
+        p.args.toList match {
+          case Nil => p.addFault(MissingArgumentFault()) // TODO
+          case xs => ParseState(p.req.add(CliArgument(name, xs, Parameter.this)), Vector.empty)
+        }
       case Multiplicity.ZeroMore =>
         RAISE.notImplementedYetDefect
     }
@@ -333,7 +337,11 @@ object Parameter {
 
   def argumentFile(name: String): Parameter = Parameter(name, ArgumentKind, XFile)
 
+  def argumentFiles(name: String): Parameter = Parameter(name, ArgumentKind, XFile, Multiplicity.OneMore)
+
   def property(name: String): Parameter = Parameter(name, PropertyKind)
+
+  def propertyFileOption(name: String): Parameter = Parameter(name, PropertyKind, XFile, Multiplicity.ZeroOne)
 
   def propertyConfigFileOrEmpty(): Parameter = propertyConfigFileOrEmpty("config")
 
