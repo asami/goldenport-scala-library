@@ -62,7 +62,8 @@ import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
  *  version Nov. 29, 2022
  *  version Dec. 12, 2022
  *  version Apr. 10, 2023
- * @version Nov. 22, 2023
+ *  version Nov. 22, 2023
+ * @version Apr.  6, 2025
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -328,6 +329,17 @@ object HoconUtils {
 
   def getFile(config: Config, key: String): Option[File] =
     getString(config, key).map(new File(_))
+
+  def toFlattenList(p: Config): List[(String, Any)] =
+    p.entrySet().asScala.toList.map(x => x.getKey -> x.getValue.unwrapped)
+
+  def toFlattenVector(p: Config): Vector[(String, Any)] =
+    p.entrySet().asScala.toVector.map(x => x.getKey -> x.getValue.unwrapped)
+
+  def toFlattenMap(p: Config): Map[String, Any] = toFlattenVector(p).toMap
+
+  def toFlattenVectorMap(p: Config): VectorMap[String, Any] =
+    VectorMap(toFlattenVector(p))
 
   //
   def getObject(p: ConfigValue): Option[ConfigObject] = Option(p) collect {
@@ -1004,4 +1016,10 @@ object HoconUtils {
     case m: Map[_, _] => RAISE.notImplementedYetDefect
     case m => ConfigValueFactory.fromAnyRef(AnyUtils.toMarshall(m))
   }
+
+  /*
+   * Mutation
+   */
+  def addProperty(config: Config, key: String, value: Any): Config =
+    config.withValue(key, ConfigValueFactory.fromAnyRef(value))
 }

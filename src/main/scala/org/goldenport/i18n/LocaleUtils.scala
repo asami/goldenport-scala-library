@@ -7,7 +7,8 @@ import org.goldenport.Strings.totoken
  * @since   Feb. 10, 2017
  *  version Aug. 29, 2017
  *  version Sep. 23, 2019
- * @version Oct. 14, 2024
+ *  version Oct. 14, 2024
+ * @version Apr.  9, 2025
  * @author  ASAMI, Tomoharu
  */
 object LocaleUtils {
@@ -43,6 +44,8 @@ object LocaleUtils {
   }
 
   val C = new Locale("C")
+  val ja = new Locale("ja")
+  val en = new Locale("en")
   val ja_JP = new Locale("ja", "JP")
   val en_US = new Locale("en", "US")
   val en_GB = new Locale("en", "GB")
@@ -72,4 +75,20 @@ object LocaleUtils {
   def isC(locale: Locale): Boolean = locale == C
   def isEnglish(locale: Locale): Boolean = locale.getLanguage == LANGUAGE_ENGLISH
   def isJapanese(locale: Locale): Boolean = locale.getLanguage == LANGUAGE_JPAPNESE
+
+  def isInclude(broader: Locale, specific: Locale): Boolean =
+    broader.getLanguage == specific.getLanguage && {
+      val country = broader.getCountry
+      if (country.isEmpty) {
+        true
+      } else {
+        country == specific.getCountry && {
+          val variant = broader.getVariant
+          if (variant.isEmpty)
+            true
+          else
+            variant == specific.getVariant
+        }
+      }
+    }
 }

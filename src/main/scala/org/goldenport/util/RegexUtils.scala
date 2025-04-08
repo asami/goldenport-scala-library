@@ -12,7 +12,8 @@ import org.goldenport.parser._
  *  version Sep. 26, 2022
  *  version Apr. 30, 2023
  *  version Oct.  9, 2024
- * @version Mar. 30, 2025
+ *  version Mar. 30, 2025
+ * @version Apr.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 object RegexUtils {
@@ -140,4 +141,8 @@ object RegexUtils {
       case Some(s) => NumberUtils.consequenceInt(s).map(Some.apply)
       case None => Consequence.success(None)
     }
+
+  object pattern {
+    val url = """(https?://[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]+)""".r
+  }
 }

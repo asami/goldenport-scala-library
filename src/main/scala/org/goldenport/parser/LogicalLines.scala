@@ -28,7 +28,8 @@ import org.goldenport.util.StringUtils
  *  version Oct. 31, 2024
  *  version Nov. 23, 2024
  *  version Jan.  1, 2025
- * @version Feb.  7, 2025
+ *  version Feb.  7, 2025
+ * @version Apr.  6, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -569,12 +570,22 @@ object LogicalLines {
         None
   }
 
+  // Legacy : Use AdvancedAwakeningLogicalLinesParseState
   sealed trait AwakeningLogicalLinesParseState extends LogicalLinesParseState {
     override protected def newline_State(config: Config, evt: CharEvent): LogicalLinesParseState =
       character_State(config, evt)
 
     override protected def carrige_Return_State(config: Config, evt: CharEvent): LogicalLinesParseState =
       character_State(config, evt)
+  }
+
+  sealed trait AdvancedAwakeningLogicalLinesParseState extends AwakeningLogicalLinesParseState {
+    override protected def use_single_quote(config: Config) = false
+    override protected def use_angle_bracket(config: Config) = false
+    override protected def use_brace(config: Config) = false
+    override protected def use_parenthesis(config: Config) = false
+    override protected def use_bracket(config: Config) = false
+    override protected def use_multiline(config: Config) = false
   }
 
   // sealed trait LineEndLogicalLinesParseState extends LogicalLinesParseState {
@@ -833,7 +844,9 @@ object LogicalLines {
     parent: LogicalLinesParseState,
     location: Option[ParseLocation],
     tag: Vector[Char] = Vector.empty
-  ) extends AwakeningLogicalLinesParseState {
+  ) extends AdvancedAwakeningLogicalLinesParseState {
+    override protected def use_angle_bracket(config: Config) = true
+
     def getLastChar = tag.lastOption
     protected def get_Current_Line = Some(tag.mkString)
     lazy val tagName = tag.takeWhile(_not_delimiterp).mkString
@@ -880,7 +893,9 @@ object LogicalLines {
     text: XmlTextState,
     location: Option[ParseLocation],
     tag: Vector[Char] = Vector.empty
-  ) extends AwakeningLogicalLinesParseState {
+  ) extends AdvancedAwakeningLogicalLinesParseState {
+    override protected def use_angle_bracket(config: Config) = true
+
     def getLastChar = tag.lastOption
     protected def get_Current_Line = Some(tag.mkString)
     lazy val tagName = tag.mkString
@@ -908,7 +923,9 @@ object LogicalLines {
     open: XmlOpenState,
     text: Vector[Char],
     location: Option[ParseLocation]
-  ) extends AwakeningLogicalLinesParseState {
+  ) extends AdvancedAwakeningLogicalLinesParseState {
+    override protected def use_angle_bracket(config: Config) = true
+
     def getLastChar = text.lastOption
     protected def get_Current_Line = Some(text.mkString)
     lazy val textString = text.mkString
@@ -985,14 +1002,7 @@ object LogicalLines {
     location: Option[ParseLocation],
     text: Vector[Char] = Vector.empty,
     isRaw: Boolean = false
-  ) extends AwakeningLogicalLinesParseState {
-    override protected def use_single_quote(config: Config) = false
-    override protected def use_angle_bracket(config: Config) = false
-    override protected def use_brace(config: Config) = false
-    override protected def use_parenthesis(config: Config) = false
-    override protected def use_bracket(config: Config) = false
-    override protected def use_multiline(config: Config) = false
-
+  ) extends AdvancedAwakeningLogicalLinesParseState {
     def getLastChar = text.lastOption
     protected def get_Current_Line = Some(text.mkString)
 
@@ -1026,14 +1036,7 @@ object LogicalLines {
     parent: LogicalLinesParseState,
     text: Vector[Char],
     location: Option[ParseLocation]
-  ) extends AwakeningLogicalLinesParseState {
-    override protected def use_double_quote(config: Config) = false
-    override protected def use_angle_bracket(config: Config) = false
-    override protected def use_brace(config: Config) = false
-    override protected def use_parenthesis(config: Config) = false
-    override protected def use_bracket(config: Config) = false
-    override protected def use_multiline(config: Config) = false
-
+  ) extends AdvancedAwakeningLogicalLinesParseState {
     def getLastChar = text.lastOption
     protected def get_Current_Line = Some(text.mkString)
 
