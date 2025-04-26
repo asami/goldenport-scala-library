@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "1.4.4"
+version := "1.4.5"
 
 scalaVersion := "2.10.3"
 // crossScalaVersions := Seq("2.9.2", "2.9.1")
@@ -41,6 +41,16 @@ libraryDependencies += "com.jsuereth" %% "scala-arm" % "1.3" exclude("org.scala-
 libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "1.6.0"
 
 libraryDependencies += "com.typesafe" % "config" % "1.2.1"
+
+libraryDependencies += "io.circe" %% "circe-core" % "0.8.0"
+
+libraryDependencies += "io.circe" %% "circe-generic" % "0.8.0"
+
+libraryDependencies += "io.circe" %% "circe-parser" % "0.8.0"
+
+libraryDependencies += "io.circe" %% "circe-yaml" % "0.8.0"
+
+libraryDependencies += "org.yaml" % "snakeyaml" % "2.4"
 
 // libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.9.4" 
 
