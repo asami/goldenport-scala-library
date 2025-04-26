@@ -57,7 +57,7 @@ import org.goldenport.values.{PathName, Urn}
  *  version Aug.  5, 2023
  *  version Sep.  5, 2024
  *  version Mar. 17, 2025
- * @version Apr.  3, 2025
+ * @version Apr. 21, 2025
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -72,7 +72,7 @@ object StringUtils {
   )
 
   val uriSafeSpecialChars = Vector(
-    '-', '_'
+    '-', '.', '_'
   )
 
   val unsafeChars = Vector(

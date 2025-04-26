@@ -35,7 +35,8 @@ import org.goldenport.extension.IRecord
  *  version Jan. 25, 2023
  *  version Jul. 23, 2023
  *  version Sep. 27, 2023
- * @version Mar.  9, 2025
+ *  version Mar.  9, 2025
+ * @version Apr. 21, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -439,6 +440,11 @@ object Consequence {
   def from[A](p: Try[A]): Consequence[A] = p match {
     case TrySuccess(s) => Consequence.success(s)
     case TryFailure(e) => error(e)
+  }
+
+  def from[E <: Throwable, A](p: Either[E, A]): Consequence[A] = p match {
+    case Right(r) => Consequence.success(r)
+    case Left(e) => error(e)
   }
 
   object config {

@@ -34,7 +34,7 @@ import org.goldenport.util.RegexUtils
  *  version Mar. 19, 2022
  *  version Feb. 25, 2025
  *  version Mar. 30, 2025
- * @version Apr.  2, 2025
+ * @version Apr. 25, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
@@ -46,6 +46,10 @@ case class Realm(
   def print: String = _tree.print
   override def display: String = _tree.display
   override def show: String = _tree.show
+
+  def backend: Tree[Data] = _tree
+
+  def backendRoot: TreeNode[Data] = _tree.root
 
   def get(pathname: String): Option[Data] = _tree.getContent(pathname)
 
@@ -77,10 +81,45 @@ case class Realm(
     }
   }
 
+  /*
+   * Mutation
+   */
   // complement
   def merge(pathname: String, view: Realm): Realm = Realm(Tree.mergeClone(this._tree, pathname, view._tree))
 
   def +(p: Realm): Realm = Realm(Tree.mergeClone(this._tree, p._tree))
+
+  def setNode(pathname: PathName): Realm = {
+    _tree.setNode(pathname.v)
+    this
+  }
+
+  def setNode(pathname: String): Realm = {
+    _tree.setNode(pathname)
+    this
+  }
+
+  def setContent(pathname: PathName, string: String): Realm = {
+    _tree.setContent(pathname, StringData(string))
+    this
+  }
+
+  def setContent(pathname: String, string: String): Realm = {
+    _tree.setContent(pathname, StringData(string))
+    this
+  }
+
+  def getCursor(pathname: PathName): Option[Cursor] =
+    _tree.getNode(pathname.v).map(Cursor.create)
+
+  def getCursor(pathname: String): Option[Cursor] =
+    _tree.getNode(pathname).map(Cursor.create)
+
+  def takeCursor(pathname: PathName): Cursor =
+    getCursor(pathname) getOrElse RAISE.missingPropertyFault(pathname.v)
+
+  def takeCursor(pathname: String): Cursor =
+    getCursor(pathname) getOrElse RAISE.missingPropertyFault(pathname)
 }
 
 object Realm {
@@ -265,6 +304,41 @@ object Realm {
     def create(cliconfig: cli.Config) = Context(Config(cliconfig))
   }
 
+  case class Cursor(node: TreeNode[Data]) {
+    def content = node.content
+
+    def enter(name: String): Cursor = copy(node.setChild(name))
+
+    def enterContent(content: Data): Cursor =
+      copy(node.addContent(content))
+
+    def leaveContent(content: Data): Cursor = {
+      require (node.content == content)
+      copy(node.parent)
+    }
+
+    def leave(): Cursor = copy(node.parent)
+
+    def set(name: String, content: Data): Cursor =
+      copy(node.setChild(name, content))
+
+    def set(name: String, content: String): Cursor =
+      set(name, StringData(content))
+
+    def add(content: Data): Cursor = copy(node.addContent(content))
+
+    def merge(pathname: String, realm: Realm): Cursor =
+      merge(pathname, realm.backend)
+
+    def merge(pathname: String, tree: Tree[Data]): Cursor = {
+      node.mergeCloneTree(pathname, tree)
+      this
+    }
+  }
+  object Cursor {
+    def create(node: TreeNode[Data]): Cursor = new Cursor(node)
+  }
+
   class Builder(
     config: Builder.Config,
     var root: Option[File] = None
@@ -383,6 +457,8 @@ object Realm {
     }
 
     def apply(): Builder = new Builder(Config.default)
+
+    def apply(config: Config): Builder = new Builder(config)
 
     def apply(root: File): Builder = new Builder(Config.default, Some(root))
 

@@ -17,7 +17,8 @@ import org.goldenport.values.CompactUuid
  *  version Nov. 14, 2020
  *  version Dec. 26, 2020
  *  version Feb. 23, 2025
- * @version Mar.  7, 2025
+ *  version Mar.  7, 2025
+ * @version Apr. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeNodeStructureBase[E] extends TreeNode[E] {
@@ -179,6 +180,22 @@ trait TreeNodeStructureBase[E] extends TreeNode[E] {
     node.content = content
     set_modified()
     node
+  }
+
+  def mergeCloneTree(tree: Tree[E]): TreeNode_TYPE = {
+    val node = tree.root.deepCopy
+    addChildren(node.children)
+    this.asInstanceOf[TreeNode_TYPE]
+  }
+
+  def mergeCloneTree(pathname: String, tree: Tree[E]): TreeNode_TYPE =
+    mergeCloneTree(PathName(pathname), tree)
+
+  def mergeCloneTree(pathname: PathName, tree: Tree[E]): TreeNode_TYPE = {
+    val a = Tree.mergeClone(this, pathname.v, tree.root).asInstanceOf[TreeNode_TYPE]
+    node_children.clear()
+    node_children ++= a.children
+    this.asInstanceOf[TreeNode_TYPE]
   }
 
   override def children: Seq[TreeNode_TYPE] = {

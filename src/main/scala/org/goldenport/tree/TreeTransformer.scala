@@ -7,7 +7,7 @@ import org.goldenport.RAISE
  *  version Nov. 15, 2020
  *  version Jan.  1, 2021
  *  version Mar. 31, 2025
- * @version Apr.  3, 2025
+ * @version Apr. 25, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeTransformer[A, B] {
@@ -237,6 +237,24 @@ trait TreeTransformer[A, B] {
       Some(p.asInstanceOf[B])
     else
       None
+
+  protected final def directive_empty(): TreeTransformer.Directive[B] =
+    TreeTransformer.Directive.Empty()
+
+  protected final def directive_default(): TreeTransformer.Directive[B] =
+    TreeTransformer.Directive.Default()
+
+  protected final def directive_asis(): TreeTransformer.Directive[B] =
+    TreeTransformer.Directive.AsIs()
+
+  protected final def directive_leaf(p: B): TreeTransformer.Directive[B] =
+    TreeTransformer.Directive.LeafContent(p)
+
+  protected final def directive_leaf(name: String, p: B): TreeTransformer.Directive[B] =
+    TreeTransformer.Directive.LeafNode(name, p)
+
+  protected final def directive_node(name: String, p: B): TreeTransformer.Directive[B] =
+    TreeTransformer.Directive.Node(TreeNode.create(name, p))
 }
 
 object TreeTransformer {

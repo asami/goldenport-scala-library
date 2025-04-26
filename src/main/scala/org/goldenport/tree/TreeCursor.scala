@@ -4,7 +4,8 @@ package org.goldenport.tree
  * @since   Nov.  8, 2008
  *          Jan.  7, 2009
  *  version Nov. 18, 2019
- * @version Feb. 23, 2025
+ *  version Feb. 23, 2025
+ * @version Apr. 23, 2025
  * @author  ASAMI, Tomoharu
  */
 class TreeCursor[E](aNode: TreeNode[E]) {
@@ -12,29 +13,35 @@ class TreeCursor[E](aNode: TreeNode[E]) {
 
   def this(aTree: Tree[E]) = this(aTree.root)
 
-  final def enter(name: String) {
+  def enter(name: String): TreeCursor[E] = {
     _current = _current.setChild(name)
+    this
   }
 
-  final def enterContent(content: E) {
+  def enterContent(content: E): TreeCursor[E] = {
     _current = _current.addContent(content)
+    this
   }
 
-  final def leaveContent(content: E) {
+  def leaveContent(content: E): TreeCursor[E] = {
     require (_current.content == content)
     _current = _current.parent
+    this
   }
 
-  final def leave() {
+  def leave(): TreeCursor[E] = {
     _current = _current.parent
+    this
   }
 
-  final def set(name: String, content: E) {
+  def set(name: String, content: E): TreeCursor[E] = {
     _current.setChild(name, content)
+    this
   }
 
-  final def add(content: E) {
+  def add(content: E): TreeCursor[E] = {
     _current.addContent(content)
+    this
   }
 
   final def node = _current

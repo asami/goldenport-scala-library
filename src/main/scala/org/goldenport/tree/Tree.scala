@@ -18,7 +18,8 @@ import org.goldenport.values.PathName
  *  version Nov. 16, 2020
  *  version Feb.  2, 2021
  *  version Mar. 19, 2022
- * @version Mar.  5, 2025
+ *  version Mar.  5, 2025
+ * @version Apr. 23, 2025
  * @author  ASAMI, Tomoharu
  */
 trait Tree[E] extends Showable {
@@ -86,6 +87,9 @@ object Tree {
 
   def mergeClone[E](strategy: MergeContentStrategy, lhs: Tree[E], rhs: Tree[E]): Tree[E] =
     new Merger[E](strategy).apply(lhs, rhs)
+
+  def mergeClone[E](lhs: TreeNode[E], pathname: String, rhs: TreeNode[E]): TreeNode[E] =
+    new Merger[E](ComplementMerge).apply(lhs, pathname, rhs)
 
   class Merger[E](
     strategy: MergeContentStrategy,

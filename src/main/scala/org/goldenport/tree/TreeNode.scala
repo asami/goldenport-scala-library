@@ -17,7 +17,8 @@ import org.goldenport.util.StringUtils
  *  version Nov. 15, 2020
  *  version Jan.  1, 2021
  *  version Feb. 23, 2025
- * @version Mar.  9, 2025
+ *  version Mar.  9, 2025
+ * @version Apr. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeNode[E] extends Showable.Control {
@@ -60,6 +61,9 @@ trait TreeNode[E] extends Showable.Control {
   def setNode(pathname: PathName): TreeNode_TYPE
   def setContent(pathname: String, content: E): TreeNode_TYPE
   def setContent(pathname: PathName, content: E): TreeNode_TYPE
+  def mergeCloneTree(tree: Tree[E]): TreeNode_TYPE
+  def mergeCloneTree(pathname: String, tree: Tree[E]): TreeNode_TYPE
+  def mergeCloneTree(pathname: PathName, tree: Tree[E]): TreeNode_TYPE
   def clear(): Unit
   def traverse(visitor: TreeVisitor[E])
   def traverse(visitor: TreeVisitor[E], filter: TreeNode[E] => Boolean)
