@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "1.4.5"
+version := "1.4.6"
 
 scalaVersion := "2.10.3"
 // crossScalaVersions := Seq("2.9.2", "2.9.1")
@@ -71,6 +71,8 @@ libraryDependencies += "com.typesafe.play" %% "play-json" % "2.2.2" % "provided"
 libraryDependencies += "org.scalanlp" %% "breeze" % "0.13.2" % "compile"
 
 libraryDependencies += "black.ninia" % "jep" % "3.9.0" % "compile"
+
+libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "5.10.0.202012080955-r" % "provided"
 
 libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.2.6"
 
