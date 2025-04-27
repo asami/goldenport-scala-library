@@ -5,7 +5,7 @@ import org.goldenport.util.StringUtils
 
 /*
  * @since   Apr. 19, 2025
- * @version Apr. 21, 2025
+ * @version Apr. 27, 2025
  * @author  ASAMI, Tomoharu
  */
 abstract class Name() extends Datatype {
@@ -20,6 +20,8 @@ abstract class Name() extends Datatype {
   require (name.length >= name_Min, s"Too short: ${name.length}")
   require (name.length <= name_Max, s"Too large: ${name.length}")
   require (is_Valid(name), s"Invalid name")
+
+  override def toString() = name
 }
 
 object Name {

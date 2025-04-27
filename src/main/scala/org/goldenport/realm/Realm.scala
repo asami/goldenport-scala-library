@@ -8,6 +8,7 @@ import java.io.FileInputStream
 import java.io.BufferedInputStream
 import java.nio.charset.Charset
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.net.URL
 import org.goldenport.RAISE
 import org.goldenport.Platform
@@ -34,12 +35,13 @@ import org.goldenport.util.RegexUtils
  *  version Mar. 19, 2022
  *  version Feb. 25, 2025
  *  version Mar. 30, 2025
- * @version Apr. 25, 2025
+ * @version Apr. 26, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
   private val _tree: Tree[Realm.Data],
-  origin: Option[File] = None
+  origin: Option[File] = None,
+  post_procedures: List[Realm.PostProcedure] = Nil
 ) extends Showable {
   import Realm._
 
@@ -69,6 +71,9 @@ case class Realm(
   def export(ctx: Context) {
     val dir = ctx.outputDirectory
     _export(dir, _tree.root)(ctx)
+    for (p <- post_procedures) {
+      p.execute(dir)
+    }
   }
 
   private def _export(dir: File, node: TreeNode[Data])(implicit ctx: Context) {
@@ -84,10 +89,16 @@ case class Realm(
   /*
    * Mutation
    */
-  // complement
-  def merge(pathname: String, view: Realm): Realm = Realm(Tree.mergeClone(this._tree, pathname, view._tree))
+  def withProcedure(p: Realm.PostProcedure) = copy(post_procedures = List(p))
 
-  def +(p: Realm): Realm = Realm(Tree.mergeClone(this._tree, p._tree))
+  def withGitInitAndCommit(path: Path): Realm = withProcedure(PostProcedure.GitInitAndCommit(path))
+
+  def withGitInitAndCommit(path: String): Realm = withGitInitAndCommit(Paths.get(path))
+
+  // complement
+  def merge(pathname: String, view: Realm): Realm = copy(Tree.mergeClone(this._tree, pathname, view._tree))
+
+  def +(p: Realm): Realm = copy(Tree.mergeClone(this._tree, p._tree))
 
   def setNode(pathname: PathName): Realm = {
     _tree.setNode(pathname.v)
@@ -524,6 +535,20 @@ object Realm {
   }
   object NodeView {
     val empty = NodeView(TreeNode.empty())
+  }
+
+  trait PostProcedure {
+    def execute(dir: File): Unit
+  }
+  object PostProcedure {
+    case class GitInitAndCommit(path: Path) extends PostProcedure {
+      import org.goldenport.util.GitUtils
+
+      def execute(dir: File): Unit = {
+        val d = new File(dir, path.toString)
+        GitUtils.initAndCommit(d)
+      }
+    }
   }
 
   def create() = Realm(new PlainTree())

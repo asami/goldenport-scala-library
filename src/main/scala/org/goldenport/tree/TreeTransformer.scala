@@ -7,7 +7,7 @@ import org.goldenport.RAISE
  *  version Nov. 15, 2020
  *  version Jan.  1, 2021
  *  version Mar. 31, 2025
- * @version Apr. 25, 2025
+ * @version Apr. 27, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeTransformer[A, B] {
@@ -23,8 +23,11 @@ trait TreeTransformer[A, B] {
   def apply(p: Tree[A]): Tree[B] = apply(p.root)
 
   def apply(p: TreeNode[A]): Tree[B] = {
-    val a = make_tree_node(p).head
-    create_tree(a)
+    val a = make_tree_node(p)
+    a match {
+      case Nil => Tree.create[B]
+      case x :: xs => create_tree(x)
+    }
   }
 
   protected final def create_tree(node: TreeNode[B]): Tree[B] =

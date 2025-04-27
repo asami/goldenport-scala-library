@@ -5,7 +5,7 @@ import org.goldenport.util.StringUtils
 
 /*
  * @since   Apr. 19, 2025
- * @version Apr. 21, 2025
+ * @version Apr. 27, 2025
  * @author  ASAMI, Tomoharu
  */
 abstract class Title() extends Datatype {
@@ -20,6 +20,8 @@ abstract class Title() extends Datatype {
   require (title.length >= title_Min, s"Too short: ${title.length}")
   require (title.length <= title_Max, s"Too large: ${title.length}")
   require (is_Valid(title), s"Invalid title")
+
+  override def toString() = title
 }
 
 object Title {
@@ -39,4 +41,3 @@ object Title {
 
 case class PlainTitle(title: String) extends Title {
 }
-

@@ -57,7 +57,7 @@ import org.goldenport.values.{PathName, Urn}
  *  version Aug.  5, 2023
  *  version Sep.  5, 2024
  *  version Mar. 17, 2025
- * @version Apr. 21, 2025
+ * @version Apr. 26, 2025
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -383,6 +383,14 @@ object StringUtils {
 
   def pathnameBodySuffixLowered(p: String): (String, Option[String]) =
     (toPathnameBody(p), getSuffix(p))
+
+  def makeTitleFromPathname(p: String): String = {
+    val a = StringUtils.pathLastComponentBody(p)
+    a.split("[-_]")
+      .filter(_.nonEmpty)
+      .map(word => word.head.toUpper)
+      .mkString(" ")
+  }
 
   def dimString(s: String, length: Int = 1000): String = {
     val postfix = "..."

@@ -1,12 +1,14 @@
 package org.goldenport.util
 
 import collection.JavaConverters._
+import scalaz.NonEmptyList
 import io.circe.Json
 import io.circe.yaml.syntax._
+import org.goldenport.collection.NonEmptyVector
 
 /*
  * @since   Apr. 21, 2025
- * @version Apr. 25, 2025
+ * @version Apr. 27, 2025
  * @author  ASAMI, Tomoharu
  */
 object CircleUtils {
@@ -52,6 +54,8 @@ object CircleUtils {
               _skip
             else
               _add(key, Json.arr(a: _*))
+          case m: NonEmptyList[_] => _handle(key, m.list)
+          case m: NonEmptyVector[_] => _handle(key, m.vector)
           case m => _add(key, convertToJson(m))
         }
       }
