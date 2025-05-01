@@ -21,7 +21,8 @@ import org.goldenport.log.Loggable
  *  version Oct. 26, 2024
  *  version Nov. 23, 2024
  *  version Jan.  1, 2025
- * @version Feb.  7, 2025
+ *  version Feb.  7, 2025
+ * @version Apr. 28, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -134,6 +135,8 @@ object LogicalBlocks {
   }
 
   trait LogicalBlocksParseState extends ParseReaderWriterState[Config, LogicalBlocks] with Loggable {
+    override protected def get_Observability_Context = None
+
     def result: LogicalBlocks
 
     def apply(config: Config, evt: ParseEvent): Transition = {

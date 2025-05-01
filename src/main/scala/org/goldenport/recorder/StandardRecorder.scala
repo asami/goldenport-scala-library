@@ -1,17 +1,24 @@
 package org.goldenport.recorder
 
 import java.io.File
-import org.goldenport.recorder.driver._
+import org.goldenport.notification.NotificationContext
+import org.goldenport.observability.ObservabilityContext
 
 /*
  * @since   Apr. 10, 2020
- * @version Jan. 24, 2021
+ *  version Jan. 24, 2021
+ * @version Apr. 28, 2025
  * @author  ASAMI, Tomoharu
  */
-class StandardRecorder() extends RecorderBase {
-  private var _log_drivers: Vector[LogDriver] = Vector(ConsoleLogDriver.default) // currently unused.
-  private var _message_drivers: Vector[MessageDriver] = Vector.empty
-  private var _report_drivers: Vector[ReportDriver] = Vector.empty
+class StandardRecorder(
+  observability: ObservabilityContext,
+  notification: NotificationContext
+) extends RecorderBase {
+  override protected def get_Observability_Context = Some(observability)
+
+  // private var _log_drivers: Vector[LogDriver] = Vector(ConsoleLogDriver.default) // currently unused.
+  // private var _message_drivers: Vector[MessageDriver] = Vector.empty
+  // private var _report_drivers: Vector[ReportDriver] = Vector.empty
 
   def setReportFile(p: File): Unit = {
     ???

@@ -9,12 +9,15 @@ import com.typesafe.config.{Config => HoconConfig, ConfigFactory}
 import org.goldenport.context.ContextFoundation
 import org.goldenport.context.DateTimeContext
 import org.goldenport.context.FormatContext
+import org.goldenport.context.RandomContext
 import org.goldenport.i18n.I18NContext
 import org.goldenport.i18n.CalendarFormatter
 import org.goldenport.i18n.EmptyResourceBundle
 import org.goldenport.i18n.StringFormatter
 import org.goldenport.hocon.RichConfig
 import org.goldenport.hocon.HoconUtils
+import org.goldenport.notification.NotificationContext
+import org.goldenport.observability.ObservabilityContext
 import org.goldenport.log.{LogConfig, LogLevel}
 import org.goldenport.recorder.{Recorder, StandardRecorder}
 import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperations}
@@ -38,7 +41,8 @@ import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperation
  *  version Apr.  4, 2022
  *  version Jan. 30, 2023
  *  version Jul. 22, 2023
- * @version Oct. 14, 2024
+ *  version Oct. 14, 2024
+ * @version Apr. 28, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Config(
@@ -64,7 +68,10 @@ case class Config(
 
   def outputDirectory: File = projectDirectory orElse workDirectory getOrElse new File(".")
 
-  lazy val recorder: Recorder = new StandardRecorder() // TODO upper layer
+  lazy val recorder: Recorder = new StandardRecorder(
+    observabilityContext,
+    notificationContext
+  )
 
   def withI18NContext(p: I18NContext) = copy(contextFoundation = contextFoundation.withI18NContext(p))
   def withLogLevel(p: LogLevel) = copy(log = log.withLogLevel(p))
@@ -278,11 +285,17 @@ object Config {
       stringformatter,
       bundle
     )
+    val observabilitycontext = ObservabilityContext.default // TODO
+    val notificationcontext = NotificationContext.default // TODO
+    val randomcontext = RandomContext.default // TODO
     val contextfoundation = ContextFoundation(
       mathcontext,
       i18ncontext,
       datetimecontext,
-      formatcontext
+      formatcontext,
+      observabilitycontext,
+      notificationcontext,
+      randomcontext
     )
     Config(
       contextfoundation,
