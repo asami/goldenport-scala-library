@@ -2,11 +2,15 @@ package org.goldenport.values
 
 import java.util.Locale
 import org.goldenport.i18n.I18NString
+import org.goldenport.i18n.test.I18NStringBeMatcher
+import org.goldenport.test.MatchResultHelper
 
 /*
  * @since   May.  2, 2020
  *  version Jun. 15, 2020
- * @version Oct. 14, 2023
+ *  version Oct. 14, 2023
+ *  version Sep.  5, 2024
+ * @version Dec. 21, 2024
  * @author  ASAMI, Tomoharu
  */
 case class Designation(
@@ -32,6 +36,8 @@ case class Designation(
 object Designation {
   val empty = Designation("")
 
+  def apply(name: Option[String]): Designation = name.fold(empty)(apply)
+
   def apply(name: String): Designation = Designation(I18NString(name), None, None)
 
   def nameLabel(name: String, label: Option[I18NString]): Designation =
@@ -53,5 +59,18 @@ object Designation {
     def term: String = designation.term
     def term_en: String = designation.term_en
     def term_ja: String = designation.term_ja
+  }
+
+  object test {
+    import org.scalatest.matchers.{BeMatcher, MatchResult}
+
+    case class DesignationBeMatcher(expected: Designation) extends BeMatcher[Designation] with MatchResultHelper {
+      def apply(actual: Designation): MatchResult = {
+        val n = be_i18nstring(expected.nameI18N, actual.nameI18N)
+        val l = be_i18nstring(expected.labelI18N, actual.labelI18N)
+        val t = be_i18nstring(expected.termI18N, actual.termI18N)
+        match_result("Designation", n, l, t)
+      }
+    }
   }
 }

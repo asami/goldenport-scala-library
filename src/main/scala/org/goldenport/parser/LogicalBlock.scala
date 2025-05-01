@@ -14,7 +14,8 @@ import org.goldenport.util.StringUtils
  *  version May. 16, 2021
  *  version Dec. 31, 2021
  *  version Nov. 27, 2022
- * @version Oct. 14, 2023
+ *  version Oct. 14, 2023
+ * @version Feb.  8, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalBlock {
@@ -72,6 +73,7 @@ case object EndBlock extends LogicalBlock {
 case class LogicalSection(
   title: I18NElement,
   blocks: LogicalBlocks,
+  mark: Option[String] = None,
   location: Option[ParseLocation] = None
 ) extends LogicalBlock {
   override def toString(): String = {
@@ -112,11 +114,23 @@ object LogicalSection {
   def apply(title: String, blocks: LogicalBlocks): LogicalSection =
     LogicalSection(I18NElement(title), blocks)
 
+  def apply(title: String, blocks: LogicalBlocks, mark: String): LogicalSection =
+    LogicalSection(I18NElement(title), blocks, Some(mark))
+
   def apply(title: String, blocks: LogicalBlocks, location: ParseLocation): LogicalSection =
-    LogicalSection(I18NElement(title), blocks, Some(location))
+    LogicalSection(I18NElement(title), blocks, None, Some(location))
+
+  def apply(title: String, blocks: LogicalBlocks, mark: String, location: ParseLocation): LogicalSection =
+    LogicalSection(I18NElement(title), blocks, Some(mark), Some(location))
 
   def create(title: String, content: String): LogicalSection =
     LogicalSection(I18NElement(title), LogicalBlocks.create(content))
+
+  def createOrg(title: String, content: String): LogicalSection =
+    LogicalSection(title, LogicalBlocks.create(content), "*")
+
+  def createMd(title: String, content: String): LogicalSection =
+    LogicalSection(title, LogicalBlocks.create(content), "#")
 }
 
 case class LogicalParagraph(

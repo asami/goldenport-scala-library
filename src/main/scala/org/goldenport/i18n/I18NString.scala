@@ -28,7 +28,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version May. 30, 2021
  *  version Jun. 19, 2021
  *  version Feb.  1, 2022
- * @version Dec.  8, 2022
+ *  version Dec.  8, 2022
+ * @version Mar.  8, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -155,6 +156,8 @@ case class I18NString(
   lazy val toJsonString: String = toJson.toString
 
   override def toString() = s"I18NString(${Strings.cutstring(en, 128)})"
+
+  def terms: Vector[String] = (Vector(c, en, ja) ++ map.values).distinct
 }
 
 object I18NString {

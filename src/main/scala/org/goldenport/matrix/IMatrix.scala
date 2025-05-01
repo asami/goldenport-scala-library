@@ -15,7 +15,8 @@ import org.goldenport.matrix.breeze.BreezeMatrix
  *  version Nov. 16, 2019
  *  version Jan. 27, 2020
  *  version Feb. 26, 2020
- * @version Mar. 19, 2022
+ *  version Mar. 19, 2022
+ * @version Oct. 20, 2024
  * @author  ASAMI, Tomoharu
  */
 trait IMatrix[T] extends Showable {
@@ -100,6 +101,8 @@ trait IMatrix[T] extends Showable {
   def *(rhs: Double)(implicit ev: T <:< Double): IMatrix[Double] = to_breeze_matrix * rhs
   //
   protected def to_breeze_matrix: BreezeMatrix = BreezeMatrix.create(this.asInstanceOf[IMatrix[Double]])
+
+  def map[A](p: T => A): IMatrix[A]
 }
 
 case class ArrayMatrix[T](matrix: Array[T], width: Int, height: Int) extends IMatrix[T] {
@@ -113,6 +116,7 @@ case class ArrayMatrix[T](matrix: Array[T], width: Int, height: Int) extends IMa
   def appendColumn(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
   def appendColumns(ps: IMatrix[T]): IMatrix[T] = RAISE.notImplementedYetDefect
   def transpose: IMatrix[T] = RAISE.notImplementedYetDefect
+  def map[A](p: T => A): IMatrix[A] = RAISE.notImplementedYetDefect
 }
 
 case class ArrayRowColumnMatrix[T](matrix: Array[Array[T]]) extends IMatrix[T] {
@@ -130,6 +134,7 @@ case class ArrayRowColumnMatrix[T](matrix: Array[Array[T]]) extends IMatrix[T] {
   def appendColumn(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
   def appendColumns(ps: IMatrix[T]): IMatrix[T] = RAISE.notImplementedYetDefect
   def transpose: IMatrix[T] = RAISE.notImplementedYetDefect
+  def map[A](p: T => A): IMatrix[A] = RAISE.notImplementedYetDefect
 }
 
 case class ArrayColumnRowMatrix[T](matrix: Array[Array[T]]) extends IMatrix[T] {
@@ -147,6 +152,7 @@ case class ArrayColumnRowMatrix[T](matrix: Array[Array[T]]) extends IMatrix[T] {
   def appendColumn(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
   def appendColumns(ps: IMatrix[T]): IMatrix[T] = RAISE.notImplementedYetDefect
   def transpose: IMatrix[T] = RAISE.notImplementedYetDefect
+  def map[A](p: T => A): IMatrix[A] = RAISE.notImplementedYetDefect
 }
 
 case class VectorMatrix[T](matrix: Vector[T], width: Int, height: Int) extends IMatrix[T] {
@@ -160,6 +166,7 @@ case class VectorMatrix[T](matrix: Vector[T], width: Int, height: Int) extends I
   def appendColumn(ps: Seq[T]): IMatrix[T] = RAISE.notImplementedYetDefect
   def appendColumns(ps: IMatrix[T]): IMatrix[T] = RAISE.notImplementedYetDefect
   def transpose: IMatrix[T] = RAISE.notImplementedYetDefect
+  def map[A](p: T => A): IMatrix[A] = RAISE.notImplementedYetDefect
 }
 
 trait VectorRowColumnMatrixBase[T] extends IMatrix[T] {
@@ -214,6 +221,7 @@ case class VectorRowColumnMatrix[T](
     }
     VectorRowColumnMatrix(a)
   }
+  def map[A](p: T => A): IMatrix[A] = copy(matrix = matrix.map(_.map(p)), emptyValue.map(p))
 }
 object VectorRowColumnMatrix {
   private val _empty = VectorRowColumnMatrix(Vector.empty)
@@ -258,6 +266,7 @@ case class VectorColumnRowMatrix[T](
     VectorColumnRowMatrix(a)
   }
   def transpose: IMatrix[T] = VectorRowColumnMatrix(matrix)
+  def map[A](p: T => A): IMatrix[A] = RAISE.notImplementedYetDefect
 }
 object VectorColumnRowMatrix {
   def apply[T](p: Seq[Seq[T]], empty: T): VectorColumnRowMatrix[T] =

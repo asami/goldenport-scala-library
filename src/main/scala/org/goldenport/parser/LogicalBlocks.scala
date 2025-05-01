@@ -17,7 +17,12 @@ import org.goldenport.log.Loggable
  *  version Jan. 11, 2021
  *  version Feb. 13, 2021
  *  version May. 16, 2021
- * @version Oct. 14, 2023
+ *  version Oct. 14, 2023
+ *  version Oct. 26, 2024
+ *  version Nov. 23, 2024
+ *  version Jan.  1, 2025
+ *  version Feb.  7, 2025
+ * @version Apr. 28, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -119,16 +124,19 @@ object LogicalBlocks {
     val raw = Config(false, true, false, LogicalLines.Config.raw, verbatimEmpty)
     val debug = Config(true, true, false, LogicalLines.Config.raw, verbatimEmpty)
     val noLocation = Config(false, false, false, LogicalLines.Config.raw, verbatimEmpty)
-    val easytext = Config(false, true, false, LogicalLines.Config.easytext, verbatimDefault)
-    val easyhtml = easytext.copy(linesConfig = LogicalLines.Config.easyhtml)
+    val easyText = Config(false, true, false, LogicalLines.Config.easyText, verbatimDefault)
+    val easyHtml = easyText.copy(linesConfig = LogicalLines.Config.easyHtml)
     // script
     val expression = Config(false, false, true, LogicalLines.Config.script, verbatimEmpty)
     val script = Config(false, true, true, LogicalLines.Config.script, verbatimEmpty)
+    val literateModel = easyHtml.copy(linesConfig = LogicalLines.Config.literateModel)
 
     val default = raw
   }
 
   trait LogicalBlocksParseState extends ParseReaderWriterState[Config, LogicalBlocks] with Loggable {
+    override protected def get_Observability_Context = None
+
     def result: LogicalBlocks
 
     def apply(config: Config, evt: ParseEvent): Transition = {
@@ -201,6 +209,26 @@ object LogicalBlocks {
       (ParseMessageSequence.empty, ParseResult.empty, line_State(config, evt))
 
     protected def line_State(config: Config, evt: LogicalLineEvent): LogicalBlocksParseState = RAISE.notImplementedYetDefect(s"line_State(${getClass.getSimpleName})")
+
+    protected final def get_title_or_verbatim(config: Config, evt: LogicalLineEvent): Option[LogicalBlocksParseState] = {
+        evt.getSectionTitle.map { title =>
+          SectionState(this, title, evt)
+        }.orElse {
+          evt.getSectionUnderline.map { underline =>
+            val level = underline.mark match {
+              case "=" => 1
+              case "-" => 2
+              case _ => 3
+            }
+            val title = LogicalLine.SectionTitle(underline.mark, level, underline.title)
+            SectionState(this, title, evt)
+          }.orElse {
+            config.getVerbatimMark(evt.line).map(mark =>
+              VerbatimState(this, mark, evt)
+            )
+          }
+      }
+    }
   }
 
   case class RootState(
@@ -222,17 +250,7 @@ object LogicalBlocks {
       if (config.isScript)
         InputState(this, evt)
       else
-        evt.getSectionTitle.map { title =>
-          SectionState(this, title, evt)
-        }.orElse {
-          evt.getSectionUnderline.map { underline =>
-            RAISE.notImplementedYetDefect("section underline")
-          }
-        }.orElse {
-          config.getVerbatimMark(evt.line).map(mark =>
-            VerbatimState(this, mark, evt)
-          )
-        }.getOrElse {
+        get_title_or_verbatim(config, evt) getOrElse {
           InputState(this, evt)
         }
     }
@@ -256,21 +274,10 @@ object LogicalBlocks {
     override protected def end_Result(config: Config): ParseResult[LogicalBlocks] =
       ParseSuccess(blocks)
 
-    override protected def line_State(config: Config, evt: LogicalLineEvent) = {
-      evt.getSectionTitle.map { title =>
-        SectionState(this, title, evt)
-      }.orElse {
-        evt.getSectionUnderline.map { underline =>
-          RAISE.notImplementedYetDefect("section underline")
-        }
-      }.orElse {
-        config.getVerbatimMark(evt.line).map(mark =>
-          VerbatimState(this, mark, evt)
-        )
-      }.getOrElse {
+    override protected def line_State(config: Config, evt: LogicalLineEvent) =
+      get_title_or_verbatim(config, evt) getOrElse {
         InputState(this, evt)
       }
-    }
   }
   object NeutralState {
     // val init = NeutralState(Vector.empty, LogicalBlocks.empty)
@@ -306,17 +313,7 @@ object LogicalBlocks {
     }
 
     override def line_State(config: Config, evt: LogicalLineEvent) =
-      evt.getSectionTitle.map { title =>
-        SectionState(this, title, evt)
-      }.orElse {
-        evt.getSectionUnderline.map { underline =>
-          RAISE.notImplementedYetDefect("section underline")
-        }
-      }.orElse {
-        config.getVerbatimMark(evt.line).map(mark =>
-          VerbatimState(this, mark, evt)
-        )
-      }.getOrElse {
+      get_title_or_verbatim(config, evt) getOrElse {
         if (evt.isEmptyLine)
           // NeutralState(parent, blocks :+ LogicalBlock(cs))
           parent.addChildState(config, blocks :+ LogicalBlock(cs))
@@ -346,7 +343,7 @@ object LogicalBlocks {
         blocks
       else
         blocks :+ LogicalBlock(cs)
-      LogicalSection(title.toI18NElement, a, location)
+      LogicalSection(title.toI18NElement, a, Some(title.mark), location)
     }
 
     private def _flush_state = if (cs.isEmpty)

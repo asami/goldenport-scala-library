@@ -13,11 +13,79 @@ import org.goldenport.util.DateTimeUtils
  *  version Mar. 10, 2019
  *  version Apr. 13, 2019
  *  version Feb. 13, 2021
- * @version Apr. 26, 2021
+ *  version Apr. 26, 2021
+ * @version Oct.  1, 2024
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
 class TryoutSpec extends WordSpec with Matchers with GivenWhenThen {
+  "script" should {
+    val config = LogicalLines.Config.script
+    def parse(p: String) = LogicalLines.parse(config, p)
+
+    "normal lines" in {
+      val s = """a
+b
+c
+"""
+      val r = parse(s)
+      r should be(LogicalLines.start("a", "b", "c"))
+    }
+    "one syntax error" ignore {
+      val s = """'"""
+      an [ParseSyntaxErrorException] should be thrownBy parse(s)
+    }
+    "double quote" which {
+      "new line" in {
+      val s = """a "
+b" c
+"""
+      val r = parse(s)
+      r should be(LogicalLines.start("""a "
+b" c"""))
+      }
+      "one" ignore {
+        val s = "\"\"\"a \"x \"\"\""
+        val r = parse(s)
+        r should be(LogicalLines.start("\"\"\"a \"x \"\"\""))
+      }
+      "stick" ignore {
+        val s = "\"\"\"a\"x\"\"\"\""
+        val r = parse(s)
+        r should be(LogicalLines.start("\"\"\"a\"x\"\"\"\""))
+      }
+    }
+    "lisp" ignore {
+      val conf = LogicalLines.Config.lisp
+      def parselisp(p: String) = LogicalLines.parse(conf, p)
+
+      "single quote" in {
+        val s = """'a"""
+        val r = parselisp(s)
+        r should be(LogicalLines.start("""'a"""))
+      }
+    }
+    "s-expression" which {
+      "one line" ignore {
+        val s = """(a b c d)"""
+        val r = parse(s)
+        r should be(LogicalLines.start("(a b c d)"))
+      }
+      "tow lines" in {
+        val s = """(a b
+c d)"""
+        val r = parse(s)
+        r should be(LogicalLines.start("(a b\nc d)"))
+      }
+      "double quote" ignore {
+        val s = """(a b "s
+" c d)"""
+        val r = parse(s)
+        r should be(LogicalLines.start("""(a b "s
+" c d)"""))
+      }
+    }
+  }
   // val context = LogicalTokens.Context.create()
   // val jodajst = DateTimeUtils.jodajst
   // val start = ParseLocation.start

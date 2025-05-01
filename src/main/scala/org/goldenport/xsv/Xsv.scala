@@ -16,7 +16,8 @@ import org.goldenport.parser._
  *  version Nov. 10, 2019
  *  version Dec.  7, 2019
  *  version Feb. 26, 2020
- * @version Apr. 25, 2021
+ *  version Apr. 25, 2021
+ * @version Oct. 18, 2024
  * @author  ASAMI, Tomoharu
  */
 case class Xsv(
@@ -37,6 +38,7 @@ case class Xsv(
   def appendColumn(ps: Seq[LogicalToken]): IMatrix[LogicalToken] = RAISE.unsupportedOperationFault
   def appendColumns(ps: IMatrix[LogicalToken]): IMatrix[LogicalToken] = RAISE.unsupportedOperationFault
   def transpose: IMatrix[LogicalToken] = RAISE.notImplementedYetDefect
+  def map[A](p: LogicalToken => A): IMatrix[A] = RAISE.notImplementedYetDefect
 }
 
 object Xsv {

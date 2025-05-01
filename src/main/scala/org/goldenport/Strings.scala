@@ -28,7 +28,8 @@ import com.asamioffice.goldenport.text.UString
  *  version May. 30, 2021
  *  version Mar. 30, 2022
  *  version Apr. 18, 2023
- * @version May. 30, 2024
+ *  version May. 30, 2024
+ * @version Oct. 28, 2024
  * @author  ASAMI, Tomoharu
  */
 object Strings {
@@ -219,6 +220,9 @@ object Strings {
     if (blankp(s)) Nil
     else UString.getTokens(s, ds).toList
   }
+
+  def totokens(s: String, ds: Seq[Char]): List[String] =
+    totokens(s, ds.mkString)
 
   def totokensVector(s: String, ds: String): Vector[String] =
     if (blankp(s))

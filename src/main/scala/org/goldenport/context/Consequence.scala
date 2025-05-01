@@ -8,6 +8,7 @@ import org.goldenport.i18n.I18NString
 import org.goldenport.i18n.I18NMessage
 import org.goldenport.parser.{ParseResult, ParseSuccess, ParseFailure, EmptyParseResult}
 import org.goldenport.parser.{ParseMessage}
+import org.goldenport.cli.spec
 import org.goldenport.util.AnyUtils
 import org.goldenport.extension.IRecord
 
@@ -33,7 +34,9 @@ import org.goldenport.extension.IRecord
  *  version Dec. 31, 2022
  *  version Jan. 25, 2023
  *  version Jul. 23, 2023
- * @version Sep. 27, 2023
+ *  version Sep. 27, 2023
+ *  version Mar.  9, 2025
+ * @version Apr. 21, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -283,6 +286,9 @@ object Consequence {
 
   // Specific error with detail code.
 
+  def successOrMissingArgumentFault[T](key: String, p: Option[T]): Consequence[T] =
+    p.map(success).getOrElse(missingArgumentFault(key))
+
   def successOrInvalidArgumentFault[T](key: String, value: Any, p: Option[T]): Consequence[T] =
     p.map(success).getOrElse(invalidArgumentFault(key, value))
 
@@ -327,6 +333,9 @@ object Consequence {
 
   def valueDomainFault[T](value: String): Consequence[T] = Error(Conclusion.valueDomainFault(value))
   def valueDomainFault[T](label: String, value: String): Consequence[T] = Error(Conclusion.valueDomainFault(label, value))
+  def valueDomainFault[T](name: String, datatype: spec.DataType, value: Any): Consequence[T] = Error(
+    Conclusion.valueDomainFault(name, datatype, value)
+  )
 
   def syntaxErrorFault[T](message: String): Consequence[T] = Error(Conclusion.syntaxErrorFault(message))
 
@@ -431,6 +440,11 @@ object Consequence {
   def from[A](p: Try[A]): Consequence[A] = p match {
     case TrySuccess(s) => Consequence.success(s)
     case TryFailure(e) => error(e)
+  }
+
+  def from[E <: Throwable, A](p: Either[E, A]): Consequence[A] = p match {
+    case Right(r) => Consequence.success(r)
+    case Left(e) => error(e)
   }
 
   object config {

@@ -6,7 +6,7 @@ import org.scalatest._
 
 /*
  * @since   Feb. 23, 2022
- * @version Feb. 23, 2022
+ * @version Mar.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -27,6 +27,12 @@ class StringFormatterSpec extends WordSpec with Matchers with GivenWhenThen {
       }
       "123456789012" in {
         StringFormatter.display.shrink("123456789012", 8, 3) should be("123..012")
+      }
+    }
+    "display.embed" which {
+      "long" in {
+        val a = StringFormatter.display.embed("1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", 60)
+        a should be("123456789012345678901234567890..3456789012345678901234567890")
       }
     }
   }

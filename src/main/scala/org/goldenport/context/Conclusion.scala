@@ -8,6 +8,7 @@ import org.goldenport.Strings
 import org.goldenport.exception.GoldenportException
 import org.goldenport.i18n.I18NString
 import org.goldenport.i18n.I18NMessage
+import org.goldenport.cli.spec
 import org.goldenport.extension.IRecord
 import org.goldenport.trace._
 import org.goldenport.util.ExceptionUtils
@@ -36,7 +37,8 @@ import org.goldenport.util.AnyUtils
  *  version Dec. 28, 2022
  *  version Jan. 20, 2023
  *  version Sep. 27, 2023
- * @version Nov.  7, 2023
+ *  version Nov.  7, 2023
+ * @version Mar. 29, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -92,7 +94,12 @@ case class Conclusion(
   )
 
   def toException: Throwable = exception getOrElse new ConclusionException(this)
+
+  def toConclusionException: Throwable = new ConclusionException(this)
+
   def RAISE: Nothing = throw toException
+
+  def RAISEC: Nothing = throw toConclusionException
 
   def isSuccess: Boolean = status.isSuccess
 
@@ -316,7 +323,14 @@ object Conclusion {
   def valueDomainFault(label: String, value: String): Conclusion = {
     val detail = DetailCode.Argument
     val status = StatusCode.BadRequest.withDetail(detail)
-    val faults = Faults(ValueDomainFault(label)) // XXX
+    val faults = Faults(ValueDomainFault(label, value))
+    Conclusion(status, faults)
+  }
+
+  def valueDomainFault(name: String, datatype: spec.DataType, value: Any): Conclusion = {
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(ValueDomainFault(name, datatype, value))
     Conclusion(status, faults)
   }
 

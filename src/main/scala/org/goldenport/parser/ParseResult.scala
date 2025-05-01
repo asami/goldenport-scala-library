@@ -6,6 +6,7 @@ import java.net.{URI, URL}
 import java.io.File
 import org.goldenport.context.Conclusion
 import org.goldenport.context.Message
+import org.goldenport.context.Consequence
 import org.goldenport.exception.SyntaxErrorFaultException
   
 /*
@@ -19,7 +20,8 @@ import org.goldenport.exception.SyntaxErrorFaultException
  *  version Jan. 30, 2021
  *  version Feb.  2, 2021
  *  version May.  5, 2021
- * @version Oct. 12, 2021
+ *  version Oct. 12, 2021
+ * @version Apr. 23, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait ParseResult[+AST] {
@@ -35,6 +37,8 @@ sealed trait ParseResult[+AST] {
   def warnings: Vector[WarningMessage]
   def messages: Vector[ParseMessage] = errors ++ warnings
   def toOption: Option[AST]
+  def toEither: Either[Vector[ParseMessage], AST]
+  def toConsequence: Consequence[AST] = Consequence.from(this)
 
   def append(es: Seq[ErrorMessage], ws: Seq[WarningMessage]): ParseResult[AST]
   def prepend(es: Seq[ErrorMessage], ws: Seq[WarningMessage]): ParseResult[AST]
@@ -45,6 +49,7 @@ case class EmptyParseResult[AST]() extends ParseResult[AST] {
   def errors = Vector.empty
   def warnings = Vector.empty
   def toOption: Option[AST] = None
+  def toEither: Either[Vector[ParseMessage], AST] = Left(messages)
   def append(es: Seq[ErrorMessage], ws: Seq[WarningMessage]): ParseResult[AST] = this.asInstanceOf[ParseResult[AST]]
   def prepend(es: Seq[ErrorMessage], ws: Seq[WarningMessage]): ParseResult[AST] = this.asInstanceOf[ParseResult[AST]]
 }
@@ -57,6 +62,7 @@ case class ParseSuccess[AST](
   def flatMap[T](f: AST => ParseResult[T]): ParseResult[T] = f(ast).prepend(Nil, warnings)
   def errors = Vector.empty
   def toOption: Option[AST] = Some(ast)
+  def toEither: Either[Vector[ParseMessage], AST] = Right(ast)
   def append(es: Seq[ErrorMessage], ws: Seq[WarningMessage]): ParseResult[AST] = copy(warnings = warnings ++ ws)
   def prepend(es: Seq[ErrorMessage], ws: Seq[WarningMessage]): ParseResult[AST] = copy(warnings = ws.toVector ++ warnings)
 }
@@ -67,6 +73,7 @@ case class ParseFailure[AST](
 ) extends ParseResult[AST] {
   def flatMap[T](f: AST => ParseResult[T]): ParseResult[T] = this.asInstanceOf[ParseResult[T]]
   def toOption: Option[AST] = None
+  def toEither: Either[Vector[ParseMessage], AST] = Left(messages)
 
   def append(es: Seq[ErrorMessage], ws: Seq[WarningMessage]): ParseResult[AST] =
     copy(errors = errors ++ es, warnings = warnings ++ ws)

@@ -46,7 +46,8 @@ import org.goldenport.values.DateTimePeriod
  *  version Oct. 29, 2022
  *  version Nov. 28, 2022
  *  version Dec. 28, 2022
- * @version Jan. 16, 2023
+ *  version Jan. 16, 2023
+ * @version Mar.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -71,18 +72,31 @@ object AnyUtils {
     case m: Showable => m.print
     case m => toString(m)
   }
-  def toDisplay(x: Any): String = x match {
-    case m: Showable => m.display
-    case m => toString(m)
+  def toDisplay(x: Any): String = {
+    val a = x match {
+      case m: Showable => m.display
+      case m => toString(m)
+    }
+    toEmbed(a, 60)
   }
-  def toShow(x: Any): String = x match {
-    case m: Showable => m.show
+  def toShow(x: Any): String = {
+    val a = x match {
+      case m: Showable => m.show
+      case m => toString(m)
+    }
+    toEmbed(a, 160)
+  }
+  def toLiteral(x: Any): String = x match {
+    case m: Showable => m.getLiteral getOrElse m.print
     case m => toString(m)
   }
   def toEmbed(x: Any): String = toEmbed(x, 8)
-  def toEmbed(x: Any, width: Int): String = x match {
+  def toEmbed(x: Any, width: Int): String = {
+    val a = x match {
     case m: Showable => m.embed(width)
-    case m => toEmbedString(toString(m), width)
+    case m => toString(m)
+    }
+    toEmbedString(a, width)
   }
   def toEmbedCenter(x: Any, width: Int): String =
     StringFormatter.display.enCenter(toEmbed(x, width), width)

@@ -17,7 +17,8 @@ import org.goldenport.util.AnyUtils
  *  version Jan.  2, 2021
  *  version Feb. 20, 2021
  *  version Feb. 28, 2022
- * @version Dec. 10, 2022
+ *  version Dec. 10, 2022
+ * @version Oct. 14, 2024
  * @author  ASAMI, Tomoharu
  */
 case class I18NContext(
@@ -196,6 +197,16 @@ case class I18NContext(
 }
 
 object I18NContext {
+  def CHARSET_UTF8 = CharsetUtils.UTF8
+  val LINESEPARATOR_LF = "\n"
+  val LINESEPARATOR_CR = "\r"
+  val LINESEPARATOR_CRLF = "\r\n"
+  val LOCALE_JA_JP = LocaleUtils.ja_JP
+  val LOCALE_EN_US = LocaleUtils.en_US
+  val LOCALE_EN_GB = LocaleUtils.en_GB
+  val LOCALE_DE_DE = LocaleUtils.de_DE
+  val LOCALE_DE_CH = LocaleUtils.de_CH
+
   val default = {
     val charset = Charset.defaultCharset()
     val newline = System.lineSeparator()

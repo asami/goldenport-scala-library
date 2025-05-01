@@ -18,7 +18,8 @@ import org.goldenport.util.StringUtils
  *  version Mar.  6, 2021
  *  version Apr. 15, 2021
  *  version Mar. 30, 2022
- * @version May. 30, 2024
+ *  version May. 30, 2024
+ * @version Sep.  5, 2024
  * @author  ASAMI, Tomoharu
  */
 case class MimeType(name: String) {
@@ -338,15 +339,17 @@ object MimeType {
   def isHtml(p: String): Boolean = p == mimetype.application_xhtml_xml || p.endsWith("html")
   def isJson(p: String): Boolean = p == mimetype.application_json
   def isImage(p: String): Boolean = p.startsWith("image/")
-  def isImageFile(p: URI): Boolean = getBySuffix(p).map(_.isImage).getOrElse(false)
-  def isImageFile(p: String): Boolean = getBySuffix(p).map(_.isImage).getOrElse(false)
+  def isImageFile(p: URI): Boolean = getByUri(p).map(_.isImage).getOrElse(false)
+  def isImageFile(p: String): Boolean = getByFilename(p).map(_.isImage).getOrElse(false)
 
   def isBinary(p: MimeType): Boolean = !isText(p)
   def isBinary(p: String): Boolean = !isText(p)
 
+  def getByUri(p: URI): Option[MimeType] = getByFilename(p.toString)
+  def getByFilename(p: String): Option[MimeType] = StringUtils.getSuffix(p).flatMap(getBySuffix)
+
   def getSuffix(p: MimeType): Option[String] = mimeSuffixMap.get(p)
   def getBySuffix(p: String): Option[MimeType] = suffixMimeMap.get(p.toLowerCase)
-  def getByFilename(p: String): Option[MimeType] = StringUtils.getSuffix(p).flatMap(getBySuffix)
   def getBySuffix(p: File): Option[MimeType] = StringUtils.getSuffix(p.getPath).flatMap(getBySuffix)
   def getBySuffix(p: URL): Option[MimeType] = StringUtils.getSuffix(p.getFile).flatMap(getBySuffix)
   def getBySuffix(p: URI): Option[MimeType] = StringUtils.getSuffix(p.getPath).flatMap(getBySuffix)

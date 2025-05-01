@@ -17,7 +17,9 @@ import org.goldenport.values.PathName
  *  version Oct. 17, 2020
  *  version Nov. 16, 2020
  *  version Feb.  2, 2021
- * @version Mar. 19, 2022
+ *  version Mar. 19, 2022
+ *  version Mar.  5, 2025
+ * @version Apr. 23, 2025
  * @author  ASAMI, Tomoharu
  */
 trait Tree[E] extends Showable {
@@ -65,6 +67,7 @@ trait Tree[E] extends Showable {
 object Tree {
   def create[T](): Tree[T] = new PlainTree[T]()
   def create[T](root: T): Tree[T] = PlainTree.create(root)
+  def create[T](root: TreeNode[T]): Tree[T] = new PlainTree(root)
 
   sealed trait MergeContentStrategy
   case object OverWriteMerge extends MergeContentStrategy
@@ -84,6 +87,9 @@ object Tree {
 
   def mergeClone[E](strategy: MergeContentStrategy, lhs: Tree[E], rhs: Tree[E]): Tree[E] =
     new Merger[E](strategy).apply(lhs, rhs)
+
+  def mergeClone[E](lhs: TreeNode[E], pathname: String, rhs: TreeNode[E]): TreeNode[E] =
+    new Merger[E](ComplementMerge).apply(lhs, pathname, rhs)
 
   class Merger[E](
     strategy: MergeContentStrategy,

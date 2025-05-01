@@ -1,7 +1,7 @@
 package org.goldenport.xml.dom
 
 import scalaz.{Node => _, Writer => _, _}, Scalaz._
-import scala.xml.{Node => XNode, Text => XText, Elem => XElem}
+import scala.xml.{Node => XNode, Text => XText, Elem => XElem, Comment => XComment}
 import scala.xml.{MetaData, TopScope, Null, PrefixedAttribute, UnprefixedAttribute, Group}
 import java.io._
 import org.cyberneko.html.parsers.DOMParser
@@ -34,7 +34,8 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version Jan.  1, 2021
  *  version Apr.  3, 2021
  *  version Mar. 28, 2022
- * @version May.  6, 2022
+ *  version May.  6, 2022
+ * @version Mar. 28, 2025
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -108,12 +109,31 @@ object DomUtils {
     transform(stylesheet, dom)
   }
 
-  def parseHtmlFragment(s: String): Node = {
+  def parseHtmlFragment(s: String): Node =
+    if (true)
+      _parse_html_fragment(s)
+    else
+      _parse_html_fragment_multi(s)
+
+  private def _parse_html_fragment(s: String): Node = {
     val doc = parseHtml(s)
     if (_is_html_body(s))
       doc
     else
       _to_fragment(doc)
+  }
+
+  private def _parse_html_fragment_multi(p: String): Node = {
+    val s = s"<div>$p</div>"
+    val doc = parseHtml(s)
+    val x = _to_fragment(doc)
+    _make_fragment(doc)(x)
+  }
+
+  private def _make_fragment(doc: Document)(p: Node): Node = p match {
+    case m: DocumentFragment => m
+    case m: Element => fragmentCloneElement(doc)(m)
+    case m => m
   }
 
   private def _is_html_body(s: String) = {
@@ -805,7 +825,8 @@ object DomUtils {
     case m: DocumentFragment =>
       val a = DomUtils.children(m).flatMap(toXmlOption)
       XmlUtils.nodesToNodeOption(a).getOrElse(Group(Nil))
-    case m => RAISE.notImplementedYetDefect
+    case m: Comment => XComment(m.getData)
+    case m => RAISE.notImplementedYetDefect(m.toString)
   }
 
   def toXmlOption(p: Node): Option[XNode] = p match {

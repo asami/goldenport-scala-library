@@ -6,7 +6,8 @@ package org.goldenport.tree
  *  version Nov. 18, 2019
  *  version Nov. 15, 2020
  *  version Feb.  2, 2021
- * @version Dec. 29, 2022
+ *  version Dec. 29, 2022
+ * @version Mar.  4, 2025
  * @author  ASAMI, Tomoharu
  */
 class PlainTree[E](node: TreeNode[E]) extends TreeBase[E] {
@@ -27,6 +28,12 @@ class PlainTree[E](node: TreeNode[E]) extends TreeBase[E] {
 object PlainTree {
   class PlainTreeFactory[E]() extends TreeFactory[E] {
     def createTree(node: TreeNode[E]): Tree[E] = new PlainTree(node)
+
+    def createTreeNode(name: String, content: Option[E], children: Seq[TreeNode[E]]): TreeNode[E] =
+      content.fold(createTreeNode(name, children))(createTreeNode(name, _, children))
+
+    def createTreeNode(name: String, children: Seq[TreeNode[E]]): TreeNode[E] =
+      PlainTreeNode.create(name, children)
 
     def createTreeNode(name: String, content: E, children: Seq[TreeNode[E]]): TreeNode[E] =
       PlainTreeNode.create(name, content, children)

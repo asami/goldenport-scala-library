@@ -12,7 +12,8 @@ import org.goldenport.values.NumberRange
  * @since   Jul.  7, 2019
  *  version Aug. 24, 2019
  *  version Sep. 16, 2019
- * @version Feb. 26, 2020
+ *  version Feb. 26, 2020
+ * @version Oct. 18, 2024
  * @author  ASAMI, Tomoharu
  */
 case class XTsv(matrix: VectorRowColumnMatrix[XmlOrJsonOrToken]) extends IMatrix[XmlOrJsonOrToken] {
@@ -30,6 +31,7 @@ case class XTsv(matrix: VectorRowColumnMatrix[XmlOrJsonOrToken]) extends IMatrix
   def appendColumn(ps: Seq[XmlOrJsonOrToken]): IMatrix[XmlOrJsonOrToken] = RAISE.unsupportedOperationFault
   def appendColumns(ps: IMatrix[XmlOrJsonOrToken]): IMatrix[XmlOrJsonOrToken] = RAISE.unsupportedOperationFault
   def transpose: IMatrix[XmlOrJsonOrToken] = RAISE.notImplementedYetDefect
+  def map[A](p: XmlOrJsonOrToken => A): IMatrix[A] = RAISE.notImplementedYetDefect
 }
 
 object XTsv {

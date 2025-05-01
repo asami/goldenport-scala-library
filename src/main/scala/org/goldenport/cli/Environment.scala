@@ -17,7 +17,8 @@ import Environment._
  *  version Jan. 24, 2021
  *  version Mar. 27, 2021
  *  version Feb. 28, 2022
- * @version Mar.  6, 2022
+ *  version Mar.  6, 2022
+ * @version Oct. 14, 2024
  * @author  ASAMI, Tomoharu
  */
 case class Environment(
@@ -26,6 +27,7 @@ case class Environment(
   appEnvironment: AppEnvironment = NoneAppEnvironment
 ) {
   def recorder = config.recorder
+  def contextFoundation = config.contextFoundation
   def charset = config.charset
   def charsetInputFile = config.charsetInputFile
   def charsetOutputFile = config.charsetOutputFile
@@ -85,13 +87,53 @@ object Environment {
     new Environment(monitor, config)
   }
 
+  def createJaJp(): Environment = createJaJp(Array())
+
+  def createJaJp(args: Array[String]): Environment = {
+    val monitor = Monitor.create(args)
+    val config = Config.buildJaJp(args)
+    new Environment(monitor, config)
+  }
+
+  def createEnUs(): Environment = createEnUs(Array())
+
+  def createEnUs(args: Array[String]): Environment = {
+    val monitor = Monitor.create(args)
+    val config = Config.buildEnUs(args)
+    new Environment(monitor, config)
+  }
+
+  def createEnGb(): Environment = createEnGb(Array())
+
+  def createEnGb(args: Array[String]): Environment = {
+    val monitor = Monitor.create(args)
+    val config = Config.buildEnGb(args)
+    new Environment(monitor, config)
+  }
+
+  def createDeDe(): Environment = createDeDe(Array())
+
+  def createDeDe(args: Array[String]): Environment = {
+    val monitor = Monitor.create(args)
+    val config = Config.buildDeDe(args)
+    new Environment(monitor, config)
+  }
+
+  def createDeCh(): Environment = createDeCh(Array())
+
+  def createDeCh(args: Array[String]): Environment = {
+    val monitor = Monitor.create(args)
+    val config = Config.buildDeCh(args)
+    new Environment(monitor, config)
+  }
+
   trait EnvironmentExecutionContextBase extends ExecutionContextBase {
     def environment: Environment
 
     protected def forward_Recorder = environment.recorder
 
     def locale = environment.locale
-    def formatContext = environment.formatContext
-    def dateTimeContext = environment.dateTimeContext // TODO base
+    override def formatContext = environment.formatContext
+    override def dateTimeContext = environment.dateTimeContext
   }
 }

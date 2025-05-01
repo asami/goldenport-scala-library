@@ -19,7 +19,8 @@ import org.goldenport.parser.{ParseResult, ParseSuccess, ParseFailure, EmptyPars
  *  version Feb. 29, 2020
  *  version Jan. 23, 2021
  *  version Mar. 28, 2021
- * @version Mar. 19, 2022
+ *  version Mar. 19, 2022
+ * @version Nov. 14, 2024
  * @author  ASAMI, Tomoharu
  */
 case class Lxsv(
@@ -39,13 +40,27 @@ case class Lxsv(
   def display: String = print // TODO
   def show: String = print // TODO
 
-  def valueMap: Map[Symbol, Any] = vectormap.mapValues(_.value)
+  def valueMap: VectorMap[Symbol, Any] = vectormap.mapValues(_.value)
+
+  def stringMap: VectorMap[Symbol, String] = vectormap.mapValues(_.raw)
+
+  def tokenMap: VectorMap[Symbol, LogicalToken] = vectormap
+
+  def toStringStringVectorMap: VectorMap[String, String] = VectorMap(vectormap.vector.map {
+    case (k, v) => k.name -> v.string
+  })
+
+  def toIRecordToken: IRecord = IRecord.create(vectormap)
+
+  def toIRecordString: IRecord = IRecord.create(stringMap)
 
   def marshall: String = RAISE.notImplementedYetDefect("Implement simplified format.")
 
   def withoutLocation: Lxsv = copy(vectormap = vectormap.mapValues(_.clearLocation))
 
-  def +(rhs: IRecord): IRecord = RAISE.notImplementedYetDefect
+  def +(rhs: Lxsv): Lxsv = copy(vectormap = vectormap append rhs.vectormap)
+
+  def +(rhs: IRecord): Lxsv = RAISE.notImplementedYetDefect
 }
 
 object Lxsv {
@@ -58,6 +73,11 @@ object Lxsv {
   private val _lxsv_token_chars = Vector('\t', ';', ',')
   private val _lxsv_candidate_chars = _lxsv_token_chars :+ '"'
   private val _complex_chars = Vector('<', '{', '[')
+
+  implicit object LxsvMonoid extends Monoid[Lxsv] {
+    def zero = empty
+    def append(lhs: Lxsv, rhs: => Lxsv) = lhs + rhs
+  }
 
   def apply(strategy: Xsv.Strategy, p: (Symbol, Any), ps: (Symbol, Any)*): Lxsv =
     apply(strategy, p +: ps)

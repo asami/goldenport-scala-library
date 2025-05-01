@@ -2,9 +2,9 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.1.13"
+version := "2.2.0"
 
-scalaVersion := "2.12.7"
+scalaVersion := "2.12.18"
 
 // crossScalaVersions := Seq("2.11.6", "2.10.5")
 
@@ -25,6 +25,8 @@ resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
 resolvers += "GitHab releases 2020" at "https://raw.github.com/asami/maven-repository/2020/releases"
 
 resolvers += "GitHab releases" at "https://raw.github.com/asami/maven-repository/2021-scala2.12/releases"
+
+resolvers += "GitHub Packages" at "https://maven.pkg.github.com/asami/maven-repository"
 
 resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository"
 
@@ -61,6 +63,16 @@ libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "2.20.0"
 
 libraryDependencies += "com.typesafe" % "config" % "1.2.1"
 
+libraryDependencies += "io.circe" %% "circe-core" % "0.8.0"
+
+libraryDependencies += "io.circe" %% "circe-generic" % "0.8.0"
+
+libraryDependencies += "io.circe" %% "circe-parser" % "0.8.0"
+
+libraryDependencies += "io.circe" %% "circe-yaml" % "0.8.0"
+
+libraryDependencies += "org.yaml" % "snakeyaml" % "2.4"
+
 // libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.9.4" 
 
 libraryDependencies += "org.typelevel" %% "spire" % "0.14.1"
@@ -73,6 +85,8 @@ libraryDependencies += "commons-codec" % "commons-codec" % "1.10" % "compile"
 
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3" % "provided"
 
+libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.6"
+
 libraryDependencies += "net.sourceforge.nekohtml" % "nekohtml" % "1.9.22" % "compile"
 
 libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.10" % "provided" exclude("org.scala-stm", "scala-stm_2.10.0")
@@ -83,28 +97,16 @@ libraryDependencies += "black.ninia" % "jep" % "3.9.0" % "compile"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5"
 
+libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "5.10.0.202012080955-r" % "provided"
+
 libraryDependencies += "junit" % "junit" % "4.12" % "test"
 
 // libraryDependencies += "org.goldenport" %% "goldenport-scalatest-lib" % "2.0.0" % "test"
 
-//
-// publishTo := Some(Resolver.file("asamioffice", file("target/maven-repository")))
-// AutoMkcol.globalSettings
+publishTo := Some(
+  "GitHub Packages" at "https://maven.pkg.github.com/asami/maven-repository"
+)
 
-// credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
-// publishTo <<= version { v: String =>
-//   val backlog = "https://everforth.backlog.jp/dav/APC/maven/"
-//   if (v.trim.endsWith("SNAPSHOT"))
-//     Some("Backlog snapshots" at backlog + "snapshots")
-//   else
-//     Some("Backlog releases" at backlog + "releases")
-// }
-
-val mavenrepo = settingKey[String]("mavenrepo")
-
-mavenrepo := sys.env.getOrElse("PUBLISH_MAVEN_REPO", default = "target/maven-repository")
-
-publishTo <<= mavenrepo { v: String =>
-  Some(Resolver.file("file", file(v)))
-}
+publishMavenStyle := true

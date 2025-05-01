@@ -13,7 +13,8 @@ import org.scalatest._
  *  version Nov. 26, 2019
  *  version Jan. 20, 2020
  *  version Jan. 17, 2021
- * @version May. 11, 2021
+ *  version May. 11, 2021
+ * @version Jan.  1, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -40,7 +41,7 @@ class LogicalLinesSpec extends WordSpec with Matchers with GivenWhenThen {
   }
 
   "easytext" should {
-    val config = LogicalLines.Config.easytext
+    val config = LogicalLines.Config.easyText
   }
 
   "script" should {
