@@ -10,11 +10,12 @@ import org.yaml.snakeyaml.Yaml
 import org.goldenport.context.Consequence
 import org.goldenport.io.InputSource
 import org.goldenport.util.StringUtils
-import org.goldenport.util.CircleUtils
+import org.goldenport.util.CirceUtils
 
 /*
  * @since   Apr. 21, 2025
- * @version Apr. 21, 2025
+ *  version Apr. 21, 2025
+ * @version May.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 object ConfigLoader {
@@ -51,7 +52,7 @@ object ConfigLoader {
     def _load_yaml_(): Consequence[T] = Consequence run {
       val yaml = new Yaml()
       val raw = yaml.load(in.openInputStream).asInstanceOf[java.util.Map[String, Object]]
-      val json = CircleUtils.convertToJson(raw)
+      val json = CirceUtils.convertToJson(raw)
       Consequence.from(json.as[T])
     }
 

@@ -8,10 +8,11 @@ import org.goldenport.collection.NonEmptyVector
 
 /*
  * @since   Apr. 21, 2025
- * @version Apr. 27, 2025
+ *  version Apr. 27, 2025
+ * @version May.  2, 2025
  * @author  ASAMI, Tomoharu
  */
-object CircleUtils {
+object CirceUtils {
   // Scala 2.10
   def convertToJson(value: Any): Json = value match {
     case m: Json => m
@@ -66,7 +67,7 @@ object CircleUtils {
 
       private def _skip = this
     }
-    ps.toList./:(Z())(_+_).r
+    ps.toList.foldLeft(Z())(_+_).r
   }
 
   def toJson(p: (String, Any), ps: (String, Any)*): Json = {

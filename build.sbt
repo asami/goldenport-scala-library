@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.2.0"
+version := "2.2.1-SNAPSHOT"
 
 scalaVersion := "2.12.18"
 
@@ -63,19 +63,19 @@ libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "2.20.0"
 
 libraryDependencies += "com.typesafe" % "config" % "1.2.1"
 
-libraryDependencies += "io.circe" %% "circe-core" % "0.8.0"
+libraryDependencies += "io.circe" %% "circe-core" % "0.14.13"
 
-libraryDependencies += "io.circe" %% "circe-generic" % "0.8.0"
+libraryDependencies += "io.circe" %% "circe-generic" % "0.14.13"
 
-libraryDependencies += "io.circe" %% "circe-parser" % "0.8.0"
+libraryDependencies += "io.circe" %% "circe-parser" % "0.14.13"
 
-libraryDependencies += "io.circe" %% "circe-yaml" % "0.8.0"
+libraryDependencies += "io.circe" %% "circe-yaml" % "1.15.0"
 
 libraryDependencies += "org.yaml" % "snakeyaml" % "2.4"
 
 // libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.9.4" 
 
-libraryDependencies += "org.typelevel" %% "spire" % "0.14.1"
+libraryDependencies += "org.typelevel" %% "spire" % "0.17.0"
 
 libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.25"
 
@@ -85,7 +85,7 @@ libraryDependencies += "commons-codec" % "commons-codec" % "1.10" % "compile"
 
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3" % "provided"
 
-libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.6"
+libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.4.2"
 
 libraryDependencies += "net.sourceforge.nekohtml" % "nekohtml" % "1.9.22" % "compile"
 

@@ -63,7 +63,8 @@ import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
  *  version Dec. 12, 2022
  *  version Apr. 10, 2023
  *  version Nov. 22, 2023
- * @version Apr.  6, 2025
+ *  version Apr.  6, 2025
+ * @version May.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -1004,7 +1005,7 @@ object HoconUtils {
 
   def createHocon(props: Seq[(String, Any)]): Config = {
     val config = ConfigFactory.empty
-    props./:(config)((z, x) => z.withValue(x._1, _to_value(x._2)))
+    props.foldLeft(config)((z, x) => z.withValue(x._1, _to_value(x._2)))
   }
 
   private def _to_value(p: Any): ConfigValue = p match {

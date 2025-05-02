@@ -47,7 +47,8 @@ import org.goldenport.values.DateTimePeriod
  *  version Nov. 28, 2022
  *  version Dec. 28, 2022
  *  version Jan. 16, 2023
- * @version Mar.  2, 2025
+ *  version Mar.  2, 2025
+ * @version May.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 object AnyUtils {
@@ -189,7 +190,7 @@ object AnyUtils {
       case v: Short => BigDecimal(v)
       case v: Int => BigDecimal(v)
       case v: Long => BigDecimal(v)
-      case v: Float => BigDecimal(v)
+      case v: Float => BigDecimal(v.toDouble)
       case v: Double => BigDecimal(v)
       case v: BigInt => BigDecimal(v)
       case v: BigDecimal => v

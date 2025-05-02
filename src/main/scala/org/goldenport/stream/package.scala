@@ -19,7 +19,8 @@ import scodec.bits.ByteVector
  *  version Oct.  6, 2015
  *  version Dec. 21, 2015
  *  version Feb. 29, 2016
- * @version Aug. 29, 2017
+ *  version Aug. 29, 2017
+ * @version May.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 package object stream {
@@ -28,7 +29,7 @@ package object stream {
       iter: Iterator[T]
     ): Process[Task, T] = {
       def acquire = Task.now(iter)
-      def release(src: Iterator[T]) = Task.now()
+      def release(src: Iterator[T]) = Task.now(())
       def execute(src: Iterator[T]) = Task delay {
         if (src.hasNext)
           src.next
