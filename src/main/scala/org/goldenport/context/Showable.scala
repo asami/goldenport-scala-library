@@ -9,7 +9,8 @@ import org.goldenport.util.AnyUtils
  * @since   Dec. 20, 2021
  *  version Mar. 19, 2022
  *  version Aug. 21, 2023
- * @version Mar. 15, 2025
+ *  version Mar. 15, 2025
+ * @version May.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 trait Showable extends org.goldenport.extension.Showable {
@@ -21,10 +22,12 @@ object Showable {
   trait Base extends Showable {
     override def toString() = show
 
-    protected def show_Name: String
+//    protected def show_Name: String
     protected def print_String: String
     protected def display_String: String
     protected def show_String: String
+
+    protected def label_string = StringUtils.capitalize(getClass.getName)
 
     protected final def escape_string(p: String) =
       StringFormatter.display.escapeDisplay(p)
@@ -35,8 +38,6 @@ object Showable {
   }
 
   trait Control extends Base {
-    protected lazy val label_string = StringUtils.capitalize(show_Name)
-
     override def print = s"[${label_string}]${print_String}"
 
     override def display = s"[${label_string}]${escape_string(display_String)}"
@@ -48,7 +49,8 @@ object Showable {
   }
   trait Value extends Base {
     protected def show_Name: String
-    protected lazy val label_string = StringUtils.capitalize(show_Name)
+
+    protected override def label_string = StringUtils.capitalize(show_Name)
 
     override def print = print_String
 
