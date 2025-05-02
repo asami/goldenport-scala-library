@@ -5,11 +5,12 @@ import org.goldenport.observability.ObservabilityContext
 /*
  * @since   Feb. 17, 2019
  *  version Feb. 25, 2019
- * @version Apr. 28, 2025
+ *  version Apr. 28, 2025
+ * @version May.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 trait Loggable {
-  protected def get_Observability_Context: Option[ObservabilityContext]
+  protected def get_Observability_Context: Option[ObservabilityContext] = None
 
   protected def log_Location: LogMark.Location = LogMark.ObjectLocation(this)
   protected def log_Action: LogMark.Action = LogMark.ProcessingAction
