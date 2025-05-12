@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.2.1"
+version := "2.2.2"
 
 scalaVersion := "2.12.18"
 
@@ -14,11 +14,25 @@ scalacOptions += "-unchecked"
 
 scalacOptions += "-feature"
 
-incOptions := incOptions.value.withNameHashing(true)
+// incOptions := incOptions.value.withNameHashing(true)
 
-javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
+javacOptions ++= Seq("--release", "21")
 
-resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
+javaOptions ++= Seq(
+  "--module-path", sys.props("java.class.path"),
+  "--add-modules", "javafx.controls,javafx.fxml"
+)
+
+lazy val javafxVersion = "21"
+
+lazy val osClassifier = System.getProperty("os.name").toLowerCase match {
+  case name if name.contains("mac")   => "mac"
+  case name if name.contains("win")   => "win"
+  case name if name.contains("linux") => "linux"
+  case _ => throw new RuntimeException("Unsupported OS")
+}
+
+// resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
 
 // resolvers += "Asami Maven Repository" at "http://www.asamioffice.com/maven"
 
@@ -31,13 +45,14 @@ resolvers += "GitHub Packages" at "https://maven.pkg.github.com/asami/maven-repo
 resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository"
 
 // For WPath and GXml. TODO separate to reduce dependencies.
-libraryDependencies <++= scalaVersion { v =>
+libraryDependencies ++= {
+  val v = scalaVersion.value
   if (v.startsWith("2.10"))
     Nil
   else
     Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1",
-      "org.scala-lang.modules" %% "scala-xml" %  "1.1.1"
+      "org.scala-lang.modules" %% "scala-xml" % "1.1.1"
     )
 }
 
@@ -100,6 +115,15 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5"
 libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "5.10.0.202012080955-r" % "provided"
 
 libraryDependencies += "junit" % "junit" % "4.12" % "test"
+
+libraryDependencies ++= Seq(
+  "org.openjfx" % "javafx-base" % javafxVersion classifier osClassifier,
+  "org.openjfx" % "javafx-controls" % javafxVersion classifier osClassifier,
+  "org.openjfx" % "javafx-graphics" % javafxVersion classifier osClassifier,
+  "org.openjfx" % "javafx-fxml" % javafxVersion classifier osClassifier,
+  "org.openjfx" % "javafx-swing" % javafxVersion classifier osClassifier,
+  "org.openjfx" % "javafx-web" % javafxVersion classifier osClassifier
+)
 
 // libraryDependencies += "org.goldenport" %% "goldenport-scalatest-lib" % "2.0.0" % "test"
 
