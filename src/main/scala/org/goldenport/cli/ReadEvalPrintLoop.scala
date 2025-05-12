@@ -16,7 +16,8 @@ import org.goldenport.console._
  *  version Feb. 14, 2019
  *  version Apr. 21, 2019
  *  version Jan. 20, 2020
- * @version Jan. 10, 2021
+ *  version Jan. 10, 2021
+ * @version May. 10, 2025
  * @author  ASAMI, Tomoharu
  */
 class ReadEvalPrintLoop(

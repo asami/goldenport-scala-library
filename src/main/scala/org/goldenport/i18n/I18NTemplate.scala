@@ -9,7 +9,8 @@ import java.util.Locale
  *  version Sep. 23, 2019
  *  version Apr. 17, 2020
  *  version Mar. 27, 2021
- * @version Apr. 29, 2021
+ *  version Apr. 29, 2021
+ * @version May. 11, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NTemplate(
@@ -18,6 +19,20 @@ case class I18NTemplate(
   ja: String,
   map: Map[Locale, String]
 ) {
+  def appendAll(s: String): I18NTemplate = I18NTemplate(
+    c + s,
+    en + s,
+    ja + s,
+    map.mapValues(_ + s)
+  )
+
+  def prependAll(s: String): I18NTemplate = I18NTemplate(
+    s + c,
+    s + en,
+    s + ja,
+    map.mapValues(x => s + x)
+  )
+
   def toI18NMessage(x: Any, xs: Any*): I18NMessage = toI18NMessage(x :: xs.toList)
 
   def toI18NMessage(parameters: Seq[Any]): I18NMessage =

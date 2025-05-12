@@ -17,7 +17,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Jun. 20, 2021
  *  version Feb.  9, 2022
  *  version Jun. 13, 2022
- * @version Dec. 28, 2022
+ *  version Dec. 28, 2022
+ * @version May. 11, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NMessage(
@@ -108,7 +109,7 @@ case class I18NMessage(
         }
       }
     }
-    val locales = rhs.map./:(Z(map))(_+_).r
+    val locales = rhs.map.foldLeft(Z(map))(_+_).r
     I18NMessage(
       s"${_c}${delimiter}${rhs._c}",
       s"${_en}${delimiter}${rhs._en}",
@@ -123,6 +124,14 @@ case class I18NMessage(
     _en + s,
     _ja + s,
     map.mapValues(_ + s),
+    parameters
+  )
+
+  def prependAll(s: String): I18NMessage = I18NMessage(
+    s + _c,
+    s + _en,
+    s + _ja,
+    map.mapValues(x => s + x),
     parameters
   )
 
@@ -145,7 +154,7 @@ case class I18NMessage(
       s"${_c}: ${p.c}",
       s"${_en}: ${p.en}",
       s"${_ja}: ${p.ja}",
-      map./:(Z(p.map))(_+_).r,
+      map.foldLeft(Z(p.map))(_+_).r,
       parameters
     )
   }
@@ -265,7 +274,7 @@ object I18NMessage {
     def parsejson = {
       Json.parse(p) match {
         case JsObject(ms) => // TODO parameters
-          val a = for ((l, s) <- ms.toVector) yield (new Locale(l), s.toString)
+          val a = for ((l, s) <- ms.toVector) yield (Locale.forLanguageTag(l), s.toString)
           apply(a)
         case m => throw new IllegalArgumentException(s"I18NMessage#parse: $m")
       }
@@ -281,12 +290,12 @@ object I18NMessage {
   def concat(ps: Seq[I18NMessage]): I18NMessage = ps.toList match {
     case Nil => empty
     case x :: Nil => x
-    case x :: xs => xs./:(x)(_ concat _)
+    case x :: xs => xs.foldLeft(x)(_ concat _)
   }
 
   def concatOption(ps: Seq[I18NMessage]): Option[I18NMessage] = ps.toList match {
     case Nil => None
     case x :: Nil => Some(x)
-    case x :: xs => Some(xs./:(x)(_ concat _))
+    case x :: xs => Some(xs.foldLeft(x)(_ concat _))
   }
 }

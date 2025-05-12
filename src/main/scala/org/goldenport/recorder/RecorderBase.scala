@@ -32,14 +32,14 @@ trait RecorderBase extends Recorder with Loggable {
 
   def debug(message: => String): Unit = {
     log_debug(message)
-    out_Standard(message)
-    out_Report(message)
+//    out_Standard(message)
+//    out_Report(message)
   }
 
   def trace(message: => String): Unit = {
     log_trace(message)
-    out_Standard(message)
-    out_Report(message)
+//    out_Standard(message)
+//    out_Report(message)
   }
 
   def message(message: String): Unit = out_Standard(message)

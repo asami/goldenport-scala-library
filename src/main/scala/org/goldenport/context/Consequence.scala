@@ -36,7 +36,8 @@ import org.goldenport.extension.IRecord
  *  version Jul. 23, 2023
  *  version Sep. 27, 2023
  *  version Mar.  9, 2025
- * @version Apr. 21, 2025
+ *  version Apr. 21, 2025
+ * @version May. 11, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -90,6 +91,8 @@ sealed trait Consequence[+T] {
   def takeOrInvalidArgumentFault(message: String): T = get getOrElse Conclusion.invalidArgumentFault(message).RAISE
 
   def takeOrIllegalConfigurationDefect(message: String): T = get getOrElse Conclusion.config.illegalConfigurationDefect(message).RAISE
+
+  def onErrorPrependMessage(msg: String): Consequence[T]
 }
 
 object Consequence {
@@ -126,6 +129,8 @@ object Consequence {
     def toPayload(f: T => Any) = Payload(conclusion.toPayload, Some(f(result)), Map.empty)
     def toPayload(f: (Conclusion => Conclusion.Payload, T => Any)): Consequence.Payload =
       Payload(f._1(conclusion), Some(f._2(result)), Map.empty)
+
+    def onErrorPrependMessage(msg: String): Consequence[T] = this
   }
 
   case class Error[+T](
@@ -179,10 +184,24 @@ object Consequence {
 
     def RAISE: Nothing = throw getException.getOrElse(new ConsequenceException(this))
     def RAISEC: Nothing = throw new ConsequenceException(this)
+
+    def onErrorPrependMessage(msg: String): Consequence[T] =
+      copy(conclusion = conclusion.onErrorPrependMessage(msg))
   }
 
-  implicit object ConsequenceApplicative extends Applicative[Consequence] {
-    def ap[A, B](fa: => Consequence[A])(f: => Consequence[A => B]): Consequence[B] = f match {
+  // implicit object ConsequenceApplicative extends Applicative[Consequence] {
+  //   def ap[A, B](fa: => Consequence[A])(f: => Consequence[A => B]): Consequence[B] = f match {
+  //     case Success(sf, cs) => fa.map(sf).add(cs)
+  //     case m: Error[_] => fa match {
+  //       case mm: Success[_] => m.add(mm.conclusion).asInstanceOf[Error[B]]
+  //       case mm: Error[_] => mm.add(m.conclusion).asInstanceOf[Error[B]]
+  //     }
+  //   }
+  //   def point[A](a: => A): Consequence[A] = Success(a)
+  // }
+
+  implicit object ConsequenceMonad extends Monad[Consequence] {
+    override def ap[A, B](fa: => Consequence[A])(f: => Consequence[A => B]): Consequence[B] = f match {
       case Success(sf, cs) => fa.map(sf).add(cs)
       case m: Error[_] => fa match {
         case mm: Success[_] => m.add(mm.conclusion).asInstanceOf[Error[B]]
@@ -190,6 +209,11 @@ object Consequence {
       }
     }
     def point[A](a: => A): Consequence[A] = Success(a)
+    def bind[A, B](fa: Consequence[A])(f: A => Consequence[B]): Consequence[B] =
+      fa match {
+        case Success(sf, cs) => f(sf)
+        case Error(cs) => Error(cs)
+      }
   }
 
   def apply[T](p: => T): Consequence[T] = execute(p)

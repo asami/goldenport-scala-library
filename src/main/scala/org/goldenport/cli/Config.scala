@@ -42,7 +42,8 @@ import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperation
  *  version Jan. 30, 2023
  *  version Jul. 22, 2023
  *  version Oct. 14, 2024
- * @version Apr. 28, 2025
+ *  version Apr. 28, 2025
+ * @version May. 11, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Config(
@@ -80,6 +81,14 @@ case class Config(
 }
 
 object Config {
+  type ParseResult[T] = ConfigurationParseState.Result[T]
+
+  val DEFAULT_RESOURCE_BUNDLE_NAME = "Resources"
+  val PROP_CHARSET = "charset"
+  val PROP_NEWLINE = "newline"
+  val PROP_LOCALE = "locale"
+  val PROP_TIMEZONE = "timezone"
+
   case class Parameters(
     charset: Option[Charset] = None,
     lineSeparator: Option[String] = None,
@@ -101,11 +110,44 @@ object Config {
     _create(hocon)
   }
 
-  def build(args: Array[String]): Config = {
+  def parse(p: ConfigurationParseState): ParseResult[Config] = {
     val hocon = _build()
-    // TODO args
-    _create(hocon)
+    val state = p.complement(hocon)
+    _parse(state)
   }
+
+  // def parse(args: Array[String]): ParseResult[Config] = {
+  //   val hocon = _build()
+  //   val state = ConfigurationParseState(args, hocon)
+  //   _parse(state)
+  // }
+
+  // def build0(args: Array[String]): (Array[String], Config) = {
+  //   val hocon1 = _build()
+  //   val (args1, hocon2) = _build_hocon(args)
+  //   val hocon = hocon2.withFallback(hocon1)
+  //   (args1, _create(hocon))
+  // }
+
+  // private def _build_hocon(args: Array[String]): (Array[String], HoconConfig) = {
+  //   case class Z(
+  //     props: Map[String, String] = Map.empty,
+  //     candidate: Option[String] = None
+  //   ) {
+  //     def r = (remainder, HoconUtils.createHocon(props))
+
+  //     def +(rhs: String) =
+  //       if (rhs.startsWith("-")) {
+  //         copy(candidate = Some(rhs.dropWhile(_ == '-')))
+  //       } else {
+  //         candidate match {
+  //           case Some(s) => copy(props = props + (s -> rhs), candidate = None)
+  //           case None => this
+  //         }
+  //       }
+  //   }
+  //   args.foldLeft(Z())(_+_).r
+  // }
 
   def build(appname: String): Config = {
     val hocon = _build(appname)
@@ -137,54 +179,56 @@ object Config {
     _create(hocon)
   }
 
-  def buildJaJp(): Config = buildJaJp(Array())
+  def buildJaJp(): Config = parseJaJp(ConfigurationParseState.empty).result
 
-  def buildJaJp(args: Array[String]): Config = {
+  def parseJaJp(p: ConfigurationParseState): ParseResult[Config] = {
     val hocon = _build()
-    // TODO args
+    val state = p.complement(hocon)
     val params = Parameters(
       Some(I18NContext.CHARSET_UTF8),
       Some(I18NContext.LINESEPARATOR_LF),
       Some(I18NContext.LOCALE_JA_JP),
       Some(DateTimeContext.nowJst())
     )
-    _create(hocon, params)
+    _parse(state, params)
   }
 
+  private def _parse(state: ConfigurationParseState, params: Parameters): ParseResult[Config] =
+    _parse(DEFAULT_RESOURCE_BUNDLE_NAME, state, params)
 
+  def buildEnUs(): Config = parseEnUs(ConfigurationParseState.empty).result
 
-  def buildEnUs(): Config = buildEnUs(Array())
-
-  def buildEnUs(args: Array[String]): Config = {
+  def parseEnUs(p: ConfigurationParseState): ParseResult[Config] = {
     val hocon = _build()
-    // TODO args
+    val state = p.complement(hocon)
     val params = Parameters(
       Some(I18NContext.CHARSET_UTF8),
       Some(I18NContext.LINESEPARATOR_LF),
       Some(I18NContext.LOCALE_EN_US),
       Some(DateTimeContext.nowEst())
     )
-    _create(hocon, params)
+    _parse(state, params)
   }
 
-  def buildEnGb(): Config = buildEnGb(Array())
+  def buildEnGb(): Config = parseEnGb(ConfigurationParseState.empty).result
 
-  def buildEnGb(args: Array[String]): Config = {
+  def parseEnGb(p: ConfigurationParseState): ParseResult[Config] = {
     val hocon = _build()
-    // TODO args
+    val state = p.complement(hocon)
     val params = Parameters(
       Some(I18NContext.CHARSET_UTF8),
       Some(I18NContext.LINESEPARATOR_LF),
       Some(I18NContext.LOCALE_EN_GB),
       Some(DateTimeContext.nowGmt())
     )
-    _create(hocon, params)
+    _parse(state, params)
   }
 
-  def buildDeDe(): Config = buildDeDe(Array())
+  def buildDeDe(): Config = parseDeDe(ConfigurationParseState.empty).result
 
-  def buildDeDe(args: Array[String]): Config = {
+  def parseDeDe(p: ConfigurationParseState): ParseResult[Config] = {
     val hocon = _build()
+    val state = p.complement(hocon)
     // TODO args
     val params = Parameters(
       Some(I18NContext.CHARSET_UTF8),
@@ -192,28 +236,28 @@ object Config {
       Some(I18NContext.LOCALE_DE_DE),
       Some(DateTimeContext.nowEuropeBerlin())
     )
-    _create(hocon, params)
+    _parse(state, params)
   }
 
-  def buildDeCh(): Config = buildDeCh(Array())
+  def buildDeCh(): Config = parseDeCh(ConfigurationParseState.empty).result
 
-  def buildDeCh(args: Array[String]): Config = {
+  def parseDeCh(p: ConfigurationParseState): ParseResult[Config] = {
     val hocon = _build()
-    // TODO args
+    val state = p.complement(hocon)
     val params = Parameters(
       Some(I18NContext.CHARSET_UTF8),
       Some(I18NContext.LINESEPARATOR_LF),
       Some(I18NContext.LOCALE_DE_CH),
       Some(DateTimeContext.nowEuropeZurich())
     )
-    _create(hocon, params)
+    _parse(state, params)
   }
 
   private def _build(): HoconConfig = {
     val base = ConfigFactory.load()
     val homefw = _load_home("goldenport")
     val currentfw = _load_current("goldenport")
-    Vector(homefw, currentfw)./:(base)((z, x) => x.map(z.withFallback).getOrElse(z))
+    Vector(homefw, currentfw).foldLeft(base)((z, x) => x.map(z.withFallback).getOrElse(z))
   }
 
   private def _build(appname: String): HoconConfig = {
@@ -222,7 +266,7 @@ object Config {
     val homeapp = _load_home(appname)
     val currentfw = _load_current("goldenport")
     val currentapp = _load_current(appname)
-    Vector(homefw, homeapp, currentfw, currentapp)./:(base)((z, x) => x.map(z.withFallback).getOrElse(z))
+    Vector(homefw, homeapp, currentfw, currentapp).foldLeft(base)((z, x) => x.map(z.withFallback).getOrElse(z))
   }
 
   private def _load_home(p: String): Option[HoconConfig] =
@@ -249,13 +293,17 @@ object Config {
       None
   }
 
-  val DEFAULT_RESOURCE_BUNDLE_NAME = "Resources"
-
   private def _create(hocon: HoconConfig): Config = _create(DEFAULT_RESOURCE_BUNDLE_NAME, hocon, Parameters.empty)
 
   private def _create(hocon: HoconConfig, params: Parameters): Config = _create(DEFAULT_RESOURCE_BUNDLE_NAME, hocon, params)
 
-  private def _create(resourcename: String, hocon: HoconConfig, params: Parameters): Config = {
+  private def _create(resourcename: String, hocon: HoconConfig, params: Parameters): Config =
+    _parse(resourcename, ConfigurationParseState(hocon), params).result
+
+  private def _parse(state: ConfigurationParseState): ParseResult[Config] =
+    _parse(DEFAULT_RESOURCE_BUNDLE_NAME, state, Parameters.empty)
+
+  private def _parse(resourcename: String, state: ConfigurationParseState, params: Parameters): ParseResult[Config] = {
     // TODO hocon
     val charset = params.charset getOrElse Charset.defaultCharset()
     val newline = params.lineSeparator getOrElse System.lineSeparator()
@@ -267,7 +315,7 @@ object Config {
     val calendarformatters = CalendarFormatter.Factory.default
     val stringformatter = StringFormatter.default
     val formatcontext = FormatContext.create(locale, timezone)
-    val bundle = EmptyResourceBundle
+    val bundle = EmptyResourceBundle // TODO
     val homedir = Option(System.getProperty("user.home")).map(x => new File(x))
     val workdir = Option(System.getProperty("user.dir")).map(x => new File(x))
     val tmpdir = Option(System.getProperty("java.io.tmpdir")).map(x => new File(x))
@@ -297,15 +345,19 @@ object Config {
       notificationcontext,
       randomcontext
     )
-    Config(
+    val r1 = LogConfig.parse(state)
+    val logconfig = r1.result
+    val hocon = r1.state.hocon
+    val c = Config(
       contextfoundation,
       homedir,
       workdir,
       tmpdir,
       projectdir,
-      LogConfig.empty,
+      logconfig,
       GoldenportNumericalOperations,
       RichConfig(hocon)
     )
+    ConfigurationParseState.Result(r1.state, c)
   }
 }

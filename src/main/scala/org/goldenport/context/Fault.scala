@@ -28,7 +28,8 @@ import Fault._
  *  version Oct. 26, 2022
  *  version Sep. 28, 2023
  *  version Nov. 11, 2023
- * @version Mar. 16, 2025
+ *  version Mar. 16, 2025
+ * @version May. 11, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -47,6 +48,8 @@ sealed trait Fault extends Incident {
     reaction.toPayload,
     implicitStatusCode.toPayload
   )
+
+  def prependMessage(msg: String): Fault
 }
 
 sealed trait Parameters1 extends { self: Fault =>
@@ -108,6 +111,9 @@ object Fault {
     reaction: DetailCode.Reaction,
     implicitStatusCode: StatusCode
   ) extends Fault {
+    def prependMessage(msg: String): RemoteFault =
+      copy(message = message.prependAll(msg))
+
     def properties(locale: Locale): IRecord = IRecord.dataS(
       KEY_NAME -> name,
       KEY_MESSAGE -> message(locale)
@@ -130,6 +136,9 @@ case class ValueDomainValueFault(
   value: String = "",
   messageTemplate: I18NTemplate = ValueDomainValueFault.template
 ) extends ValueDomainFault {
+  def prependMessage(msg: String): ValueDomainFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.BadRequest
 
   def message = messageTemplate.toI18NMessage(value)
@@ -151,6 +160,9 @@ case class ValueDomainMultiplicityFault(
   value: String = "",
   messageTemplate: I18NTemplate = ValueDomainMultiplicityFault.template
 ) extends ValueDomainFault {
+  def prependMessage(msg: String): ValueDomainMultiplicityFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.BadRequest
 
   def message = messageTemplate.toI18NMessage(value)
@@ -174,6 +186,9 @@ case class ValueDomainDatatypeFault(
   value: String = "",
   messageTemplate: I18NTemplate = ValueDomainDatatypeFault.template
 ) extends ValueDomainFault {
+  def prependMessage(msg: String): ValueDomainDatatypeFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.BadRequest
 
   def message = messageTemplate.toI18NMessage(key, datatype, value)
@@ -205,6 +220,9 @@ case class InvalidArgumentFault(
   value: Option[String] = None,
   faults: Option[NonEmptyVector[Fault]] = None
 ) extends ArgumentFault {
+  def prependMessage(msg: String): InvalidArgumentFault =
+    copy(message = message.prependAll(msg))
+
   def properties(locale: Locale): IRecord = IRecord.dataS(
     KEY_NAME -> name,
     KEY_MESSAGE -> message(locale)
@@ -240,6 +258,9 @@ case class MissingArgumentFault(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = MissingArgumentFault.template
 ) extends ArgumentFault {
+  def prependMessage(msg: String): MissingArgumentFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
@@ -258,6 +279,9 @@ case class TooManyArgumentsFault(
   values: Seq[Any] = Nil,
   messageTemplate: I18NTemplate = TooManyArgumentsFault.template
 ) extends ArgumentFault {
+  def prependMessage(msg: String): TooManyArgumentsFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def message = messageTemplate.toI18NMessage(values.map(AnyUtils.toShow).mkString(";"))
 
   def properties(locale: Locale): IRecord = IRecord.dataS(
@@ -279,6 +303,9 @@ case class ValueDomainResultFault(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = ValueDomainResultFault.template
 ) extends ResultFault {
+  def prependMessage(msg: String): ValueDomainResultFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.InternalServerError
 
   def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
@@ -310,6 +337,9 @@ case class InvalidPropertyFault(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = InvalidPropertyFault.template
 ) extends PropertyFault {
+  def prependMessage(msg: String): InvalidPropertyFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.BadRequest
 
   def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
@@ -337,6 +367,9 @@ case class MissingPropertyFault(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = MissingPropertyFault.template
 ) extends PropertyFault {
+  def prependMessage(msg: String): MissingPropertyFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.BadRequest
 
   def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
@@ -364,6 +397,8 @@ case class InvalidTokenFault(
   message: I18NMessage,
   parameters: Option[Seq[Any]] = None
 ) extends ArgumentFault with Parameters1 {
+  def prependMessage(msg: String): InvalidTokenFault =
+    copy(message = message.prependAll(msg))
 }
 object InvalidTokenFault {
   val template = I18NTemplate("Illegal configuration defect: {0}")
@@ -386,6 +421,9 @@ case class ValueDomainPropertyFault(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = ValueDomainPropertyFault.template
 ) extends PropertyFault {
+  def prependMessage(msg: String): ValueDomainPropertyFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.BadRequest
 
   def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
@@ -413,6 +451,8 @@ case class SyntaxErrorFault(
   parameters: Seq[Any] = Nil,
   messageTemplate: I18NTemplate = SyntaxErrorFault.template
 ) extends ArgumentFault with MessageTemplateImpl {
+  def prependMessage(msg: String): SyntaxErrorFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
 }
 object SyntaxErrorFault {
   val template = I18NTemplate("Syntax error: {0}")
@@ -432,6 +472,8 @@ case class FormatErrorFault(
   parameters: Seq[Any] = Nil,
   messageTemplate: I18NTemplate = FormatErrorFault.template
 ) extends ArgumentFault with MessageTemplateImpl {
+  def prependMessage(msg: String): FormatErrorFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
 }
 object FormatErrorFault {
   val template = I18NTemplate("Format error: {0}")
@@ -451,6 +493,8 @@ case class UnfoldResourceFault(
   parameters: Seq[Any] = Nil,
   messageTemplate: I18NTemplate = UnfoldResourceFault.template
 ) extends ArgumentFault with MessageTemplateImpl {
+  def prependMessage(msg: String): UnfoldResourceFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
 }
 object UnfoldResourceFault {
   val template = I18NTemplate("Unfold resource: {0}")
@@ -470,6 +514,8 @@ case class UnsupportedOperationFault(
   parameters: Seq[Any] = Nil,
   messageTemplate: I18NTemplate = UnsupportedOperationFault.template
 ) extends ArgumentFault with MessageTemplateImpl {
+  def prependMessage(msg: String): UnsupportedOperationFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
 }
 object UnsupportedOperationFault {
   val template = I18NTemplate("Unsupported operation: {0}")
@@ -489,6 +535,8 @@ case class UnsupportedFormatFault(
   parameters: Seq[Any] = Nil,
   messageTemplate: I18NTemplate = UnsupportedFormatFault.template
 ) extends ArgumentFault with MessageTemplateImpl {
+  def prependMessage(msg: String): UnsupportedFormatFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
 }
 object UnsupportedFormatFault {
   val template = I18NTemplate("Unsupported format: {0}")
@@ -512,6 +560,9 @@ case class DatabaseIoFault(
   parameters: Seq[Any] = Nil,
   messageTemplate: I18NTemplate = DatabaseIoFault.template
 ) extends IoFault with MessageTemplateImpl {
+  def prependMessage(msg: String): DatabaseIoFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.InternalServerError
 }
 object DatabaseIoFault {
@@ -529,6 +580,9 @@ case class NetworkIoFault(
   parameters: Seq[Any] = Nil,
   messageTemplate: I18NTemplate = NetworkIoFault.template
 ) extends IoFault with MessageTemplateImpl {
+  def prependMessage(msg: String): NetworkIoFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.InternalServerError
 }
 object NetworkIoFault {
@@ -545,6 +599,9 @@ case class FileIoFault(
   parameters: Seq[Any] = Nil,
   messageTemplate: I18NTemplate = FileIoFault.template
 ) extends IoFault with MessageTemplateImpl {
+  def prependMessage(msg: String): FileIoFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.InternalServerError
 }
 object FileIoFault {
@@ -561,6 +618,9 @@ case class SystemIoFault(
   parameters: Seq[Any] = Nil,
   messageTemplate: I18NTemplate = SystemIoFault.template
 ) extends IoFault with MessageTemplateImpl {
+  def prependMessage(msg: String): SystemIoFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.InternalServerError
 }
 object SystemIoFault {
@@ -577,6 +637,9 @@ case class SubsystemIoFault(
   parameters: Seq[Any] = Nil,
   messageTemplate: I18NTemplate = SubsystemIoFault.template
 ) extends IoFault with MessageTemplateImpl {
+  def prependMessage(msg: String): SubsystemIoFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.InternalServerError
 }
 object SubsystemIoFault {
@@ -595,6 +658,9 @@ case class IllegalConfigurationDefect(
   parameters: Option[Seq[Any]] = None
 //  messageTemplate: I18NTemplate = IllegalConfigurationDefect.template
 ) extends Defect with Parameters1 {
+  def prependMessage(msg: String): IllegalConfigurationDefect =
+    copy(message = message.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.InternalServerError
 }
 object IllegalConfigurationDefect {
@@ -614,6 +680,9 @@ case class UnmarshallingDefect(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = UnmarshallingDefect.template
 ) extends PropertyFault {
+  def prependMessage(msg: String): UnmarshallingDefect =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.BadRequest
 
   def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
@@ -642,6 +711,9 @@ case class NoReachDefect(
   parameters: Seq[String] = Nil,
   messageTemplate: I18NTemplate = NoReachDefect.template
 ) extends PropertyFault {
+  def prependMessage(msg: String): NoReachDefect =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
   def implicitStatusCode: StatusCode = StatusCode.BadRequest
 
   def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
@@ -667,6 +739,8 @@ object NoReachDefect {
 }
 
 case class Faults(faults: Vector[Fault] = Vector.empty) {
+  def nonEmpty = faults.nonEmpty
+
   def getMessage: Option[String] = toI18NStringONev.map(x =>
     x.list.map(_.en).mkString(";")
   )
@@ -701,6 +775,11 @@ case class Faults(faults: Vector[Fault] = Vector.empty) {
   def :+(p: Fault) = add(p)
 
   private def _is_strong(lhs: StatusCode, rhs: StatusCode): Boolean = lhs.code >= rhs.code
+
+  def prependMessage(p: String) = faults match {
+    case Vector() => this
+    case x +: xs => copy(x.prependMessage(p) +: xs)
+  }
 
   def toPayload = Faults.Payload(faults.map(_.toPayload))
 

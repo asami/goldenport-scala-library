@@ -38,7 +38,8 @@ import org.goldenport.util.AnyUtils
  *  version Jan. 20, 2023
  *  version Sep. 27, 2023
  *  version Nov.  7, 2023
- * @version Mar. 29, 2025
+ *  version Mar. 29, 2025
+ * @version May. 11, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -79,6 +80,16 @@ case class Conclusion(
   def withExceptionData(p: ExceptionData): Conclusion = copy(exceptionData = Some(p))
   def withData(p: Any): Conclusion = copy(data = Some(p))
   def withDataRecord(p: IRecord): Conclusion = copy(exceptionData = Some(ExceptionData(p)))
+
+  def onErrorPrependMessage(p: String) =
+    messageI18NOption match {
+      case Some(s) => withMessage(p + message)
+      case None =>
+        if (faults.nonEmpty)
+          copy(faults = faults.prependMessage(p))
+        else
+          withMessage(p + message)
+    }
 
   def +(rhs: Conclusion): Conclusion = Conclusion(
     status,
@@ -166,7 +177,7 @@ object Conclusion {
         def +(rhs: Fault) = copy(reaction = reaction max rhs.reaction)
       }
       faults.faults.headOption.
-        map(x => faults.faults.tail./:(Z(x.reaction))(_+_).r).
+        map(x => faults.faults.tail.foldLeft(Z(x.reaction))(_+_).r).
         getOrElse(none)
     }
 

@@ -4,6 +4,7 @@ import java.io._
 import java.net.URL
 import org.goldenport.monitor.Monitor
 import org.goldenport.context._
+import org.goldenport.log.LogContext
 import Environment._
 
 /*
@@ -18,7 +19,8 @@ import Environment._
  *  version Mar. 27, 2021
  *  version Feb. 28, 2022
  *  version Mar.  6, 2022
- * @version Oct. 14, 2024
+ *  version Oct. 14, 2024
+ * @version May. 10, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Environment(
@@ -50,6 +52,17 @@ case class Environment(
 
   def withAppEnvironment(p: AppEnvironment) = copy(appEnvironment = p)
 
+  def setupAppEnvironment(f: Environment => AppEnvironment): Environment = {
+    val a = f(this)
+    withAppEnvironment(a)
+  }
+
+  def initialize(): Unit = {
+    val url = config.log.confFile
+    val level = config.log.level
+    LogContext.init(url, level)
+  }
+
   lazy val stdout: PrintWriter = new PrintWriter(new OutputStreamWriter(System.out, consoleCharset), true)
   lazy val stderr: PrintWriter = new PrintWriter(new OutputStreamWriter(System.err, consoleCharset), true)
 
@@ -74,57 +87,71 @@ object Environment {
   trait AppEnvironment
   case object NoneAppEnvironment extends AppEnvironment
 
-  def create(): Environment = create(Array())
+  def create(): Environment = parse(Array())._2
 
   def create(appname: String, args: Array[String]): Environment = {
     val config = Config.build(appname, args)
     new Environment(Monitor.default, config)
   }
 
-  def create(args: Array[String]): Environment = {
-    val monitor = Monitor.create(args)
-    val config = Config.build(args)
-    new Environment(monitor, config)
+  def create(args: Array[String]): Environment = parse(args)._2
+
+  def parse(args: Array[String]): (Array[String], Environment) = {
+    val s = ConfigurationParseState(args)
+    val a = Monitor.parse(s)
+    val monitor = a.result
+    val b = Config.parse(a.state)
+    (b.toArgs, new Environment(monitor, b.result))
   }
 
-  def createJaJp(): Environment = createJaJp(Array())
+  def createJaJp(): Environment = parseJaJp(Array())._2
 
-  def createJaJp(args: Array[String]): Environment = {
-    val monitor = Monitor.create(args)
-    val config = Config.buildJaJp(args)
-    new Environment(monitor, config)
+  def parseJaJp(args: Array[String]): (Array[String], Environment) = {
+    val s = ConfigurationParseState(args)
+    val a = Monitor.parse(s)
+    val monitor = a.result
+    val b = Config.parseJaJp(a.state)
+    (b.toArgs, new Environment(monitor, b.result))
   }
 
-  def createEnUs(): Environment = createEnUs(Array())
+  def createEnUs(): Environment = parseEnUs(Array())._2
 
-  def createEnUs(args: Array[String]): Environment = {
-    val monitor = Monitor.create(args)
-    val config = Config.buildEnUs(args)
-    new Environment(monitor, config)
+  def parseEnUs(args: Array[String]): (Array[String], Environment) = {
+    val s = ConfigurationParseState(args)
+    val a = Monitor.parse(s)
+    val monitor = a.result
+    val b = Config.parseEnUs(a.state)
+    (b.toArgs, new Environment(monitor, b.result))
   }
 
-  def createEnGb(): Environment = createEnGb(Array())
+  def createEnGb(): Environment = parseEnGb(Array())._2
 
-  def createEnGb(args: Array[String]): Environment = {
-    val monitor = Monitor.create(args)
-    val config = Config.buildEnGb(args)
-    new Environment(monitor, config)
+  def parseEnGb(args: Array[String]): (Array[String], Environment) = {
+    val s = ConfigurationParseState(args)
+    val a = Monitor.parse(s)
+    val monitor = a.result
+    val b = Config.parseEnGb(a.state)
+    (b.toArgs, new Environment(monitor, b.result))
   }
 
-  def createDeDe(): Environment = createDeDe(Array())
+  def createDeDe(): Environment = parseDeDe(Array())._2
 
-  def createDeDe(args: Array[String]): Environment = {
-    val monitor = Monitor.create(args)
-    val config = Config.buildDeDe(args)
-    new Environment(monitor, config)
+  def parseDeDe(args: Array[String]): (Array[String], Environment) = {
+    val s = ConfigurationParseState(args)
+    val a = Monitor.parse(s)
+    val monitor = a.result
+    val b = Config.parseDeDe(a.state)
+    (b.toArgs, new Environment(monitor, b.result))
   }
 
-  def createDeCh(): Environment = createDeCh(Array())
+  def createDeCh(): Environment = parseDeCh(Array())._2
 
-  def createDeCh(args: Array[String]): Environment = {
-    val monitor = Monitor.create(args)
-    val config = Config.buildDeCh(args)
-    new Environment(monitor, config)
+  def parseDeCh(args: Array[String]): (Array[String], Environment) = {
+    val s = ConfigurationParseState(args)
+    val a = Monitor.parse(s)
+    val monitor = a.result
+    val b = Config.parseDeCh(a.state)
+    (b.toArgs, new Environment(monitor, b.result))
   }
 
   trait EnvironmentExecutionContextBase extends ExecutionContextBase {

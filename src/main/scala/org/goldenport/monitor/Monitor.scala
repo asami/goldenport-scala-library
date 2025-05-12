@@ -4,6 +4,7 @@ import java.io.File
 import org.goldenport.recorder._
 import org.goldenport.observability.ObservabilityContext
 import org.goldenport.notification.NotificationContext
+import org.goldenport.cli.ConfigurationParseState
 
 /*
  * Derived from IRMonitor.java and AbstractRMonitor.java since Feb. 5, 2006.
@@ -15,7 +16,8 @@ import org.goldenport.notification.NotificationContext
  *  version Jun.  1, 2020
  *  version Jan. 24, 2021
  *  version Feb.  7, 2022
- * @version Apr. 28, 2025
+ *  version Apr. 28, 2025
+ * @version May. 10, 2025
  * @author  ASAMI, Tomoharu
  */
 trait Monitor {
@@ -35,5 +37,8 @@ object Monitor {
   class DefaultMonitor() extends Monitor {
   }
 
-  def create(args: Array[String]): Monitor = default
+//  def create(args: Array[String]): (Array[String], Monitor) = (args, default)
+
+  def parse(p: ConfigurationParseState): ConfigurationParseState.Result[Monitor] =
+    ConfigurationParseState.Result(p, default)
 }

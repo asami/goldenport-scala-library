@@ -20,7 +20,8 @@ import org.goldenport.parser.ParseResult
  *  version Feb. 16, 2022
  *  version Mar. 19, 2022
  *  version Jul. 22, 2023
- * @version Oct.  9, 2024
+ *  version Oct.  9, 2024
+ * @version May. 11, 2025
  * @author  ASAMI, Tomoharu
  */
 object NumberUtils {
@@ -496,7 +497,7 @@ object NumberUtils {
     }
     case m: BigDecimal => Consequence.run {
       val r = m.toFloat
-      if (BigDecimal(r) == m)
+      if (BigDecimal(r.toString) == m)
         Consequence.success(r)
       else
         Consequence.valueDomainFault(AnyUtils.toString(p))
@@ -642,6 +643,9 @@ object NumberUtils {
     case m: java.math.BigDecimal => Consequence(BigDecimal(m))
     case _ => Consequence.valueDomainFault(AnyUtils.toString(p))
   }
+
+  def cIntProperty(key: String, value: Any): Consequence[Int] =
+    consequenceInt(value).onErrorPrependMessage(s"$key: ")
 
   def addScaleZero(lhs: BigDecimal, rhs: Float, mc: MathContext): BigDecimal = {
     val a = lhs.apply(mc) + rhs

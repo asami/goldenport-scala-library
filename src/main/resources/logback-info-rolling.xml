@@ -1,0 +1,22 @@
+<configuration>
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs.d/app.log</file>
+
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- Pattern includes date and time -->
+      <fileNamePattern>logs.d/app-%d{yyyy-MM-dd_HH-mm-ss}.log</fileNamePattern>
+
+      <!-- Optional: keep only the last 30 log files -->
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    
+    <encoder>
+      <pattern>%highlight([%d{HH:mm:ss.SSS}] [%level] %logger{36} - %msg%n)</pattern>
+    </encoder>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="ROLLING" />
+  </root>
+</configuration>
+

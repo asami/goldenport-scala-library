@@ -12,7 +12,8 @@ import org.goldenport.config._
  * @since   Feb. 16, 2019
  *  version Feb. 24, 2019
  *  version Apr.  8, 2019
- * @version Oct. 27, 2019
+ *  version Oct. 27, 2019
+ * @version May.  4, 2025
  * @author  ASAMI, Tomoharu
  */
 class LogContext(mark: LogMark) {
