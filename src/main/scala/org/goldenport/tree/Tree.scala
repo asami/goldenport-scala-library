@@ -19,7 +19,8 @@ import org.goldenport.values.PathName
  *  version Feb.  2, 2021
  *  version Mar. 19, 2022
  *  version Mar.  5, 2025
- * @version Apr. 23, 2025
+ *  version Apr. 23, 2025
+ * @version May. 17, 2025
  * @author  ASAMI, Tomoharu
  */
 trait Tree[E] extends Showable {
@@ -56,9 +57,13 @@ trait Tree[E] extends Showable {
   def ztree: ZTree[TreeNode[E]]
   //
   def print: String = show
-  def display: String = s"Tree"
+  def display: String = {
+    val printer = Printer.createDisplay[E]()
+    traverse(printer)
+    printer.print
+  }
   def show: String = {
-    val printer = Printer.create[E]()
+    val printer = Printer.createShow[E]()
     traverse(printer)
     printer.print
   }
@@ -118,7 +123,7 @@ object Tree {
         private def _clone(node: TreeNode[E]) =
           copy(resolved = resolved :+ factory.cloneTreeNodeDescendants(node))
       }
-      val xs = lhs.children./:(Z())(_+_).r
+      val xs = lhs.children.foldLeft(Z())(_+_).r
       val r = new PlainTreeNode[E](lhs.name)
       r.addChildren(xs)
       r

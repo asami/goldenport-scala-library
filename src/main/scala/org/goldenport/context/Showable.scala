@@ -10,7 +10,7 @@ import org.goldenport.util.AnyUtils
  *  version Mar. 19, 2022
  *  version Aug. 21, 2023
  *  version Mar. 15, 2025
- * @version May.  2, 2025
+ * @version May. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 trait Showable extends org.goldenport.extension.Showable {
@@ -48,9 +48,9 @@ object Showable {
     override protected def display_String: String = show_String
   }
   trait Value extends Base {
-    protected def show_Name: String
+//    protected def show_Name: String
 
-    protected override def label_string = StringUtils.capitalize(show_Name)
+//    protected override def label_string = StringUtils.capitalize(show_Name)
 
     override def print = print_String
 

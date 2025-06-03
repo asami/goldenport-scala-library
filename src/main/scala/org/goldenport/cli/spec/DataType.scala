@@ -10,7 +10,8 @@ import org.goldenport.util.AnyUtils
 
 /*
  * @since   Mar.  2, 2025
- * @version Mar. 12, 2025
+ *  version Mar. 12, 2025
+ * @version Jun.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait DataType extends NamedValueInstance {
@@ -28,6 +29,21 @@ case object XString extends DataType {
   val name = "string"
 
   def toInstance(p: Any): String = AnyUtils.toString(p)
+}
+
+case class XPowertype[T <: ValueInstance](
+  ptc: EnumerationClass[T]
+) extends DataType {
+  type InstanceType = T
+  val name = "powertype"
+
+  def toInstance(p: Any): T = p match {
+    case m: String => ptc.get(m) getOrElse _raise(m)
+    case _ => _raise(p)
+  }
+
+  private def _raise(p: Any) =
+    ValueDomainValueFault(s"Invaid powertype(${ptc.name}): ${AnyUtils.toString(p)}").RAISE
 }
 
 case object XFile extends DataType {

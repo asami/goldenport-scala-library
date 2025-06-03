@@ -64,7 +64,7 @@ import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
  *  version Apr. 10, 2023
  *  version Nov. 22, 2023
  *  version Apr.  6, 2025
- * @version May.  2, 2025
+ * @version May. 21, 2025
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -114,7 +114,7 @@ object HoconUtils {
     asStringList(config, key).toVector
 
   def asUrlList(config: Config, key: String): List[URL] =
-    asStringList(config, key).map(new URL(_))
+    asStringList(config, key).map(new URI(_).toURL)
 
   def asDuration(config: Config, key: String, fallback: FiniteDuration): Duration =
     getDuration(config, key) getOrElse fallback
@@ -122,12 +122,12 @@ object HoconUtils {
   def takeString(config: Config, key: String): String = config.getString(key)
 
   def takeUrl(config: Config, key: String): URL =
-    new URL(config.getString(key))
+    takeUri(config, key).toURL
 
   def takeUri(config: Config, key: String): URI =
     new URI(config.getString(key))
 
-  def takeLocale(config: Config, key: String): Locale = new Locale(config.getString(key))
+  def takeLocale(config: Config, key: String): Locale = Locale.forLanguageTag(config.getString(key))
 
   def takeI18NString(config: Config, key: String): I18NString =
     I18NString.parse(config.getString(key))

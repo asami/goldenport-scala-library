@@ -6,7 +6,8 @@ import org.goldenport.util.AnyUtils
 /*
  * @since   Nov.  7, 2020
  *  version Nov. 14, 2020
- * @version Mar.  2, 2025
+ *  version Mar.  2, 2025
+ * @version May. 17, 2025
  * @author  ASAMI, Tomoharu
  */
 class Printer[E](
@@ -37,5 +38,6 @@ class Printer[E](
 }
 
 object Printer {
-  def create[T](): Printer[T] = new Printer[T](Showable.toString(Showable.Kind.Display, _))
+  def createDisplay[T](): Printer[T] = new Printer[T](Showable.toString(Showable.Kind.Display, _))
+  def createShow[T](): Printer[T] = new Printer[T](Showable.toString(Showable.Kind.Show, _))
 }

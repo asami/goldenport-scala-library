@@ -5,6 +5,8 @@ import scala.collection.mutable.ArrayBuffer
 /*
  * Aug.  4, 2008
  * Oct. 31, 2008
+ * @version May. 24, 2025
+ * @author  ASAMI, Tomoharu
  */
 class GPathnameBuffer {
   var absolute = false
@@ -22,4 +24,6 @@ class GPathnameBuffer {
   override def toString: String = {
     comps.mkString(if (absolute) "/" else "", "/", if (container) "/" else "")
   }
+
+  def toList: List[String] = comps.toList
 }

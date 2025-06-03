@@ -14,7 +14,8 @@ import org.goldenport.util.StringUtils
  *  version Sep. 24, 2018
  *  version Mar. 21, 2021
  *  version Jun. 14, 2021
- * @version Oct. 20, 2021
+ *  version Oct. 20, 2021
+ * @version Jun.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 trait ValueInstance {
@@ -33,18 +34,19 @@ trait ClassNamedValueInstance extends NamedValueInstance {
 }
 
 trait ValueClass[T <: ValueInstance] {
+  val name = StringUtils.className(this)
   def isCaseSensible = true
   protected final def normalize_key(s: String) = s.toLowerCase
   def get(s: String): Option[T] // TODO
   def getIgnoreCase(s: String): Option[T]
   def apply(s: String): T = get(normalize_key(s)) getOrElse {
-    throw new IllegalArgumentException(s"Invalid value: $s")
+    throw new IllegalArgumentException(s"Invalid value($name): $s")
   }
   def takeIgnoreCase(s: String): T = getIgnoreCase(normalize_key(s)) getOrElse {
-    throw new IllegalArgumentException(s"Invalid value: $s")
+    throw new IllegalArgumentException(s"Invalid value($name): $s")
   }
   def parse(s: String): ParseResult[T] = get(normalize_key(s)).
-    map(ParseResult.success).getOrElse(ParseResult.error(s"Invalid value: $s"))
+    map(ParseResult.success).getOrElse(ParseResult.error(s"Invalid value($name): $s"))
   def consequence(s: String): Consequence[T] =
     Consequence.successOrInvalidTokenFault(s, get(normalize_key(s)))
 }

@@ -37,7 +37,7 @@ import org.goldenport.extension.IRecord
  *  version Sep. 27, 2023
  *  version Mar.  9, 2025
  *  version Apr. 21, 2025
- * @version May. 11, 2025
+ * @version May. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -109,8 +109,8 @@ object Consequence {
     def asError[U]: Consequence[U] = Consequence.noReachDefect("Force error in as operation.")
     def getException: Option[Throwable] = None
     def add(p: Conclusion): Consequence[T] = copy(conclusion = conclusion + p)
-    def map[U](f: T => U): Consequence[U] = copy(result = f(result))
-    def flatMap[U](f: T => Consequence[U]): Consequence[U] = f(result).add(conclusion)
+    def map[U](f: T => U): Consequence[U] = Consequence(f(result)).add(conclusion)
+    def flatMap[U](f: T => Consequence[U]): Consequence[U] = Consequence(f(result)).flatten.add(conclusion)
     def foreach[U](f: T => U): Unit = f(result)
     def flatten[U](implicit ev: <:<[T, Consequence[U]]): Consequence[U] = result
     def transform[U](s: T => Consequence[U], f: Conclusion => Consequence[U]): Consequence[U] = flatMap(s)

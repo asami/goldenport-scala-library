@@ -7,7 +7,9 @@ import org.goldenport.tree._
  * @since   Nov. 15, 2020
  *  version Jan.  1, 2021
  *  version Mar. 18, 2025
- * @version Apr. 23, 2025
+ *  version Apr. 23, 2025
+ *  version May. 31, 2025
+ * @version Jun.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 trait RealmTransformer extends HomoTreeTransformer[Realm.Data] with RealmMaker.Helper[Realm.Data] {
@@ -32,9 +34,18 @@ trait RealmTransformer extends HomoTreeTransformer[Realm.Data] with RealmMaker.H
 
 object RealmTransformer {
   trait Rule extends TreeTransformer.Rule[Realm.Data, Realm.Data] {
+    def realmConfig: RealmTransformer.Config
+    override def config: Option[TreeTransformer.Config] = realmConfig.treeTransformerConfig
   }
   object Rule {
     def default = TreeTransformer.Rule.default[Realm.Data, Realm.Data]
+  }
+
+  case class Config(
+    treeTransformerConfig: Option[TreeTransformer.Config] = None
+  )
+  object Config {
+    val empty = Config()
   }
 
   case class Context(

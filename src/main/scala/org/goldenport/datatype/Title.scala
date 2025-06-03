@@ -5,11 +5,14 @@ import org.goldenport.util.StringUtils
 
 /*
  * @since   Apr. 19, 2025
- * @version Apr. 27, 2025
+ *  version Apr. 27, 2025
+ * @version May. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 abstract class Title() extends Datatype {
   import Title._
+
+  protected def print_String = title
 
   def title: String
 

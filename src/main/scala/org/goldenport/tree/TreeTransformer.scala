@@ -1,13 +1,19 @@
 package org.goldenport.tree
 
+import scala.util.matching.Regex
 import org.goldenport.RAISE
+import org.goldenport.value._
+import org.goldenport.util.CirceUtils.Codec._
+import org.goldenport.util.RegexUtils
 
 /*
  * @since   Nov. 14, 2020
  *  version Nov. 15, 2020
  *  version Jan.  1, 2021
  *  version Mar. 31, 2025
- * @version Apr. 27, 2025
+ *  version Apr. 27, 2025
+ *  version May. 31, 2025
+ * @version Jun.  4, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeTransformer[A, B] {
@@ -18,7 +24,8 @@ trait TreeTransformer[A, B] {
   def treeTransformerContext: Context[B]
   def rule: Rule[A, B] = Rule.default[A, B]
 
-  lazy val _factory = treeTransformerContext.factory
+  private lazy val _factory = treeTransformerContext.factory
+  private def _config = rule.config orElse treeTransformerContext.config getOrElse Config.default
 
   def apply(p: Tree[A]): Tree[B] = apply(p.root)
 
@@ -172,7 +179,43 @@ trait TreeTransformer[A, B] {
   //   }
   // }
 
-  protected def make_node(p: TreeNode[A]): Directive[B] =
+  protected def make_node(p: TreeNode[A]): Directive[B] = {
+    _config.scope.policy match {
+      case Config.Scope.Policy.All =>
+        if (_config.scope.isExclude(p))
+          Directive.Empty()
+        else
+          _make_node(p)
+      case Config.Scope.Policy.HomeOnly =>
+        if (_config.scope.isExclude(p))
+          Directive.Empty()
+        else if (_config.scope.isInclude(p))
+          _make_node(p)
+        else
+          p.pathList.length match {
+            case 0 => _make_node(p)
+            case 1 if p.isLeaf => _make_node(p)
+            case _ => Directive.Empty()
+          }
+      case Config.Scope.Policy.ExcludeHome =>
+        if (_config.scope.isExclude(p))
+          Directive.Empty()
+        else if (_config.scope.isInclude(p))
+          _make_node(p)
+        else
+          p.pathList.length match {
+            case 0 => _make_node(p)
+            case 1 =>
+              if (p.isContainer)
+                _make_node(p)
+              else
+                Directive.Empty()
+            case _ => _make_node(p)
+          }
+    }
+  }
+
+  private def _make_node(p: TreeNode[A]): Directive[B] =
     p.getContent.fold {
       // println(s"a: $p")
       make_Node(p)
@@ -262,23 +305,82 @@ trait TreeTransformer[A, B] {
 
 object TreeTransformer {
   case class Context[E](
-//    context: Context,
+    config: Option[Config] = None,
     factory: TreeFactory[E]
   )
   object Context {
-    private val _default = Context(TreeFactory.default)
+    private val _default = Context(factory = TreeFactory.default)
     def default[E] = _default.asInstanceOf[Context[E]]
   }
 
+  case class Config(
+    scope: Config.Scope = Config.Scope.all
+  )
+  object Config {
+    import io.circe._
+    import io.circe.generic.extras._
+    import io.circe.generic.extras.semiauto._
+
+    val default = Config()
+
+    implicit val circeconf = Configuration.default.
+      withDefaults.withSnakeCaseMemberNames
+
+    case class Scope(
+      policy: Scope.Policy = Scope.Policy.All,
+      includePaths: List[Regex] = Nil,
+      excludePaths: List[Regex] = Nil
+    ) {
+      def isInclude[A](p: TreeNode[A]): Boolean =
+        RegexUtils.isWholeMatch(includePaths, p.pathname)
+
+      def isExclude[A](p: TreeNode[A]): Boolean =
+        RegexUtils.isWholeMatch(excludePaths, p.pathname)
+    }
+    object Scope {
+      val all = Scope()
+
+      sealed trait Policy extends NamedValueInstance {
+      }
+      object Policy extends EnumerationClass[Policy] {
+        val elements = Vector(All, HomeOnly, ExcludeHome)
+
+        case object All extends Policy {
+          def name = "all"
+        }
+        case object HomeOnly extends Policy {
+          def name = "home_only"
+        }
+        case object ExcludeHome extends Policy {
+          def name = "exclude_home"
+        }
+
+        def create(p: String): Either[String, Policy] =
+          elements.find(_.name == p).map(Right(_)) getOrElse {
+            Left(s"Unknown Policy: $p")
+          }
+
+        implicit val policyDecoder: Decoder[Policy] = Decoder.decodeString.emap(create)
+        implicit val policyEncoder: Encoder[Policy] = Encoder.encodeString.contramap(_.name)
+      }
+    }
+
+    implicit val scopedecoder: Decoder[Scope] = deriveConfiguredDecoder
+    implicit val scopeencoder: Encoder[Scope] = deriveConfiguredEncoder
+
+    implicit val configdecoder: Decoder[Config] = deriveConfiguredDecoder
+    implicit val configencoder: Encoder[Config] = deriveConfiguredEncoder
+  }
+
   trait Rule[A, B] {
-    def getTargetName(p: TreeNode[A]): Option[String]
+    def config: Option[Config] = None
+    def getTargetName(p: TreeNode[A]): Option[String] = None
     def makeContent(p: A): Option[B] = None
     def makeContent(oldname: String, newname: String, p: A): Option[B] = None
 //    def mapContent(oldname: String, newname: String, p: A): B = RAISE.noReachDefect(s"$oldname -> $newname: $p")
   }
   object Rule {
     case class AsIs[A, B]() extends Rule[A, B] {
-      def getTargetName(p: TreeNode[A]): Option[String] = None
       override def makeContent(oldname: String, newname: String, p: A): Option[B] = Some(p.asInstanceOf[B])
     }
 

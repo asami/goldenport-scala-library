@@ -1,15 +1,17 @@
 package org.goldenport.util
 
 import collection.JavaConverters._
+import scala.util.control.NonFatal
+import scala.util.matching.Regex
 import scalaz.NonEmptyList
-import io.circe.Json
+import io.circe._
 import io.circe.yaml.syntax._
 import org.goldenport.collection.NonEmptyVector
 
 /*
  * @since   Apr. 21, 2025
  *  version Apr. 27, 2025
- * @version May.  2, 2025
+ * @version May. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 object CirceUtils {
@@ -78,5 +80,17 @@ object CirceUtils {
   def toYamlString(p: (String, Any), ps: (String, Any)*): String = {
     val json = toJson(p, ps: _*)
     toYamlString(json)
+  }
+
+  object Codec {
+    implicit val regexDecoder: Decoder[Regex] = Decoder.decodeString.emap { str =>
+      try {
+        Right(str.r)
+      } catch {
+        case NonFatal(e) => Left(s"Invalid regex: ${e.getMessage}")
+      }
+    }
+
+    implicit val regexEncoder: Encoder[Regex] = Encoder.encodeString.contramap(_.regex)
   }
 }

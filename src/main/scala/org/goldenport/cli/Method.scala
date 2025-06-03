@@ -6,6 +6,7 @@ import org.goldenport.Strings
 import org.goldenport.context.{Consequence, Conclusion}
 import org.goldenport.bag.StringBag
 import org.goldenport.bag.ChunkBag
+import org.goldenport.realm.Realm
 import org.goldenport.util.AnyRefUtils
 import Environment.AppEnvironment
 
@@ -16,7 +17,8 @@ import Environment.AppEnvironment
  *  version Jun. 18, 2021
  *  version Jan. 30, 2022
  *  version Feb.  1, 2022
- * @version Jul. 23, 2023
+ *  version Jul. 23, 2023
+ * @version May. 17, 2025
  * @author  ASAMI, Tomoharu
  */
 trait Method {
@@ -49,6 +51,10 @@ trait Method {
   protected final def to_response_file(url: URL, p: ChunkBag) = FileResponse(p, url)
 
   protected final def to_response_file(p: ChunkBag) = FileResponse(p)
+
+  protected final def to_response_file(url: URL, p: Realm) = FileRealmResponse(p, url)
+
+  protected final def to_response_file(p: Realm) = FileRealmResponse(p)
 
   protected final def to_response(p: Conclusion): Response = ConclusionResponse(p)
 

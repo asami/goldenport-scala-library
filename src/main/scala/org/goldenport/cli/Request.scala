@@ -12,6 +12,7 @@ import org.goldenport.context.Faults
 import org.goldenport.io.InputSource
 import org.goldenport.hocon.HoconUtils
 import org.goldenport.extension.IRecord
+import org.goldenport.value._
 
 /*
  * @since   Oct.  4, 2018
@@ -26,7 +27,8 @@ import org.goldenport.extension.IRecord
  *  version Jan. 30, 2023
  *  version Jul. 23, 2023
  *  version Mar. 16, 2025
- * @version Apr.  2, 2025
+ *  version Apr.  2, 2025
+ * @version Jun.  3, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Request(
@@ -82,6 +84,12 @@ case class Request(
 
   def cAnyListOption(p: spec.Parameter): Consequence[Option[List[Any]]] =
     Consequence(listOption(p))
+
+  def cPowertypeOption[T <: ValueInstance](p: spec.Parameter): Consequence[Option[T]] =
+    for {
+      x <- cAnyOption(p)
+      r <- x.traverse(p.cPowertype)
+    } yield r
 
   def cFile(p: spec.Parameter): Consequence[File] = for {
     x <- cAny(p)

@@ -1,9 +1,9 @@
 package org.goldenport
 
-import scalaz._, Scalaz._
-import scalaz.concurrent.Task
-import scalaz.stream._
-import scalaz.stream.Cause, Cause._
+import _root_.scalaz._, Scalaz._
+import _root_.scalaz.concurrent.Task
+import _root_.scalaz.stream._
+import _root_.scalaz.stream.Cause, Cause._
 import scala.io.{Codec, Source}
 import java.sql._
 import java.io.InputStream
@@ -20,7 +20,7 @@ import scodec.bits.ByteVector
  *  version Dec. 21, 2015
  *  version Feb. 29, 2016
  *  version Aug. 29, 2017
- * @version May.  2, 2025
+ * @version May. 19, 2025
  * @author  ASAMI, Tomoharu
  */
 package object stream {
@@ -36,7 +36,7 @@ package object stream {
         else
           throw Cause.Terminated(Cause.End)
       }
-      scalaz.stream.io.resource(acquire)(release)(execute)
+      _root_.scalaz.stream.io.resource(acquire)(release)(execute)
     }
 
     // def resultsets(sql: String, params: Seq[Any] = Nil)(c: => Connection): Process[Task, ResultSet] = {
@@ -291,7 +291,7 @@ package object stream {
     // }
 
     def stringsR(src: Source, size: Int): Process[Task, String] =
-      scalaz.stream.io.resource(Task.delay(src))(src => Task.delay(src.close)) { src =>
+      _root_.scalaz.stream.io.resource(Task.delay(src))(src => Task.delay(src.close)) { src =>
         lazy val chunks = src.grouped(size) // A stateful iterator
         Task.delay {
           if (chunks.hasNext)
@@ -306,7 +306,7 @@ package object stream {
   }
 
   object process1 {
-    import scalaz.stream.process1.lift
+    import _root_.scalaz.stream.process1.lift
 
     // val sqlRow2Record: Process1[SqlRow, Record] = {
     //   lift(SqlUtils.sqlRow2Record)

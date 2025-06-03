@@ -18,7 +18,8 @@ import org.goldenport.util.MagicSequence
  *  version Feb. 16, 2020
  *  version Jan. 30, 2023
  *  version Mar. 17, 2025
- * @version Apr.  2, 2025
+ *  version Apr.  2, 2025
+ * @version Jun.  3, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Parameter(
@@ -112,7 +113,7 @@ case class Parameter(
         case m => copy(remainder = remainder :+ m)
       }
     }
-    p.args./:(Z())(_+_).r
+    p.args.foldLeft(Z())(_+_).r
   }
 
   private def _parse_property(p: ParseState): ParseState = {
@@ -232,7 +233,7 @@ case class Parameter(
         else
           Vector(p)
     }
-    p.args./:(Z())(_+_).r
+    p.args.foldLeft(Z())(_+_).r
   }
 
   def parseArgument(p: ParseState): ParseState = kind match {
@@ -261,6 +262,11 @@ case class Parameter(
     case m: String => is_switch(m)
     case _ => false
   }
+
+  def cPowertype[T <: ValueInstance](p: Any): Consequence[T] =
+    for {
+      a <- datatype.cInstance(p)
+    } yield a.asInstanceOf[T]
 
   def cFile(p: Any): Consequence[File] =
     for {
@@ -350,4 +356,7 @@ object Parameter {
 
   def propertyInputSourceSequence(name: String): Parameter =
     Parameter(name, PropertyKind, XInputSource, Multiplicity.ZeroMore)
+
+  def propertyPowertypeOption[T <: ValueInstance](ptc: EnumerationClass[T], name: String): Parameter =
+    Parameter(name, PropertyKind, XPowertype(ptc), Multiplicity.ZeroOne)
 }

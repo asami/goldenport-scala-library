@@ -19,7 +19,8 @@ import org.goldenport.io.UriUtils
  *  version Apr.  4, 2021
  *  version Jan. 30, 2022
  *  version Feb.  1, 2022
- * @version Nov. 25, 2023
+ *  version Nov. 25, 2023
+ * @version May. 17, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Response {
@@ -72,12 +73,17 @@ object FileResponse {
 
 case class FileRealmResponse(
   realm: Realm,
-  override val stdout: Option[String] = None
+  override val stdout: Option[String] = None,
+  uri: Option[URI] = None
 ) extends Response {
   override def output(env: Environment): Unit = {
     implicit val ctx = Realm.Context.create(env.config)
     realm.export(ctx)
   }
+}
+object FileRealmResponse {
+  def apply(p: Realm, uri: URI): FileRealmResponse = FileRealmResponse(p, uri = Some(uri))
+  def apply(p: Realm, url: URL): FileRealmResponse = apply(p, url.toURI)
 }
 
 trait ApplicationResponse extends Response

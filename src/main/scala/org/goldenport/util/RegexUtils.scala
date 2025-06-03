@@ -13,12 +13,16 @@ import org.goldenport.parser._
  *  version Apr. 30, 2023
  *  version Oct.  9, 2024
  *  version Mar. 30, 2025
- * @version Apr.  5, 2025
+ *  version Apr.  5, 2025
+ * @version May. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 object RegexUtils {
   def isWholeMatch(regex: Regex, p: String): Boolean =
     regex.pattern.matcher(p).matches()
+
+  def isWholeMatch(regexs: Seq[Regex], p: String): Boolean =
+    regexs.exists(isWholeMatch(_, p))
 
   def getString(regex: Regex, s: String, i: Int): Option[String] =
     regex.findFirstMatchIn(s).flatMap(getString(_, i))

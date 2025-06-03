@@ -13,6 +13,7 @@ import java.net.URL
 import org.goldenport.RAISE
 import org.goldenport.Platform
 import org.goldenport.context.Showable
+import org.goldenport.i18n.I18NContext
 import org.goldenport.value._
 import org.goldenport.cli
 import org.goldenport.tree._
@@ -35,7 +36,9 @@ import org.goldenport.util.RegexUtils
  *  version Mar. 19, 2022
  *  version Feb. 25, 2025
  *  version Mar. 30, 2025
- * @version Apr. 26, 2025
+ *  version Apr. 26, 2025
+ *  version May. 23, 2025
+ * @version Jun.  4, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
@@ -54,6 +57,12 @@ case class Realm(
   def backendRoot: TreeNode[Data] = _tree.root
 
   def get(pathname: String): Option[Data] = _tree.getContent(pathname)
+
+  def getString(pathname: String)(implicit ctx: I18NContext): Option[String] =
+    get(pathname).collect {
+      case StringData(s) => s
+      case m: FileData => m.toString
+    }
 
   def tree: ZTree[NodeView] = _tree.ztree.map(NodeView.apply)
 
@@ -96,7 +105,14 @@ case class Realm(
   def withGitInitAndCommit(path: String): Realm = withGitInitAndCommit(Paths.get(path))
 
   // complement
-  def merge(pathname: String, view: Realm): Realm = copy(Tree.mergeClone(this._tree, pathname, view._tree))
+  def merge(pathname: String, view: Realm): Realm =
+    copy(
+      _tree = Tree.mergeClone(this._tree, pathname, view._tree),
+      post_procedures = post_procedures ::: _merge_post_procedures(pathname, view.post_procedures)
+    )
+
+  private def _merge_post_procedures(pathname: String, procedures: List[Realm.PostProcedure]): List[Realm.PostProcedure] =
+    procedures.map(_.mergePathname(pathname))
 
   def +(p: Realm): Realm = copy(Tree.mergeClone(this._tree, p._tree))
 
@@ -238,6 +254,9 @@ object Realm {
   case class FileData(file: File) extends Data {
     def print = show
     override def show = s"File($file)"
+
+    def toString(implicit ctx: I18NContext): String =
+      IoUtils.toText(file, ctx.charsetInputFile)
 
     def export(output: File)(implicit ctx: Context): Unit =
       IoUtils.save(output, file)
@@ -539,6 +558,7 @@ object Realm {
 
   trait PostProcedure {
     def execute(dir: File): Unit
+    def mergePathname(pathname: String): PostProcedure
   }
   object PostProcedure {
     case class GitInitAndCommit(path: Path) extends PostProcedure {
@@ -548,6 +568,9 @@ object Realm {
         val d = new File(dir, path.toString)
         GitUtils.initAndCommit(d)
       }
+
+      def mergePathname(pathname: String): GitInitAndCommit =
+        copy(path = Paths.get(pathname).resolve(path))
     }
   }
 

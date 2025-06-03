@@ -18,7 +18,8 @@ import org.goldenport.util.StringUtils
  *  version Jan.  1, 2021
  *  version Feb. 23, 2025
  *  version Mar.  9, 2025
- * @version Apr. 24, 2025
+ *  version Apr. 24, 2025
+ * @version May. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeNode[E] extends Showable.Control {
@@ -80,7 +81,9 @@ trait TreeNode[E] extends Showable.Control {
   /*
    * XXX pathname format variation - absolute, container
    */
-  def pathname: String = {
+  def pathname: String = _path_buffer.toString
+
+  private def _path_buffer: GPathnameBuffer = {
     val pb = new GPathnameBuffer
     pb.absolute = true
 //    pb.container = isContainer
@@ -89,8 +92,10 @@ trait TreeNode[E] extends Showable.Control {
       pb.addContainer(node.name)
       node = node.parent
     }
-    pb.toString
+    pb
   }
+
+  lazy val pathList: List[String] = _path_buffer.toList
 
   def getNameSuffix: Option[String] = StringUtils.getSuffix(name)
   def nameBody: String = StringUtils.toPathnameBody(name)

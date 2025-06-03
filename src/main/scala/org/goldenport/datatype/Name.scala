@@ -5,11 +5,14 @@ import org.goldenport.util.StringUtils
 
 /*
  * @since   Apr. 19, 2025
- * @version Apr. 27, 2025
+ *  version Apr. 27, 2025
+ * @version May. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 abstract class Name() extends Datatype {
   import Name._
+
+  protected def print_String = name
 
   def name: String
 

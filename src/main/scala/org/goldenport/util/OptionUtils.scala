@@ -7,7 +7,8 @@ import scalaz._, Scalaz._
  *  version Sep.  1, 2017
  *  version Oct. 17, 2018
  *  version Oct.  8, 2021
- * @version Jan. 27, 2022
+ *  version Jan. 27, 2022
+ * @version Jun.  3, 2025
  * @author  ASAMI, Tomoharu
  */
 object OptionUtils {
@@ -15,7 +16,23 @@ object OptionUtils {
   def optionList[T](p: Option[List[T]]): Option[List[T]] =
     p.flatMap(optionList(_))
 
-  def complement[T](lhs: Option[T], rhs: Option[T]): Option[T] =
+  private def complement[T](lhs: Option[T], rhs: Option[T]): Option[T] =
+    (lhs, rhs) match {
+      case (Some(l), Some(r)) => Some(r)
+      case (Some(l), None) => Some(l)
+      case (None, Some(r)) => Some(r)
+      case (None, None) => None
+    }
+
+  def firstMonoid[T](lhs: Option[T], rhs: Option[T]): Option[T] =
+    (lhs, rhs) match {
+      case (Some(l), Some(r)) => Some(l)
+      case (Some(l), None) => Some(l)
+      case (None, Some(r)) => Some(r)
+      case (None, None) => None
+    }
+
+  def lastMonoid[T](lhs: Option[T], rhs: Option[T]): Option[T] =
     (lhs, rhs) match {
       case (Some(l), Some(r)) => Some(r)
       case (Some(l), None) => Some(l)
