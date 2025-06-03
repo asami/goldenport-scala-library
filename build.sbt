@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.2.2"
+version := "2.2.3"
 
 scalaVersion := "2.12.18"
 
@@ -84,9 +84,17 @@ libraryDependencies += "io.circe" %% "circe-generic" % "0.14.13"
 
 libraryDependencies += "io.circe" %% "circe-parser" % "0.14.13"
 
+libraryDependencies += "io.circe" %% "circe-generic-extras" % "0.14.3"
+
 libraryDependencies += "io.circe" %% "circe-yaml" % "1.15.0"
 
+libraryDependencies += "io.circe" %% "circe-config" % "0.10.1"
+
 libraryDependencies += "org.yaml" % "snakeyaml" % "2.4"
+
+// libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.17.6"
+
+// libraryDependencies += "com.github.pureconfig" %% "pureconfig-circe" % "0.17.6"
 
 // libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.9.4" 
 
@@ -110,9 +118,9 @@ libraryDependencies += "org.scalanlp" %% "breeze" % "0.13.2" % "compile"
 
 libraryDependencies += "black.ninia" % "jep" % "3.9.0" % "compile"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5"
-
 libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "5.10.0.202012080955-r" % "provided"
+
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5"
 
 libraryDependencies += "junit" % "junit" % "4.12" % "test"
 
