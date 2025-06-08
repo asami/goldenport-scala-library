@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.2.3"
+version := "2.2.4"
 
 scalaVersion := "2.12.18"
 
@@ -31,6 +31,8 @@ lazy val osClassifier = System.getProperty("os.name").toLowerCase match {
   case name if name.contains("linux") => "linux"
   case _ => throw new RuntimeException("Unsupported OS")
 }
+
+lazy val circeVersion = "0.14.13"
 
 // resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
 
@@ -78,13 +80,13 @@ libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "2.20.0"
 
 libraryDependencies += "com.typesafe" % "config" % "1.2.1"
 
-libraryDependencies += "io.circe" %% "circe-core" % "0.14.13"
+libraryDependencies += "io.circe" %% "circe-core" % circeVersion
 
-libraryDependencies += "io.circe" %% "circe-generic" % "0.14.13"
+libraryDependencies += "io.circe" %% "circe-generic" % circeVersion
 
-libraryDependencies += "io.circe" %% "circe-parser" % "0.14.13"
+libraryDependencies += "io.circe" %% "circe-parser" % circeVersion
 
-libraryDependencies += "io.circe" %% "circe-generic-extras" % "0.14.3"
+libraryDependencies += "io.circe" %% "circe-generic-extras" % "0.14.4"
 
 libraryDependencies += "io.circe" %% "circe-yaml" % "1.15.0"
 
