@@ -10,7 +10,8 @@ import org.goldenport.util.AnyUtils
  *  version Nov. 18, 2019
  *  version Nov. 15, 2020
  *  version Dec. 26, 2020
- * @version Mar.  6, 2025
+ *  version Mar.  6, 2025
+ * @version Jun.  6, 2025
  * @author  ASAMI, Tomoharu
  */
 class PlainTreeNode[E](aName: String) extends TreeNodeBase[E] with Showable.Control {
@@ -19,10 +20,10 @@ class PlainTreeNode[E](aName: String) extends TreeNodeBase[E] with Showable.Cont
 
   def this() = this(PlainTreeNode.generate_anonymous_name)
 
-  protected def show_Name: String = s"TreeNode($name)"
-  override protected def print_String: String = Option(content).fold("")(to_print)
-  override protected def display_String: String = Option(content).fold("")(to_display)
-  protected def show_String: String = Option(content).fold("")(to_show)
+  // protected def show_Name: String = s"TreeNode($name)"
+  // override protected def print_String: String = Option(content).fold("")(to_print)
+  // override protected def display_String: String = Option(content).fold("")(to_display)
+  // protected def show_String: String = Option(content).fold("")(to_show)
 
   def new_Node(name: String): TreeNode_TYPE = {
     new PlainTreeNode[E](name)

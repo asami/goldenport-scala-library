@@ -1,6 +1,7 @@
 package org.goldenport.cli.spec
 
 import scalaz._, Scalaz._
+import scala.util.matching.Regex
 import java.io.File
 import java.net.URL
 import com.typesafe.config.{Config => Hocon}
@@ -11,6 +12,7 @@ import org.goldenport.hocon.HoconUtils
 import org.goldenport.io.InputSource
 import org.goldenport.cli.{Request => CliRequest, Switch => CliSwitch, Property => CliProperty, Argument => CliArgument}
 import org.goldenport.util.MagicSequence
+import org.goldenport.util.AnyUtils
 
 /*
  * @since   Oct.  6, 2018
@@ -19,7 +21,7 @@ import org.goldenport.util.MagicSequence
  *  version Jan. 30, 2023
  *  version Mar. 17, 2025
  *  version Apr.  2, 2025
- * @version Jun.  3, 2025
+ * @version Jun.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Parameter(
@@ -294,6 +296,18 @@ case class Parameter(
       s <- Consequence(in.asText)
       c <- HoconUtils.parseConfig(s)
     } yield c
+
+  def cRegex(p: Any): Consequence[Regex] = p match {
+    case m: Regex => Consequence.success(m)
+    case m: String => Consequence(new Regex(m))
+    case m => Consequence.valueDomainFault("regex", AnyUtils.toShow(m))
+  }
+
+  def cRegexListOption(ps: Option[Seq[Any]]): Consequence[Option[List[Regex]]] =
+    ps match {
+      case Some(s) => s.toList.traverse(cRegex(_)).map(Some.apply)
+      case None => Consequence.success(None)
+    }
 }
 
 object Parameter {
@@ -359,4 +373,7 @@ object Parameter {
 
   def propertyPowertypeOption[T <: ValueInstance](ptc: EnumerationClass[T], name: String): Parameter =
     Parameter(name, PropertyKind, XPowertype(ptc), Multiplicity.ZeroOne)
+
+  def propertyRegexSequence(name: String): Parameter =
+    Parameter(name, PropertyKind, XRegex, Multiplicity.ZeroMore)
 }

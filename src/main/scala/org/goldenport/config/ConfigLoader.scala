@@ -18,7 +18,7 @@ import org.goldenport.util.CirceUtils
 /*
  * @since   Apr. 21, 2025
  *  version May. 23, 2025
- * @version Jun.  3, 2025
+ * @version Jun.  6, 2025
  * @author  ASAMI, Tomoharu
  */
 object ConfigLoader {
@@ -128,7 +128,10 @@ object ConfigLoader {
   }
 
   private def _merge(jsons: Json*): Consequence[Json] = Consequence {
-    jsons.filterNot(_ == Json.Null).reduce(_ deepMerge _)
+    jsons.toList.filterNot(_ == Json.Null) match {
+      case Nil => Json.Null
+      case xs => xs.reduce(_ deepMerge _)
+    }
   }
 
   private def _parse(body: => Option[Either[ParsingFailure, Json]]): Consequence[Json] =

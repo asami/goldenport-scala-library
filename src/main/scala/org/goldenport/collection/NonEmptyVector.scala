@@ -1,6 +1,7 @@
 package org.goldenport.collection
 
 import scalaz._, Scalaz._
+import io.circe._
 import org.goldenport.context.Conclusion
 import org.goldenport.util.VectorUtils
 
@@ -15,7 +16,8 @@ import org.goldenport.util.VectorUtils
  *  version Jun. 20, 2021
  *  version Jun.  5, 2024
  *  version Nov.  2, 2024
- * @version Feb.  5, 2025
+ *  version Feb.  5, 2025
+ * @version Jun.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 case class NonEmptyVector[T](head: T, tailVector: Vector[T]) {
@@ -114,6 +116,10 @@ object NonEmptyVector {
   implicit def NonEmptyVectorSemigroup[T]: Semigroup[NonEmptyVector[T]] = new Semigroup[NonEmptyVector[T]] {
     def append(lhs: NonEmptyVector[T], rhs: => NonEmptyVector[T]) = lhs ++ rhs
   }
+
+  // implicit def nonemptytlistDecorder[T]: Decoder[NonEmptyVector[T]] = ???
+
+  // implicit def nonemptytlistEncorder[T]: Encoder[NonEmptyVector[T]] = ???
 
   def apply[T](p: Seq[T]): NonEmptyVector[T] = NonEmptyVector(p.head, p.tail.toVector)
   // def apply[T](p: Vector[T]): NonEmptyVector[T] = NonEmptyVector(p.head, p.tail)

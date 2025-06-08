@@ -10,7 +10,8 @@ import org.goldenport.util.AnyUtils
  *  version Mar. 19, 2022
  *  version Aug. 21, 2023
  *  version Mar. 15, 2025
- * @version May. 16, 2025
+ *  version May. 16, 2025
+ * @version Jun.  8, 2025
  * @author  ASAMI, Tomoharu
  */
 trait Showable extends org.goldenport.extension.Showable {
@@ -27,7 +28,7 @@ object Showable {
     protected def display_String: String
     protected def show_String: String
 
-    protected def label_string = StringUtils.capitalize(getClass.getName)
+    protected def label_string = StringUtils.shortPackageName(getClass.getName)
 
     protected final def escape_string(p: String) =
       StringFormatter.display.escapeDisplay(p)

@@ -19,7 +19,8 @@ import org.goldenport.util.StringUtils
  *  version Feb. 23, 2025
  *  version Mar.  9, 2025
  *  version Apr. 24, 2025
- * @version May. 24, 2025
+ *  version May. 24, 2025
+ * @version Jun.  6, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeNode[E] extends Showable.Control {
@@ -99,6 +100,12 @@ trait TreeNode[E] extends Showable.Control {
 
   def getNameSuffix: Option[String] = StringUtils.getSuffix(name)
   def nameBody: String = StringUtils.toPathnameBody(name)
+
+  override protected def label_string = s"TreeNode($pathname)"
+
+  override protected def print_String: String = Option(content).fold("")(to_print)
+  override protected def display_String: String = Option(content).fold("")(to_display)
+  protected def show_String: String = Option(content).fold("")(to_show)
 }
 
 object TreeNode {

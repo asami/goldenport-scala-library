@@ -43,7 +43,8 @@ import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperation
  *  version Jul. 22, 2023
  *  version Oct. 14, 2024
  *  version Apr. 28, 2025
- * @version May. 11, 2025
+ *  version May. 11, 2025
+ * @version Jun.  7, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Config(
@@ -56,7 +57,7 @@ case class Config(
   numericalOperations: INumericalOperations,
   properties: RichConfig
 ) extends ContextFoundation.Holder {
-  def i18n = i18nContext
+  def i18n = i18NContext
   def charset: Charset = i18n.charset
   def charsetInputFile = i18n.charsetInputFile
   def charsetOutputFile = i18n.charsetOutputFile

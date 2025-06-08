@@ -2,9 +2,11 @@ package org.goldenport.tree
 
 import scala.util.matching.Regex
 import org.goldenport.RAISE
+import org.goldenport.i18n.I18NContext
 import org.goldenport.value._
 import org.goldenport.util.CirceUtils.Codec._
 import org.goldenport.util.RegexUtils
+import org.goldenport.util.StringUtils
 
 /*
  * @since   Nov. 14, 2020
@@ -13,7 +15,7 @@ import org.goldenport.util.RegexUtils
  *  version Mar. 31, 2025
  *  version Apr. 27, 2025
  *  version May. 31, 2025
- * @version Jun.  4, 2025
+ * @version Jun.  8, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeTransformer[A, B] {
@@ -21,8 +23,11 @@ trait TreeTransformer[A, B] {
 
   def isEndomap: Boolean = false
   def isCleanVoid: Boolean = true
+  def isCleanEmptyChildren: Boolean = false
   def treeTransformerContext: Context[B]
   def rule: Rule[A, B] = Rule.default[A, B]
+
+  private lazy val _label = StringUtils.shortPackageName(getClass.getName)
 
   private lazy val _factory = treeTransformerContext.factory
   private def _config = rule.config orElse treeTransformerContext.config getOrElse Config.default
@@ -46,7 +51,13 @@ trait TreeTransformer[A, B] {
   protected final def create_tree_node(name: String, content: B, children: Seq[TreeNode[B]]): TreeNode[B] =
     _factory.createTreeNode(name, content, children)
 
-  protected def make_tree_node(p: TreeNode[A]): List[TreeNode[B]] =
+  protected def make_tree_node(p: TreeNode[A]): List[TreeNode[B]] = {
+    val r = _make_tree_node(p)
+    // println(s"[${_label}]make_tree_node: $p => $r")
+    r
+  }
+
+  private def _make_tree_node(p: TreeNode[A]): List[TreeNode[B]] =
     rule.getTargetName(p).map { name =>
       // println(s"make_tree_node: $name")
       make_node_or_control(p.name, name, p)
@@ -78,7 +89,14 @@ trait TreeTransformer[A, B] {
           case None => 
             if (p.isContainer) {
               val r = _create_node(oldname, newname, p)
-              List(r)
+              if (isCleanEmptyChildren) {
+                if (r.isEmpty)
+                  Nil
+                else
+                  List(r)
+              } else {
+                List(r)
+              }
             } else {
               Nil
             }
@@ -98,6 +116,9 @@ trait TreeTransformer[A, B] {
   }
 
   protected def make_node(oldname: String, newname: String, p: TreeNode[A]): Directive[B] =
+    _make_node_control(_make_node(oldname, newname, p))(p)
+
+  private def _make_node(oldname: String, newname: String, p: TreeNode[A]): Directive[B] =
     p.getContent.fold {
       // println(s"a: $p")
       make_Node(oldname, newname, p)
@@ -148,13 +169,7 @@ trait TreeTransformer[A, B] {
     make_node(p) match {
       case Directive.Empty() => Nil
       case Directive.AsIs() => List(p.asInstanceOf[TreeNode[B]])
-      case Directive.Default() =>
-        if (p.isVoid && isCleanVoid) {
-          Nil
-        } else {
-          val r = _create_node(p)
-          List(r)
-        }
+      case Directive.Default() => _make_node_default(p)
       case m: Directive.LeafContent[B] => List(_create_leaf(p, m.content))
       case m: Directive.Content[B] => List(_create_node(p, m.content))
       case m: Directive.LeafNode[B] => List(_create_leaf(m.name, m.content))
@@ -169,6 +184,31 @@ trait TreeTransformer[A, B] {
     }
   }
 
+  private def _make_node_default(p: TreeNode[A]): List[TreeNode[B]] =
+    if (isCleanEmptyChildren)
+      _make_node_clean(p)
+    else
+      _make_node_retain(p)
+
+  private def _make_node_retain(p: TreeNode[A]): List[TreeNode[B]] =
+    if (p.isVoid && isCleanVoid) {
+      Nil
+    } else {
+      val r = _create_node(p)
+      List(r)
+    }
+
+  private def _make_node_clean(p: TreeNode[A]): List[TreeNode[B]] =
+    if (p.isVoid && isCleanVoid) {
+      Nil
+    } else {
+      val r = _create_node(p)
+      if (r.isEmpty)
+        Nil
+      else
+        List(r)
+    }
+
   //     case ControlTreeNode.Empty() => Nil
   //     case ControlTreeNode.AsIs(m) => List(m)
   //     case ControlTreeNode.Collection(ms) => ms
@@ -179,39 +219,57 @@ trait TreeTransformer[A, B] {
   //   }
   // }
 
-  protected def make_node(p: TreeNode[A]): Directive[B] = {
+  protected def make_node(p: TreeNode[A]): Directive[B] =
+    _make_node_control(_make_node(p))(p)
+
+  private def _make_node_control(makenodef: => Directive[B])(p: TreeNode[A]): Directive[B] = {
     _config.scope.policy match {
       case Config.Scope.Policy.All =>
         if (_config.scope.isExclude(p))
           Directive.Empty()
         else
-          _make_node(p)
+          makenodef
       case Config.Scope.Policy.HomeOnly =>
         if (_config.scope.isExclude(p))
           Directive.Empty()
         else if (_config.scope.isInclude(p))
-          _make_node(p)
+          makenodef
         else
           p.pathList.length match {
-            case 0 => _make_node(p)
-            case 1 if p.isLeaf => _make_node(p)
+            case 0 => makenodef
+            case 1 if p.isLeaf => makenodef
             case _ => Directive.Empty()
           }
       case Config.Scope.Policy.ExcludeHome =>
         if (_config.scope.isExclude(p))
           Directive.Empty()
         else if (_config.scope.isInclude(p))
-          _make_node(p)
+          makenodef
         else
           p.pathList.length match {
-            case 0 => _make_node(p)
+            case 0 => makenodef
             case 1 =>
               if (p.isContainer)
-                _make_node(p)
+                makenodef
               else
                 Directive.Empty()
-            case _ => _make_node(p)
+            case _ => makenodef
           }
+      case Config.Scope.Policy.Target =>
+        if (_config.scope.isExclude(p))
+          Directive.Empty()
+        else if (_config.scope.isInclude(p))
+          makenodef
+        else
+          p.pathList.length match {
+            case 0 => makenodef
+            case _ =>
+              if (p.isContainer)
+                makenodef
+              else
+                Directive.Empty()
+          }
+
     }
   }
 
@@ -305,9 +363,16 @@ trait TreeTransformer[A, B] {
 
 object TreeTransformer {
   case class Context[E](
+    factory: TreeFactory[E],
     config: Option[Config] = None,
-    factory: TreeFactory[E]
-  )
+    i18NContextOption: Option[I18NContext] = None
+  ) {
+    def withConfig(p: Option[Config]) = copy(config = p)
+    def withI18NContext(p: I18NContext) = copy(i18NContextOption = Some(p))
+    def withI18NContext(p: Option[I18NContext]) = copy(i18NContextOption = p)
+
+    def toContext[A] = this.asInstanceOf[Context[A]]
+  }
   object Context {
     private val _default = Context(factory = TreeFactory.default)
     def default[E] = _default.asInstanceOf[Context[E]]
@@ -343,7 +408,7 @@ object TreeTransformer {
       sealed trait Policy extends NamedValueInstance {
       }
       object Policy extends EnumerationClass[Policy] {
-        val elements = Vector(All, HomeOnly, ExcludeHome)
+        val elements = Vector(All, HomeOnly, ExcludeHome, Target)
 
         case object All extends Policy {
           def name = "all"
@@ -353,6 +418,9 @@ object TreeTransformer {
         }
         case object ExcludeHome extends Policy {
           def name = "exclude_home"
+        }
+        case object Target extends Policy {
+          def name = "target"
         }
 
         def create(p: String): Either[String, Policy] =

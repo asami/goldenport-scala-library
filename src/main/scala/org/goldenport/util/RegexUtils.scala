@@ -14,10 +14,18 @@ import org.goldenport.parser._
  *  version Oct.  9, 2024
  *  version Mar. 30, 2025
  *  version Apr.  5, 2025
- * @version May. 24, 2025
+ *  version May. 24, 2025
+ * @version Jun.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 object RegexUtils {
+  def toRegex(p: String): Regex = new Regex(p)
+
+  def toQuotedRegex(p: String): Regex = {
+    val escaped = java.util.regex.Pattern.quote(p)
+    escaped.r
+  }
+
   def isWholeMatch(regex: Regex, p: String): Boolean =
     regex.pattern.matcher(p).matches()
 

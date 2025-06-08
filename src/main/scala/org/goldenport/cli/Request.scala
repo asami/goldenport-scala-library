@@ -1,6 +1,7 @@
 package org.goldenport.cli
 
 import scalaz._, Scalaz._
+import scala.util.matching.Regex
 import java.io.File
 import java.net.URL
 import com.typesafe.config.{Config => Hocon}
@@ -28,7 +29,7 @@ import org.goldenport.value._
  *  version Jul. 23, 2023
  *  version Mar. 16, 2025
  *  version Apr.  2, 2025
- * @version Jun.  3, 2025
+ * @version Jun.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Request(
@@ -123,6 +124,12 @@ case class Request(
     xs <- cAnyList(p)
     r <- p.cInputSourceList(xs)
   } yield r
+
+  def cRegexListOption(p: spec.Parameter): Consequence[Option[List[Regex]]] =
+    for {
+      x <- cAnyListOption(p)
+      r <- p.cRegexListOption(x)
+    } yield r
 
   def argumentsAsString: List[String] = arguments.map(_.asString)
   def argumentsAsUrl: List[URL] = arguments.map(_.asUrl)

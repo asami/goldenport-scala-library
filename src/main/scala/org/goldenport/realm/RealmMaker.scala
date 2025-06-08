@@ -4,7 +4,8 @@ import org.goldenport.tree._
 
 /*
  * @since   Apr. 23, 2025
- * @version Apr. 25, 2025
+ *  version Apr. 25, 2025
+ * @version Jun.  8, 2025
  * @author  ASAMI, Tomoharu
  */
 object RealmMaker {
@@ -29,6 +30,7 @@ object RealmMaker {
   }
 
   trait Transformer[A] extends TreeTransformer[A, Realm.Data] with Helper[A] {
+    override def isCleanEmptyChildren = true
   }
 
   def make[A](in: Tree[A], tx: Transformer[A]): Realm = {

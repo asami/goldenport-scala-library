@@ -18,7 +18,8 @@ import org.goldenport.util.AnyUtils
  *  version Feb. 20, 2021
  *  version Feb. 28, 2022
  *  version Dec. 10, 2022
- * @version Oct. 14, 2024
+ *  version Oct. 14, 2024
+ * @version Jun.  7, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NContext(
@@ -48,6 +49,7 @@ case class I18NContext(
     locale = l,
     timezone = tz
   )
+  def withLocale(p: Locale) = copy(locale = p)
 
   def charsetInputFile = charsetInputFileOption getOrElse charset
   def charsetOutputFile = charsetOutputFileOption getOrElse charset

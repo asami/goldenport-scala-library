@@ -57,7 +57,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Aug.  5, 2023
  *  version Sep.  5, 2024
  *  version Mar. 17, 2025
- * @version Apr. 26, 2025
+ *  version Apr. 26, 2025
+ * @version Jun.  6, 2025
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -613,6 +614,13 @@ object StringUtils {
     val fromDir: Path = if (from.endsWith("/")) fromPath else fromPath.getParent
     fromDir.relativize(toPath).toString
   }
+
+  def shortPackageName(p: String): String =
+    Strings.totokens(p, ".") match {
+      case Nil => ""
+      case x :: Nil => x
+      case xs => xs.init.map(_.headOption.getOrElse("")).mkString + "." + xs.last
+    }
 
   def print(p: String, newline: String): String = {
     val a = Strings.tolines(p)

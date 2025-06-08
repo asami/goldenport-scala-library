@@ -12,26 +12,27 @@ import org.goldenport.notification.NotificationContext
 
 /*
  * @since   Oct. 13, 2024
- * @version Apr. 28, 2025
+ *  version Apr. 28, 2025
+ * @version Jun.  7, 2025
  * @author  ASAMI, Tomoharu
  */
 case class ContextFoundation(
   mathContext: MathContext,
-  i18nContext: I18NContext,
+  i18NContext: I18NContext,
   dateTimeContext: DateTimeContext,
   formatContext: FormatContext,
   observabilityContext: ObservabilityContext,
   notificationContext: NotificationContext,
   randomContext: RandomContext
 ) {
-  def withI18NContext(p: I18NContext) = copy(i18nContext = p)
+  def withI18NContext(p: I18NContext) = copy(i18NContext = p)
 }
 
 object ContextFoundation {
   trait Holder {
     def contextFoundation: ContextFoundation
     def mathContext: MathContext = contextFoundation.mathContext
-    def i18nContext: I18NContext = contextFoundation.i18nContext
+    def i18NContext: I18NContext = contextFoundation.i18NContext
     def dateTimeContext: DateTimeContext = contextFoundation.dateTimeContext
     def formatContext: FormatContext = contextFoundation.formatContext
     def observabilityContext: ObservabilityContext = contextFoundation.observabilityContext

@@ -1,6 +1,7 @@
 package org.goldenport.cli.spec
 
 import java.io.File
+import scala.util.matching.Regex
 import com.typesafe.config.{Config => Hocon}
 import org.goldenport.context._
 import org.goldenport.value._
@@ -11,7 +12,7 @@ import org.goldenport.util.AnyUtils
 /*
  * @since   Mar.  2, 2025
  *  version Mar. 12, 2025
- * @version Jun.  2, 2025
+ * @version Jun.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait DataType extends NamedValueInstance {
@@ -51,6 +52,17 @@ case object XFile extends DataType {
   val name = "file"
 
   def toInstance(p: Any): File = new File(AnyUtils.toString(p))
+}
+
+case object XRegex extends DataType {
+  type InstanceType = Regex
+  val name = "regex"
+
+  def toInstance(p: Any): Regex = p match {
+    case m: Regex => m
+    case m: String => new Regex(m)
+    case m => ValueDomainValueFault(s"Invalid Regex: ${AnyUtils.toString(m)}").RAISE
+  }
 }
 
 case object XConfig extends DataType {
