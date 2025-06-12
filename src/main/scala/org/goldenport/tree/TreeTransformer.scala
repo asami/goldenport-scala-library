@@ -15,7 +15,7 @@ import org.goldenport.util.StringUtils
  *  version Mar. 31, 2025
  *  version Apr. 27, 2025
  *  version May. 31, 2025
- * @version Jun.  8, 2025
+ * @version Jun. 12, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeTransformer[A, B] {
@@ -46,10 +46,15 @@ trait TreeTransformer[A, B] {
     _factory.createTree(node: TreeNode[B])
 
   protected final def create_tree_node(name: String, content: Option[B], children: Seq[TreeNode[B]]): TreeNode[B] =
-    _factory.createTreeNode(name, content, children)
+    mutation_normalize_node(_factory.createTreeNode(name, content, children))
 
   protected final def create_tree_node(name: String, content: B, children: Seq[TreeNode[B]]): TreeNode[B] =
-    _factory.createTreeNode(name, content, children)
+    mutation_normalize_node(_factory.createTreeNode(name, content, children))
+
+  protected def mutation_normalize_node(p: TreeNode[B]): TreeNode[B] =
+    mutation_Normalize_Node(p)
+
+  protected def mutation_Normalize_Node(p: TreeNode[B]): TreeNode[B] = p
 
   protected def make_tree_node(p: TreeNode[A]): List[TreeNode[B]] = {
     val r = _make_tree_node(p)
@@ -102,7 +107,7 @@ trait TreeTransformer[A, B] {
             }
         }
       case m: Directive.LeafContent[B] => List(_create_leaf(p, m.content))
-      case m: Directive.Content[B] => List(_create_node(p, m.content))
+      case m: Directive.ContainerContent[B] => List(_create_node(p, m.content))
       case m: Directive.LeafNode[B] => List(_create_leaf(m.name, m.content))
       case m: Directive.NameNode[B] => List(_create_node_children(m.name, m.content, m.children))
       case m: Directive.Node[B] => m.node match {
@@ -171,7 +176,7 @@ trait TreeTransformer[A, B] {
       case Directive.AsIs() => List(p.asInstanceOf[TreeNode[B]])
       case Directive.Default() => _make_node_default(p)
       case m: Directive.LeafContent[B] => List(_create_leaf(p, m.content))
-      case m: Directive.Content[B] => List(_create_node(p, m.content))
+      case m: Directive.ContainerContent[B] => List(_create_node(p, m.content))
       case m: Directive.LeafNode[B] => List(_create_leaf(m.name, m.content))
       case m: Directive.NameNode[B] => List(_create_node_children(m.name, m.content, m.children))
       case m: Directive.Node[B] => m.node match {
@@ -351,6 +356,9 @@ trait TreeTransformer[A, B] {
   protected final def directive_asis(): TreeTransformer.Directive[B] =
     TreeTransformer.Directive.AsIs()
 
+  protected final def directive_container_content(p: B): TreeTransformer.Directive[B] =
+    TreeTransformer.Directive.ContainerContent(p)
+
   protected final def directive_leaf(p: B): TreeTransformer.Directive[B] =
     TreeTransformer.Directive.LeafContent(p)
 
@@ -368,6 +376,7 @@ object TreeTransformer {
     i18NContextOption: Option[I18NContext] = None
   ) {
     def withConfig(p: Option[Config]) = copy(config = p)
+    def withConfig(p: Config) = copy(config = Some(p))
     def withI18NContext(p: I18NContext) = copy(i18NContextOption = Some(p))
     def withI18NContext(p: Option[I18NContext]) = copy(i18NContextOption = p)
 
@@ -463,7 +472,7 @@ object TreeTransformer {
     case class AsIs[T]() extends Directive[T]
     case class Default[T]() extends Directive[T]
     case class LeafContent[T](content: T) extends Directive[T]
-    case class Content[T](content: T) extends Directive[T]
+    case class ContainerContent[T](content: T) extends Directive[T]
     case class LeafNode[T](name: String, content: T) extends Directive[T]
     case class NameNode[T](name: String, content: T, children: List[TreeNode[T]]) extends Directive[T]
     case class Node[T](node: TreeNode[T]) extends Directive[T]

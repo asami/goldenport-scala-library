@@ -10,6 +10,7 @@ import org.goldenport.Strings
 import org.goldenport.util.StringUtils
 import org.goldenport.context.Consequence
 import org.goldenport.context.Faults
+import org.goldenport.collection.NonEmptyVector
 import org.goldenport.io.InputSource
 import org.goldenport.hocon.HoconUtils
 import org.goldenport.extension.IRecord
@@ -29,7 +30,7 @@ import org.goldenport.value._
  *  version Jul. 23, 2023
  *  version Mar. 16, 2025
  *  version Apr.  2, 2025
- * @version Jun.  5, 2025
+ * @version Jun. 10, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Request(
@@ -86,6 +87,15 @@ case class Request(
   def cAnyListOption(p: spec.Parameter): Consequence[Option[List[Any]]] =
     Consequence(listOption(p))
 
+  def cAnyOneMore(p: spec.Parameter): Consequence[NonEmptyVector[Any]] =
+    for {
+      xs <- cAnyList(p)
+      r <- xs match {
+        case Nil => Consequence.missingArgumentFault(p.name)
+        case x :: xx => Consequence.success(NonEmptyVector(x, xx))
+      }
+    } yield r
+
   def cPowertypeOption[T <: ValueInstance](p: spec.Parameter): Consequence[Option[T]] =
     for {
       x <- cAnyOption(p)
@@ -105,6 +115,12 @@ case class Request(
   def cFileOption(p: spec.Parameter): Consequence[Option[File]] = for {
     x <- cAnyOption(p)
     r <- x.traverse(p.cFile)
+  } yield r
+
+  def cFileOneMore(p: spec.Parameter): Consequence[NonEmptyVector[File]] = for {
+    x <- cAnyOneMore(p)
+    r0 <- x.vector.traverse(p.cFile)
+    r <- Consequence.success(NonEmptyVector(r0))
   } yield r
 
   def cConfig(p: spec.Parameter): Consequence[Hocon] = for {

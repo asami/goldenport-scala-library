@@ -18,7 +18,7 @@ import org.goldenport.util.CirceUtils
 /*
  * @since   Apr. 21, 2025
  *  version May. 23, 2025
- * @version Jun.  6, 2025
+ * @version Jun. 10, 2025
  * @author  ASAMI, Tomoharu
  */
 object ConfigLoader {
@@ -72,6 +72,20 @@ object ConfigLoader {
       case Format.Hocon => _load_hocon_
       case Format.Json => _load_json_
       case Format.Yaml => _load_yaml_
+    }
+  }
+
+  def loadConfigHocon(in: InputSource): Consequence[Hocon] = {
+    import org.goldenport.util.CirceUtils.Codec.hoconDecoder
+
+    def _load_hocon_(): Consequence[Hocon] = Consequence run {
+      val s = in.asText
+      Consequence(HoconFactory.parseString(s))
+    }
+
+    _load_hocon_.toOption match {
+      case Some(s) => Consequence.success(s)
+      case None => loadConfig(in)
     }
   }
 

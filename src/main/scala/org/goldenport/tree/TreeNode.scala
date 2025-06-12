@@ -20,7 +20,7 @@ import org.goldenport.util.StringUtils
  *  version Mar.  9, 2025
  *  version Apr. 24, 2025
  *  version May. 24, 2025
- * @version Jun.  6, 2025
+ * @version Jun. 12, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeNode[E] extends Showable.Control {
@@ -55,6 +55,7 @@ trait TreeNode[E] extends Showable.Control {
   def addChild(child: TreeNode[E]): TreeNode_TYPE
   def addChildren(parent: TreeNode[E]): Unit
   def addChildren(ps: Seq[TreeNode[E]]): Unit
+  def setChildren(ps: Seq[TreeNode[E]]): Unit
   def addContent(content: E): TreeNode_TYPE
   def removeChild(child: TreeNode[E])
   def getNode(pathname: String): Option[TreeNode_TYPE]

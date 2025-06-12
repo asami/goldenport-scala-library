@@ -38,7 +38,7 @@ import org.goldenport.util.RegexUtils
  *  version Mar. 30, 2025
  *  version Apr. 26, 2025
  *  version May. 23, 2025
- * @version Jun.  4, 2025
+ * @version Jun. 11, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
@@ -108,13 +108,17 @@ case class Realm(
   def merge(pathname: String, view: Realm): Realm =
     copy(
       _tree = Tree.mergeClone(this._tree, pathname, view._tree),
+      origin = None,
       post_procedures = post_procedures ::: _merge_post_procedures(pathname, view.post_procedures)
     )
 
   private def _merge_post_procedures(pathname: String, procedures: List[Realm.PostProcedure]): List[Realm.PostProcedure] =
     procedures.map(_.mergePathname(pathname))
 
-  def +(p: Realm): Realm = copy(Tree.mergeClone(this._tree, p._tree))
+  def +(p: Realm): Realm = copy(
+    _tree = Tree.mergeClone(this._tree, p._tree),
+    origin = None
+  )
 
   def setNode(pathname: PathName): Realm = {
     _tree.setNode(pathname.v)
@@ -334,6 +338,7 @@ object Realm {
     def create(cliconfig: cli.Config) = Context(Config(cliconfig))
   }
 
+  // TODO orign
   case class Cursor(node: TreeNode[Data]) {
     def content = node.content
 

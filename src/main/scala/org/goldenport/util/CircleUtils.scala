@@ -4,6 +4,9 @@ import collection.JavaConverters._
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
 import scalaz.NonEmptyList
+import com.typesafe.config.{Config => Hocon}
+import com.typesafe.config.{ConfigFactory => HoconFactory}
+import com.typesafe.config.{ConfigException}
 import io.circe._
 import io.circe.yaml.syntax._
 import org.goldenport.collection.NonEmptyVector
@@ -11,7 +14,8 @@ import org.goldenport.collection.NonEmptyVector
 /*
  * @since   Apr. 21, 2025
  *  version Apr. 27, 2025
- * @version May. 24, 2025
+ *  version May. 24, 2025
+ * @version Jun. 10, 2025
  * @author  ASAMI, Tomoharu
  */
 object CirceUtils {
@@ -92,5 +96,17 @@ object CirceUtils {
     }
 
     implicit val regexEncoder: Encoder[Regex] = Encoder.encodeString.contramap(_.regex)
+
+    implicit val hoconDecoder: Decoder[Hocon] = Decoder.instance { c =>
+      c.as[Json].flatMap { json =>
+        val str = json.noSpaces
+        try {
+          val hocon = HoconFactory.parseString(s"root = $str").getConfig("root")
+          Right(hocon)
+        } catch {
+          case e: ConfigException => Left(DecodingFailure(e.getMessage, c.history))
+        }
+      }
+    }
   }
 }

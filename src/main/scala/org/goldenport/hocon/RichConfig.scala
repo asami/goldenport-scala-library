@@ -50,7 +50,8 @@ import org.goldenport.parser.ParseResult
  *  version Oct. 13, 2022
  *  version Nov. 28, 2022
  *  version Dec. 12, 2022
- * @version Apr.  4, 2023
+ *  version Apr.  4, 2023
+ * @version Jun.  9, 2025
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -140,9 +141,11 @@ case class RichConfig(config: Config) extends AnyVal {
   def cStringOption(key: String): Consequence[Option[String]] = HoconUtils.consequenceStringOption(config, key)
   def cRational(key: String): Consequence[Rational] = HoconUtils.consequenceRational(config, key)
   def cRationalOption(key: String): Consequence[Option[Rational]] = HoconUtils.consequenceRationalOption(config, key)
+  def cDateTimeOption(key: String)(implicit ctx: DateTimeContext) = consequenceDateTimeOption(key)
   def cAsConfig(key: String): Consequence[Config] = HoconUtils.consequenceAsConfig(config, key)
   def cAsConfigList(key: String): Consequence[List[Config]] = HoconUtils.consequenceAsConfigList(config, key)
   def cEagerStringList(key: String): Consequence[List[String]] = Consequence(HoconUtils.getEagerStringList(config, key) getOrElse Nil)
+  def cEagerStringListOption(key: String): Consequence[Option[List[String]]] = Consequence(HoconUtils.getEagerStringList(config, key))
 
   def consequenceBoolean(key: String): Consequence[Boolean] = HoconUtils.consequenceBoolean(config, key)
   def consequenceBoolean(key: String, default: Boolean): Consequence[Boolean] = HoconUtils.consequenceBoolean(config, key, default)
@@ -188,7 +191,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def consequenceFiniteDurationByDay(key: String, default: FiniteDuration): Consequence[FiniteDuration] = HoconUtils.consequenceFiniteDurationByDay(config, key, default)
   def consequenceFiniteDurationByDayOption(key: String): Consequence[Option[FiniteDuration]] = HoconUtils.consequenceFiniteDurationByDayOption(config, key)
   def consequenceDateTime(key: String): Consequence[DateTime] = HoconUtils.consequenceDateTime(config, key)
-  def consequenceDateTimeOption(key: String): Consequence[Option[DateTime]] = HoconUtils.consequenceDateTimeOption(config, key)
+  def consequenceDateTimeOption(key: String)(implicit ctx: DateTimeContext): Consequence[Option[DateTime]] = HoconUtils.consequenceDateTimeOption(config, key)
   def consequenceDateTimeWithContext(key: String)(implicit ctx: DateTimeContext): Consequence[DateTime] = HoconUtils.consequenceDateTimeWithContext(config, key)
   def consequenceDateTimeOptionWithContext(key: String)(implicit ctx: DateTimeContext): Consequence[Option[DateTime]] = HoconUtils.consequenceDateTimeOptionWithContext(config, key)
   def consequenceLocalDateTime(key: String): Consequence[LocalDateTime] = HoconUtils.consequenceLocalDateTime(config, key)

@@ -18,7 +18,9 @@ import org.goldenport.values.CompactUuid
  *  version Dec. 26, 2020
  *  version Feb. 23, 2025
  *  version Mar.  7, 2025
- * @version Apr. 24, 2025
+ *  version Apr. 24, 2025
+ *  version Apr. 24, 2025
+ * @version Jun. 12, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeNodeStructureBase[E] extends TreeNode[E] {
@@ -109,6 +111,11 @@ trait TreeNodeStructureBase[E] extends TreeNode[E] {
 
   override def addChildren(ps: Seq[TreeNode[E]]) {
     ps.foreach(addChild)
+  }
+
+  override def setChildren(ps: Seq[TreeNode[E]]) {
+    clear()
+    addChildren(ps)
   }
 
   override def addChildren(parent: TreeNode[E]) {
