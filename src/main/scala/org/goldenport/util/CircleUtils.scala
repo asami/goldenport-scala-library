@@ -7,15 +7,19 @@ import scalaz.NonEmptyList
 import com.typesafe.config.{Config => Hocon}
 import com.typesafe.config.{ConfigFactory => HoconFactory}
 import com.typesafe.config.{ConfigException}
+import org.joda.time.DateTime
+import org.joda.time.LocalDate
 import io.circe._
 import io.circe.yaml.syntax._
 import org.goldenport.collection.NonEmptyVector
+import org.goldenport.context.Consequence
+import org.goldenport.context.{DateTimeContext => CDateTimeContext}
 
 /*
  * @since   Apr. 21, 2025
  *  version Apr. 27, 2025
  *  version May. 24, 2025
- * @version Jun. 10, 2025
+ * @version Jun. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 object CirceUtils {
@@ -86,6 +90,14 @@ object CirceUtils {
     toYamlString(json)
   }
 
+  def prefixedEncoder[A](prefix: String)(implicit enc: Encoder.AsObject[A]): Encoder[A] =
+    Encoder.instance { a =>
+      val obj = enc.encodeObject(a)
+      Json.obj(
+        obj.toMap.map { case (k, v) => s"$prefix$k" -> v }.toSeq: _*
+      )
+    }
+
   object Codec {
     implicit val regexDecoder: Decoder[Regex] = Decoder.decodeString.emap { str =>
       try {
@@ -96,6 +108,20 @@ object CirceUtils {
     }
 
     implicit val regexEncoder: Encoder[Regex] = Encoder.encodeString.contramap(_.regex)
+
+    implicit def datetimeDecoder(implicit dctx: CDateTimeContext): Decoder[DateTime] =
+      Decoder.decodeString.emap { s =>
+        Consequence(DateTimeUtils.parseDateTime(s, dctx.dateTimeZone)).toEitherString
+      }
+
+    implicit val datetimeEncoder: Encoder[DateTime] = Encoder.encodeString.contramap(AnyUtils.toString)
+
+    implicit def localdateDecoder(implicit dctx: CDateTimeContext): Decoder[LocalDate] =
+      Decoder.decodeString.emap { s =>
+        LocalDateUtils.consequenceLocalDate(s).toEitherString
+      }
+
+    implicit val localdateEncoder: Encoder[LocalDate] = Encoder.encodeString.contramap(AnyUtils.toString)
 
     implicit val hoconDecoder: Decoder[Hocon] = Decoder.instance { c =>
       c.as[Json].flatMap { json =>

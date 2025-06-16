@@ -21,6 +21,7 @@ import org.goldenport.RAISE
 import org.goldenport.Strings
 import org.goldenport.i18n.{I18NString, I18NElement}
 import org.goldenport.value._
+import org.goldenport.values.LocalDateOrDateTime
 import org.goldenport.collection.VectorMap
 import org.goldenport.context.Consequence
 import org.goldenport.context.DateTimeContext
@@ -32,6 +33,7 @@ import org.goldenport.util.LocalDateTimeUtils
 import org.goldenport.util.LocalDateUtils
 import org.goldenport.util.LocalTimeUtils
 import org.goldenport.util.AnyUtils
+import org.goldenport.util.AnyRefUtils
 import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
 
 /*
@@ -64,7 +66,8 @@ import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
  *  version Apr. 10, 2023
  *  version Nov. 22, 2023
  *  version Apr.  6, 2025
- * @version May. 21, 2025
+ *  version May. 21, 2025
+ * @version Jun. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -326,7 +329,7 @@ object HoconUtils {
   def getValue[T <: ValueInstance](valueclass: ValueClass[T], config: Config, key: String): Option[T] =
     getString(config, key).
       map(x => valueclass.get(x).
-        getOrElse(RAISE.invalidArgumentFault(s"Invalid value name: $key")))
+        getOrElse(RAISE.invalidArgumentFault(s"Invalid value name: $key = $x")))
 
   def getFile(config: Config, key: String): Option[File] =
     getString(config, key).map(new File(_))
@@ -337,7 +340,14 @@ object HoconUtils {
   def toFlattenVector(p: Config): Vector[(String, Any)] =
     p.entrySet().asScala.toVector.map(x => x.getKey -> x.getValue.unwrapped)
 
+  def toFlattenVectorAnyRef(p: Config): Vector[(String, AnyRef)] =
+    toFlattenVector(p).map {
+      case (k, v) => k -> AnyRefUtils.toAnyRef(v)
+    }
+
   def toFlattenMap(p: Config): Map[String, Any] = toFlattenVector(p).toMap
+
+  def toFlattenMapAnyRef(p: Config): Map[String, AnyRef] = toFlattenVectorAnyRef(p).toMap
 
   def toFlattenVectorMap(p: Config): VectorMap[String, Any] =
     VectorMap(toFlattenVector(p))
@@ -597,6 +607,12 @@ object HoconUtils {
   def consequenceUrlOption(p: Config, key: String): Consequence[Option[URL]] =
     consequenceStringOption(p, key).flatMap(x => Consequence(x.map(UURL.getURLFromFileOrURLName)))
 
+  def consequenceUri(p: Config, key: String): Consequence[URI] =
+    consequenceUrl(p, key).map(_.toURI)
+
+  def consequenceUriOption(p: Config, key: String): Consequence[Option[URI]] =
+    consequenceUrlOption(p, key).map(_.map(_.toURI))
+
   def consequenceMillisecondsOption(config: Config, key: String): Consequence[Option[Long]] =
     if (config.hasPath(key))
       Consequence(config.getDuration(key, MILLISECONDS)).map(Some(_))
@@ -844,6 +860,12 @@ object HoconUtils {
     for {
       s <- consequenceStringOption(p, key)
       x <- s.traverse(LocalTimeUtils.consequenceLocalTime)
+    } yield x
+
+  def consequenceLocalDateOrDateTimeOption(p: Config, key: String)(implicit ctx: DateTimeContext): Consequence[Option[LocalDateOrDateTime]] =
+    for {
+      s <- consequenceStringOption(p, key)
+      x <- s.traverse(LocalDateOrDateTime.parse)
     } yield x
 
   def consequenceToken[T <: ValueInstance](p: Config, key: String, f: ValueClass[T]): Consequence[T] =

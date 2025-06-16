@@ -17,7 +17,8 @@ import org.goldenport.parser._
  *  version Dec.  7, 2019
  *  version Feb. 26, 2020
  *  version Apr. 25, 2021
- * @version Oct. 18, 2024
+ *  version Oct. 18, 2024
+ * @version Jun. 14, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Xsv(
@@ -124,7 +125,7 @@ object Xsv {
   def parseSsv(ps: Seq[String]): Xsv = parse(SsvStrategy, ps)
 
   def parse(s: Strategy, ps: Seq[String]): Xsv = {
-    val xs = ps./:(VectorRowColumnMatrix.empty[LogicalToken])((z, x) => z.appendRow(_parse(s, x)))
+    val xs = ps.foldLeft(VectorRowColumnMatrix.empty[LogicalToken])((z, x) => z.appendRow(_parse(s, x)))
     Xsv(s, xs)
   }
 
@@ -157,12 +158,12 @@ object Xsv {
           case 0 => EmptyToken
           case 1 => ps.head
           case _ =>
-            val sb = ps./:(new StringBuilder)((z, x) => z.append(x.raw))
+            val sb = ps.foldLeft(new StringBuilder)((z, x) => z.append(x.raw))
             SingleStringToken(sb.toString)
         }
       }
     }
-    xs./:(Z())(_+_).r
+    xs.foldLeft(Z())(_+_).r
   }
 
   def load(s: Strategy, in: ResourceHandle): Xsv = {

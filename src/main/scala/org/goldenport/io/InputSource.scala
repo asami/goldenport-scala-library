@@ -19,7 +19,8 @@ import org.goldenport.util.StringUtils
  *  version Oct.  8, 2018
  *  version Dec.  7, 2019
  *  version Jul. 31, 2023
- * @version Mar. 20, 2025
+ *  version Mar. 20, 2025
+ * @version Jun. 14, 2025
  * @author  ASAMI, Tomoharu
  */
 trait InputSource {
@@ -36,6 +37,7 @@ trait InputSource {
 object InputSource {
   def apply(string: String): InputSource = StringInputSource(string)
   def apply(string: String, charset: Charset): InputSource = StringInputSource(string, charset)
+  def apply(string: String, uri: URI): InputSource = StringInputSource(string, uri)
   def apply(file: File): InputSource = FileInputSource(file)
   def apply(path: Path): InputSource = PathInputSource(path)
   def apply(url: URL): InputSource = UrlInputSource(url)

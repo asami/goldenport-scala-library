@@ -37,13 +37,15 @@ import org.goldenport.extension.IRecord
  *  version Sep. 27, 2023
  *  version Mar.  9, 2025
  *  version Apr. 21, 2025
- * @version May. 16, 2025
+ *  version May. 16, 2025
+ * @version Jun. 15, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
   def conclusion: Conclusion
   def code: Int = conclusion.code
   def toOption: Option[T]
+  def toEitherString: Either[String, T]
   def toTry: Try[T]
   def some: Consequence[Option[T]]
   def none: Consequence[Option[T]]
@@ -102,6 +104,7 @@ object Consequence {
   ) extends Consequence[T] {
     def isSuccess: Boolean = true
     def toOption: Option[T] = Some(result)
+    def toEitherString: Either[String, T] = Right(result)
     def toTry: Try[T] = Try(result)
     def some: Consequence[Option[T]] = copy(result = Some(result))
     def none: Consequence[Option[T]] = copy(result = None)
@@ -138,6 +141,7 @@ object Consequence {
   ) extends Consequence[T] {
     def isSuccess: Boolean = false
     def toOption: Option[T] = None
+    def toEitherString: Either[String, T] = Left(message)
     def toTry: Try[T] = TryFailure(conclusion.toException)
     def some: Consequence[Option[T]] = this.asInstanceOf[Consequence[Option[T]]]
     def none: Consequence[Option[T]] = this.asInstanceOf[Consequence[Option[T]]]

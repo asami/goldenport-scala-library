@@ -18,7 +18,7 @@ import org.goldenport.util.CirceUtils
 /*
  * @since   Apr. 21, 2025
  *  version May. 23, 2025
- * @version Jun. 10, 2025
+ * @version Jun. 14, 2025
  * @author  ASAMI, Tomoharu
  */
 object ConfigLoader {
@@ -29,13 +29,15 @@ object ConfigLoader {
     case object Yaml extends Format
   }
 
-  private def _detect_format(path: String): Option[Format] =
-    StringUtils.getSuffix(path) collect {
+  private def _detect_format(path: String): Option[Format] = {
+    val suffix = StringUtils.getSuffix(path) orElse Some(path)
+    suffix collect {
       case "conf" => Format.Hocon
       case "json" => Format.Json
       case "yaml" => Format.Yaml
       case "yml" => Format.Yaml
     }
+  }
 
   def loadConfig[T: Decoder](in: InputSource): Consequence[T] =
     in.getSuffix match {
