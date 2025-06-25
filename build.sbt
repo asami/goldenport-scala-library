@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.2.6"
+version := "2.2.7"
 
 scalaVersion := "2.12.18"
 
@@ -78,7 +78,7 @@ libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "2.20.0"
 
 // libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.9.4"
 
-libraryDependencies += "com.typesafe" % "config" % "1.2.1"
+libraryDependencies += "com.typesafe" % "config" % "1.4.3"
 
 libraryDependencies += "io.circe" %% "circe-core" % circeVersion
 
