@@ -38,7 +38,7 @@ import org.goldenport.util.RegexUtils
  *  version Mar. 30, 2025
  *  version Apr. 26, 2025
  *  version May. 23, 2025
- * @version Jun. 11, 2025
+ * @version Jun. 23, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
@@ -486,7 +486,10 @@ object Realm {
         ".*~$".r,
         ".*.bak$".r
       )
-    )
+    ) {
+      def addTextSuffixes(p: String, ps: String*): Config =
+        copy(textSuffixes = textSuffixes ++ (p +: ps))
+    }
     object Config {
       val default = Config()
     }

@@ -67,7 +67,7 @@ import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
  *  version Nov. 22, 2023
  *  version Apr.  6, 2025
  *  version May. 21, 2025
- * @version Jun. 16, 2025
+ * @version Jun. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -337,8 +337,17 @@ object HoconUtils {
   def toFlattenList(p: Config): List[(String, Any)] =
     p.entrySet().asScala.toList.map(x => x.getKey -> x.getValue.unwrapped)
 
-  def toFlattenVector(p: Config): Vector[(String, Any)] =
-    p.entrySet().asScala.toVector.map(x => x.getKey -> x.getValue.unwrapped)
+  def toFlattenVector(p: Config): Vector[(String, Any)] = {
+    val a = p.entrySet()
+    val b = a.asScala.toVector
+    b.map(x => _norimalize_key(x.getKey) -> x.getValue.unwrapped)
+  }
+
+  private def _norimalize_key(s: String) =
+    if (s.startsWith("\""))
+      s.filterNot(_ == '"')
+    else
+      s
 
   def toFlattenVectorAnyRef(p: Config): Vector[(String, AnyRef)] =
     toFlattenVector(p).map {

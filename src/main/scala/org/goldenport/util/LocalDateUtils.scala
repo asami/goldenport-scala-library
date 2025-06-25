@@ -14,7 +14,8 @@ import org.goldenport.context.Consequence
  *  version Jun. 14, 2018
  *  version Oct. 10, 2018
  *  version Apr. 20, 2022
- * @version Dec. 12, 2022
+ *  version Dec. 12, 2022
+ * @version Jun. 22, 2025
  * @author  ASAMI, Tomoharu
  */
 object LocalDateUtils {
@@ -110,4 +111,10 @@ object LocalDateUtils {
   //
   def isSameMonth(lhs: LocalDate, rhs: LocalDate): Boolean =
     lhs.getYear == rhs.getYear && lhs.getMonthOfYear == rhs.getMonthOfYear
+
+  def compareAscOption(lhs: Option[LocalDate], rhs: Option[LocalDate]): Option[Boolean] =
+    OptionUtils.compareAscOption(lhs, rhs)
+
+  def compareDescOption(lhs: Option[LocalDate], rhs: Option[LocalDate]): Option[Boolean] =
+    OptionUtils.compareDescOption(lhs, rhs)
 }

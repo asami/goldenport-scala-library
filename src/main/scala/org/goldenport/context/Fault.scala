@@ -29,7 +29,8 @@ import Fault._
  *  version Sep. 28, 2023
  *  version Nov. 11, 2023
  *  version Mar. 16, 2025
- * @version May. 11, 2025
+p.toI18NMessage) *  version May. 11, 2025
+p.toI18NMessage) * @version Jun. 21, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -234,6 +235,7 @@ case class InvalidArgumentFault(
 object InvalidArgumentFault {
   val template = I18NTemplate("Invalid Argument[{0}]: {1}")
 
+  def apply(p: String): InvalidArgumentFault = InvalidArgumentFault(I18NString(p))
   def apply(p: I18NString): InvalidArgumentFault = InvalidArgumentFault(p.toI18NMessage)
   def apply(p: String, fault: Fault): InvalidArgumentFault = {
     val msg = _message(p, List(fault))

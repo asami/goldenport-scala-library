@@ -6,7 +6,8 @@ import org.goldenport.util.StringUtils
 /*
  * @since   Apr. 19, 2025
  *  version Apr. 27, 2025
- * @version May. 16, 2025
+ *  version May. 16, 2025
+ * @version Jun. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 abstract class Title() extends Datatype {
@@ -33,7 +34,7 @@ object Title {
 
   def apply(title: String): Title = PlainTitle(title)
 
-  def parse(title: String): Consequence[Title] = ???
+  def parse(title: String): Consequence[Title] = Consequence(apply(title))
 
   def isTitleChar(c: Char): Boolean =
     !(StringUtils.isAsciiChar(c) && !StringUtils.isSafeAsciiChar(c))

@@ -8,7 +8,7 @@ import scalaz._, Scalaz._
  *  version Oct. 17, 2018
  *  version Oct.  8, 2021
  *  version Jan. 27, 2022
- * @version Jun.  3, 2025
+ * @version Jun. 22, 2025
  * @author  ASAMI, Tomoharu
  */
 object OptionUtils {
@@ -56,4 +56,22 @@ object OptionUtils {
       case (None, Some(r)) => Some(r)
       case (None, None) => None
     }
+
+  def compareAscOption[T](lhs: Option[T], rhs: Option[T])(implicit ordering: scala.math.Ordering[T]): Option[Boolean] = {
+    (lhs, rhs) match {
+      case (Some(l), Some(r)) => Some(ordering.gteq(l, r))
+      case (Some(l), None) => Some(true)
+      case (None, Some(r)) => Some(false)
+      case (None, None) => None
+    }
+  }
+
+  def compareDescOption[T](lhs: Option[T], rhs: Option[T])(implicit ordering: scala.math.Ordering[T]): Option[Boolean] = {
+    (lhs, rhs) match {
+      case (Some(l), Some(r)) => Some(ordering.lteq(l, r))
+      case (Some(l), None) => Some(true)
+      case (None, Some(r)) => Some(false)
+      case (None, None) => None
+    }
+  }
 }

@@ -20,7 +20,8 @@ import org.goldenport.i18n.{I18NString, I18NElement}
  *  version Oct. 27, 2017
  *  version Dec. 14, 2017
  *  version Oct. 21, 2018
- * @version Nov.  5, 2018
+ *  version Nov.  5, 2018
+ * @version Jun. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -47,13 +48,13 @@ object HoconUtils {
     asStringList(config, key).toVector
 
   def asUrlList(config: Config, key: String): List[URL] =
-    asStringList(config, key).map(new URL(_))
+    asStringList(config, key).map(new URI(_).toURL)
 
   def asDuration(config: Config, key: String, fallback: FiniteDuration): Duration =
     getDuration(config, key) getOrElse fallback
 
   def takeUrl(config: Config, key: String): URL =
-    new URL(config.getString(key))
+    new URI(config.getString(key)).toURL
 
   def takeUri(config: Config, key: String): URI =
     new URI(config.getString(key))

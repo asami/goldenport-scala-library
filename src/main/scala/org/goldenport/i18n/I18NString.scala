@@ -29,7 +29,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Jun. 19, 2021
  *  version Feb.  1, 2022
  *  version Dec.  8, 2022
- * @version Mar.  8, 2025
+ *  version Mar.  8, 2025
+ * @version Jun. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -65,7 +66,7 @@ case class I18NString(
   def apply(locale: Locale): String = get(locale) getOrElse en
 
   lazy val localeMap: Map[Locale, String] =
-    map + (Locale.ENGLISH -> en) + (Locale.JAPANESE -> ja)
+    map + (LocaleUtils.C -> c) + (Locale.ENGLISH -> en) + (Locale.JAPANESE -> ja)
   lazy val localeList: List[(Locale, String)] = localeMap.toList
   lazy val localeVector: Vector[(Locale, String)] = localeMap.toVector
 
@@ -82,6 +83,9 @@ case class I18NString(
   }
   def size(locale: Locale): Int = as(locale).length
 
+  def maxLength: Int = I18NUtils.maxLength(values)
+  def minLength: Int = I18NUtils.minLength(values)
+
   def +(rhs: I18NString): I18NString = concat(rhs, "")
   def concat(rhs: I18NString): I18NString = concat(rhs, ";")
   def concat(rhs: I18NString, delimiter: String): I18NString = {
@@ -93,7 +97,7 @@ case class I18NString(
         }
       }
     }
-    val locales = rhs.map./:(Z(map))(_+_).r
+    val locales = rhs.map.foldLeft(Z(map))(_+_).r
     I18NString(
       s"${c}${delimiter}${rhs.c}",
       s"${en}${delimiter}${rhs.en}",
@@ -128,7 +132,7 @@ case class I18NString(
       s"${c}: ${p.c}",
       s"${en}: ${p.en}",
       s"${ja}: ${p.ja}",
-      map./:(Z(p.map))(_+_).r
+      map.foldLeft(Z(p.map))(_+_).r
     )
   }
 
@@ -201,11 +205,18 @@ object I18NString {
     I18NString(s, s, s, a.toMap)
   }
 
+  def fromStringMap(ps: Map[String, String]): I18NString = {
+    val a = ps.map {
+      case (k, v) => LocaleUtils.parse(k) -> v
+    }
+    apply(a)
+  }
+
   def parse(p: String): I18NString = {
     def parsejson = {
       Json.parse(p) match {
         case JsObject(ms) => // TODO parameters
-          val a = for ((l, s) <- ms) yield (new Locale(l), s.toString)
+          val a = for ((l, s) <- ms) yield (Locale.of(l), s.toString)
           apply(a.toVector)
         case m => throw new IllegalArgumentException(s"I18NString#parse: $m")
       }
@@ -221,13 +232,13 @@ object I18NString {
   def concat(ps: Seq[I18NString]): I18NString = ps.toList match {
     case Nil => empty
     case x :: Nil => x
-    case x :: xs => xs./:(x)(_ concat _)
+    case x :: xs => xs.foldLeft(x)(_ concat _)
   }
 
   def concatOption(ps: Seq[I18NString]): Option[I18NString] = ps.toList match {
     case Nil => None
     case x :: Nil => Some(x)
-    case x :: xs => Some(xs./:(x)(_ concat _))
+    case x :: xs => Some(xs.foldLeft(x)(_ concat _))
   }
 
   def mkI18NString(ps: NonEmptyList[I18NString], infix: String): I18NString =
@@ -240,5 +251,34 @@ object I18NString {
       case x :: xs => _go_(z.appendAll(infix) + x, xs)
     }
     _go_(empty, ps.toList)
+  }
+
+  import io.circe.{Decoder, Encoder, HCursor, Json => CJson}
+  import io.circe.generic.extras._
+  import io.circe.generic.extras.semiauto._
+
+  implicit val circeconf = Configuration.default.
+    withDefaults.withSnakeCaseMemberNames
+
+  implicit val i18nStringDecoder: Decoder[I18NString] = Decoder.instance { cursor =>
+    val decoder = Decoder.decodeString.
+      map(str => I18NString(str)).
+      or {
+        Decoder.decodeList(Decoder.decodeMap[String, String]).
+          map { list =>
+            val a = list.flatten.toMap
+            I18NString.fromStringMap(a)
+          }
+      }
+    decoder.apply(cursor)
+  }
+
+  implicit val i18nStringEncoder: Encoder[I18NString] = Encoder.instance { s =>
+    if (s.c == s.en && s.en == s.ja && s.map.isEmpty) {
+      CJson.fromString(s.en)
+    } else {
+      val list = s.localeList.map { case (k, v) => Map(k.toString -> v) }
+      Encoder.encodeList(Encoder.encodeMap[String, String]).apply(list)
+    }
   }
 }

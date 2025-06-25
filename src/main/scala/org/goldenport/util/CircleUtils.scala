@@ -1,9 +1,11 @@
 package org.goldenport.util
 
 import collection.JavaConverters._
+import scala.util.Try
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
 import scalaz.NonEmptyList
+import java.net.URI
 import com.typesafe.config.{Config => Hocon}
 import com.typesafe.config.{ConfigFactory => HoconFactory}
 import com.typesafe.config.{ConfigException}
@@ -19,7 +21,7 @@ import org.goldenport.context.{DateTimeContext => CDateTimeContext}
  * @since   Apr. 21, 2025
  *  version Apr. 27, 2025
  *  version May. 24, 2025
- * @version Jun. 16, 2025
+ * @version Jun. 25, 2025
  * @author  ASAMI, Tomoharu
  */
 object CirceUtils {
@@ -99,6 +101,12 @@ object CirceUtils {
     }
 
   object Codec {
+    implicit val uriEncoder: Encoder[URI] = Encoder.encodeString.contramap[URI](_.toString)
+
+    implicit val uriDecoder: Decoder[URI] = Decoder.decodeString.emap { str =>
+      Try(new URI(str)).toEither.left.map(_.getMessage)
+    }
+
     implicit val regexDecoder: Decoder[Regex] = Decoder.decodeString.emap { str =>
       try {
         Right(str.r)
