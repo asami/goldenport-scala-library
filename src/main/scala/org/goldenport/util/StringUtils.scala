@@ -58,7 +58,7 @@ import org.goldenport.values.{PathName, Urn}
  *  version Sep.  5, 2024
  *  version Mar. 17, 2025
  *  version Apr. 26, 2025
- * @version Jun.  6, 2025
+ * @version Jun. 29, 2025
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -375,6 +375,14 @@ object StringUtils {
   def getSuffixRaw(s: String): Option[String] = Option(UPathString.getSuffix(s))
 
   def changeSuffix(s: String, suffix: String): String = toPathnameBody(s) + "." + suffix
+
+  def changeSuffixRelative(s: String, suffix: String): String =
+    toRelative(changeSuffix(s, suffix))
+
+  def changeLeafRelative(pathname: String, leaf: String): String =
+    toRelative(concatPath(pathContainer(pathname), leaf))
+
+  def toRelative(pathname: String): String = pathname.dropWhile(_ == '/')
 
   def toPathnameBody(s: String): String = UPathString.getPathnameBody(s)
 

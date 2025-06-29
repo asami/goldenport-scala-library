@@ -19,7 +19,7 @@ import org.goldenport.util.AnyUtils
  *  version Feb. 28, 2022
  *  version Dec. 10, 2022
  *  version Oct. 14, 2024
- * @version Jun.  7, 2025
+ * @version Jun. 26, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NContext(
@@ -233,6 +233,8 @@ object I18NContext {
     )
   }
   val c = default.copy(locale = LocaleUtils.C)
+  val en = default.copy(locale = LocaleUtils.en)
+  val ja = default.copy(locale = LocaleUtils.ja)
   val test = {
     val charset = Charset.defaultCharset()
     val newline = System.lineSeparator()

@@ -26,7 +26,8 @@ import org.goldenport.util._
  *  version Sep.  4, 2018
  *  version Oct. 15, 2018
  *  version Apr. 28, 2019
- * @version Jul. 20, 2019
+ *  version Jul. 20, 2019
+ * @version Jun. 26, 2025
  * @author  ASAMI, Tomoharu
  */
 object JsonUtils {
@@ -217,7 +218,7 @@ object JsonUtils {
         case m: JsError => copy(errors = errors :+ m)
       }
     }
-    ps./:(Z())(_+_).r
+    ps.foldLeft(Z())(_+_).r
   }
 
   /*
@@ -450,8 +451,8 @@ object JsonUtils {
         }.toList
       )
     }
-    implicit val LocaleFormat = new ValueFormat[Locale](new Locale(_), _.toString)
-    implicit val UrlFormat = new ValueFormat[URL](new URL(_), _.toString)
+    implicit val LocaleFormat = new ValueFormat[Locale](Locale.of(_), _.toString)
+    implicit val UrlFormat = new ValueFormat[URL](new URI(_).toURL, _.toString)
     implicit val UriFormat = new ValueFormat[URI](new URI(_), _.toString)
     implicit val FinitDurationFormat = new ValueFormat[FiniteDuration](
       parseDuration, _.toString

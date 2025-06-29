@@ -1,12 +1,13 @@
 package org.goldenport.datatype
 
+import java.util.Locale
 import org.goldenport.context.Consequence
 import org.goldenport.i18n.I18NString
 import org.goldenport.util.StringUtils
 
 /*
  * @since   Jun. 24, 2025
- * @version Jun. 24, 2025
+ * @version Jun. 27, 2025
  * @author  ASAMI, Tomoharu
  */
 abstract class I18NTitle() extends Datatype {
@@ -24,6 +25,8 @@ abstract class I18NTitle() extends Datatype {
   require (title.maxLength <= title_Max, s"Too large: ${title.maxLength}")
   require (is_Valid(title), s"Invalid title")
 
+  def print(locale: Locale): String = title(locale)
+
   override def toString() = title.toString
 }
 
@@ -33,9 +36,9 @@ object I18NTitle {
 
   def apply(title: String): I18NTitle = Plain(I18NString(title))
 
-  def parse(title: String): Consequence[I18NTitle] = ???
+  def parse(title: String): Consequence[I18NTitle] = Consequence(apply(title))
 
-  def isTitleString(s: I18NString): Boolean = ???
+  def isTitleString(s: I18NString): Boolean = true
 
   case class Plain(title: I18NString) extends I18NTitle
 }

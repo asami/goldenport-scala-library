@@ -20,7 +20,7 @@ import org.goldenport.util.StringUtils
  *  version Mar.  9, 2025
  *  version Apr. 24, 2025
  *  version May. 24, 2025
- * @version Jun. 12, 2025
+ * @version Jun. 29, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeNode[E] extends Showable.Control {
@@ -80,10 +80,8 @@ trait TreeNode[E] extends Showable.Control {
   def toXml: Node
   def toPrettyXml: String
 
-  /*
-   * XXX pathname format variation - absolute, container
-   */
   def pathname: String = _path_buffer.toString
+  def pathnameRelative: String = StringUtils.toRelative(pathname)
 
   private def _path_buffer: GPathnameBuffer = {
     val pb = new GPathnameBuffer

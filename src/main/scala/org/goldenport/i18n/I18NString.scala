@@ -30,7 +30,7 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Feb.  1, 2022
  *  version Dec.  8, 2022
  *  version Mar.  8, 2025
- * @version Jun. 24, 2025
+ * @version Jun. 26, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -62,6 +62,8 @@ case class I18NString(
       }
     }
   }
+
+  def apply(ctx: I18NContext): String = apply(ctx.locale)
 
   def apply(locale: Locale): String = get(locale) getOrElse en
 
@@ -280,5 +282,9 @@ object I18NString {
       val list = s.localeList.map { case (k, v) => Map(k.toString -> v) }
       Encoder.encodeList(Encoder.encodeMap[String, String]).apply(list)
     }
+  }
+
+  def i18nStringWithContextEncoder(implicit ctx: I18NContext): Encoder[I18NString] = Encoder.instance { s =>
+    CJson.fromString(s.apply(ctx.locale))
   }
 }
