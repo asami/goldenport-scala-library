@@ -2,11 +2,13 @@ package org.goldenport.test
 
 import scalaz._, Scalaz._
 import org.scalatest.matchers.{BeMatcher, MatchResult}
+import org.goldenport.util.StringUtils
 import org.goldenport.util.AnyUtils
 
 /*
  * @since   Dec.  7, 2024
- * @version Dec. 26, 2024
+ *  version Dec. 26, 2024
+ * @version Jul.  1, 2025
  * @author  ASAMI, Tomoharu
  */
 object MatchResultUtils {
@@ -75,6 +77,12 @@ object MatchResultUtils {
       //   p.prettifier
       // )
   }
+
+  def matchString(expected: String, actual: String): MatchResult =
+    StringUtils.compareAt(expected, actual) match {
+      case Some(s) => MatchResult(false, s, "Strings match.")
+      case None => MatchResult(true, "Strings unmatch.", "Strings match.")
+    }
 
   def matchOption[T](matcher: (T, T) => MatchResult, expected: Option[T], actual: Option[T]): MatchResult =
     (expected, actual) match {

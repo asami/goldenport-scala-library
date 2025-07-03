@@ -5,7 +5,8 @@ import java.util.Locale
 
 /*
  * @since   Jun. 24, 2025
- * @version Jun. 26, 2025
+ *  version Jun. 26, 2025
+ * @version Jul.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NContainer[T](
@@ -61,4 +62,8 @@ object I18NContainer {
     val a = p -- Set(LocaleUtils.C, LocaleUtils.en, LocaleUtils.ja)
     I18NContainer(c, e, j, a)
   }
+
+  def enja[T](en: T, ja: T): I18NContainer[T] = I18NContainer(
+    en, en, ja, Map.empty
+  )
 }

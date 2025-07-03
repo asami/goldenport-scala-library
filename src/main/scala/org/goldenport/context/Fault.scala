@@ -30,7 +30,8 @@ import Fault._
  *  version Nov. 11, 2023
  *  version Mar. 16, 2025
 p.toI18NMessage) *  version May. 11, 2025
-p.toI18NMessage) * @version Jun. 21, 2025
+p.toI18NMessage) *  version Jun. 21, 2025
+p.toI18NMessage) * @version Jul.  3, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -748,7 +749,7 @@ case class Faults(faults: Vector[Fault] = Vector.empty) {
   )
 
   def getMessage(locale: Locale): Option[String] = toI18NStringONev.map(x =>
-    x.list.map(_.apply(locale)).mkString(";")
+    x.list.map(_.distill(locale)).mkString(";")
   )
 
   def argumentFaults: Vector[ArgumentFault] = faults.collect {

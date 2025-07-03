@@ -7,7 +7,8 @@ import org.goldenport.util.StringUtils
 
 /*
  * @since   Jun. 24, 2025
- * @version Jun. 27, 2025
+ *  version Jun. 27, 2025
+ * @version Jul.  3, 2025
  * @author  ASAMI, Tomoharu
  */
 abstract class I18NTitle() extends Datatype {
@@ -25,7 +26,9 @@ abstract class I18NTitle() extends Datatype {
   require (title.maxLength <= title_Max, s"Too large: ${title.maxLength}")
   require (is_Valid(title), s"Invalid title")
 
-  def print(locale: Locale): String = title(locale)
+  def distill(locale: Locale): String = title.distill(locale)
+
+  def distillDefault: String = title.distillDefault
 
   override def toString() = title.toString
 }
@@ -33,6 +36,8 @@ abstract class I18NTitle() extends Datatype {
 object I18NTitle {
   val TITLE_MIN = 1
   val TITLE_MAX = 128
+
+  def apply(title: I18NString): I18NTitle = Plain(title)
 
   def apply(title: String): I18NTitle = Plain(I18NString(title))
 

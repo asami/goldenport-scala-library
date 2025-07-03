@@ -58,7 +58,8 @@ import org.goldenport.values.{PathName, Urn}
  *  version Sep.  5, 2024
  *  version Mar. 17, 2025
  *  version Apr. 26, 2025
- * @version Jun. 29, 2025
+"Strings match." *  version Jun. 29, 2025
+"Strings match." * @version Jul.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -435,6 +436,42 @@ object StringUtils {
 
   def pathContainer(path: String): String = {
     UPathString.getContainerPathname(path)
+  }
+
+  def makePathContainer(path: String): String = {
+    val a = makePathContainerRelative(path)
+    if (path.startsWith("/"))
+      "/" + a
+    else
+      a
+  }
+
+  def makePathContainerBody(path: String): String = {
+    val a = makePathContainerRelativeBody(path)
+    if (path.startsWith("/"))
+      "/" + a
+    else
+      a
+  }
+
+  def makePathContainerRelative(path: String): String = {
+    val xs = _make_path_container_list(path)
+    xs.mkString("", "/", "/")
+  }
+
+  def makePathContainerRelativeBody(path: String): String = {
+    val xs = _make_path_container_list(path)
+    xs.mkString("/")
+  }
+
+  private def _make_path_container_list(path: String): List[String] = {
+    val xs = Strings.totokens(path, "/")
+    xs.lastOption.fold(List.empty[String]) { x =>
+      if (getSuffix(x).isDefined)
+        xs.init
+      else
+        xs
+    }
   }
 
   def pathRelative(root: String, path: String): String = {
@@ -1056,5 +1093,21 @@ object StringUtils {
       (None, p)
     else
       (Option(p.substring(0, i)), p.substring(i + 1))
+  }
+
+  def compareAt(expected: String, actual: String): Option[String] = {
+    val mismatchIndex = actual.zip(expected).indexWhere { case (a, b) => a != b }
+    if (mismatchIndex >= 0) {
+      val e = StringFormatter.display.escapeDisplay(expected)
+      val a = StringFormatter.display.escapeDisplay(actual)
+      Some(s"""
+       |Mismatch at index $mismatchIndex:
+       |actual  : $a
+       |expected: $e
+       |          ${" " * mismatchIndex}^
+     """.stripMargin)
+    } else {
+      None
+    }
   }
 }

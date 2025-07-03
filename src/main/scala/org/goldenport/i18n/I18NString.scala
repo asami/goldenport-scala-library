@@ -30,7 +30,12 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Feb.  1, 2022
  *  version Dec.  8, 2022
  *  version Mar.  8, 2025
- * @version Jun. 26, 2025
+
+  def distill(
+ * @version Jul.  3, 2025
+
+  def distill(
+ * @version Jul.  3, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -63,9 +68,11 @@ case class I18NString(
     }
   }
 
-  def apply(ctx: I18NContext): String = apply(ctx.locale)
+  def distill(ctx: I18NContext): String = distill(ctx.locale)
 
-  def apply(locale: Locale): String = get(locale) getOrElse en
+  def distill(locale: Locale): String = get(locale) getOrElse distillDefault
+
+  def distillDefault: String = c
 
   lazy val localeMap: Map[Locale, String] =
     map + (LocaleUtils.C -> c) + (Locale.ENGLISH -> en) + (Locale.JAPANESE -> ja)
@@ -285,6 +292,6 @@ object I18NString {
   }
 
   def i18nStringWithContextEncoder(implicit ctx: I18NContext): Encoder[I18NString] = Encoder.instance { s =>
-    CJson.fromString(s.apply(ctx.locale))
+    CJson.fromString(s.distill(ctx.locale))
   }
 }

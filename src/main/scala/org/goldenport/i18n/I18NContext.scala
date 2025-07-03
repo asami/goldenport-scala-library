@@ -19,7 +19,8 @@ import org.goldenport.util.AnyUtils
  *  version Feb. 28, 2022
  *  version Dec. 10, 2022
  *  version Oct. 14, 2024
- * @version Jun. 26, 2025
+ *  version Jun. 26, 2025
+ * @version Jul.  3, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NContext(
@@ -64,7 +65,7 @@ case class I18NContext(
 
   def format(p: Any): String = p match {
     case m: Number => formatNumber(m)
-    case m: I18NString => m(locale)
+    case m: I18NString => m.distill(locale)
     case m: java.sql.Timestamp => formatDateTime(m)
     case m: java.sql.Date => formatDate(m)
     case m: java.util.Date => formatDateTime(m)
@@ -113,7 +114,7 @@ case class I18NContext(
 
   def format(fmt: String, p: Any): String = p match {
     case m: Number => formatNumber(fmt, m)
-    case m: I18NString => formatString(fmt, m(locale))
+    case m: I18NString => formatString(fmt, m.distill(locale))
     case m: java.sql.Timestamp => formatDateTime(fmt, m)
     case m: java.util.Date => formatDate(fmt, m)
     case m: DateTime => formatDateTime(fmt, m)
