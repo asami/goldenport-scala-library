@@ -6,7 +6,7 @@ import java.util.Locale
 /*
  * @since   Jun. 24, 2025
  *  version Jun. 26, 2025
- * @version Jul.  2, 2025
+ * @version Jul.  4, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NContainer[T](
@@ -34,9 +34,35 @@ case class I18NContainer[T](
     }
   }
 
-  def apply(locale: Locale): T = get(locale) getOrElse en
+  def localeVector: Vector[(Locale, T)] =
+    if (c == en && en == ja)
+      _locale_vector_without_c
+    else if (c != en && en == ja)
+      _locale_vector_with_c
+    else if (c == en && en != ja)
+      _locale_vector_without_c
+    else
+      _locale_vector_with_c
 
-  def default = en
+  private def _locale_vector_with_c = {
+    val a = Map(LocaleUtils.C -> c, LocaleUtils.en -> en, LocaleUtils.ja -> ja)
+    (map ++ a).toVector
+  }
+
+  private def _locale_vector_without_c = {
+    val a = Map(LocaleUtils.en -> en, LocaleUtils.ja -> ja)
+    (map ++ a).toVector
+  }
+
+  def getIfNoLocale: Option[T] =
+    if (c == en && en == ja)
+      Some(c)
+    else
+      None
+
+  def apply(locale: Locale): T = get(locale) getOrElse c
+
+  def default = c
 }
 
 object I18NContainer {

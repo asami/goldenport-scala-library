@@ -18,11 +18,12 @@ import org.goldenport.xml.XmlUtils.{makeString, parseNodeSeq}
  *  version Feb. 15, 2021
  *  version Sep. 17, 2021
  *  version Dec. 31, 2021
- * @version Nov.  6, 2022
+ *  version Nov.  6, 2022
+ * @version Jul.  3, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait I18NElement {
-  def apply(locale: Locale): NodeSeq
+  def distill(locale: Locale): NodeSeq
   def get(locale: Locale): Option[NodeSeq]
   def toI18NString: I18NString
   def toString(locale: Locale): String = toI18NString.as(locale)
@@ -54,7 +55,7 @@ case class NodeSeqI18NElement(v: Map[Locale, NodeSeq]) extends I18NElement {
 
   lazy val en: NodeSeq = v.get(Locale.ENGLISH) getOrElse Text("")
   lazy val ja: NodeSeq = v.get(Locale.JAPANESE) getOrElse en
-  def apply(locale: Locale): NodeSeq = v.get(locale) getOrElse en
+  def distill(locale: Locale): NodeSeq = v.get(locale) getOrElse en
   def get(locale: Locale): Option[NodeSeq] = v.get(locale) // TODO country/variation. See I18NString.
   lazy val toI18NString: I18NString = I18NString(v.mapValues(x => XmlPrinter.html(x)).toVector)
   def toJsonString = toI18NString.toJsonString
@@ -69,7 +70,7 @@ case class I18NStringI18NElement(v: I18NString) extends I18NElement {
   import I18NElement._
   lazy val en: NodeSeq = parseNodeSeq(v.en)
   lazy val ja: NodeSeq = parseNodeSeq(v.ja)
-  def apply(locale: Locale): NodeSeq = get(locale) getOrElse en
+  def distill(locale: Locale): NodeSeq = get(locale) getOrElse en
   def get(locale: Locale): Option[NodeSeq] = v.get(locale).map(parseNodeSeq)
   def toJson = v.toJson
   def toJsonString = v.toJsonString
@@ -87,7 +88,7 @@ case class I18NMessageI18NElement(v: I18NMessage) extends I18NElement {
   import I18NElement._
   lazy val en: NodeSeq = parseNodeSeq(v.en)
   lazy val ja: NodeSeq = parseNodeSeq(v.ja)
-  def apply(locale: Locale): NodeSeq = get(locale) getOrElse en
+  def distill(locale: Locale): NodeSeq = get(locale) getOrElse en
   def get(locale: Locale): Option[NodeSeq] = v.get(locale).map(parseNodeSeq)
   def toJson = v.toJson
   def toJsonString = v.toJsonString

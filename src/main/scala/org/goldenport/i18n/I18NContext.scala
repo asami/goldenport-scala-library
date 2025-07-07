@@ -20,7 +20,7 @@ import org.goldenport.util.AnyUtils
  *  version Dec. 10, 2022
  *  version Oct. 14, 2024
  *  version Jun. 26, 2025
- * @version Jul.  3, 2025
+ * @version Jul.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NContext(
@@ -96,7 +96,7 @@ case class I18NContext(
 
   def formatDateTime(p: LocalDateTime): String = formatDateTime(p.toDateTime(dateTimeZone))
 
-  def formatDate(p: LocalDate): String = RAISE.notImplementedYetDefect
+  def formatDate(p: LocalDate): String = p.toString // TODO
 
   def formatTime(p: LocalTime): String = RAISE.notImplementedYetDefect
 

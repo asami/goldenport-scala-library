@@ -30,12 +30,7 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Feb.  1, 2022
  *  version Dec.  8, 2022
  *  version Mar.  8, 2025
-
-  def distill(
- * @version Jul.  3, 2025
-
-  def distill(
- * @version Jul.  3, 2025
+ * @version Jul.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -270,16 +265,11 @@ object I18NString {
     withDefaults.withSnakeCaseMemberNames
 
   implicit val i18nStringDecoder: Decoder[I18NString] = Decoder.instance { cursor =>
-    val decoder = Decoder.decodeString.
-      map(str => I18NString(str)).
-      or {
-        Decoder.decodeList(Decoder.decodeMap[String, String]).
-          map { list =>
-            val a = list.flatten.toMap
-            I18NString.fromStringMap(a)
-          }
-      }
-    decoder.apply(cursor)
+    cursor.as[String] match {
+      case Right(s) => Right(I18NString(s))
+      case Left(_) =>
+        cursor.as[Map[String, String]].map(I18NString.fromStringMap)
+    }
   }
 
   implicit val i18nStringEncoder: Encoder[I18NString] = Encoder.instance { s =>
@@ -293,5 +283,9 @@ object I18NString {
 
   def i18nStringWithContextEncoder(implicit ctx: I18NContext): Encoder[I18NString] = Encoder.instance { s =>
     CJson.fromString(s.distill(ctx.locale))
+  }
+
+  def i18nStringWithLocaleEncoder(implicit locale: Locale): Encoder[I18NString] = Encoder.instance { s =>
+    CJson.fromString(s.distill(locale))
   }
 }

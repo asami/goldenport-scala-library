@@ -67,7 +67,8 @@ import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
  *  version Nov. 22, 2023
  *  version Apr.  6, 2025
  *  version May. 21, 2025
- * @version Jun. 24, 2025
+UURL.getURLFromFileOrURLName(s)) *  version Jun. 24, 2025
+UURL.getURLFromFileOrURLName(s)) * @version Jul.  7, 2025
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -617,10 +618,10 @@ object HoconUtils {
     consequenceStringOption(p, key).flatMap(x => Consequence(x.map(UURL.getURLFromFileOrURLName)))
 
   def consequenceUri(p: Config, key: String): Consequence[URI] =
-    consequenceUrl(p, key).map(_.toURI)
+    consequenceString(p, key).map(new URI(_))
 
   def consequenceUriOption(p: Config, key: String): Consequence[Option[URI]] =
-    consequenceUrlOption(p, key).map(_.map(_.toURI))
+    consequenceStringOption(p, key).map(_.map(new URI(_)))
 
   def consequenceMillisecondsOption(config: Config, key: String): Consequence[Option[Long]] =
     if (config.hasPath(key))

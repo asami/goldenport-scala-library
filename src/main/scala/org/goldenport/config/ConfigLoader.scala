@@ -18,7 +18,8 @@ import org.goldenport.util.CirceUtils
 /*
  * @since   Apr. 21, 2025
  *  version May. 23, 2025
- * @version Jun. 14, 2025
+ *  version Jun. 14, 2025
+ * @version Jul.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 object ConfigLoader {
@@ -76,6 +77,9 @@ object ConfigLoader {
       case Format.Yaml => _load_yaml_
     }
   }
+
+  def loadConfigFromYaml[T: Decoder](in: InputSource): Consequence[T] =
+    loadConfig(in, Format.Yaml)
 
   def loadConfigHocon(in: InputSource): Consequence[Hocon] = {
     import org.goldenport.util.CirceUtils.Codec.hoconDecoder
