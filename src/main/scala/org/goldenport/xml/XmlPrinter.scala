@@ -13,7 +13,8 @@ import org.goldenport.util.AnyUtils
  *  version Jan.  5, 2018
  *  version Mar.  6, 2018
  *  version Aug.  5, 2018
- * @version Mar. 29, 2025
+ *  version Mar. 29, 2025
+ * @version Jul.  9, 2025
  * @author  ASAMI, Tomoharu
  */
 class XmlPrinter(
@@ -105,11 +106,18 @@ class XmlPrinter(
     case m => Unit // _p(m.toString)
   }
 
+  private def _node_seq_asis(n: NodeSeq): Unit = n match {
+    case Text(s) => _text_asis(s)
+    case m => _node_seq(m)
+  }
+
   private def _text(s: String): Unit = formattingMode match {
     case FormattingMode.AsIs => _p(escape(s))
     case FormattingMode.Pretty => if (_not_space(s)) _p(escape(s))
     case FormattingMode.Condense => if (_not_space(s)) _p(escape(s))
   }
+
+  private def _text_asis(s: String): Unit = _p(s)
 
   private def _not_space(s: String) = !_is_space(s)
 
@@ -124,6 +132,8 @@ class XmlPrinter(
   private def _element(elem: Elem): Unit =
     if (_is_paragraph(elem))
       _element_paragraph(elem)
+    else if (_is_script(elem))
+      _element_script(elem)
     else if (_is_inline(elem))
       _element_inline(elem)
     else if (_is_empty(elem))
@@ -132,6 +142,9 @@ class XmlPrinter(
       _element_block(elem)
 
   private def _is_paragraph(elem: Elem): Boolean = elem.label.toLowerCase == "p"
+
+  private def _is_script(elem: Elem): Boolean = elem.label.toLowerCase == "script"
+
   private def _is_inline(elem: Elem): Boolean = inlineTags.contains(elem.label.toLowerCase)
 
   private def _is_empty(elem: Elem): Boolean = elem.child.isEmpty
@@ -141,6 +154,17 @@ class XmlPrinter(
     _in_block
     _element_open(elem)
     _element_children(elem)
+    _element_close(elem)
+    _nl
+    _down
+    _out
+  }
+
+  private def _element_script(elem: Elem): Unit = {
+    _up_print
+    _in_block
+    _element_open(elem)
+    _element_script_children(elem)
     _element_close(elem)
     _nl
     _down
@@ -197,6 +221,11 @@ class XmlPrinter(
   private def _element_children(elem: Elem): Unit = {
     val children = elem.child
     children.foreach(_node_seq)
+  }
+
+  private def _element_script_children(elem: Elem): Unit = {
+    val children = elem.child
+    children.foreach(_node_seq_asis)
   }
 
   private def _element_close(elem: Elem): Unit = {

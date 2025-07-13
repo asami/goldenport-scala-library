@@ -3,7 +3,8 @@ package org.goldenport.util
 /*
  * @since   Apr. 27, 2025
  *  version Apr. 27, 2025
- * @version Jun. 17, 2025
+ *  version Jun. 17, 2025
+ * @version Jul. 13, 2025
  * @author  ASAMI, Tomoharu
  */
 trait StringBuildFeature {
@@ -43,7 +44,7 @@ trait StringBuildFeature {
     _buffer.append(p)
   }
 
-  protected final def sb_print_space: Unit = {
+  protected final def sb_print_space(): Unit = {
     _buffer.append(' ')
   }
 }
