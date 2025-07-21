@@ -39,7 +39,8 @@ import org.goldenport.util.AnyUtils
  *  version Sep. 27, 2023
  *  version Nov.  7, 2023
  *  version Mar. 29, 2025
- * @version May. 11, 2025
+ *  version May. 11, 2025
+ * @version Jul. 18, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -275,6 +276,13 @@ object Conclusion {
     Conclusion(status, faults)
   }
 
+  def emptyArgumentFault(): Conclusion = {
+    val detail = DetailCode.Argument
+    val status = StatusCode.BadRequest.withDetail(detail)
+    val faults = Faults(EmptyArgumentFault())
+    Conclusion(status, faults)
+  }
+
   def tooManyArgumentsFault(values: Seq[Any]): Conclusion = {
     val detail = DetailCode.Argument
     val status = StatusCode.BadRequest.withDetail(detail)
@@ -425,6 +433,13 @@ object Conclusion {
     val detail = DetailCode.IoSubSystem
     val status = StatusCode.InternalServerError.withDetail(detail)
     val faults = Faults(SubsystemIoFault(message))
+    Conclusion(status, faults)
+  }
+
+  def resourceNotFound(name: String): Conclusion = {
+    val detail = DetailCode.IoSystem
+    val status = StatusCode.InternalServerError.withDetail(detail)
+    val faults = Faults(ResourceNotFoundFault(name))
     Conclusion(status, faults)
   }
 

@@ -2,6 +2,7 @@ package org.goldenport.io
 
 import scala.util.control.NonFatal
 import java.net.URL
+import java.net.URI
 import java.io.File
 import com.asamioffice.goldenport.io.UURL
 import org.goldenport.util.StringUtils
@@ -12,7 +13,8 @@ import org.goldenport.util.StringUtils
  *  version Oct.  6, 2017
  *  version Dec.  9, 2019
  *  version Jan. 26, 2020
- * @version Mar. 21, 2022
+ *  version Mar. 21, 2022
+ * @version Jul. 18, 2025
  * @author  ASAMI, Tomoharu
  */
 object UrlUtils {
@@ -43,11 +45,11 @@ object UrlUtils {
     if (s.endsWith("/"))
       p
     else
-      new URL(s + "/")
+      new URI(s + "/").toURL
   }
 
   def build(protocol: String, authority: String, path: String, query: Option[String], fragment: Option[String]): URL =
-    new URL(buildString(protocol, authority, path, query, fragment))
+    new URI(buildString(protocol, authority, path, query, fragment)).toURL
 
   def buildString(protocol: String, authority: String, path: String, query: Option[String], fragment: Option[String]): String =
     s"""$protocol://$authority$path${query.map("?" + _).getOrElse("")}${fragment.map("#" + _).getOrElse("")}"""
@@ -63,4 +65,10 @@ object UrlUtils {
   }
 
   def getFile(url: URL): Option[File] = Option(UURL.getActiveFile(url))
+
+  def addPath(url: URL, path: String): URL = {
+    val baseuri = url.toURI
+    val normalizedpath = if (path.startsWith("/")) path else "/" + path
+    baseuri.resolve(normalizedpath).toURL
+  }
 }

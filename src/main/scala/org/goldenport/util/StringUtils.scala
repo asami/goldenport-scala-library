@@ -12,6 +12,7 @@ import org.goldenport.RAISE
 import org.goldenport.Strings
 import org.goldenport.i18n.StringFormatter
 import org.goldenport.values.{PathName, Urn}
+import org.goldenport.collection.NonEmptyVector
 
 /*
  * @since   May. 24, 2014
@@ -59,7 +60,7 @@ import org.goldenport.values.{PathName, Urn}
  *  version Mar. 17, 2025
  *  version Apr. 26, 2025
 "Strings match." *  version Jun. 29, 2025
-"Strings match." * @version Jul.  2, 2025
+"Strings match." * @version Jul. 17, 2025
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -1013,6 +1014,10 @@ object StringUtils {
 
   def makeOptionNonEmptyListString(s: String): Option[NonEmptyList[String]] = {
     ScalazUtils.makeOptionNonEmptyList(Strings.totokens(s).toList)
+  }
+
+  def makeOptionNonEmptyVectorToken(s: String): Option[NonEmptyVector[String]] = {
+    NonEmptyVector.createOption(Strings.totokens(s))
   }
 
   // def marshallStringsForCsv(xs: Seq[String]): String = {

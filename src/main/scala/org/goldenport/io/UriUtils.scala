@@ -7,13 +7,16 @@ import java.io.File
 import java.nio.charset.StandardCharsets
 import com.asamioffice.goldenport.io.UURL
 import org.goldenport.values.Urn
+import org.goldenport.cli.Environment
+import org.goldenport.util
 
 /*
  * @since   Oct.  6, 2017
  *  version Apr. 26, 2019
  *  version Jan. 26, 2020
  *  version Nov. 22, 2023
- * @version May. 29, 2024
+ *  version May. 29, 2024
+ * @version Jul. 18, 2025
  * @author  ASAMI, Tomoharu
  */
 object UriUtils {
@@ -55,7 +58,22 @@ object UriUtils {
           copy(xs = xs :+ rhs)
         }
     }
-    val s = p.toVector./:(Z())(_+_).r
+    val s = p.toVector.foldLeft(Z())(_+_).r
     new java.net.URI(s)
   }
+
+  def showTerse(workdir: File, uri: URI): String =
+    util.UriUtils.showTerse(workdir, uri)
+
+  def showTerse(env: Environment, uri: URI): String =
+    util.UriUtils.showTerse(env, uri)
+
+  def getRelative(base: File, uri: URI): Option[URI] =
+    util.UriUtils.getRelative(base, uri)
+
+  def getRelative(base: URI, uri: URI): Option[URI] =
+    util.UriUtils.getRelative(base, uri)
+
+  def printPathQueryFragment(p: URI): String =
+    util.UriUtils.printPathQueryFragment(p)
 }

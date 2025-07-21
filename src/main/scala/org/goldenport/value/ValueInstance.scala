@@ -1,7 +1,10 @@
 package org.goldenport.value
 
+import scalaz._, Scalaz._
+import org.goldenport.Strings
 import org.goldenport.context.Consequence
 import org.goldenport.parser.ParseResult
+import org.goldenport.collection.NonEmptyVector
 import org.goldenport.util.StringUtils
 
 /*
@@ -15,7 +18,8 @@ import org.goldenport.util.StringUtils
  *  version Mar. 21, 2021
  *  version Jun. 14, 2021
  *  version Oct. 20, 2021
- * @version Jun.  2, 2025
+ *  version Jun.  2, 2025
+ * @version Jul. 17, 2025
  * @author  ASAMI, Tomoharu
  */
 trait ValueInstance {
@@ -49,6 +53,22 @@ trait ValueClass[T <: ValueInstance] {
     map(ParseResult.success).getOrElse(ParseResult.error(s"Invalid value($name): $s"))
   def consequence(s: String): Consequence[T] =
     Consequence.successOrInvalidTokenFault(s, get(normalize_key(s)))
+
+  def parseNonEmptyVector(p: String): Consequence[NonEmptyVector[T]] = {
+    val xs = Strings.totokens(p)
+    for {
+      a <- xs.traverse(consequence)
+      b <- NonEmptyVector.createC(a)
+    } yield b
+  }
+
+  def parseNonEmptyVector(p: String, delimiter: String): Consequence[NonEmptyVector[T]] = {
+    val xs = Strings.totokens(p, delimiter)
+    for {
+      a <- xs.traverse(consequence)
+      b <- NonEmptyVector.createC(a)
+    } yield b
+  }
 }
 
 trait EnumerationClass[T <: ValueInstance] extends ValueClass[T] {

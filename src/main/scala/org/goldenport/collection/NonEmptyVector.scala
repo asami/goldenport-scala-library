@@ -3,6 +3,7 @@ package org.goldenport.collection
 import scalaz._, Scalaz._
 import io.circe._
 import org.goldenport.context.Conclusion
+import org.goldenport.context.Consequence
 import org.goldenport.util.VectorUtils
 
 /*
@@ -17,7 +18,8 @@ import org.goldenport.util.VectorUtils
  *  version Jun.  5, 2024
  *  version Nov.  2, 2024
  *  version Feb.  5, 2025
- * @version Jun.  5, 2025
+ *  version Jun.  5, 2025
+ * @version Jul. 17, 2025
  * @author  ASAMI, Tomoharu
  */
 case class NonEmptyVector[T](head: T, tailVector: Vector[T]) {
@@ -140,4 +142,7 @@ object NonEmptyVector {
 
   def createOption[T](p: Option[Seq[T]]): Option[NonEmptyVector[T]] =
     p.flatMap(seq => seq.headOption.map(x => NonEmptyVector(x, seq.tail.toVector)))
+
+  def createC[T](p: Seq[T]): Consequence[NonEmptyVector[T]] =
+    Consequence.successOrEmptyArgumentFault(createOption(p))
 }

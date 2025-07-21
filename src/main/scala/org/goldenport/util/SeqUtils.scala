@@ -14,7 +14,8 @@ import scala.collection.mutable.Builder
  *  version Feb. 18, 2018
  *  version May. 23, 2018
  *  version Sep. 30, 2021
- * @version Oct.  1, 2021
+ *  version Oct.  1, 2021
+ * @version Jul. 15, 2025
  * @author  ASAMI, Tomoharu
  */
 object SeqUtils {
@@ -54,7 +55,7 @@ object SeqUtils {
           this
       }
     }
-    ps./:(Z())(_+_).r
+    ps.foldLeft(Z())(_+_).r
   }
 
   // def split3[T, S[_] <: Seq[T]](p: T => Boolean)(ps: S[T])(implicit bf: CanBuildFrom[Seq[_], T, S[T]]): (S[T], S[T], S[T]) = {
@@ -117,7 +118,7 @@ object SeqUtils {
       private def _is_center = current == CENTER
       private def _is_right = !(_is_left || _is_center)
     }
-    ps./:(Z())(_+_).r
+    ps.foldLeft(Z())(_+_).r
   }
 
   def split3L[T](p: T => Boolean)(ps: Seq[T]): (List[T], List[T], List[T]) = {
@@ -141,7 +142,7 @@ object SeqUtils {
   def buildTupleVector[T](p: (String, Option[T]), ps: (String, Option[T])*): Vector[(String, T)] =
     buildTupleVector(p +: ps)
 
-  def buildTupleVector[T](options: Seq[(String, Option[T])]): Vector[(String, T)] =
+  def buildTupleVector[K, T](options: Seq[(K, Option[T])]): Vector[(K, T)] =
     options.toVector.flatMap {
       case (k, Some(v)) => Some(k -> v)
       case (_, None) => None

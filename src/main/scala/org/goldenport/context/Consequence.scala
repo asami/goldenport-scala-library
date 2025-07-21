@@ -38,7 +38,8 @@ import org.goldenport.extension.IRecord
  *  version Mar.  9, 2025
  *  version Apr. 21, 2025
  *  version May. 16, 2025
- * @version Jun. 15, 2025
+ *  version Jun. 15, 2025
+ * @version Jul. 18, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -320,6 +321,9 @@ object Consequence {
   def successOrInvalidArgumentFault[T](key: String, value: Any, p: Option[T]): Consequence[T] =
     p.map(success).getOrElse(invalidArgumentFault(key, value))
 
+  def successOrEmptyArgumentFault[T](p: Option[T]): Consequence[T] =
+    p.map(success).getOrElse(emptyArgumentFault)
+
   def successOrInvalidTokenFault[T](name: String, p: Option[T]): Consequence[T] =
     p.map(success).getOrElse(invalidTokenFault(name))
 
@@ -342,6 +346,8 @@ object Consequence {
   def invalidArgumentFault[T](p: String): Consequence[T] = invalidArgumentFault(I18NMessage(p))
   def invalidArgumentFault[T](p: String, arg: Any, args: Any*): Consequence[T] = Error(Conclusion.invalidArgumentFault(I18NMessage(p, args +: args)))
   def invalidArgumentFault[T](p: I18NMessage): Consequence[T] = Error(Conclusion.invalidArgumentFault(p))
+
+  def emptyArgumentFault[T](): Consequence[T] = Error(Conclusion.emptyArgumentFault)
 
   def missingArgumentFault[T](p: String, ps: String*): Consequence[T] = missingArgumentFault(p +: ps)
   def missingArgumentFault[T](ps: Seq[String]): Consequence[T] = Error(Conclusion.missingArgumentFault(ps))
@@ -376,6 +382,8 @@ object Consequence {
   def unmarshallingDefect[T](p: String): Consequence[T] = Error(Conclusion.unmarshallingDefect(p))
 
   def databaseIoFault[T](message: String): Consequence[T] = Error(Conclusion.databaseIoFault(message))
+
+  def resourceNotFound[T](name: String): Consequence[T] = Error(Conclusion.resourceNotFound(name))
 
   def noReachDefect[T](message: String): Consequence[T] = Error(Conclusion.noReachDefect(message))
 
@@ -417,6 +425,18 @@ object Consequence {
     p match {
       case Some(s) => Consequence.success(Some(s))
       case None => run(q)
+    }
+
+  def runOptionMap[A, B](p: Option[A])(f: A => Consequence[B]): Consequence[Option[B]] =
+    p match {
+      case Some(s) => f(s).map(Some(_))
+      case None => none[Option[B]]
+    }
+
+  def runOptionMapOption[A, B](p: Option[A])(f: A => Consequence[Option[B]]): Consequence[Option[B]] =
+    p match {
+      case Some(s) => f(s)
+      case None => none[Option[B]]
     }
 
   def runOrMissingPropertyFault[T](name: String)(p: => Consequence[Option[T]]): Consequence[T] =

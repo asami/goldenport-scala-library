@@ -18,7 +18,8 @@ import org.goldenport.util.{NumberUtils, AnyRefUtils}
  *  version Jan. 30, 2021
  *  version Jan. 25, 2022
  *  version Feb. 17, 2022
- * @version Mar. 19, 2022
+ *  version Mar. 19, 2022
+ * @version Jul. 17, 2025
  * @author  ASAMI, Tomoharu
  */
 trait NumberRange extends Showable {
@@ -43,6 +44,8 @@ object NumberRange {
   def parseOption(p: String): Option[NumberRange] = parse(p).toOption
 
   def unmarshall(p: String): Consequence[NumberRange] = Consequence.from(parse(p))
+
+  def parseC(p: String): Consequence[NumberRange] = Consequence.from(parse(p))
 
   def parse(s: String): ParseResult[NumberRange] = {
     Strings.totokens(s, ",") match {
@@ -94,7 +97,7 @@ object NumberRange {
         copy(xs = z)
       }
     }
-    ps./:(Z())(_+_).r
+    ps.foldLeft(Z())(_+_).r
   }
 
   private def _parse(p: String): ParseResult[NumberRange] =
@@ -127,7 +130,7 @@ object NumberRange {
         case m: EmptyParseResult[_] => this
       }
     }
-    ps./:(Z())(_+_).r
+    ps.foldLeft(Z())(_+_).r
   }
 
   private def _parse(labelf: String => Option[Number], p: String): ParseResult[NumberRange] =

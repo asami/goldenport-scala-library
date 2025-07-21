@@ -16,7 +16,8 @@ import org.goldenport.util.VectorUtils
  *  version Sep. 10, 2020
  *  version Apr. 12, 2021
  *  version Sep. 10, 2024
- * @version Nov. 14, 2024
+ *  version Nov. 14, 2024
+ * @version Jul. 15, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait VectorMap[K, +V] extends Map[K, V] {
@@ -146,7 +147,7 @@ object IndexedVectorMap {
   def empty[K, V] = _empty.asInstanceOf[IndexedVectorMap[K, V]]
 
   def apply[K, V](ps: Vector[(K, V)]): IndexedVectorMap[K, V] = {
-    val m = ps./:(Map.empty[K, V])(_+_)
+    val m = ps.foldLeft(Map.empty[K, V])(_+_)
     IndexedVectorMap(ps, m)
   }
 }
@@ -159,10 +160,15 @@ object VectorMap {
   def apply[K, V](p: (K, V), ps: (K, V)*): VectorMap[K, V] = PlainVectorMap(p +: ps.toVector)
   def apply[K, V](ps: Iterable[(K, V)]): VectorMap[K, V] = PlainVectorMap(ps.toVector)
 
+  def create[K, V](p: (K, Option[V]), ps: (K, Option[V])*): VectorMap[K, V] = {
+    val a: Vector[(K, V)] = VectorUtils.buildTupleVector(p +: ps.toVector)
+    PlainVectorMap(a)
+  }
+
   implicit def VectorMapMonoid[K, V: Monoid] = new Monoid[VectorMap[K, V]] {
     def zero = empty
     def append(lhs: VectorMap[K, V], rhs: => VectorMap[K, V]) = {
-      rhs.vector./:(lhs)((z, x) => z.get(x._1) match {
+      rhs.vector.foldLeft(lhs)((z, x) => z.get(x._1) match {
         case Some(s) =>
           val b = x._1 -> (s |+| x._2)
           z.update(b)
@@ -172,7 +178,7 @@ object VectorMap {
   }
 
   def parseUriQuery(p: String): VectorMap[String, String] = {
-    Strings.totokens(p, "&")./:(VectorMap.empty[String, String]) { (z, x) =>
+    Strings.totokens(p, "&").foldLeft(VectorMap.empty[String, String]) { (z, x) =>
       x.indexOf('=') match {
         case -1 => if (x.isEmpty) z else z.append(x, "")
         case n => z.append(x.take(n).trim, x.drop(n + 1))

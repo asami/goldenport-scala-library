@@ -31,7 +31,7 @@ import Fault._
  *  version Mar. 16, 2025
 p.toI18NMessage) *  version May. 11, 2025
 p.toI18NMessage) *  version Jun. 21, 2025
-p.toI18NMessage) * @version Jul.  3, 2025
+p.toI18NMessage) * @version Jul. 18, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -276,6 +276,27 @@ object MissingArgumentFault {
   val template = I18NTemplate("Mising Argument: {0}")
 
   def apply(p: String): MissingArgumentFault = MissingArgumentFault(List(p))
+}
+
+case class EmptyArgumentFault(
+  parameters: Seq[String] = Nil,
+  messageTemplate: I18NTemplate = EmptyArgumentFault.template
+) extends ArgumentFault {
+  def prependMessage(msg: String): EmptyArgumentFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
+  def message = messageTemplate.toI18NMessage(parameters.mkString(";"))
+
+  def properties(locale: Locale): IRecord = IRecord.dataS(
+    KEY_NAME -> name,
+    KEY_PARAMETERS -> parameters,
+    KEY_MESSAGE -> message(locale)
+  )
+}
+object EmptyArgumentFault {
+  val template = I18NTemplate("Empty Argument")
+
+  def apply(p: String): EmptyArgumentFault = EmptyArgumentFault(List(p))
 }
 
 case class TooManyArgumentsFault(
@@ -654,6 +675,26 @@ object SubsystemIoFault {
     SubsystemIoFault(messageTemplate = I18NTemplate(p))
 
   def parameter(p: Any, ps: Any*): SubsystemIoFault = SubsystemIoFault(p +: ps.toList)
+}
+
+case class ResourceNotFoundFault(
+  parameters: Seq[Any] = Nil,
+  messageTemplate: I18NTemplate = ResourceNotFoundFault.template
+) extends IoFault with MessageTemplateImpl {
+  def prependMessage(msg: String): ResourceNotFoundFault =
+    copy(messageTemplate = messageTemplate.prependAll(msg))
+
+  def implicitStatusCode: StatusCode = StatusCode.InternalServerError
+}
+object ResourceNotFoundFault {
+  val template = I18NTemplate("Resource not found: {0}")
+
+  def apply(p: String): ResourceNotFoundFault = apply(I18NString(p))
+
+  def apply(p: I18NString): ResourceNotFoundFault = 
+    ResourceNotFoundFault(messageTemplate = I18NTemplate(p))
+
+  def parameter(p: Any, ps: Any*): ResourceNotFoundFault = ResourceNotFoundFault(p +: ps.toList)
 }
 
 case class IllegalConfigurationDefect(

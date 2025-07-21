@@ -24,10 +24,13 @@ import com.asamioffice.goldenport.io.UIO
  *  version Jul. 24, 2017
  *  version Aug. 30, 2017
  *  version Oct.  5, 2018
- * @version Apr. 21, 2019
+ *  version Apr. 21, 2019
+ * @version Jul. 18, 2025
  * @author  ASAMI, Tomoharu
  */
 trait ChunkBag extends Bag {
+  def effectiveCodec = getCodec getOrElse Codec.UTF8
+
   def getChunkBag = Some(this)
   def createChunkBag = copyTo(new BufferFileBag())
 
@@ -193,7 +196,7 @@ trait ChunkBag extends Bag {
   }
 
   def copyTo(sink: Sink[Task, ByteVector]): Unit = 
-    chunksR.to(sink).run.run
+    chunksR.to(sink).run.unsafePerformSync
 
   override def copyTo(out: OutputStream) {
     val bufsize = 8192
@@ -277,7 +280,7 @@ trait ChunkBag extends Bag {
   }
 
   def toText: String = {
-    toInputResource.string(Codec.UTF8)
+    toInputResource.string(effectiveCodec)
   }
 
   def toText(encoding: String): String = {
@@ -285,11 +288,11 @@ trait ChunkBag extends Bag {
   }
 
   def toTextTry: Try[String] = {
-    Try(toInputResource.string(Codec.UTF8))
+    Try(toInputResource.string(effectiveCodec))
   }
 
   def toTextTask: Task[String] = {
-    Task(toInputResource.string(Codec.UTF8))
+    Task(toInputResource.string(effectiveCodec))
   }
 
   def toLines: scalax.io.LongTraversable[String] = {

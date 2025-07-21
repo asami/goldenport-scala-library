@@ -7,7 +7,8 @@ package org.goldenport.util
  *  version Jul. 29, 2019
  *  version Jan. 31, 2020
  *  version Oct.  1, 2021
- * @version Jun.  5, 2024
+ *  version Jun.  5, 2024
+ * @version Jul. 15, 2025
  * @author  ASAMI, Tomoharu
  */
 object VectorUtils {
@@ -17,7 +18,7 @@ object VectorUtils {
   def buildTupleVector[T](p: (String, Option[T]), ps: (String, Option[T])*): Vector[(String, T)] =
     SeqUtils.buildTupleVector(p +: ps)
 
-  def buildTupleVector[T](options: Seq[(String, Option[T])]): Vector[(String, T)] =
+  def buildTupleVector[K, T](options: Seq[(K, Option[T])]): Vector[(K, T)] =
     SeqUtils.buildTupleVector(options)
 
   def sliding2[T](ps: Seq[T]): Vector[Seq[T]] =
@@ -118,7 +119,7 @@ object VectorUtils {
     updateMap(v, kvs.toSeq)
 
   def updateMap[K, V](v: Vector[(K, V)], kvs: Seq[(K, V)]): Vector[(K, V)] =
-    kvs./:(v)(updateMap(_, _))
+    kvs.foldLeft(v)(updateMap(_, _))
 
   def removeMap[K, V](p: Vector[(K, V)], k: K): Vector[(K, V)] =
     p.filterNot(_._1 == k)
@@ -153,7 +154,7 @@ object VectorUtils {
       private def _is_center = current == CENTER
       private def _is_right = !(_is_left || _is_center)
     }
-    ps./:(Z())(_+_).r
+    ps.foldLeft(Z())(_+_).r
   }
 
   def zipRightOption[A, B](pl: Seq[A], pr: Seq[B]): Vector[(A, Option[B])] = {
@@ -166,6 +167,6 @@ object VectorUtils {
         case None => copy(r = r :+ (rhs, None))
       }
     }
-    pl./:(Z())(_+_).r
+    pl.foldLeft(Z())(_+_).r
   }
 }
