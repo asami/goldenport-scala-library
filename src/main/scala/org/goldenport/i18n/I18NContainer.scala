@@ -2,11 +2,12 @@ package org.goldenport.i18n
 
 import scalaz._, Scalaz._
 import java.util.Locale
+import org.goldenport.RAISE
 
 /*
  * @since   Jun. 24, 2025
  *  version Jun. 26, 2025
- * @version Jul.  4, 2025
+ * @version Jul. 27, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NContainer[T](
@@ -63,13 +64,52 @@ case class I18NContainer[T](
   def apply(locale: Locale): T = get(locale) getOrElse c
 
   def default = c
+
+  def mapValue[A: Monoid](f: T => A): I18NContainer[A] = {
+    val a = localeVector.map {
+      case (locale, xs) =>
+        val x = f(xs)
+        (locale -> x)
+    }
+    I18NContainer.create(a)
+  }
 }
 
 object I18NContainer {
   def make[T](p: T): I18NContainer[T] = I18NContainer(p, p, p, Map.empty)
 
-  def create[T](p: Map[Locale, Seq[T]]): I18NContainer[List[T]] =
+  def create[T: Monoid](p: Seq[(Locale, T)]): I18NContainer[T] =
+    create(p.toMap)
+
+  def create[T: Monoid](p: Map[Locale, T]): I18NContainer[T] = {
+    val copt = p.get(LocaleUtils.C)
+    val enopt = p.get(LocaleUtils.en)
+    val jaopt = p.get(LocaleUtils.ja)
+    val (c, e, j): (T, T, T) = (copt, enopt, jaopt) match {
+      case (Some(c), Some(e), Some(j)) => (c, e, j)
+      case (Some(c), Some(e), None) => (c, e, e)
+      case (Some(c), None, Some(j)) => (c, j, j)
+      case (Some(c), None, None) => (c, c, c)
+      case (None, Some(e), Some(j)) => (e, e, j)
+      case (None, Some(e), None) => (e, e, e)
+      case (None, None, Some(j)) => (j, j, j)
+      case (None, None, None) =>
+        p.headOption match {
+          case Some((_, s)) => (s, s, s)
+          case None => 
+            val empty = Monoid[T].zero
+            (empty, empty, empty)
+        }
+    }
+    val a = p -- Set(LocaleUtils.C, LocaleUtils.en, LocaleUtils.ja)
+    I18NContainer(c, e, j, a)
+  }
+
+  def createSeq[T](p: Map[Locale, Seq[T]]): I18NContainer[List[T]] =
     _create(p.mapValues(_.toList))
+
+  def createSeq[T](p: Seq[(Locale, Seq[T])]): I18NContainer[List[T]] =
+    createSeq(p.toMap)
 
   private def _create[T](p: Map[Locale, List[T]]): I18NContainer[List[T]] = {
     val copt = p.get(LocaleUtils.C)

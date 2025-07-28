@@ -1,9 +1,14 @@
 package org.goldenport.io
 
 import java.io.{InputStream, OutputStream, File}
+import java.io.Reader
+import java.io.FileInputStream
+import java.io.BufferedInputStream
+import java.io.FileReader
 import java.net.URL
 import java.net.URI
 import java.nio.charset.Charset
+import java.nio.file.Files
 import java.nio.file.Path
 import scalax.io.Codec
 import com.asamioffice.goldenport.io.UURL
@@ -20,11 +25,14 @@ import org.goldenport.util.StringUtils
  *  version Dec.  7, 2019
  *  version Jul. 31, 2023
  *  version Mar. 20, 2025
- * @version Jun. 14, 2025
+ *  version Jun. 14, 2025
+ * @version Jul. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 trait InputSource {
   def openInputStream: InputStream = asBag.openInputStream
+  def openReader: Reader = asBag.openReader(Platform.charset.UTF8)
+  def openReader(enc: Charset): Reader = asBag.openReader(enc)
   def writeClose(out: OutputStream): Unit = IoUtils.copyClose(openInputStream, out)
   def asBag: ChunkBag = BufferFileBag.fromInputStreamAndClose(openInputStream)
   def asText: String = IoUtils.toText(this)
@@ -71,6 +79,10 @@ object StringInputSource {
 
 case class FileInputSource(file: File) extends InputSource {
   override def asBag = FileBag.create(file)
+
+  override def openInputStream: InputStream = new BufferedInputStream(Files.newInputStream(file.toPath))
+  override def openReader: Reader = Files.newBufferedReader(file.toPath, Platform.charset.UTF8)
+  override def openReader(enc: Charset): Reader = Files.newBufferedReader(file.toPath, enc)
 
   def getSuffix = StringUtils.getSuffix(file.getName)
 }

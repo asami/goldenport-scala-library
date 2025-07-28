@@ -11,6 +11,7 @@ import com.asamioffice.goldenport.io.{UIO, UURL}
 import org.goldenport.RAISE
 import org.goldenport.bag.Bag
 import org.goldenport.bag.ClobBag
+import org.goldenport.i18n.CharsetUtils
 
 /*
  * @since   Oct.  9, 2017
@@ -27,7 +28,8 @@ import org.goldenport.bag.ClobBag
  *  version Mar.  6, 2022
  *  version May. 23, 2022
  *  version Feb. 23, 2025
- * @version Mar. 14, 2025
+ *  version Mar. 14, 2025
+ * @version Jul. 23, 2025
  * @author  ASAMI, Tomoharu
  */
 object IoUtils {
@@ -173,6 +175,10 @@ object IoUtils {
     save(file, p, charset)
   }
 
+  def save(file: File, p: String) {
+    save(file, p, CharsetUtils.UTF8)
+  }
+
   def save(file: File, p: String, charset: Charset) {
     ensureParentDirectory(file)
     val in = toInputStream(p, charset)
@@ -278,7 +284,7 @@ object IoUtils {
           copy(indirs = indirs ++ descendants(rhs))
       }
     }
-    p.listFiles.toList./:(Z())(_+_).r
+    p.listFiles.toList.foldLeft(Z())(_+_).r
   }
 
   def openInputStream(url: URL): InputStream = openInputStream(url, None, None)
@@ -302,5 +308,14 @@ object IoUtils {
     val conn = url.openConnection()
     conn.setRequestProperty("Authorization", s"Basic $data")
     conn.getInputStream()
+  }
+
+  def using[A <: AutoCloseable, B](resource: => A)(f: A => B): B = {
+    val r = resource
+    try {
+      f(r)
+    } finally {
+      r.close()
+    }
   }
 }

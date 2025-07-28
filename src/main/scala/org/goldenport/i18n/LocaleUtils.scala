@@ -9,7 +9,8 @@ import org.goldenport.Strings.totoken
  *  version Sep. 23, 2019
  *  version Oct. 14, 2024
  *  version Apr.  9, 2025
- * @version Jun. 24, 2025
+ *  version Jun. 24, 2025
+ * @version Jul. 26, 2025
  * @author  ASAMI, Tomoharu
  */
 object LocaleUtils {
@@ -106,4 +107,10 @@ object LocaleUtils {
       }
       Locale.forLanguageTag(tag)
     }
+
+  def getAvailableLocale(p: String): Option[Locale] = p match {
+    case "ja" => Some(ja)
+    case "en" => Some(en)
+    case _ => None // TODO
+  }
 }

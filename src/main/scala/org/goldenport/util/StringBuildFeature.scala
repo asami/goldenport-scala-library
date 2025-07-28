@@ -4,7 +4,7 @@ package org.goldenport.util
  * @since   Apr. 27, 2025
  *  version Apr. 27, 2025
  *  version Jun. 17, 2025
- * @version Jul. 13, 2025
+ * @version Jul. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 trait StringBuildFeature {
@@ -15,6 +15,8 @@ trait StringBuildFeature {
 
   private val _buffer = new StringBuilder()
   private var _indent_depth: Int = 0
+
+  protected final def sb_buffer: StringBuilder = _buffer
 
   protected final def sb_indent_length = _indent_depth * sb_indent_size
   protected def sb_indent: String = sb_indent_mark * sb_indent_length + sb_indent_post_mark

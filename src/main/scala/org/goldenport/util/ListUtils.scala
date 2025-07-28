@@ -9,7 +9,8 @@ import scalaz._
  *  version Aug.  5, 2018
  *  version Oct. 30, 2018
  *  version Jul. 29, 2019
- * @version Jul. 31, 2023
+ *  version Jul. 31, 2023
+ * @version Jul. 27, 2025
  * @author  ASAMI, Tomoharu
  */
 object ListUtils {
@@ -39,4 +40,10 @@ object ListUtils {
     val (ls, cs, rs) = VectorUtils.split3(p)(ps)
     (ls.toList, cs.toList, rs.toList)
   }
+
+  def headMiddleLast[T](ps: Seq[T]): Option[(T, List[T], T)] =
+    if (ps.length >= 2)
+      Some((ps.head, ps.tail.init.toList, ps.last))
+    else
+      None
 }

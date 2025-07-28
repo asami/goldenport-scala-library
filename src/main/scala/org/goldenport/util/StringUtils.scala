@@ -59,8 +59,8 @@ import org.goldenport.collection.NonEmptyVector
  *  version Sep.  5, 2024
  *  version Mar. 17, 2025
  *  version Apr. 26, 2025
-"Strings match." *  version Jun. 29, 2025
-"Strings match." * @version Jul. 17, 2025
+ *  version Jun. 29, 2025
+ * @version Jul. 28, 2025
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -254,8 +254,10 @@ object StringUtils {
   def isI18NIdentifierChar(c: Char) =
     safeI18NCharBlocks.contains(UnicodeBlock.of(c))
 
-  def isSeperationLanguageChar(c: Char) =
-    safeI18NCharBlocks.contains(UnicodeBlock.of(c))
+  def isSeparationLanguageChar(c: Char): Boolean = isAsciiAlphabetNumberChar(c)
+
+  def isSeparationLanguageChar(l: Char, r: Char): Boolean =
+    isSeparationLanguageChar(l) && isSeparationLanguageChar(r)
 
   def isKana(c: Char) =
     jananeseKanaCharBlocks.contains(UnicodeBlock.of(c))

@@ -4,8 +4,18 @@ import scalaz.{Node =>_, _} , Scalaz._
 import scala.util.control.NonFatal
 import scala.annotation.tailrec
 import scala.xml._
+import java.net.URI
+import java.util.Locale
+import java.time.Instant
 import com.asamioffice.goldenport.xml.UXML
 import org.goldenport.Strings
+import org.goldenport.context.Consequence
+import org.goldenport.context.DateTimeContext
+import org.goldenport.i18n.I18NContainer
+import org.goldenport.i18n.LocaleUtils
+import org.goldenport.value._
+import org.goldenport.values.LocalDateOrDateTime
+import org.goldenport.util.StringUtils
 import org.goldenport.util.{AnyUtils, SeqUtils}
 
 /*
@@ -19,7 +29,8 @@ import org.goldenport.util.{AnyUtils, SeqUtils}
  *  version Aug.  5, 2018
  *  version Mar. 28, 2022
  *  version Dec. 29, 2023
- * @version Mar. 28, 2025
+ *  version Mar. 28, 2025
+ * @version Jul. 26, 2025
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
@@ -261,7 +272,7 @@ object XmlUtils {
   def concat(ps: Seq[NodeSeq]): NodeSeq = ps.toList match {
     case Nil => Group(Nil)
     case xs => 
-      val a = xs./:(List[Node]())((z, x) => z ::: nodeSeqToNodeList(x))
+      val a = xs.foldLeft(List[Node]())((z, x) => z ::: nodeSeqToNodeList(x))
       nodesToNodeSeq(a)
   }
 
@@ -433,10 +444,150 @@ object XmlUtils {
   def escapeCharData(s: String) = UXML.escapeCharData(s)
   def escapeCharDataCr(s: String) = UXML.escapeCharDataCr(s)
 
+  def getElement(p: Node, name: String): Option[Elem] =
+    p.child.collectFirst {
+      case e: Elem if e.label == name => e
+    }
+
+  def getString(p: Node, name: String): Option[String] =
+    getElement(p, name).map(_.text.trim).filter(_.nonEmpty)
+
+  def getUri(p: Node, name: String): Option[URI] =
+    getString(p, name).map(x => new URI(x))
+
+  def getInstant(p: Node, name: String): Option[Instant] =
+    getString(p, name).map(Instant.parse)
+
+  def getStringListEager(p: Node, name: String): List[String] =
+    getString(p, name) match {
+      case None => Nil
+      case Some(s) => StringUtils.eagerMagicForm(s)
+    }
+
+  def getLocalDateOrDateTime(p: Node, name: String)(implicit dctx: DateTimeContext): Option[LocalDateOrDateTime] =
+    getLocalDateOrDateTimeC(p, name).take
+
+  def getPowertype[T <: NamedValueInstance](p: Node, pt: EnumerationClass[T], name: String): Option[T] =
+    getString(p, name).map(pt.apply)
+
+  def getI18NContainer(p: Node, name: String): Option[I18NContainer[List[Node]]] =
+    getElement(p, name).flatMap(getI18NContainer)
+
+  def getI18NContainer(p: Node): Option[I18NContainer[List[Node]]] = {
+    val children = p.child
+    if (children.isEmpty) {
+      None
+    } else {
+      case class Z(
+        locals: Map[Locale, List[Node]] = Map.empty,
+        nodes: Vector[Node] = Vector.empty
+      ) {
+        def r: Option[I18NContainer[List[Node]]] = 
+          if (locals.isEmpty)
+            Some(I18NContainer.make(nodes.toList))
+          else
+            Some(I18NContainer.createSeq(locals))
+
+        def +(rhs: Node) = rhs match {
+          case m: Elem => LocaleUtils.getAvailableLocale(m.label) match {
+            case Some(s) =>
+              copy(locals = locals + (s -> rhs.child.toList), nodes = nodes :+ m)
+            case None => copy(nodes = nodes :+ m)
+          }
+          case m => copy(nodes = nodes :+ m)
+        }
+      }
+      children.foldLeft(Z())(_+_).r
+    }
+  }
+
+  def getElementC(p: Node, name: String): Consequence[Option[Elem]] =
+    Consequence(getElement(p, name))
+
+  def getStringC(p: Node, name: String): Consequence[Option[String]] =
+    Consequence(getString(p, name))
+
+  def getUriC(p: Node, name: String): Consequence[Option[URI]] =
+    Consequence(getUri(p, name))
+
+  def getInstantC(p: Node, name: String): Consequence[Option[Instant]] =
+    Consequence(getInstant(p, name))
+
+  def getStringListEagerC(p: Node, name: String): Consequence[List[String]] =
+    Consequence(getStringListEager(p, name))
+
+  def getLocalDateOrDateTimeC(p: Node, name: String)(implicit dctx: DateTimeContext): Consequence[Option[LocalDateOrDateTime]] =
+    for {
+      s <- getStringC(p, name)
+      r <- s.traverse(LocalDateOrDateTime.parse)
+    } yield r
+
+  def getPowertypeC[T <: NamedValueInstance](p: Node, pt: EnumerationClass[T], name: String): Consequence[Option[T]] =
+    Consequence(getPowertype(p, pt, name))
+
+  def getI18NContainerC(p: Node, name: String): Consequence[Option[I18NContainer[List[Node]]]] =
+    Consequence(getI18NContainer(p, name))
+
   def show(p: Elem): String = {
     val attrs = attributeVector(p).map {
       case (k, v) => s"${k}=${v}"
     }.mkString(",")
     s"""${tagName(p)}(${attrs})"""
   }
+
+  def printOpenTag(buf: StringBuilder, name: String): Unit = {
+    buf.append("<")
+    buf.append(name)
+    buf.append(">")
+  }
+
+  def printOpenTag(
+    buf: StringBuilder,
+    name: String,
+    attrs: Map[String, String]
+  ): Unit = {
+    val a = formatAttributes(attrs)
+    buf.append("<")
+    buf.append(name)
+    if (a.nonEmpty) {
+      buf.append(" ")
+      buf.append(a)
+    }
+    buf.append(">")
+  }
+
+  def printCloseTag(buf: StringBuilder, name: String): Unit = {
+    buf.append("</")
+    buf.append(name)
+    buf.append(">")
+  }
+
+  def formatAttributes(attrs: Map[String, String]): String =
+    attrs.map {
+      case (k, v) => """%s="%s"""".format(k, v)
+    }.mkString(" ")
+
+  def printObject(buf: StringBuilder, name: String, o: Option[Any]): Unit =
+    for (x <- o)
+      _print_object(buf, name, x)
+
+  private def _print_object(buf: StringBuilder, name: String, o: Any): Unit = {
+    printOpenTag(buf, name)
+    buf.append(AnyUtils.toString(o))
+    printCloseTag(buf, name)
+  }
+
+  def printObject(buf: StringBuilder, name: String, o: Any): Unit =
+    o match {
+      case None => Unit
+      case Some(s) => _print_object(buf, name, s)
+      case m => _print_object(buf, name, m)
+    }
+
+  def printPowertype(buf: StringBuilder, name: String, o: Option[NamedValueInstance]): Unit =
+    for (x <- o)
+      printPowertype(buf, name, x)
+
+  def printPowertype(buf: StringBuilder, name: String, o: NamedValueInstance): Unit =
+    _print_object(buf, name, o.name)
 }

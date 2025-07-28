@@ -9,6 +9,7 @@ import org.goldenport.i18n.I18NMessage
 import org.goldenport.parser.{ParseResult, ParseSuccess, ParseFailure, EmptyParseResult}
 import org.goldenport.parser.{ParseMessage}
 import org.goldenport.cli.spec
+import org.goldenport.io.IoUtils
 import org.goldenport.util.AnyUtils
 import org.goldenport.extension.IRecord
 
@@ -39,7 +40,7 @@ import org.goldenport.extension.IRecord
  *  version Apr. 21, 2025
  *  version May. 16, 2025
  *  version Jun. 15, 2025
- * @version Jul. 18, 2025
+ * @version Jul. 27, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -87,8 +88,6 @@ sealed trait Consequence[+T] {
   def recover[U >: T](pf: PartialFunction[Conclusion, U]): Consequence[U]
   def recoverWith[U >: T](pf: PartialFunction[Conclusion, Consequence[U]]): Consequence[U]
 
-  def take: T
-
   def getException: Option[Throwable]
 
   def takeOrInvalidArgumentFault(message: String): T = get getOrElse Conclusion.invalidArgumentFault(message).RAISE
@@ -96,6 +95,11 @@ sealed trait Consequence[+T] {
   def takeOrIllegalConfigurationDefect(message: String): T = get getOrElse Conclusion.config.illegalConfigurationDefect(message).RAISE
 
   def onErrorPrependMessage(msg: String): Consequence[T]
+
+  // Non functional
+  def take: T
+
+  def unsafeOnError(f: Conclusion => Unit): Consequence[T]
 }
 
 object Consequence {
@@ -124,6 +128,7 @@ object Consequence {
     def orElse[TT >: T](p: => Consequence[TT]): Consequence[TT] = this
     def onSuccess[TT >: T](p: T => TT): Consequence[TT] = map(p)
     def onError[TT >: T](p: Conclusion => Consequence[TT]): Consequence[TT] = this
+    def unsafeOnError(f: Conclusion => Unit): Consequence[T] = this
     def recover[U >: T](pf: PartialFunction[Conclusion, U]): Consequence[U] = this
     def recoverWith[U >: T](pf: PartialFunction[Conclusion, Consequence[U]]): Consequence[U] = this
     def take = result
@@ -162,6 +167,10 @@ object Consequence {
     def orElse[TT >: T](p: => Consequence[TT]): Consequence[TT] = p
     def onSuccess[TT >: T](p: T => TT): Consequence[TT] = this
     def onError[TT >: T](p: Conclusion => Consequence[TT]): Consequence[TT] = p(conclusion)
+    def unsafeOnError(f: Conclusion => Unit): Consequence[T] = {
+      f(conclusion)
+      this
+    }
     def recover[U >: T](pf: PartialFunction[Conclusion, U]): Consequence[U] =
       Consequence.run(
         if (pf isDefinedAt conclusion)
@@ -403,6 +412,11 @@ object Consequence {
       }
     } yield r
 
+  def using[A <: AutoCloseable, B](resource: => A)(f: A => B): Consequence[B] =
+    Consequence.execute {
+      IoUtils.using(resource)(f)
+    }
+
   def getOrExecute[T](p: Option[T])(x: => T): Consequence[T] =
     p.map(success).getOrElse(Consequence(x))
 
@@ -417,6 +431,11 @@ object Consequence {
   } catch {
     case NonFatal(e) => error(e)
   }
+
+  def runUsing[A <: AutoCloseable, B](resource: => A)(f: A => Consequence[B]): Consequence[B] =
+    Consequence.run {
+      IoUtils.using(resource)(f)
+    }
 
   def getOrRun[T](p: Option[T], q: => Consequence[T]): Consequence[T] =
     p.map(success) getOrElse run(q)

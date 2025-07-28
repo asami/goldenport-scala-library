@@ -10,6 +10,7 @@ import java.nio.charset.Charset
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.net.URL
+import java.time.Instant
 import org.goldenport.RAISE
 import org.goldenport.Platform
 import org.goldenport.context.Showable
@@ -38,7 +39,8 @@ import org.goldenport.util.RegexUtils
  *  version Mar. 30, 2025
  *  version Apr. 26, 2025
  *  version May. 23, 2025
- * @version Jun. 23, 2025
+ *  version Jun. 23, 2025
+ * @version Jul. 22, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
@@ -60,7 +62,7 @@ case class Realm(
 
   def getString(pathname: String)(implicit ctx: I18NContext): Option[String] =
     get(pathname).collect {
-      case StringData(s) => s
+      case m: StringData => m.string
       case m: FileData => m.toString
     }
 
@@ -238,13 +240,20 @@ object Realm {
     }
   }
 
-  case class StringData(string: String) extends Data {
+  case class StringData(
+    string: String,
+    lastModifiedOption: Option[Instant] = None
+  ) extends Data {
     def print = string
     override def display = '"' + string + '"'
     override def show = s"String($string)"
 
     def export(file: File)(implicit ctx: Context): Unit =
       IoUtils.save(file, string, ctx.charset)
+  }
+  object StringData {
+    def apply(string: String, ts: Long): StringData =
+      StringData(string, Some(Instant.ofEpochMilli(ts)))
   }
 
   case class UrlData(url: URL) extends Data {
@@ -465,7 +474,7 @@ object Realm {
     private def _is_exclude(filename: String) =
       config.excludeFiles.exists(RegexUtils.isWholeMatch(_, filename))
 
-    private def _to_text(p: File) = StringData(IoUtils.toText(p))
+    private def _to_text(p: File) = StringData(IoUtils.toText(p), p.lastModified)
 
     private def _to_binary(p: File) = FileData(p)
 
