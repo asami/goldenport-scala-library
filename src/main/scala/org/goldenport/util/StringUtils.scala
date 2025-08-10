@@ -60,7 +60,8 @@ import org.goldenport.collection.NonEmptyVector
  *  version Mar. 17, 2025
  *  version Apr. 26, 2025
  *  version Jun. 29, 2025
- * @version Jul. 28, 2025
+ *  version Jul. 28, 2025
+ * @version Aug.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -578,12 +579,17 @@ object StringUtils {
       z: Vector[String],
       x: Vector[Char]
     ) extends ParseState {
-      def apply(rhs: Char) = {
-        if (rhs.isUpper)
+      def apply(rhs: Char) =
+        if (_is_symbol(rhs))
+          copy(delimiter, z, x :+ rhs)
+        else if (rhs.isUpper && _is_after_lower)
           copy(delimiter, z :+ x.mkString, Vector(rhs))
         else
           copy(delimiter, z, x :+ rhs)
-      }
+
+      private def _is_symbol(rhs: Char) = StringUtils.scriptSymbolChars.contains(rhs)
+
+      private def _is_after_lower = x.lastOption.fold(false)(_.isLower)
 
       def result: String = to_string(z :+ x.mkString)
     }

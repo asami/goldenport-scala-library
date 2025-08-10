@@ -13,7 +13,8 @@ import org.goldenport.util.StringUtils
  *  version Jan. 14, 2018
  *  version Apr. 26, 2019
  *  version Dec.  9, 2019
- * @version Jun.  6, 2020
+ *  version Jun.  6, 2020
+ * @version Aug. 10, 2025
  * @author  ASAMI, Tomoharu
  */
 case class UriBuilder(
@@ -84,6 +85,11 @@ case class UriBuilder(
 
   private def _make_url_query_params(q: Seq[(String, String)]) =
     StringUtils.urlQueryString(q)
+
+  def container: UriBuilder = {
+    val s = StringUtils.pathContainer(path)
+    copy(path = s)
+  }
 }
 
 object UriBuilder {

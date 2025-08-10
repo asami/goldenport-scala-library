@@ -30,7 +30,8 @@ import org.goldenport.util.{AnyUtils, SeqUtils}
  *  version Mar. 28, 2022
  *  version Dec. 29, 2023
  *  version Mar. 28, 2025
- * @version Jul. 26, 2025
+ *  version Jul. 26, 2025
+ * @version Aug. 10, 2025
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
@@ -556,16 +557,33 @@ object XmlUtils {
     buf.append(">")
   }
 
+  def printOpenCloseTag(
+    buf: StringBuilder,
+    name: String,
+    attrs: Map[String, String]
+  ): Unit = {
+    val a = formatAttributes(attrs)
+    buf.append("<")
+    buf.append(name)
+    if (a.nonEmpty) {
+      buf.append(" ")
+      buf.append(a)
+    }
+    buf.append("/>")
+  }
+
   def printCloseTag(buf: StringBuilder, name: String): Unit = {
     buf.append("</")
     buf.append(name)
     buf.append(">")
   }
 
-  def formatAttributes(attrs: Map[String, String]): String =
-    attrs.map {
+  def formatAttributes(attrs: Map[String, String]): String = {
+    val a = attrs.toVector.sortBy(_._1)
+    a.map {
       case (k, v) => """%s="%s"""".format(k, v)
     }.mkString(" ")
+  }
 
   def printObject(buf: StringBuilder, name: String, o: Option[Any]): Unit =
     for (x <- o)
@@ -573,7 +591,7 @@ object XmlUtils {
 
   private def _print_object(buf: StringBuilder, name: String, o: Any): Unit = {
     printOpenTag(buf, name)
-    buf.append(AnyUtils.toString(o))
+    buf.append(escape(AnyUtils.toString(o)))
     printCloseTag(buf, name)
   }
 

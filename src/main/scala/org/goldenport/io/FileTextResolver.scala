@@ -2,6 +2,7 @@ package org.goldenport.io
 
 import scala.util.Try
 import java.io.File
+import java.net.URI
 import org.goldenport.context.Consequence
 import org.goldenport.collection.NonEmptyVector
 import org.goldenport.value._
@@ -12,12 +13,17 @@ import org.goldenport.util.StringUtils
 
 /*
  * @since   Jul. 18, 2025
- * @version Jul. 19, 2025
+ * @version Aug. 10, 2025
  * @author  ASAMI, Tomoharu
  */
 class FileTextResolver(context: FileTextResolver.Context) {
-  def resolve(path: String): Option[String] = {
-    ???
+  def resolve(path: String): Consequence[String] = {
+    val fr = new FileResolver(context.fileResolverContext)
+    val tr = new TextResolver(context.textResolverContext)
+    for {
+      x <- fr.resolveString(path)
+      s <- tr.resolve(x)
+    } yield s
   }
 }
 
@@ -31,6 +37,10 @@ object FileTextResolver {
         fileResolverContext = fileResolverContext.withParameters(params),
         textResolverContext = textResolverContext.withParameters(params)
       )
+    }
+
+    def withBaseFile(p: URI) = {
+      copy(fileResolverContext = fileResolverContext.withBaseFile(p))
     }
   }
   object Context {
@@ -47,7 +57,10 @@ object FileTextResolver {
     options: Option[NonEmptyVector[Opt]] = None,
     substitutes: Option[NonEmptyVector[Sub]] = None
   ) {
-    def effectiveTags: Vector[String] = ???
+    def effectiveTags: Vector[String] = tags match {
+      case Some(s) => s.vector
+      case None => Vector.empty
+    }
   }
   object Parameters {
     val empty = Parameters()
@@ -187,4 +200,6 @@ object FileTextResolver {
       val name = "none"
     }
   }
+
+  def create(): FileTextResolver = new FileTextResolver(Context.default)
 }

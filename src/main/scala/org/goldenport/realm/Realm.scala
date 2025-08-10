@@ -40,7 +40,8 @@ import org.goldenport.util.RegexUtils
  *  version Apr. 26, 2025
  *  version May. 23, 2025
  *  version Jun. 23, 2025
- * @version Jul. 22, 2025
+ *  version Jul. 22, 2025
+ * @version Aug.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
@@ -448,7 +449,10 @@ object Realm {
     }
 
     private def _setup_file(cursor: TreeCursor[Realm.Data], p: File): Unit = {
-      val name = p.getName.toLowerCase
+      val name = if (config.isAutoLowerCase)
+        p.getName.toLowerCase
+      else
+        p.getName
       val suffix = StringUtils.toSuffix(name)
       if (_is_text(suffix))
         cursor.set(name, _to_text(p))
@@ -494,7 +498,8 @@ object Realm {
       excludeFiles: Set[Regex] = Set(
         ".*~$".r,
         ".*.bak$".r
-      )
+      ),
+      isAutoLowerCase: Boolean = false
     ) {
       def addTextSuffixes(p: String, ps: String*): Config =
         copy(textSuffixes = textSuffixes ++ (p +: ps))

@@ -7,7 +7,8 @@ import org.goldenport.util.StringUtils
 /*
  * @since   Aug. 17, 2019
  *  version Aug. 18, 2019
- * @version Dec.  8, 2019
+ *  version Dec.  8, 2019
+ * @version Aug. 10, 2025
  * @author  ASAMI, Tomoharu
  */
 class ResourceManager(
@@ -28,6 +29,7 @@ class ResourceManager(
 
   def takeHandle(p: ResourceLocator): ResourceHandle = p match {
     case m: FileResourceLocator => takeHandle(m.file)
+    case m: PathResourceLocator => takeHandle(m.file)
     case m: UrlResourceLocator => takeHandle(m.url)
     case m: UriResourceLocator => takeHandle(m.uri)
   }

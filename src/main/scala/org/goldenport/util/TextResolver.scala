@@ -10,17 +10,18 @@ import org.goldenport.values.NumberRange
 
 /*
  * @since   Jul. 18, 2025
- * @version Jul. 19, 2025
+ *  version Jul. 19, 2025
+ * @version Aug.  9, 2025
  * @author  ASAMI, Tomoharu
  */
 class TextResolver(context: TextResolver.Context) {
   import TextResolver._
 
-  def resolve(p: String): String = {
+  def resolve(p: String): Consequence[String] = Consequence {
     val s = Strings.tolines(p)
     val a = context.parameters.leveloffset.fold(s)(_level_offset(_, s))
     val b = context.parameters.lines.fold(a)(_lines(_, a))
-    val c = _tags(context.parameters.effectiveTags, b)
+    val c = _tags(context.parameters.tags, b)
     val d = context.parameters.indent.fold(c)(_indent(_, c))
     val e = context.parameters.options.fold(d)(x => _options(x.vector, d))
     val f = context.parameters.substitutes.fold(e)(x => _substitutes(x.vector, e))
@@ -50,6 +51,12 @@ class TextResolver(context: TextResolver.Context) {
       case i if 0 <= i && i < ps.length => ps(i)
     }
   }
+
+  private def _tags(tags: Option[NonEmptyVector[String]], p: Vector[String]): Vector[String] =
+    tags match {
+      case Some(s) => _tags(s.vector, p)
+      case None => p
+    }
 
   private def _tags(tags: Vector[String], p: Vector[String]): Vector[String] = {
     val TagStart = """tag::([^\[\]]+)""".r

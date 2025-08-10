@@ -3,6 +3,7 @@ package org.goldenport.io
 import scala.util.Try
 import java.io._
 import java.nio.charset.Charset
+import java.nio.file.{Files, StandardCopyOption}
 import java.net.{URL, URI}
 // import java.util.Base64
 import org.apache.commons.codec.binary.Base64
@@ -29,7 +30,8 @@ import org.goldenport.i18n.CharsetUtils
  *  version May. 23, 2022
  *  version Feb. 23, 2025
  *  version Mar. 14, 2025
- * @version Jul. 23, 2025
+ *  version Jul. 23, 2025
+ * @version Aug.  6, 2025
  * @author  ASAMI, Tomoharu
  */
 object IoUtils {
@@ -309,6 +311,27 @@ object IoUtils {
     conn.setRequestProperty("Authorization", s"Basic $data")
     conn.getInputStream()
   }
+
+  def moveFileWithErrorSuffix(file: File): File =
+    moveFileWithSuffix(file, "error")
+
+  def moveFileWithSuffix(file: File, suffix: String): File = {
+    val originalPath = file.toPath
+    val newName = file.getName + "." + suffix
+    val newPath = originalPath.resolveSibling(newName)
+    Files.move(originalPath, newPath, StandardCopyOption.REPLACE_EXISTING)
+    newPath.toFile
+  }
+
+  def addSuffix(file: File, suffix: String): File = {
+    val name = file.getName
+    val resolved = name + "." + suffix
+    Option(file.getParent) match {
+      case Some(s) => new File(s, resolved)
+      case None => new File(resolved)
+    }
+  }
+
 
   def using[A <: AutoCloseable, B](resource: => A)(f: A => B): B = {
     val r = resource

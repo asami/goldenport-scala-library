@@ -30,7 +30,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Feb.  1, 2022
  *  version Dec.  8, 2022
  *  version Mar.  8, 2025
- * @version Jul.  5, 2025
+ *  version Jul.  5, 2025
+ * @version Aug.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -220,7 +221,7 @@ object I18NString {
     def parsejson = {
       Json.parse(p) match {
         case JsObject(ms) => // TODO parameters
-          val a = for ((l, s) <- ms) yield (Locale.of(l), s.toString)
+          val a = for ((l, s) <- ms) yield (Locale.forLanguageTag(l), s.toString)
           apply(a.toVector)
         case m => throw new IllegalArgumentException(s"I18NString#parse: $m")
       }

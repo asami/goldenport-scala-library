@@ -6,7 +6,7 @@ import org.scalatest._
 
 /*
  * @since   Jul.  2, 2025
- * @version Jul.  2, 2025
+ * @version Aug. 10, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -14,6 +14,17 @@ class StringUtilsSpec extends WordSpec with Matchers with GivenWhenThen {
   import StringUtils._
 
   "StringUtils" when {
+    "pathLastComponent" should {
+      "absolute" in {
+        pathLastComponent("/a/b/x.html") should be("x.html")
+      }
+      "relative" in {
+        pathLastComponent("a/b/x.html") should be("x.html")
+      }
+      "leaf" in {
+        pathLastComponent("x.html") should be("x.html")
+      }
+    }
     "pathContainer" should {
       "leaf with suffix" in {
         pathContainer("/a/b/x.html") should be("/a/b")
@@ -92,6 +103,17 @@ class StringUtilsSpec extends WordSpec with Matchers with GivenWhenThen {
       }
       "leaf withdout suffix relative" in {
         makePathContainerRelativeBody("a/b") should be("a/b")
+      }
+    }
+    "camelToUnderscore" should {
+      "with suffix" in {
+        camelToUnderscore("AnalysisUpDown.png") should be("analysis_up_down.png")
+      }
+      "with uppercase suffix" in {
+        camelToUnderscore("AnalysisUpDown.PNG") should be("analysis_up_down.png")
+      }
+      "pathname with uppercase suffix" in {
+        camelToUnderscore("images/AnalysisUpDown.PNG") should be("images/analysis_up_down.png")
       }
     }
   }

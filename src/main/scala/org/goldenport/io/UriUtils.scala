@@ -4,6 +4,7 @@ import scala.util.control.NonFatal
 import java.net.{URI, URL}
 import java.net.URLEncoder
 import java.io.File
+import java.nio.file.{Paths, Path, InvalidPathException}
 import java.nio.charset.StandardCharsets
 import com.asamioffice.goldenport.io.UURL
 import org.goldenport.values.Urn
@@ -16,7 +17,8 @@ import org.goldenport.util
  *  version Jan. 26, 2020
  *  version Nov. 22, 2023
  *  version May. 29, 2024
- * @version Jul. 18, 2025
+ *  version Jul. 18, 2025
+ * @version Aug. 10, 2025
  * @author  ASAMI, Tomoharu
  */
 object UriUtils {
@@ -24,10 +26,24 @@ object UriUtils {
   def sibling(uri: URI): URI = UriBuilder.byPath("..").addPath(uri).build
 
   def getFile(uri: URI): Option[File] =
-    if (uri.getScheme == "file")
-      Some(new File(uri.toURL.getFile))
-    else
-      None
+    Option(uri.getScheme) match {
+      case Some(s) => s.toLowerCase match {
+        case "file" => Some(new File(uri.toURL.getFile))
+        case _ => None
+      }
+      case None => Some(new File(uri.getPath))
+    }
+
+  def getFile(base: File, uri: URI): Option[File] =
+    Option(uri.getScheme) match {
+      case Some(s) => s.toLowerCase match {
+        case "file" => Some(new File(uri.toURL.getFile))
+        case _ => None
+      }
+      case None => Some(new File(base, uri.getPath))
+    }
+
+  def getPath(uri: URI): Option[Path] = getFile(uri).map(_.toPath)
 
   def getUrl(uri: URI): Option[URL] =
     if (UrlUtils.urlSchemes.contains(uri.getScheme))
@@ -61,6 +77,8 @@ object UriUtils {
     val s = p.toVector.foldLeft(Z())(_+_).r
     new java.net.URI(s)
   }
+
+  def toContainer(uri: URI): URI = UriBuilder(uri).container.build
 
   def showTerse(workdir: File, uri: URI): String =
     util.UriUtils.showTerse(workdir, uri)

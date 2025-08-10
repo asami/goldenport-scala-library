@@ -5,6 +5,7 @@ import java.io.Reader
 import java.io.FileInputStream
 import java.io.BufferedInputStream
 import java.io.FileReader
+import java.io.StringReader
 import java.net.URL
 import java.net.URI
 import java.nio.charset.Charset
@@ -26,7 +27,8 @@ import org.goldenport.util.StringUtils
  *  version Jul. 31, 2023
  *  version Mar. 20, 2025
  *  version Jun. 14, 2025
- * @version Jul. 24, 2025
+ *  version Jul. 24, 2025
+ * @version Aug.  6, 2025
  * @author  ASAMI, Tomoharu
  */
 trait InputSource {
@@ -60,6 +62,8 @@ object InputSource {
 
   private def _create(s: String): InputSource = UrlInputSource(UURL.getURLFromFileOrURLName(s))
 
+  def string(p: String): InputSource = StringInputSource(p)
+
   def file(p: String): InputSource = FileInputSource(new File(p))
 }
 
@@ -69,6 +73,10 @@ case class StringInputSource(
   uri: Option[URI] = None
 ) extends InputSource {
   override lazy val asBag = BufferBag.create(string, charset)
+
+  override def openReader = openReader(charset)
+
+  override def openReader(p: Charset): Reader = new StringReader(string)
 
   def getSuffix = uri.flatMap(x => StringUtils.getSuffix(x.toString))
 }

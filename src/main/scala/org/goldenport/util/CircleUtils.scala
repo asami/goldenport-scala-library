@@ -7,6 +7,7 @@ import scala.util.matching.Regex
 import scalaz.NonEmptyList
 import java.net.URL
 import java.net.URI
+import java.io.File
 import java.util.Locale
 import com.typesafe.config.{Config => Hocon}
 import com.typesafe.config.{ConfigFactory => HoconFactory}
@@ -24,7 +25,8 @@ import org.goldenport.i18n.I18NContext
  * @since   Apr. 21, 2025
  *  version Apr. 27, 2025
  *  version May. 24, 2025
- * @version Jun. 28, 2025
+ *  version Jun. 28, 2025
+ * @version Aug. 10, 2025
  * @author  ASAMI, Tomoharu
  */
 object CirceUtils {
@@ -104,6 +106,12 @@ object CirceUtils {
     }
 
   object Codec {
+    implicit val fileEncoder: Encoder[File] = Encoder.encodeString.contramap[File](_.toString)
+
+    implicit val fileDecoder: Decoder[File] = Decoder.decodeString.emap { str =>
+      Try(new File(str)).toEither.left.map(_.getMessage)
+    }
+
     implicit val urlEncoder: Encoder[URL] = Encoder.encodeString.contramap[URL](_.toString)
 
     implicit val urlDecoder: Decoder[URL] = Decoder.decodeString.emap { str =>
@@ -119,7 +127,7 @@ object CirceUtils {
     implicit val localeEncoder: Encoder[Locale] = Encoder.encodeString.contramap[Locale](_.toLanguageTag)
 
     implicit val localeDecoder: Decoder[Locale] = Decoder.decodeString.emap { str =>
-      Try(Locale.of(str)).toEither.left.map(_.getMessage)
+      Try(Locale.forLanguageTag(str)).toEither.left.map(_.getMessage)
     }
 
     implicit val regexDecoder: Decoder[Regex] = Decoder.decodeString.emap { str =>
