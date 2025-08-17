@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.3.4"
+version := "2.3.5"
 
 scalaVersion := "2.12.18"
 
@@ -54,7 +54,7 @@ libraryDependencies ++= {
   else
     Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1",
-      "org.scala-lang.modules" %% "scala-xml" % "1.1.1"
+      "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
     )
 }
 
@@ -122,7 +122,13 @@ libraryDependencies += "black.ninia" % "jep" % "3.9.0" % "compile"
 
 libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "5.10.0.202012080955-r" % "provided"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19"
+
+libraryDependencies += "org.scalatestplus" %% "junit-4-13" % "3.2.19.0" % Test
+
+libraryDependencies += "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test // ScalaCheck 1.17 用
+
+libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.17.0" % Test
 
 libraryDependencies += "junit" % "junit" % "4.12" % "test"
 
