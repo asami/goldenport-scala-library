@@ -12,7 +12,8 @@ import org.xml.sax.InputSource
 /**
  * @since   Jul. 27, 2010
  *  version Oct.  8, 2010
- * @version Feb. 17, 2013
+ *  version Feb. 17, 2013
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 object GXml {
@@ -23,13 +24,13 @@ object GXml {
   // xslt
   def transform(xslt: Elem)(source: Elem): Elem = {
     val saxHandler = new NoBindingFactoryAdapter()
-    saxHandler.scopeStack.push(TopScope)
+    saxHandler.scopeStack = TopScope :: saxHandler.scopeStack
     val transFactory = TransformerFactory.newInstance
     val xslts = new StreamSource(new StringReader(xslt.toString))
     val trans = transFactory.newTransformer(xslts)
     val ss = new StreamSource(new StringReader(source.toString))
     trans.transform(ss, new SAXResult(saxHandler))
-    saxHandler.scopeStack.pop
+    saxHandler.scopeStack = saxHandler.scopeStack.drop(1)
     saxHandler.rootElem.asInstanceOf[Elem]
   }
 

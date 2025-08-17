@@ -1,7 +1,9 @@
 package org.goldenport.values
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import org.goldenport.parser.ParseResultMatchers
 
@@ -9,11 +11,12 @@ import org.goldenport.parser.ParseResultMatchers
  * @since   Sep. 28, 2020
  *  version Sep. 28, 2020
  *  version Oct. 12, 2020
- * @version Jan. 21, 2022
+ *  version Jan. 21, 2022
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class NumberRangeSpec extends WordSpec with Matchers with GivenWhenThen with ParseResultMatchers {
+class NumberRangeSpec extends AnyWordSpec with Matchers with GivenWhenThen with ParseResultMatchers {
   def parselabel(p: String): Option[Number] = Option(p) collect {
     case "北海道" => 1
     case "東京都" => 13

@@ -1,16 +1,19 @@
 package org.goldenport.i18n
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 
 /*
  * @since   Feb. 23, 2022
- * @version Mar.  2, 2025
+ *  version Mar.  2, 2025
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class StringFormatterSpec extends WordSpec with Matchers with GivenWhenThen {
+class StringFormatterSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   "StringFormatter" should {
     "display.shrink" which {
       "empty" in {

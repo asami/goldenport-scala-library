@@ -8,7 +8,8 @@ package org.goldenport.util
  *  version Jan. 31, 2020
  *  version Oct.  1, 2021
  *  version Jun.  5, 2024
- * @version Jul. 15, 2025
+ *  version Jul. 15, 2025
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 object VectorUtils {
@@ -169,4 +170,28 @@ object VectorUtils {
     }
     pl.foldLeft(Z())(_+_).r
   }
+
+  def split3[A](v: Vector[A])(p: A => Boolean): (Vector[A], Vector[A], Vector[A]) = {
+  val (before, rest)  = v.span(a => !p(a))
+  val (matched, after) = rest.span(p)
+  (before, matched, after)
+  }
+
+  def split3Option[A](v: Vector[A])(p: A => Boolean): Option[(Vector[A], A, Vector[A])] = {
+    val (before, rest) = v.span(a => !p(a))
+    rest.headOption.map { firstMatch =>
+      val after = rest.tail
+      (before, firstMatch, after)
+    }
+  }
+
+  def findMapSplit[A, B <: A](v: Vector[A])(p: A => Option[B]): Option[(Vector[A], B, Vector[A])] = {
+    val (before, rest) = v.span(a => p(a).isEmpty)
+    rest.headOption.flatMap { a =>
+      p(a).map { b =>
+        (before, b, rest.tail)
+      }
+    }
+  }
 }
+

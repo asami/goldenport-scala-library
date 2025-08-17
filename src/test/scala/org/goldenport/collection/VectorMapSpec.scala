@@ -1,17 +1,19 @@
 package org.goldenport.collection
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import scalaz._, Scalaz._
 
 /*
  * @since   Dec. 27, 2018
- * @version Dec. 27, 2018
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class VectorMapSpec extends WordSpec with Matchers with GivenWhenThen {
+class VectorMapSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   "VectorMapSpec" should {
     val a = VectorMap("a" -> Vector("A"))
     val b = VectorMap("b" -> Vector("B"))

@@ -1,17 +1,19 @@
 package org.goldenport.util
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import org.joda.time.LocalDateTime
 
 /*
  * @since   Jan. 27, 2022
- * @version Jan. 27, 2022
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class LocalDateTimeUtilsSpec extends WordSpec with Matchers with GivenWhenThen {
+class LocalDateTimeUtilsSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   import SeqUtils._
 
   "LocalDateTimeUtils" should {

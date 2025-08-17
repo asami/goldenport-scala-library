@@ -1,17 +1,20 @@
 package org.goldenport.values
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import org.goldenport.context._
 
 /*
  * @since   Nov. 12, 2021
- * @version Nov. 13, 2021
+ *  version Nov. 13, 2021
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class TriggerGuardSpec extends WordSpec with Matchers with GivenWhenThen {
+class TriggerGuardSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   "TriggerGuard" should {
     "12/1" which {
       val dc = DateTimeContext.create(2021, 12, 1, 14, 55)

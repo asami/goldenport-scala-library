@@ -1,17 +1,20 @@
 package org.goldenport.io
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import org.goldenport.util.StringUtils
 
 /*
  * @since   Sep.  1, 2020
- * @version Sep.  8, 2020
+ *  version Sep.  8, 2020
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class MimeTypeSpec extends WordSpec with Matchers with GivenWhenThen {
+class MimeTypeSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   "getBySuffix" should {
     "pdf" in {
       MimeType.getBySuffix("pdf").map(_.name) should be(Some("application/pdf"))

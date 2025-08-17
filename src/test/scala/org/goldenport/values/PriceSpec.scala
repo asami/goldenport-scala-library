@@ -1,18 +1,21 @@
 package org.goldenport.values
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import spire.math.Rational
 
 /*
  * @since   Jun. 29, 2018
  *  version Dec. 22, 2020
- * @version Mar. 31, 2022
+ *  version Mar. 31, 2022
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class PriceSpec extends WordSpec with Matchers with GivenWhenThen {
+class PriceSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   import Urn._
 
   "PriceIncludingTax" should {

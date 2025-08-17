@@ -1,17 +1,19 @@
 package org.goldenport.cli.spec
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import org.goldenport.cli.{Request => CliRequest, Switch => CliSwitch, Property => CliProperty, Argument => CliArgument}
 
 /*
  * @since   Mar. 16, 2025
- * @version Mar. 16, 2025
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class ParameterSpec extends WordSpec with Matchers with GivenWhenThen {
+class ParameterSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   import Parameter.ParseState
 
   "ParameterSpec" should {

@@ -2,7 +2,9 @@ package org.goldenport.cli
 
 import scalaz._, Scalaz._
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import org.goldenport.context.Consequence
 import org.goldenport.context.test.ConsequenceMatchers
@@ -10,11 +12,12 @@ import ConfigurationParseState.StateFunctions._
 
 /*
  * @since   May. 10, 2025
- * @version May. 11, 2025
+ *  version May. 11, 2025
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class ConfigurationParseStateSpec extends WordSpec with Matchers with GivenWhenThen with ConsequenceMatchers {
+class ConfigurationParseStateSpec extends AnyWordSpec with Matchers with GivenWhenThen with ConsequenceMatchers {
   "typical" should {
     "State" which {
       "empty" in {

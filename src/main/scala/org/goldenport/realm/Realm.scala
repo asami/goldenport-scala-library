@@ -41,7 +41,7 @@ import org.goldenport.util.RegexUtils
  *  version May. 23, 2025
  *  version Jun. 23, 2025
  *  version Jul. 22, 2025
- * @version Aug.  5, 2025
+ * @version Aug. 17, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
@@ -60,6 +60,8 @@ case class Realm(
   def backendRoot: TreeNode[Data] = _tree.root
 
   def get(pathname: String): Option[Data] = _tree.getContent(pathname)
+
+  def getNode(pathname: String): Option[TreeNode[Data]] = _tree.getNode(pathname)
 
   def getString(pathname: String)(implicit ctx: I18NContext): Option[String] =
     get(pathname).collect {

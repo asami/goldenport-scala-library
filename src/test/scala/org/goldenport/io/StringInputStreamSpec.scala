@@ -1,17 +1,19 @@
 package org.goldenport.io
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import org.goldenport.util.StringUtils
 
 /*
  * @since   May.  4, 2020
- * @version May.  4, 2020
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class StringInputStreamSpec extends WordSpec with Matchers with GivenWhenThen {
+class StringInputStreamSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   val emptystring = ""
   val smallstring = "hello world!"
   val smallmultibytestring = "こんにちは 世界!"

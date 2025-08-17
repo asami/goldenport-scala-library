@@ -1,7 +1,9 @@
 package org.goldenport.parser
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 // import org.joda.time._
 import org.scalatest.matchers._
@@ -14,11 +16,12 @@ import org.goldenport.util.DateTimeUtils
  *  version Apr. 13, 2019
  *  version Feb. 13, 2021
  *  version Apr. 26, 2021
- * @version Oct.  1, 2024
+ *  version Oct.  1, 2024
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class TryoutSpec extends WordSpec with Matchers with GivenWhenThen {
+class TryoutSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   "script" should {
     val config = LogicalLines.Config.script
     def parse(p: String) = LogicalLines.parse(config, p)

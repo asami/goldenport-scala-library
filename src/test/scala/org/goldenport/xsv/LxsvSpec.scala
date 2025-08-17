@@ -1,7 +1,9 @@
 package org.goldenport.xsv
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import scala.xml._
 
@@ -9,11 +11,12 @@ import scala.xml._
  * @since   Oct. 11, 2019
  *  version Oct. 27, 2019
  *  version Feb. 29, 2020
- * @version Nov. 24, 2024
+ *  version Nov. 24, 2024
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class LxsvSpec extends WordSpec with Matchers with GivenWhenThen {
+class LxsvSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   def create(p: String): Lxsv = Lxsv.create(p)
   def lxsv(p: (Symbol, Any), ps: (Symbol, Any)*): Lxsv = Lxsv(Xsv.XsvStrategy, p +: ps)
   def lcsv(p: (Symbol, Any), ps: (Symbol, Any)*): Lxsv = Lxsv(Xsv.CsvStrategy, p +: ps)

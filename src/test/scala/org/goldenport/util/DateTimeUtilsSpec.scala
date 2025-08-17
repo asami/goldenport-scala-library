@@ -1,18 +1,20 @@
 package org.goldenport.util
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import org.joda.time._
 import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
 
 /*
  * @since   Jun. 17, 2022
- * @version Jun. 17, 2022
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class DateTimeUtilsSpec extends WordSpec with Matchers with GivenWhenThen {
+class DateTimeUtilsSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   "parseIsoDateTime" should {
     "parse" which {
       "2022-06-20T18:00:00+09:00" in {

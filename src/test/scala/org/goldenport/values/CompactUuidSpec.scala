@@ -1,17 +1,19 @@
 package org.goldenport.values
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import java.util.UUID
 
 /*
  * @since   Dec. 26, 2020
- * @version Dec. 26, 2020
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class CompactUuidSpec extends WordSpec with Matchers with GivenWhenThen {
+class CompactUuidSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   import Urn._
 
   "CompactUuid String" should {

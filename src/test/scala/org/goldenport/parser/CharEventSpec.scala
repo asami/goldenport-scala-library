@@ -1,18 +1,21 @@
 package org.goldenport.parser
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 
 /*
  * @since   Aug. 26, 2018
  *  version Sep.  2, 2018
  *  version Jan.  3, 2019
- * @version Feb. 29, 2020
+ *  version Feb. 29, 2020
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class CharEventSpec extends WordSpec with Matchers with GivenWhenThen {
+class CharEventSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   "CharEvent" should {
     "flat" in {
       val s = """a

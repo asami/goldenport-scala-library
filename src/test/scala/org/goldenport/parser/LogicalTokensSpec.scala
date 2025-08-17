@@ -1,7 +1,9 @@
 package org.goldenport.parser
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import org.joda.time._
 import scala.xml._
@@ -20,11 +22,12 @@ import org.goldenport.util.DateTimeUtils
  *  version Jan. 21, 2020
  *  version Feb. 29, 2020
  *  version Jan. 22, 2021
- * @version Jun. 17, 2022
+ *  version Jun. 17, 2022
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class LogicalTokensSpec extends WordSpec with Matchers with GivenWhenThen {
+class LogicalTokensSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   "token" should {
     "number" which {
       "integer" in {

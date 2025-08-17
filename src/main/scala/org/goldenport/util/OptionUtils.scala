@@ -9,7 +9,8 @@ import scalaz._, Scalaz._
  *  version Oct.  8, 2021
  *  version Jan. 27, 2022
  *  version Jun. 22, 2025
- * @version Jul. 14, 2025
+ *  version Jul. 14, 2025
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 object OptionUtils {
@@ -25,7 +26,7 @@ object OptionUtils {
       case (None, None) => None
     }
 
-  def firstMonoid[T](lhs: Option[T], rhs: Option[T]): Option[T] =
+  def firstOption[T](lhs: Option[T], rhs: Option[T]): Option[T] =
     (lhs, rhs) match {
       case (Some(l), Some(r)) => Some(l)
       case (Some(l), None) => Some(l)
@@ -33,7 +34,7 @@ object OptionUtils {
       case (None, None) => None
     }
 
-  def lastMonoid[T](lhs: Option[T], rhs: Option[T]): Option[T] =
+  def lastOption[T](lhs: Option[T], rhs: Option[T]): Option[T] =
     (lhs, rhs) match {
       case (Some(l), Some(r)) => Some(r)
       case (Some(l), None) => Some(l)

@@ -1,16 +1,18 @@
 package org.goldenport.util
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 
 /*
  * @since   Jul.  2, 2025
- * @version Aug. 10, 2025
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class StringUtilsSpec extends WordSpec with Matchers with GivenWhenThen {
+class StringUtilsSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   import StringUtils._
 
   "StringUtils" when {

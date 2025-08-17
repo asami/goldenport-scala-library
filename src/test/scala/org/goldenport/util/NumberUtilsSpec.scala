@@ -1,7 +1,9 @@
 package org.goldenport.util
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import java.math.MathContext
 import java.math.RoundingMode
@@ -10,11 +12,10 @@ import org.goldenport.collection.VectorMap
 
 /*
  * @since   Jan. 27, 2022
- * @version Jan. 27, 2022
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class NumberUtilsSpec extends WordSpec with Matchers with GivenWhenThen {
+class NumberUtilsSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   import NumberUtils._
 
   val MC_UP = new MathContext(2, UP)

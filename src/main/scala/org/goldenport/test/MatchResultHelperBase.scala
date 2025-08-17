@@ -3,12 +3,14 @@ package org.goldenport.test
 import scalaz._, Scalaz._
 import org.scalatest._
 import org.scalatest.matchers.{BeMatcher, MatchResult}
+import org.scalatest.matchers.should.Matchers
 import org.goldenport.test.MatchResultUtils.Implicits._
 import org.goldenport.i18n.test._
 
 /*
  * @since   Dec.  8, 2024
- * @version Dec. 26, 2024
+ *  version Dec. 26, 2024
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 trait MatchResultHelperBase extends Matchers {

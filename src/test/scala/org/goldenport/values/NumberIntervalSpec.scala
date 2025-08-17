@@ -1,17 +1,20 @@
 package org.goldenport.values
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import org.goldenport.parser.ParseResultMatchers
 
 /*
  * @since   Sep. 29, 2020
- * @version Jan. 23, 2021
+ *  version Jan. 23, 2021
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class NumberIntervalSpec extends WordSpec with Matchers with GivenWhenThen with ParseResultMatchers {
+class NumberIntervalSpec extends AnyWordSpec with Matchers with GivenWhenThen with ParseResultMatchers {
   "NumberInterval" should {
     "default-default" in {
       val r = NumberInterval.parse("100~200")

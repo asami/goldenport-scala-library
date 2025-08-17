@@ -1,16 +1,18 @@
 package org.goldenport.values
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 
 /*
  * @since   Oct. 31, 2017
- * @version Oct. 31, 2017
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class UrnSpec extends WordSpec with Matchers with GivenWhenThen {
+class UrnSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   import Urn._
 
   "urn" should {

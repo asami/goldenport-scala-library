@@ -3,6 +3,7 @@ package org.goldenport.i18n.test
 import scalaz._, Scalaz._
 import org.scalatest._
 import org.scalatest.matchers._
+import org.scalatest.matchers.should.Matchers
 import org.goldenport.test._
 import org.goldenport.test.MatchResultUtils.Implicits._
 import org.goldenport.context.test.ConsequenceBeMatcher
@@ -10,7 +11,8 @@ import org.goldenport.i18n.I18NString
 
 /*
  * @since   Dec.  3, 2024
- * @version Dec. 25, 2024
+ *  version Dec. 25, 2024
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NStringBeMatcher(expected: I18NString) extends BeMatcher[I18NString] with Matchers with MatchResultHelper {

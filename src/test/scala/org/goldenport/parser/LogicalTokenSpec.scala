@@ -1,7 +1,9 @@
 package org.goldenport.parser
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import org.scalatest.matchers._
 import org.joda.time.{DateTime, DateTimeZone}
@@ -12,11 +14,12 @@ import org.goldenport.util.DateTimeUtils
  *  version Jan. 23, 2021
  *  version Feb. 13, 2021
  *  version Sep.  2, 2024
- * @version Oct.  9, 2024
+ *  version Oct.  9, 2024
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class LogicalTokenSpec extends WordSpec with Matchers with GivenWhenThen {
+class LogicalTokenSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   val context = LogicalTokens.Context.create()
   val jodajst = DateTimeUtils.jodajst
   val tz900 = DateTimeZone.forOffsetHours(9)

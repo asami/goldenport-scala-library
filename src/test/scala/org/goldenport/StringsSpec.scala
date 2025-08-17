@@ -1,16 +1,18 @@
 package org.goldenport
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 
 /*
  * @since   Mar. 10, 2016
- * @version Mar. 10, 2016
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class StringsSpec extends WordSpec with Matchers with GivenWhenThen {
+class StringsSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   import Strings._
 
   "blankp" should {

@@ -1,18 +1,21 @@
 package org.goldenport.xml.dom
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest._
 import scala.xml._
 import org.goldenport.RAISE
 
 /*
  * @since   Jun. 29, 2019
- * @version Jul. 10, 2019
+ *  version Jul. 10, 2019
+ * @version Aug. 16, 2025
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
-class DomUtilsSpec extends WordSpec with Matchers with GivenWhenThen {
+class DomUtilsSpec extends AnyWordSpec with Matchers with GivenWhenThen {
   import DomUtils._
 
   val xml = """<PHONEBOOK>

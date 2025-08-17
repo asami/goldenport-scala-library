@@ -1,6 +1,7 @@
 package org.goldenport.values
 
 import org.goldenport.Strings
+import org.goldenport.datatype.QualifiedName
 import org.goldenport.util.StringUtils
 
 /*
@@ -26,7 +27,8 @@ import org.goldenport.util.StringUtils
  *  version Dec. 30, 2022
  *  version Jan.  4, 2023
  *  version Sep. 26, 2023
- * @version Mar.  9, 2025
+ *  version Mar.  9, 2025
+ * @version Aug. 17, 2025
  * @author  ASAMI, Tomoharu
  */
 case class PathName(
@@ -96,6 +98,8 @@ case class PathName(
   }
 
   private def _is_pattern(s: String) = s.contains("{")
+
+  def toQualifiedName: QualifiedName = QualifiedName(components.mkString("."))
 
   // for HTTP
   def isResource(p: String): Boolean = firstComponent == p
