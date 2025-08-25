@@ -20,7 +20,8 @@ import org.goldenport.values.PathName
  *  version Mar. 19, 2022
  *  version Mar.  5, 2025
  *  version Apr. 23, 2025
- * @version May. 17, 2025
+ *  version May. 17, 2025
+ * @version Aug. 22, 2025
  * @author  ASAMI, Tomoharu
  */
 trait Tree[E] extends Showable {
@@ -36,8 +37,11 @@ trait Tree[E] extends Showable {
   def setContent(pathname: PathName, data: E): TreeNode_TYPE
   def setContent(pathname: String, data: E): TreeNode_TYPE
   def copyIn(aSource: Tree[E]): Unit
+  def remove(pathname: PathName): Unit
+  def remove(pathname: String): Unit = remove(PathName(pathname))
   def traverse(visitor: TreeVisitor[E]): Unit
   def traverse(visitor: TreeVisitor[E], filter: TreeNode[E] => Boolean): Unit
+  def traverse(pathname: String, visitor: TreeVisitor[E]): Unit
   def traverse(aProcedure: E => Unit)
   def collect(aCollector: TreeNode[E] => Boolean): Seq[TreeNode[E]]
   //

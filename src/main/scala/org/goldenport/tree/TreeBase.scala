@@ -13,7 +13,8 @@ import org.goldenport.values.PathName
  *  version Nov.  2, 2012
  *  version Nov. 18, 2019
  *  version May.  4, 2020
- * @version Nov. 14, 2020
+ *  version Nov. 14, 2020
+ * @version Aug. 22, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeBase[E] extends Tree[E] {
@@ -92,6 +93,15 @@ trait TreeBase[E] extends Tree[E] {
   }
 */
 
+  final def remove(pathname: PathName): Unit =
+    getNode(pathname.v) match {
+      case Some(s) => s.getParent match {
+        case Some(p) => p.removeChild(s)
+        case None => Unit
+      }
+      case None => Unit
+    }
+
   final def copyIn(aSource: Tree[E]) {
     require(aSource != null)
     dbc_invariants
@@ -133,6 +143,12 @@ trait TreeBase[E] extends Tree[E] {
     dbc_invariants
     root_node.traverse(visitor, filter)
   }
+
+  def traverse(pathname: String, visitor: TreeVisitor[E]): Unit =
+    getNode(pathname) match {
+      case Some(s) => s.traverse(visitor)
+      case None => Unit
+    }
 
   final def traverse(aFunction: E => Unit) {
     traverse(new FunctionVisitor[E](aFunction))
@@ -206,7 +222,7 @@ trait TreeBase[E] extends Tree[E] {
     val cs = node.children.toStream.map {
       x => _ztree(x.asInstanceOf[TreeNode[E]])
     }
-    ZTree.node(node, cs)
+    ZTree.Node(node, cs)
   }
 
   def ztree0: ZTree[E] = {
@@ -217,7 +233,7 @@ trait TreeBase[E] extends Tree[E] {
     val cs = node.children.toStream.map {
       x => _ztree0(x.asInstanceOf[TreeNode_TYPE])    
     }
-    ZTree.node(node.content, cs)
+    ZTree.Node(node.content, cs)
   }
 
   /*

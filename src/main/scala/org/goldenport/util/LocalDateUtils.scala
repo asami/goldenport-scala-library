@@ -15,7 +15,8 @@ import org.goldenport.context.Consequence
  *  version Oct. 10, 2018
  *  version Apr. 20, 2022
  *  version Dec. 12, 2022
- * @version Jun. 22, 2025
+ *  version Jun. 22, 2025
+ * @version Aug. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 object LocalDateUtils {
@@ -117,4 +118,21 @@ object LocalDateUtils {
 
   def compareDescOption(lhs: Option[LocalDate], rhs: Option[LocalDate]): Option[Boolean] =
     OptionUtils.compareDescOption(lhs, rhs)
+
+  object Implicits {
+    implicit val ordering: Ordering[LocalDate] =
+      Ordering.fromLessThan(_ isBefore _)
+
+    implicit val equal: scalaz.Equal[LocalDate] =
+      scalaz.Equal.equal(_ == _)
+
+    implicit val show: scalaz.Show[LocalDate] =
+      scalaz.Show.show(_.toString)
+
+    implicit val ceq: cats.Eq[LocalDate] =
+      cats.Eq.fromUniversalEquals
+
+    implicit val cshow: cats.Show[LocalDate] =
+      cats.Show.show(_.toString)
+  }
 }

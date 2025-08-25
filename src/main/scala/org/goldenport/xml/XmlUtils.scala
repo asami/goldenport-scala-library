@@ -13,6 +13,7 @@ import org.goldenport.context.Consequence
 import org.goldenport.context.DateTimeContext
 import org.goldenport.i18n.I18NContainer
 import org.goldenport.i18n.LocaleUtils
+import org.goldenport.collection.VectorMap
 import org.goldenport.value._
 import org.goldenport.values.LocalDateOrDateTime
 import org.goldenport.util.StringUtils
@@ -31,7 +32,7 @@ import org.goldenport.util.{AnyUtils, SeqUtils}
  *  version Dec. 29, 2023
  *  version Mar. 28, 2025
  *  version Jul. 26, 2025
- * @version Aug. 10, 2025
+ * @version Aug. 23, 2025
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
@@ -252,6 +253,9 @@ object XmlUtils {
     }
     go(p, Vector.empty)
   }
+
+  def attributeVectorMap(elem: Elem): VectorMap[String, String] =
+    VectorMap(attributeVector(elem))
 
   def nodeSeqToNodeList(ps: NodeSeq): List[Node] = ps match {
     case Group(ms) => ms.toList

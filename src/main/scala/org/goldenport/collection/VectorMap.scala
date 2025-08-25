@@ -1,6 +1,6 @@
 package org.goldenport.collection
 
-import scalaz._, Scalaz._
+import scalaz.{Ordering => _, _}, Scalaz._
 import org.goldenport.RAISE
 import org.goldenport.Strings
 import org.goldenport.util.VectorUtils
@@ -17,7 +17,8 @@ import org.goldenport.util.VectorUtils
  *  version Apr. 12, 2021
  *  version Sep. 10, 2024
  *  version Nov. 14, 2024
- * @version Jul. 15, 2025
+ *  version Jul. 15, 2025
+ * @version Aug. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait VectorMap[K, +V] extends Map[K, V] {
@@ -52,6 +53,10 @@ sealed trait VectorMap[K, +V] extends Map[K, V] {
 
   def remove(k: K): VectorMap[K, V]
 
+  def without(k: K, ks: K*): VectorMap[K, V] = without(k +: ks)
+
+  def without(ks: Seq[K]): VectorMap[K, V] = ks.foldLeft(this)((z, x) => z.remove(x))
+
   protected def create_Map[W >:V](ps: Vector[(K, W)]): VectorMap[K, W]
 
   protected def update_vector[W >: V](ps: Vector[(K, W)], x: (K, W)): Vector[(K, W)] =
@@ -68,7 +73,14 @@ sealed trait VectorMap[K, +V] extends Map[K, V] {
 
   def getIgnoreCase(k: String)(implicit ev: K <:< String): Option[V] =
     vector.find(_._1.equalsIgnoreCase(k)).map(_._2)
-}
+
+  def sortKeyWith(lt: (K, K) => Boolean): VectorMap[K, V]
+
+  def sortKeyAsc(implicit ord: Ordering[K]): VectorMap[K, V] =
+    sortKeyWith(ord.lt)
+
+  def sortKeyDesc(implicit ord: Ordering[K]): VectorMap[K, V] =
+    sortKeyWith(ord.gt)}
 
 case class PlainVectorMap[K, +V](
   vector: Vector[(K, V)]
@@ -92,6 +104,11 @@ case class PlainVectorMap[K, +V](
   override def mapValues[W](f: V => W): VectorMap[K, W] = copy(vector.map {
     case (k, v) => k -> f(v)
   })
+
+  def sortKeyWith(lt: (K, K) => Boolean): VectorMap[K, V] = {
+    val a = vector.sortWith { case (a, b) => lt(a._1, b._1) }
+    PlainVectorMap(a)
+  }
 }
 object PlainVectorMap {
   private val _empty = PlainVectorMap(Vector.empty)
@@ -141,6 +158,11 @@ case class IndexedVectorMap[K, +V](
       case (k, v) => k -> f(v)
     }
   )
+
+  def sortKeyWith(lt: (K, K) => Boolean): VectorMap[K, V] = {
+    val a = vector.sortWith { case (a, b) => lt(a._1, b._1) }
+    copy(a)
+  }
 }
 object IndexedVectorMap {
   private val _empty = IndexedVectorMap(Vector.empty, Map.empty)

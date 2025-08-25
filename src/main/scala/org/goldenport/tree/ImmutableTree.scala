@@ -8,7 +8,8 @@ import org.goldenport.values.PathName
 
 /*
  * @since   May. 15, 2021
- * @version May. 17, 2021
+ *  version May. 17, 2021
+ * @version Aug. 22, 2025
  * @author  ASAMI, Tomoharu
  */
 case class ImmutableTree[E](
@@ -24,8 +25,10 @@ case class ImmutableTree[E](
   def setContent(pathname: PathName, data: E): TreeNode_TYPE = RAISE.notImplementedYetDefect
   def setContent(pathname: String, data: E): TreeNode_TYPE = RAISE.notImplementedYetDefect
   def copyIn(aSource: Tree[E]): Unit = RAISE.notImplementedYetDefect
+  def remove(pathname: PathName): Unit = RAISE.notImplementedYetDefect
   def traverse(visitor: TreeVisitor[E]): Unit = RAISE.notImplementedYetDefect
   def traverse(visitor: TreeVisitor[E], filter: TreeNode[E] => Boolean): Unit = RAISE.notImplementedYetDefect
+  def traverse(pathname: String, visitor: TreeVisitor[E]): Unit = RAISE.notImplementedYetDefect
   def traverse(aProcedure: E => Unit) = RAISE.notImplementedYetDefect
   def collect(aCollector: TreeNode[E] => Boolean): Seq[TreeNode[E]] = RAISE.notImplementedYetDefect
   //
