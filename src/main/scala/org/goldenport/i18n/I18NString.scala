@@ -31,7 +31,7 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Dec.  8, 2022
  *  version Mar.  8, 2025
  *  version Jul.  5, 2025
- * @version Aug. 23, 2025
+ * @version Aug. 30, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -218,6 +218,8 @@ object I18NString {
     }
     apply(a)
   }
+
+  def enja(en: String, ja: String): I18NString = I18NString(en, en, ja, Map.empty)
 
   def parse(p: String): I18NString = {
     def parsejson = {
