@@ -11,7 +11,8 @@ import org.goldenport.values.NumberRange
 /*
  * @since   Jul. 18, 2025
  *  version Jul. 19, 2025
- * @version Aug.  9, 2025
+ *  version Aug.  9, 2025
+ * @version Sep.  7, 2025
  * @author  ASAMI, Tomoharu
  */
 class TextResolver(context: TextResolver.Context) {
@@ -21,7 +22,7 @@ class TextResolver(context: TextResolver.Context) {
     val s = Strings.tolines(p)
     val a = context.parameters.leveloffset.fold(s)(_level_offset(_, s))
     val b = context.parameters.lines.fold(a)(_lines(_, a))
-    val c = _tags(context.parameters.tags, b)
+    val c = _tags(context.parameters.effectiveTags, b)
     val d = context.parameters.indent.fold(c)(_indent(_, c))
     val e = context.parameters.options.fold(d)(x => _options(x.vector, d))
     val f = context.parameters.substitutes.fold(e)(x => _substitutes(x.vector, e))
@@ -59,31 +60,34 @@ class TextResolver(context: TextResolver.Context) {
     }
 
   private def _tags(tags: Vector[String], p: Vector[String]): Vector[String] = {
-    val TagStart = """tag::([^\[\]]+)""".r
-    val TagEnd   = """end::([^\[\]]+)""".r
+    val TagStart = """//\s*tag::([^\[\]]+)(?:\[\])?""".r
+    val TagEnd   = """//\s*end::([^\[\]]+)(?:\[\])?""".r
+    // val TagStart = """tag::([^\[\]]+)(?:\[\])?""".r
+    // val TagEnd   = """end::([^\[\]]+)(?:\[\])?""".r
 
     case class State(
       active: Set[String] = Set.empty,
-      result: Vector[String] = Vector.empty
+      result: Vector[String] = Vector.empty,
+      idx: Int = 0
     ) {
+      def r = result
+
       def isActive: Boolean = active.exists(tags.contains)
+
+      def +(rhs: String) = rhs.trim match {
+        case TagStart(name) =>
+          copy(active = active + name, idx = idx + 1)
+        case TagEnd(name) =>
+          copy(active = active - name, idx = idx + 1)
+        case _ =>
+          if (isActive)
+            copy(result = result :+ rhs, idx = idx + 1)
+          else
+            copy(idx = idx + 1)
+      }
     }
 
-    p.foldLeft((State(), 0)) { case ((state, idx), line) =>
-      line.trim match {
-        case TagStart(name) =>
-          (state.copy(active = state.active + name), idx + 1)
-
-        case TagEnd(name) =>
-          (state.copy(active = state.active - name), idx + 1)
-
-        case _ =>
-          if (state.isActive)
-            (state.copy(result = state.result :+ line), idx + 1)
-          else
-            (state, idx + 1)
-      }
-    }._1.result
+    p.foldLeft(State())(_+_).r
   }
 
   private def _indent(indent: String, p: Vector[String]): Vector[String] =

@@ -31,7 +31,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Dec.  8, 2022
  *  version Mar.  8, 2025
  *  version Jul.  5, 2025
- * @version Aug. 30, 2025
+ *  version Aug. 30, 2025
+ * @version Sep.  6, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -74,6 +75,9 @@ case class I18NString(
     map + (LocaleUtils.C -> c) + (Locale.ENGLISH -> en) + (Locale.JAPANESE -> ja)
   lazy val localeList: List[(Locale, String)] = localeMap.toList
   lazy val localeVector: Vector[(Locale, String)] = localeMap.toVector
+
+  def localeMapWithoutC: Map[Locale, String] =
+    map + (Locale.ENGLISH -> en) + (Locale.JAPANESE -> ja)
 
   lazy val values: Vector[String] = localeVector.map(_._2)
 
@@ -168,7 +172,13 @@ case class I18NString(
 
   def terms: Vector[String] = (Vector(c, en, ja) ++ map.values).distinct
 
-  def isSimple: Boolean = terms.length <= 1
+  def isSimple: Boolean = c == en && en == ja && map.isEmpty
+
+  def getIfNoLocale: Option[String] =
+    if (isSimple)
+      Some(c)
+    else
+      None
 }
 
 object I18NString {

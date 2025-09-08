@@ -5,7 +5,7 @@ import java.util.Locale
 
 /*
  * @since   Aug. 31, 2025
- * @version Sep.  1, 2025
+ * @version Sep.  6, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NHangar[T](
@@ -15,6 +15,20 @@ case class I18NHangar[T](
   def get(locale: Locale): Option[Vector[T]] = map.get(locale)
 
   def valueVector: Vector[T] = map.values.toVector.flatten ++ commons
+
+  def unify: Either[Vector[T], Map[Locale, Vector[T]]] =
+    if (map.isEmpty)
+      Left(commons)
+    else
+      Right(map.mapValues(x => commons ++ x))
+
+  def filterNot(f: T => Boolean): I18NHangar[T] = I18NHangar(
+    map.mapValues(_.filterNot(f)),
+    commons.filterNot(f)
+  )
+
+  def mapValueCollection(f: Vector[T] => Vector[T]): I18NHangar[T] =
+    copy(map = map.mapValues(f))
 }
 
 object I18NHangar {

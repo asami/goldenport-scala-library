@@ -8,7 +8,8 @@ import org.goldenport.RAISE
  * @since   Jun. 24, 2025
  *  version Jun. 26, 2025
  *  version Jul. 27, 2025
- * @version Aug.  7, 2025
+ *  version Aug.  7, 2025
+ * @version Sep.  6, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NContainer[T](
@@ -56,8 +57,10 @@ case class I18NContainer[T](
     (map ++ a).toVector
   }
 
+  def isSimple: Boolean = c == en && en == ja && map.isEmpty
+
   def getIfNoLocale: Option[T] =
-    if (c == en && en == ja && map.isEmpty)
+    if (isSimple)
       Some(c)
     else
       None

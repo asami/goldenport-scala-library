@@ -15,7 +15,8 @@ import org.goldenport.util.StringUtils
  *  version Mar. 31, 2025
  *  version Apr. 27, 2025
  *  version May. 31, 2025
- * @version Jun. 12, 2025
+ *  version Jun. 12, 2025
+ * @version Sep.  6, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeTransformer[A, B] {
@@ -67,18 +68,21 @@ trait TreeTransformer[A, B] {
       // println(s"make_tree_node: $name")
       make_node_or_control(p.name, name, p)
     }.getOrElse {
-      p.getContent.fold {
-        if (p.children.isEmpty) {
-          // println(s"make_tree_node Nil: ${p.name}")
-          Nil
-        } else {
-          // println(s"make_tree_node A: ${p.name}")
+      if (rule.isIgnore(p))
+        Nil
+      else
+        p.getContent.fold {
+          if (p.children.isEmpty) {
+            // println(s"make_tree_node Nil: ${p.name}")
+            Nil
+          } else {
+            // println(s"make_tree_node A: ${p.name}")
+            make_node_or_control(p)
+          }
+        } { x =>
+          // println(s"make_tree_node B: ${p.name}")
           make_node_or_control(p)
         }
-      } { x =>
-        // println(s"make_tree_node B: ${p.name}")
-        make_node_or_control(p)
-      }
     }
 
   protected def make_node_or_control(oldname: String, newname: String, p: TreeNode[A]): List[TreeNode[B]] = {
@@ -451,6 +455,7 @@ object TreeTransformer {
 
   trait Rule[A, B] {
     def config: Option[Config] = None
+    def isIgnore(p: TreeNode[A]): Boolean = false
     def getTargetName(p: TreeNode[A]): Option[String] = None
     def makeContent(p: A): Option[B] = None
     def makeContent(oldname: String, newname: String, p: A): Option[B] = None

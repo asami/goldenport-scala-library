@@ -13,7 +13,8 @@ import org.goldenport.util.StringUtils
 
 /*
  * @since   Jul. 18, 2025
- * @version Aug. 10, 2025
+ *  version Aug. 10, 2025
+ * @version Sep.  7, 2025
  * @author  ASAMI, Tomoharu
  */
 class FileTextResolver(context: FileTextResolver.Context) {
@@ -57,9 +58,16 @@ object FileTextResolver {
     options: Option[NonEmptyVector[Opt]] = None,
     substitutes: Option[NonEmptyVector[Sub]] = None
   ) {
-    def effectiveTags: Vector[String] = tags match {
-      case Some(s) => s.vector
-      case None => Vector.empty
+    def effectiveTags: Option[NonEmptyVector[String]] =
+      NonEmptyVector.createOption(effectiveTagsVector)
+
+    def effectiveTagsVector: Vector[String] = {
+      val a = tag.toVector
+      val b = tags match {
+        case Some(s) => s.vector
+        case None => Vector.empty
+      }
+      a ++ b
     }
   }
   object Parameters {
