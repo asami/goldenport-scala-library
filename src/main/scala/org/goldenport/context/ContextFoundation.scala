@@ -9,11 +9,15 @@ import org.goldenport.i18n.CalendarFormatter
 import org.goldenport.i18n.StringFormatter
 import org.goldenport.observability.ObservabilityContext
 import org.goldenport.notification.NotificationContext
+import org.goldenport.io.FileTextResolver
+import org.goldenport.io.FileResolver
+import org.goldenport.util.TextResolver
 
 /*
  * @since   Oct. 13, 2024
  *  version Apr. 28, 2025
- * @version Jun.  7, 2025
+ *  version Jun.  7, 2025
+ * @version Sep. 12, 2025
  * @author  ASAMI, Tomoharu
  */
 case class ContextFoundation(
@@ -23,7 +27,8 @@ case class ContextFoundation(
   formatContext: FormatContext,
   observabilityContext: ObservabilityContext,
   notificationContext: NotificationContext,
-  randomContext: RandomContext
+  randomContext: RandomContext,
+  fileTextResolver: FileTextResolver
 ) {
   def withI18NContext(p: I18NContext) = copy(i18NContext = p)
 }
@@ -38,6 +43,9 @@ object ContextFoundation {
     def observabilityContext: ObservabilityContext = contextFoundation.observabilityContext
     def notificationContext: NotificationContext = contextFoundation.notificationContext
     def randomContext: RandomContext = contextFoundation.randomContext
+    def fileTextResolver: FileTextResolver = contextFoundation.fileTextResolver
+    def fileResolver: FileResolver = fileTextResolver.fileResolver
+    def textResolver: TextResolver = fileTextResolver.textResolver
   }
 
   case class Parameters(
@@ -47,7 +55,7 @@ object ContextFoundation {
     formatContext: Option[FormatContext] = None
   )
 
-  val default: ContextFoundation = build(Parameters())
+  def default(): ContextFoundation = build(Parameters())
 
   def build(params: Parameters): ContextFoundation = {
     val mathcontext = params.mathContext getOrElse MathContext.UNLIMITED // Scala default: MathContext.DECIMAL128
@@ -79,6 +87,7 @@ object ContextFoundation {
     val observabilitycontext = ObservabilityContext.default // TODO
     val notificationcontext = NotificationContext.default // TODO
     val randomcontext = RandomContext.default // TODO
+    val filetextresolver = FileTextResolver.create() // TODO
     ContextFoundation(
       mathcontext,
       i18ncontext,
@@ -86,7 +95,8 @@ object ContextFoundation {
       formatcontext,
       observabilitycontext,
       notificationcontext,
-      randomcontext
+      randomcontext,
+      filetextresolver
     )
   }
 }

@@ -32,7 +32,7 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Mar.  8, 2025
  *  version Jul.  5, 2025
  *  version Aug. 30, 2025
- * @version Sep.  6, 2025
+ * @version Sep. 14, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NString(
@@ -94,6 +94,9 @@ case class I18NString(
 
   def maxLength: Int = I18NUtils.maxLength(values)
   def minLength: Int = I18NUtils.minLength(values)
+
+  def map(f: ((Locale, String)) => ((Locale, String))): I18NString =
+    I18NString(localeMap.map(f))
 
   def +(rhs: I18NString): I18NString = concat(rhs, "")
   def concat(rhs: I18NString): I18NString = concat(rhs, ";")

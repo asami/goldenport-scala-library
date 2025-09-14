@@ -2,6 +2,7 @@ package org.goldenport.io
 
 import scala.util.Try
 import java.net.URI
+import java.net.URL
 import java.io.File
 import org.goldenport.context.Consequence
 import org.goldenport.bag.ChunkBag
@@ -9,10 +10,13 @@ import org.goldenport.bag.ChunkBag
 /*
  * @since   Jul. 17, 2025
  *  version Jul. 19, 2025
- * @version Aug. 10, 2025
+ *  version Aug. 10, 2025
+ * @version Sep. 12, 2025
  * @author  ASAMI, Tomoharu
  */
 class FileResolver(context: FileResolver.Context) {
+  def directoryForWrite = context.directoryForWrite
+
   def resolve(path: String): Consequence[ChunkBag] = {
     val candidats = context.makeCandidates(path)
     candidats match {
@@ -26,6 +30,20 @@ class FileResolver(context: FileResolver.Context) {
         }
     }
   }
+
+  def toFile(uri: URI): Consequence[File] = directoryForWrite match {
+    case Some(s) => UriUtils.getFile(s, uri) match {
+      case Some(ss) => Consequence.success(ss)
+      case None => Consequence.badRequest(s"No suitable for file: $uri")
+    }
+    case None => Consequence.notFound("No directory to write.")
+  }
+
+  def toFile(url: URL): Consequence[File] =
+    UrlUtils.getFile(url) match {
+      case Some(ss) => Consequence.success(ss)
+      case None => Consequence.badRequest(s"No suitable for file: $url")
+    }
 
   @annotation.tailrec
   private def _resolve(p: InputSource, ps: Vector[InputSource]): Consequence[ChunkBag] =
@@ -71,6 +89,8 @@ object FileResolver {
           }
         }
       }
+
+    def directoryForWrite: Option[File] = resources.flatMap(_.getFile).headOption
   }
   object Context {
     val default = create(new File("."))

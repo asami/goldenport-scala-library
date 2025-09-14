@@ -18,6 +18,7 @@ import org.goldenport.hocon.RichConfig
 import org.goldenport.hocon.HoconUtils
 import org.goldenport.notification.NotificationContext
 import org.goldenport.observability.ObservabilityContext
+import org.goldenport.io.FileTextResolver
 import org.goldenport.log.{LogConfig, LogLevel}
 import org.goldenport.recorder.{Recorder, StandardRecorder}
 import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperations}
@@ -44,7 +45,8 @@ import org.goldenport.matrix.{INumericalOperations, GoldenportNumericalOperation
  *  version Oct. 14, 2024
  *  version Apr. 28, 2025
  *  version May. 11, 2025
- * @version Jun.  7, 2025
+ *  version Jun.  7, 2025
+ * @version Sep. 12, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Config(
@@ -337,6 +339,7 @@ object Config {
     val observabilitycontext = ObservabilityContext.default // TODO
     val notificationcontext = NotificationContext.default // TODO
     val randomcontext = RandomContext.default // TODO
+    val filetextresolver = FileTextResolver.create() // TODO
     val contextfoundation = ContextFoundation(
       mathcontext,
       i18ncontext,
@@ -344,7 +347,8 @@ object Config {
       formatcontext,
       observabilitycontext,
       notificationcontext,
-      randomcontext
+      randomcontext,
+      filetextresolver
     )
     val r1 = LogConfig.parse(state)
     val logconfig = r1.result

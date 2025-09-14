@@ -14,16 +14,17 @@ import org.goldenport.util.StringUtils
 /*
  * @since   Jul. 18, 2025
  *  version Aug. 10, 2025
- * @version Sep.  7, 2025
+ * @version Sep. 12, 2025
  * @author  ASAMI, Tomoharu
  */
 class FileTextResolver(context: FileTextResolver.Context) {
+  lazy val fileResolver = new FileResolver(context.fileResolverContext)
+  lazy val textResolver = new TextResolver(context.textResolverContext)
+
   def resolve(path: String): Consequence[String] = {
-    val fr = new FileResolver(context.fileResolverContext)
-    val tr = new TextResolver(context.textResolverContext)
     for {
-      x <- fr.resolveString(path)
-      s <- tr.resolve(x)
+      x <- fileResolver.resolveString(path)
+      s <- textResolver.resolve(x)
     } yield s
   }
 }
