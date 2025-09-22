@@ -7,7 +7,8 @@ package org.goldenport.tree
  *  version Nov. 15, 2020
  *  version Feb.  2, 2021
  *  version Dec. 29, 2022
- * @version Mar.  4, 2025
+ *  version Mar.  4, 2025
+ * @version Sep. 21, 2025
  * @author  ASAMI, Tomoharu
  */
 class PlainTree[E](node: TreeNode[E]) extends TreeBase[E] {
@@ -37,6 +38,14 @@ object PlainTree {
 
     def createTreeNode(name: String, content: E, children: Seq[TreeNode[E]]): TreeNode[E] =
       PlainTreeNode.create(name, content, children)
+
+    def createTreeNode(path: List[String], content: E, children: Seq[TreeNode[E]]): TreeNode[E] =
+      path.lastOption match {
+        case Some(s) =>
+          val leaf = createTreeNode(s, content, children)
+          path.init.reverse.foldLeft(leaf)((z, x) => createTreeNode(x, List(z)))
+        case None => createTreeNode("", content, children)
+      }
   }
 
   def create[E](root: E): PlainTree[E] = new PlainTree(PlainTreeNode.create("", root, Nil))

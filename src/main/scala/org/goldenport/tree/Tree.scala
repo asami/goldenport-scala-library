@@ -21,7 +21,8 @@ import org.goldenport.values.PathName
  *  version Mar.  5, 2025
  *  version Apr. 23, 2025
  *  version May. 17, 2025
- * @version Aug. 22, 2025
+ *  version Aug. 22, 2025
+ * @version Sep. 21, 2025
  * @author  ASAMI, Tomoharu
  */
 trait Tree[E] extends Showable {
@@ -148,7 +149,7 @@ object Tree {
           val cs = lhs.children.find(_.name == x).map { node =>
             _merge_child(lhs.children, node, xs, rhs)
           }.getOrElse {
-            val a = factory.cloneTreeNodeDescendants(x, rhs)
+            val a = factory.cloneTreeNodeDescendants(x :: xs, rhs)
             lhs.children :+ a
           }
           factory.createTreeNode(lhs.name, lhs.content, cs)

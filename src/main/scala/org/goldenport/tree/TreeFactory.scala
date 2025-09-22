@@ -5,13 +5,15 @@ import org.goldenport.RAISE
 /*
  * @since   Nov. 15, 2020
  *  version Nov. 16, 2020
- * @version Mar.  4, 2025
+ *  version Mar.  4, 2025
+ * @version Sep. 21, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeFactory[E] {
   def createTree(node: TreeNode[E]): Tree[E]
   def createTreeNode(name: String, content: E, children: Seq[TreeNode[E]]): TreeNode[E]
   def createTreeNode(name: String, content: Option[E], children: Seq[TreeNode[E]]): TreeNode[E]
+  def createTreeNode(path: List[String], content: E, children: Seq[TreeNode[E]]): TreeNode[E]
 
   def cloneTreeNodeDescendants(p: TreeNode[E]): TreeNode[E] = {
     val children = p.children.map(cloneTreeNodeDescendants)
@@ -21,6 +23,11 @@ trait TreeFactory[E] {
   def cloneTreeNodeDescendants(name: String, p: TreeNode[E]): TreeNode[E] = {
     val children = p.children.map(cloneTreeNodeDescendants)
     createTreeNode(name, p.content, children)
+  }
+
+  def cloneTreeNodeDescendants(path: List[String], p: TreeNode[E]): TreeNode[E] = {
+    val children = p.children.map(cloneTreeNodeDescendants)
+    createTreeNode(path, p.content, children)
   }
 }
 

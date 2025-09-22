@@ -6,7 +6,8 @@ import org.goldenport.context.Consequence
 
 /*
  * @since   May. 19, 2025
- * @version May. 19, 2025
+ *  version May. 19, 2025
+ * @version Sep. 19, 2025
  * @author  ASAMI, Tomoharu
  */
 package object rwscr {
@@ -39,4 +40,9 @@ package object rwscr {
   def modify[R, S](f: S => S): RWSCR[R, S, Unit] = ReaderWriterStateT { (r: R, s: S) =>
     Consequence((Recorder.empty, (), f(s)))
   }
+
+  def lift[R, S, A](ca: Consequence[A]): RWSCR[R, S, A] =
+    ReaderWriterStateT { (r: R, s: S) =>
+      ca.map(a => (Recorder.empty, a, s))
+    }
 }
