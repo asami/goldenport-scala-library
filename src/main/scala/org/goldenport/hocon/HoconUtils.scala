@@ -67,8 +67,9 @@ import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
  *  version Nov. 22, 2023
  *  version Apr.  6, 2025
  *  version May. 21, 2025
-UURL.getURLFromFileOrURLName(s)) *  version Jun. 24, 2025
-UURL.getURLFromFileOrURLName(s)) * @version Jul.  7, 2025
+ *  version Jun. 24, 2025
+ *  version Jul.  7, 2025
+ * @version Sep. 28, 2025
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -331,6 +332,11 @@ object HoconUtils {
     getString(config, key).
       map(x => valueclass.get(x).
         getOrElse(RAISE.invalidArgumentFault(s"Invalid value name: $key = $x")))
+
+  def getValueList[T <: ValueInstance](valueclass: ValueClass[T], config: Config, key: String): Option[List[T]] =
+    getEagerStringList(config, key).
+      map(xs => xs.map(x => valueclass.get(x).
+        getOrElse(RAISE.invalidArgumentFault(s"Invalid value name: $key = $x"))))
 
   def getFile(config: Config, key: String): Option[File] =
     getString(config, key).map(new File(_))

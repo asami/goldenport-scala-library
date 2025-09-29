@@ -52,7 +52,8 @@ import org.goldenport.parser.ParseResult
  *  version Nov. 28, 2022
  *  version Dec. 12, 2022
  *  version Apr.  4, 2023
- * @version Jun. 16, 2025
+ *  version Jun. 16, 2025
+ * @version Sep. 28, 2025
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -96,6 +97,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def getConfigOption(key: String) = HoconUtils.getConfig(config, key)
   def getRichConfigOption(key: String) = HoconUtils.getRichConfig(config, key)
   def getValueOption[T <: ValueInstance](valueclass: ValueClass[T], key: String) = HoconUtils.getValue(valueclass, config, key)
+  def getValueListOption[T <: ValueInstance](valueclass: ValueClass[T], key: String): Option[List[T]] = HoconUtils.getValueList(valueclass, config, key)
   def getFileOption(key: String): Option[File] = HoconUtils.getFile(config, key)
   def parseBoolean(key: String): ParseResult[Boolean] = HoconUtils.parseBoolean(config, key)
   def parseBooleanOption(key: String): ParseResult[Option[Boolean]] = HoconUtils.parseBooleanOption(config, key)
@@ -151,6 +153,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def cEagerStringList(key: String): Consequence[List[String]] = Consequence(HoconUtils.getEagerStringList(config, key) getOrElse Nil)
   def cEagerStringListOption(key: String): Consequence[Option[List[String]]] = Consequence(HoconUtils.getEagerStringList(config, key))
   def cValueOption[T <: ValueInstance](valueclass: ValueClass[T], key: String) = Consequence(getValueOption(valueclass, key))
+  def cValueList[T <: ValueInstance](valueclass: ValueClass[T], key: String) = Consequence(getValueListOption(valueclass, key).getOrElse(Nil))
 
   def consequenceBoolean(key: String): Consequence[Boolean] = HoconUtils.consequenceBoolean(config, key)
   def consequenceBoolean(key: String, default: Boolean): Consequence[Boolean] = HoconUtils.consequenceBoolean(config, key, default)

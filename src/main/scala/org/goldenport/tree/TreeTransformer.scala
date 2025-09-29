@@ -16,7 +16,7 @@ import org.goldenport.util.StringUtils
  *  version Apr. 27, 2025
  *  version May. 31, 2025
  *  version Jun. 12, 2025
- * @version Sep.  6, 2025
+ * @version Sep. 28, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeTransformer[A, B] {
@@ -32,6 +32,13 @@ trait TreeTransformer[A, B] {
 
   private lazy val _factory = treeTransformerContext.factory
   private def _config = rule.config orElse treeTransformerContext.config getOrElse Config.default
+
+  private var _stack: List[TreeNode[A]] = Nil
+
+  private def _push(p: TreeNode[A]): Unit = _stack = p :: _stack
+  private def _pop(p: TreeNode[A]): Unit = _stack = _stack.tail
+
+  def stack: List[TreeNode[A]] = _stack
 
   def apply(p: Tree[A]): Tree[B] = apply(p.root)
 
@@ -86,8 +93,9 @@ trait TreeTransformer[A, B] {
     }
 
   protected def make_node_or_control(oldname: String, newname: String, p: TreeNode[A]): List[TreeNode[B]] = {
+    _push(p)
     val a: Directive[B] = make_node(oldname, newname, p)
-    a match {
+    val r = a match {
       case Directive.Empty() => Nil
       case Directive.AsIs() => List(p.asInstanceOf[TreeNode[B]])
       case Directive.Default() =>
@@ -122,6 +130,8 @@ trait TreeTransformer[A, B] {
       }
       case Directive.Nodes(nodes) => nodes
     }
+    _pop(p)
+    r
   }
 
   protected def make_node(oldname: String, newname: String, p: TreeNode[A]): Directive[B] =
@@ -175,7 +185,8 @@ trait TreeTransformer[A, B] {
   protected def make_Content(oldname: String, newname: String, p: A): Option[B] = None
 
   protected def make_node_or_control(p: TreeNode[A]): List[TreeNode[B]] = {
-    make_node(p) match {
+    _push(p)
+    val r = make_node(p) match {
       case Directive.Empty() => Nil
       case Directive.AsIs() => List(p.asInstanceOf[TreeNode[B]])
       case Directive.Default() => _make_node_default(p)
@@ -191,6 +202,8 @@ trait TreeTransformer[A, B] {
       }
       case Directive.Nodes(nodes) => nodes
     }
+    _pop(p)
+    r
   }
 
   private def _make_node_default(p: TreeNode[A]): List[TreeNode[B]] =
@@ -290,25 +303,6 @@ trait TreeTransformer[A, B] {
       // println(s"b: $p, $x")
       make_Node(p, x)
     }
-
-  // protected def make_node0(p: TreeNode[A]): Option[TreeNode[B]] = {
-  //   val a = p.getContent.fold {
-  //     println(s"a: $p")
-  //     make_Node(p)
-  //   } { x =>
-  //     println(s"b: $p, $x")
-  //     make_Node(p, x)
-  //   }
-  //   a orElse {
-  //     if (p.isContainer) {
-  //       val r = _create_node(p)
-  //       Some(r)
-  //     } else {
-  //       None
-  //     }
-  //   }
-  // }
-
 
   private def _create_leaf(p: TreeNode[A], content: B): TreeNode[B] =
     create_tree_node(p.name, Some(content), Nil)
