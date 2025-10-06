@@ -7,7 +7,8 @@ import org.goldenport.context.Consequence
 /*
  * @since   May. 19, 2025
  *  version May. 19, 2025
- * @version Sep. 19, 2025
+ *  version Sep. 19, 2025
+ * @version Oct.  1, 2025
  * @author  ASAMI, Tomoharu
  */
 package object rwscr {
@@ -45,4 +46,20 @@ package object rwscr {
     ReaderWriterStateT { (r: R, s: S) =>
       ca.map(a => (Recorder.empty, a, s))
     }
+
+  def intercalateTraverse[R, S, A, B](
+    xs: Seq[A],
+    sep: RWSCR[R, S, B]
+  )(f: A => RWSCR[R, S, B]): RWSCR[R, S, Vector[B]] = {
+    type F[X] = RWSCR[R, S, X]
+    FoldTraverseUtil.intercalateTraverse[F, A, B](xs, sep)(f)
+  }
+
+  def intercalateTraverse_[R, S, A](
+    xs: Seq[A],
+    sep: RWSCR[R, S, Unit]
+  )(f: A => RWSCR[R, S, Unit]): RWSCR[R, S, Unit] = {
+    type F[X] = RWSCR[R, S, X]
+    FoldTraverseUtil.intercalateTraverse_[F, A](xs, sep)(f)
+  }
 }

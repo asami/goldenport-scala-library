@@ -9,7 +9,8 @@ import org.goldenport.RAISE
  *  version Jun. 26, 2025
  *  version Jul. 27, 2025
  *  version Aug.  7, 2025
- * @version Sep.  6, 2025
+ *  version Sep.  6, 2025
+ * @version Oct.  4, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NContainer[T](
@@ -69,7 +70,7 @@ case class I18NContainer[T](
 
   def default = c
 
-  def mapValue[A: Monoid](f: T => A): I18NContainer[A] = {
+  def mapValues[A: Monoid](f: T => A): I18NContainer[A] = {
     val a = localeVector.map {
       case (locale, xs) =>
         val x = f(xs)

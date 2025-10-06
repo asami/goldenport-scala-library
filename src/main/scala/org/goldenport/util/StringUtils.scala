@@ -62,7 +62,8 @@ import org.goldenport.collection.NonEmptyVector
  *  version Jun. 29, 2025
  *  version Jul. 28, 2025
  *  version Aug.  5, 2025
- * @version Sep. 14, 2025
+ *  version Sep. 14, 2025
+ * @version Oct.  4, 2025
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -671,6 +672,42 @@ object StringUtils {
     val toPath: Path = Paths.get(to).toAbsolutePath.normalize()
     val fromDir: Path = if (from.endsWith("/")) fromPath else fromPath.getParent
     fromDir.relativize(toPath).toString
+  }
+
+  def resolvePath(base: String, to: String): String = {
+    val basepath = Paths.get(base)
+    val basedir =
+      if (base.endsWith("/"))
+        basepath // base is a directory path
+      else
+        basepath.getParent // base is a file, use its parent directory
+    basedir.resolve(to).normalize().toString
+  }
+
+  /**
+   * Resolves the path `to` against `base`, handling both absolute and relative `to` paths safely.
+   */
+  def resolvePathSafe(base: String, to: String): String = {
+    val toPath = java.nio.file.Paths.get(to)
+    if (toPath.isAbsolute)
+      toPath.normalize().toString
+    else
+      resolvePath(base, to)
+  }
+
+  def relativizePath(current: String, target: String): String = {
+    val currentPath = Paths.get(current)
+    val currentDir = if (current.endsWith("/")) currentPath else currentPath.getParent
+    val targetPath = Paths.get(target)
+    currentDir.relativize(targetPath).toString
+  }
+
+  def relativizePathSafe(current: String, target: String): String = {
+    val targetPath = Paths.get(target)
+    if (!targetPath.isAbsolute)
+      target  // already relative
+    else
+      relativizePath(current, target)
   }
 
   def shortPackageName(p: String): String =
