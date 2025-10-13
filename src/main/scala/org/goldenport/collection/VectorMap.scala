@@ -18,7 +18,8 @@ import org.goldenport.util.VectorUtils
  *  version Sep. 10, 2024
  *  version Nov. 14, 2024
  *  version Jul. 15, 2025
- * @version Aug. 24, 2025
+ *  version Aug. 24, 2025
+ * @version Oct.  9, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait VectorMap[K, +V] extends Map[K, V] {
@@ -182,8 +183,11 @@ object VectorMap {
   def apply[K, V](p: (K, V), ps: (K, V)*): VectorMap[K, V] = PlainVectorMap(p +: ps.toVector)
   def apply[K, V](ps: Iterable[(K, V)]): VectorMap[K, V] = PlainVectorMap(ps.toVector)
 
-  def create[K, V](p: (K, Option[V]), ps: (K, Option[V])*): VectorMap[K, V] = {
-    val a: Vector[(K, V)] = VectorUtils.buildTupleVector(p +: ps.toVector)
+  def create[K, V](p: (K, Option[V]), ps: (K, Option[V])*): VectorMap[K, V] =
+    create(p +: ps)
+
+  def create[K, V](ps: Seq[(K, Option[V])]): VectorMap[K, V] = {
+    val a: Vector[(K, V)] = VectorUtils.buildTupleVector(ps)
     PlainVectorMap(a)
   }
 

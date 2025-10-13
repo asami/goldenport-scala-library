@@ -3,12 +3,14 @@ package org.goldenport.util
 import scala.language.higherKinds
 import scalaz._, Scalaz._
 import scala.collection.generic.CanBuildFrom
+import org.goldenport.collection.VectorMap
 
 /*
  * @since   Jun. 25, 2017
  *  version Aug. 30, 2017
  *  version Nov. 14, 2017
- * @version Sep.  4, 2019
+ *  version Sep.  4, 2019
+ * @version Oct.  9, 2025
  * @author  ASAMI, Tomoharu
  */
 object MapUtils {
@@ -21,7 +23,7 @@ object MapUtils {
         Z(r |+| f(rhs))
       }
     }
-    ks.grouped(chunksize)./:(Z())(_+_).r
+    ks.grouped(chunksize).foldLeft(Z())(_+_).r
   }
 
   def toVectorMap[K, V](ps: Seq[(K, V)]): Map[K, Vector[V]] = {
@@ -29,10 +31,13 @@ object MapUtils {
     case class Z(r: Map[K, Vector[V]] = Map.empty) {
       def +(rhs: (K, V)) = Z(r |+| Map(rhs._1 -> Vector(rhs._2)))
     }
-    ps./:(Z())(_+_).r
+    ps.foldLeft(Z())(_+_).r
   }
 
   def toSingleMap[K, V](p: Map[K, Seq[V]]): Map[K, V] = p.mapValues(_.head)
+
+  def build[T](p: (String, Option[T]), ps: (String, Option[T])*): VectorMap[String, T] =
+    VectorMap.create(p +: ps)
 
   def complement[K, V](master: Map[K, V], aux: Map[K, V]): Map[K, V] = {
     case class Z(r: Map[K, V]) {
@@ -44,11 +49,11 @@ object MapUtils {
           Z(r + rhs)
       }
     }
-    aux./:(Z(master))(_+_).r
+    aux.foldLeft(Z(master))(_+_).r
   }
 
   def complements[K, V](master: Map[K, V], auxs: Seq[Map[K, V]]): Map[K, V] =
-    auxs./:(master)(complement)
+    auxs.foldLeft(master)(complement)
 
   def complementT[K, V, M[_, _] <: Map[K, V]](master: M[K, V], aux: Map[K, V])(implicit bf: CanBuildFrom[Map[K, V], (K, V), M[K, V]]): M[K, V] = {
     case class Z(r: Map[K, V]) {
@@ -60,12 +65,12 @@ object MapUtils {
           Z(r + rhs)
       }
     }
-    val a = aux./:(Z(master))(_+_).r
+    val a = aux.foldLeft(Z(master))(_+_).r
     bf(a).result()
   }
 
   def complementsT[K, V, M[_, _] <: Map[K, V]](master: M[K, V], auxs: Seq[Map[K, V]])(implicit bf: CanBuildFrom[Map[K, V], (K, V), M[K, V]]): M[K, V] =
-    auxs./:(master)(complementT)
+    auxs.foldLeft(master)(complementT)
 
   def show[K, V](p: Map[K, V]): String = p.map {
     case (k, v) => s"$k=$v"

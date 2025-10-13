@@ -4,6 +4,7 @@ import scala.util.Try
 import java.io._
 import java.nio.charset.Charset
 import java.nio.file.{Files, StandardCopyOption}
+import java.nio.file.StandardOpenOption
 import java.net.{URL, URI}
 // import java.util.Base64
 import org.apache.commons.codec.binary.Base64
@@ -31,7 +32,8 @@ import org.goldenport.i18n.CharsetUtils
  *  version Feb. 23, 2025
  *  version Mar. 14, 2025
  *  version Jul. 23, 2025
- * @version Aug.  6, 2025
+ *  version Aug.  6, 2025
+ * @version Oct. 11, 2025
  * @author  ASAMI, Tomoharu
  */
 object IoUtils {
@@ -76,6 +78,8 @@ object IoUtils {
   def toText(in: ResourceHandle, charset: Option[Charset]): String = toText(in.openInputStream, charset)
   def toText(in: ResourceHandle, charset: Charset): String = toText(in.openInputStream, charset)
   def toText(in: ResourceHandle, codec: Codec): String = toText(in.openInputStream, codec)
+
+  def toBytes(in: File): Array[Byte] = Files.readAllBytes(in.toPath)
 
   def copy(in: InputStream, out: OutputStream): Unit =
     _copy_stream(in, out)
@@ -227,6 +231,13 @@ object IoUtils {
     }
   }
 
+  def save(file: File, bs: Array[Byte]): Unit = {
+    val parent = file.getParentFile
+    if (parent != null && !parent.exists())
+      parent.mkdirs()
+    Files.write(file.toPath, bs, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
+  }
+
   def ensureParentDirectory(p: File) {
     Option(p.getParentFile).map(ensureDirectory)
   }
@@ -323,6 +334,21 @@ object IoUtils {
     newPath.toFile
   }
 
+  def removeDirectory(dir: File): Unit = {
+    if (dir.exists()) {
+      val files = dir.listFiles()
+      if (files != null) {
+        files.foreach { f =>
+          if (f.isDirectory)
+            removeDirectory(f) // recursion
+          else
+            f.delete()
+        }
+      }
+      dir.delete()
+    }
+  }
+
   def addSuffix(file: File, suffix: String): File = {
     val name = file.getName
     val resolved = name + "." + suffix
@@ -331,7 +357,6 @@ object IoUtils {
       case None => new File(resolved)
     }
   }
-
 
   def using[A <: AutoCloseable, B](resource: => A)(f: A => B): B = {
     val r = resource

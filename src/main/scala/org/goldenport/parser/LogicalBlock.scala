@@ -15,7 +15,8 @@ import org.goldenport.util.StringUtils
  *  version Dec. 31, 2021
  *  version Nov. 27, 2022
  *  version Oct. 14, 2023
- * @version Feb.  8, 2025
+ *  version Feb.  8, 2025
+ * @version Oct.  9, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalBlock {
@@ -33,11 +34,14 @@ object LogicalBlock {
     def get(p: String): Option[VerbatimMark]
   }
   trait VerbatimMark {
+    def getKind: Option[String]
     def isDone(p: String): Boolean
     def isDone(p: LogicalLine): Boolean
   }
   object RawBackquoteMarkClass extends VerbatimMarkClass {
-    def isMatch(p: String): Boolean = p == "```" || p.startsWith("``` ")
+    private val _Kind_Pattern = "^`+\\s*(.*)$".r
+
+    def isMatch(p: String): Boolean = p.startsWith("```") // p == "```" || p.startsWith("``` ")
     def isMatch(p: LogicalLine): Boolean = isMatch(p.text)
     def get(p: LogicalLine): Option[VerbatimMark] =
       if (isMatch(p.text))
@@ -45,8 +49,14 @@ object LogicalBlock {
       else
         None
     def get(p: String): Option[VerbatimMark] = get(LogicalLine(p))
+
+    def getKind(p: LogicalLine): Option[String] = p.text match {
+      case _Kind_Pattern(rest) if rest.nonEmpty => Some(rest)
+      case _ => None
+    }
   }
   case class RawBackquoteMark(line: LogicalLine) extends VerbatimMark {
+    def getKind: Option[String] = RawBackquoteMarkClass.getKind(line)
     def isDone(p: String): Boolean = isDone(LogicalLine(p))
     def isDone(p: LogicalLine): Boolean = RawBackquoteMarkClass.isMatch(p)
   }
@@ -156,6 +166,8 @@ case class LogicalVerbatim(
   def isEmpty = lines.isEmpty
 
   def getText = Some(lines.text)
+
+  def getKind = mark.getKind
 }
 object LogicalVerbatim {
 }

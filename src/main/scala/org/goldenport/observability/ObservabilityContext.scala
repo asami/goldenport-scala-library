@@ -4,7 +4,8 @@ import org.goldenport.log._
 
 /*
  * @since   Apr. 28, 2025
- * @version Jul. 27, 2025
+ *  version Jul. 27, 2025
+ * @version Oct. 11, 2025
  * @author  ASAMI, Tomoharu
  */
 case class ObservabilityContext(
@@ -22,6 +23,10 @@ case class ObservabilityContext(
 
   object log {
     def error(msg: String) = log(LogLevel.Error, msg)
+    def warn(msg: String) = log(LogLevel.Warn, msg)
+    def info(msg: String) = log(LogLevel.Info, msg)
+    def debug(msg: String) = log(LogLevel.Debug, msg)
+    def trace(msg: String) = log(LogLevel.Trace, msg)
   }
 
   def trace(): Unit = {
