@@ -13,7 +13,8 @@ import org.goldenport.util.VectorUtils
  *  version Sep. 22, 2019
  *  version Jan. 31, 2020
  *  version Jan. 22, 2021
- * @version May. 11, 2021
+ *  version May. 11, 2021
+ * @version Oct. 14, 2025
  * @author  ASAMI, Tomoharu
  */
 trait ParseEvent {
@@ -134,6 +135,9 @@ case class CharEvent(
     case _ => RAISE.noReachDefect
   }
 
+  def isMatchTree(p: Char): Boolean = 
+    c == p && next.fold(false)(_ == p) && next2.fold(false)(_ == p)
+
   def withNext(n: CharEvent) = copy(
     next = Some(n.c)
   )
@@ -204,7 +208,7 @@ object CharEvent {
         Z(r = r :+ evt, l, o + 1, c == '\r')
       }
     }
-    VectorUtils.sliding4(ps)./:(Z())(_+_).r
+    VectorUtils.sliding4(ps).foldLeft(Z())(_+_).r
   }
 
   def makeWithoutLocation(p: String): Vector[CharEvent] = makeWithoutLocation(p.toVector)
@@ -222,7 +226,7 @@ object CharEvent {
         Z(r :+ evt)
       }
     }
-    VectorUtils.sliding4(ps)./:(Z())(_+_).r
+    VectorUtils.sliding4(ps).foldLeft(Z())(_+_).r
   }
 }
 

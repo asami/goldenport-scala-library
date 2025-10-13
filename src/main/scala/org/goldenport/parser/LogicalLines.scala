@@ -30,7 +30,8 @@ import org.goldenport.util.StringUtils
  *  version Jan.  1, 2025
  *  version Feb.  7, 2025
  *  version Apr.  6, 2025
- * @version Jul. 15, 2025
+ *  version Jul. 15, 2025
+ * @version Oct. 14, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -65,6 +66,20 @@ object LogicalLines {
   ) {
     def isEmpty = cs.isEmpty
     def lastOption = cs.lastOption
+
+    def isLineStart: Boolean = cs.isEmpty
+
+    def isGoingVerbatim: Boolean = cs.headOption match {
+      case Some(s) => s match {
+        case '`' => cs.tail match {
+          case Seq() => true
+          case xs => xs.forall(_ == '`')
+        }
+        case _ => false
+      }
+      case None => false
+    }
+
     def mkString = cs.mkString
     def phsicalLines: List[String] = if (candidates.isEmpty)
       lines.toList
@@ -157,6 +172,7 @@ object LogicalLines {
     i18nContext: I18NContext = I18NContext.default,
     useDoubleQuote: Boolean = false,
     useSingleQuote: Boolean = false,
+    useBackQuote: Boolean = false,
     useAngleBracket: Boolean = false, // XML
     useBrace: Boolean = false, // JSON
     useParenthesis: Boolean = false, // S-Expression (Lisp)
@@ -191,7 +207,19 @@ object LogicalLines {
   object Config {
     val raw = Config()
 //    val script = Config(I18NContext.default, true, true, true, true, true, true, true, true, true)
-    val script = Config(I18NContext.default, true, true, true, true, true, true, false, true, false)
+    val script = Config(
+      I18NContext.default,
+      true, // useDoubleQuote
+      true, // useSingleQuote
+      false, // useBackQuote
+      true, // useAngleBracket
+      true, // useBrace
+      true, // useParenthesis
+      true, // useBracket
+      false, // useMultiline
+      true, // useList
+      false // usePropertyLine
+    )
     val lisp = script.copy(useSingleQuote = false, useList = false)
     val easyText = raw.copy(
       useMultiline = true,
@@ -208,6 +236,7 @@ object LogicalLines {
   trait LogicalLinesParseState extends ParseReaderWriterState[Config, LogicalLines] {
     protected def use_double_quote(config: Config) = config.useDoubleQuote
     protected def use_single_quote(config: Config) = config.useSingleQuote
+    protected def use_back_quote(config: Config, evt: CharEvent) = config.useBackQuote
     protected def use_angle_bracket(config: Config) = config.useAngleBracket
     protected def use_brace(config: Config) = config.useBrace
     protected def use_parenthesis(config: Config) = config.useParenthesis
@@ -271,6 +300,7 @@ object LogicalLines {
         case m: CharEvent => m.c match {
           case '"' if use_double_quote(config) => handle_double_quote(config, m)
           case '\'' if use_single_quote(config) => handle_single_quote(config, m)
+          case '`' if use_back_quote(config, m) => handle_back_quote(config, m)
           case '<' if use_angle_bracket(config) => handle_open_angle_bracket(config, m)
           case '>' if use_angle_bracket(config) => handle_close_angle_bracket(config, m)
           case '{' if use_brace(config) => handle_open_brace(config, m)
@@ -338,12 +368,20 @@ object LogicalLines {
     protected final def handle_single_quote(config: Config, evt: CharEvent): Transition =
       handle_Single_Quote(config, evt)
 
-
     protected def handle_Single_Quote(config: Config, evt: CharEvent): Transition =
       (ParseMessageSequence.empty, ParseResult.empty, single_Quote_State(config, evt))
 
     protected def single_Quote_State(config: Config, evt: CharEvent): LogicalLinesParseState =
       SingleQuoteState(this, evt.location)
+
+    protected final def handle_back_quote(config: Config, evt: CharEvent): Transition =
+      handle_Back_Quote(config, evt)
+
+    protected def handle_Back_Quote(config: Config, evt: CharEvent): Transition =
+      (ParseMessageSequence.empty, ParseResult.empty, back_Quote_State(config, evt))
+
+    protected def back_Quote_State(config: Config, evt: CharEvent): LogicalLinesParseState =
+      BackQuoteState(this, evt.location)
 
     protected final def handle_open_angle_bracket(config: Config, evt: CharEvent): Transition =
       handle_Open_Angle_Bracket(config, evt)
@@ -629,6 +667,7 @@ object LogicalLines {
 
   sealed trait AdvancedAwakeningLogicalLinesParseState extends AwakeningLogicalLinesParseState {
     override protected def use_single_quote(config: Config) = false
+    override protected def use_back_quote(config: Config, evt: CharEvent) = false
     override protected def use_angle_bracket(config: Config) = false
     override protected def use_brace(config: Config) = false
     override protected def use_parenthesis(config: Config) = false
@@ -707,6 +746,9 @@ object LogicalLines {
     location: Option[ParseLocation],
     result: LogicalLines
   ) extends LogicalLinesParseState {
+    override protected def use_back_quote(config: Config, evt: CharEvent) =
+      super.use_back_quote(config, evt) && !cs.isGoingVerbatim && !(cs.isLineStart && evt.isMatchTree('`'))
+
     def getLastChar = cs.lastOption
     protected def get_Current_Line = Some(cs.mkString)
     override def addChild(config: Config, ps: Vector[Char]) = copy(cs = cs ++ ps)
@@ -1107,6 +1149,30 @@ object LogicalLines {
       SingleQuoteState(parent, Vector.empty, Some(location))
   }
 
+  case class BackQuoteState(
+    parent: LogicalLinesParseState,
+    text: Vector[Char],
+    location: Option[ParseLocation]
+  ) extends AdvancedAwakeningLogicalLinesParseState {
+    override protected def use_back_quote(config: Config, evt: CharEvent) = true
+
+    def getLastChar = text.lastOption
+    protected def get_Current_Line = Some(text.mkString)
+
+    override protected def end_Result(config: Config): ParseResult[LogicalLines] =
+      ParseResult.error("Unpredictable end in a back quote string.", "バッククオートの文字列中で最後になりました。", location)
+
+    override protected def character_State(c: Char) = copy(text = text :+ c)
+
+    // TODO escape
+    override protected def back_Quote_State(config: Config, evt: CharEvent) =
+      parent.addChild(config, '`' +: text :+ '`')
+  }
+  object BackQuoteState {
+    def apply(parent: LogicalLinesParseState, location: ParseLocation): BackQuoteState =
+      BackQuoteState(parent, Vector.empty, Some(location))
+  }
+
   // case class RawStringState() extends AwakeningLogicalLinesParseState {
   // }
 
@@ -1118,6 +1184,8 @@ object LogicalLines {
     def location: Option[ParseLocation] = lines.location
 
     override protected def use_double_quote(config: Config) = false
+    override protected def use_single_quote(config: Config) = false
+    override protected def use_back_quote(config: Config, evt: CharEvent) = false
     override protected def use_angle_bracket(config: Config) = false
     override protected def use_brace(config: Config) = false
     override protected def use_parenthesis(config: Config) = false
