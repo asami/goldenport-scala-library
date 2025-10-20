@@ -31,7 +31,7 @@ import org.goldenport.util.StringUtils
  *  version Feb.  7, 2025
  *  version Apr.  6, 2025
  *  version Jul. 15, 2025
- * @version Oct. 14, 2025
+ * @version Oct. 15, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -101,6 +101,7 @@ object LogicalLines {
     val empty = Slot(Vector.empty, Vector.empty, Vector.empty)
 
     def apply(p: Char): Slot = Slot(Vector(p), Vector(p), Vector.empty)
+    def apply(ps: Vector[Char]): Slot = Slot(ps, ps, Vector.empty)
   }
 
   case class Builder(
@@ -699,6 +700,9 @@ object LogicalLines {
     val location = None
     def getLastChar = None
     protected def get_Current_Line = None
+
+    override def addChild(config: Config, ps: Vector[Char]) = NormalState(ps)
+
     override protected def end_Result(config: Config) = ParseSuccess(LogicalLines.empty)
     override protected def line_End_State(config: Config, evt: LineEndEvent): LogicalLinesParseState =
       NormalState("", evt.location)
@@ -839,6 +843,8 @@ object LogicalLines {
     def apply(p: Char, location: ParseLocation): NormalState = NormalState(Slot(p), Some(location), LogicalLines.empty)
     def apply(p: String, location: ParseLocation): NormalState = NormalState(Slot.empty, Some(location), LogicalLines(p))
     def apply(location: ParseLocation): NormalState = NormalState(Slot.empty, Some(location), LogicalLines.empty)
+
+    def apply(ps: Vector[Char]): NormalState = NormalState(Slot(ps), None, LogicalLines.empty)
   }
 
   // Unused
@@ -1249,6 +1255,8 @@ false
 
     def getLastChar = cs.lastOption
     protected def get_Current_Line = Some(cs.mkString)
+
+    override def addChild(config: Config, ps: Vector[Char]) = copy(cs = cs ++ ps)
 
     override protected def handle_End(config: Config): Transition = {
       val r = _make_result(config)
