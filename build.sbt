@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.3.13"
+version := "2.3.14"
 
 scalaVersion := "2.12.18"
 
