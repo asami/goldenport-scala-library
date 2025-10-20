@@ -6,7 +6,7 @@ import org.goldenport.context.Consequence
 
 /*
  * @since   Oct.  1, 2025
- * @version Oct.  1, 2025
+ * @version Oct. 17, 2025
  * @author  ASAMI, Tomoharu
  */
 object FoldTraverseUtil {
@@ -37,6 +37,64 @@ object FoldTraverseUtil {
     sep: F[Unit]
   )(f: A => F[Unit]): F[Unit] =
     intercalateTraverse[F, A, Unit](as, sep)(f).void
+
+  def intercalateTraverseWithEnd[F[_]: Monad, A, B](
+    as: Seq[A],
+    sep: F[B],
+    end: F[B]
+  )(f: A => F[B]): F[Vector[B]] = as match {
+    case Nil => Vector.empty[B].point[F]
+    case Seq(a) =>
+      for {
+        x <- f(a)
+        e <- end
+      } yield Vector(x, e)
+    case x +: rest =>
+      def loop(xs: Seq[A]): F[Vector[B]] = xs match {
+        case Nil => end.map(Vector(_))
+        case Seq(a) =>
+          for {
+            x <- f(a)
+            e <- end
+          } yield Vector(x, e)
+        case a +: tail =>
+          for {
+            x <- f(a)
+            s <- sep
+            t <- loop(tail)
+          } yield x +: s +: t
+      }
+      loop(as)
+  }
+
+  def intercalateTraverseWithEnd_[F[_]: Monad, A](
+    as: Seq[A],
+    sep: F[Unit],
+    end: F[Unit]
+  )(f: A => F[Unit]): F[Unit] = as match {
+    case Nil => ().point[F]
+    case Seq(a) =>
+      for {
+        _ <- f(a)
+        _ <- end
+      } yield ()
+    case x +: rest =>
+      def loop(xs: Seq[A]): F[Unit] = xs match {
+        case Nil => end
+        case Seq(a) =>
+          for {
+            _ <- f(a)
+            _ <- end
+          } yield ()
+        case a +: tail =>
+          for {
+            _ <- f(a)
+            _ <- sep
+            _ <- loop(tail)
+          } yield ()
+      }
+      loop(as)
+  }
 
   def intercalateFoldLeft[B: Monoid](
     as: Seq[B],
