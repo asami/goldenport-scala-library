@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.3.14"
+version := "2.3.15"
 
 scalaVersion := "2.12.18"
 
@@ -113,6 +113,8 @@ libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3" % "provide
 libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.4.2"
 
 libraryDependencies += "net.sourceforge.nekohtml" % "nekohtml" % "1.9.22" % "compile"
+
+libraryDependencies += "org.jsoup" % "jsoup" % "1.18.1" % "compile"
 
 libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.10" % "provided" exclude("org.scala-stm", "scala-stm_2.10.0")
 
