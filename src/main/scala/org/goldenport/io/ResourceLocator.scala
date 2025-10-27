@@ -7,7 +7,8 @@ import java.net.{URL, URI}
 /*
  * @since   Jun. 24, 2019
  *  version Jul. 18, 2025
- * @version Aug. 10, 2025
+ *  version Aug. 10, 2025
+ * @version Oct. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait ResourceLocator {
@@ -27,6 +28,13 @@ object ResourceLocator {
       case Some(s) => FileResourceLocator(s)
       case None => UriResourceLocator(p)
     }
+  }
+
+  def get(p: InputSource): Option[ResourceLocator] = p match {
+    case FileInputSource(file) => Some(FileResourceLocator(file))
+    case PathInputSource(path) => Some(PathResourceLocator(path))
+    case UrlInputSource(url) => Some(UrlResourceLocator(url))
+    case _ => None
   }
 }
 

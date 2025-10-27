@@ -6,6 +6,8 @@ import java.nio.charset.Charset
 import scalax.io.Codec
 import com.asamioffice.goldenport.io.UURL
 import org.goldenport.RAISE
+import org.goldenport.context.Conclusion
+import org.goldenport.bag.ChunkBag
 
 /*
  * See InputSource
@@ -13,7 +15,8 @@ import org.goldenport.RAISE
  * @since   Aug. 17, 2019
  *  version Aug. 18, 2019
  *  version Dec.  8, 2019
- * @version Mar.  6, 2021
+ *  version Mar.  6, 2021
+ * @version Oct. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 trait ResourceHandle {
@@ -27,6 +30,11 @@ trait ResourceHandle {
   def asText(charset: Charset): String = IoUtils.toText(this, charset)
   def asText(codec: Codec): String = IoUtils.toText(this, codec)
   def url: URL
+}
+
+object ResourceHandle {
+  def create(locator: ResourceLocator, bag: ChunkBag): ResourceHandle =
+    new LocatorBagResourceHandle(locator, bag)
 }
 
 class FileResourceHandle(
@@ -65,4 +73,14 @@ class UriResourceHandle(
   def name = uri.toString
   def getMimeType = mimeTypeOption orElse MimeType.getBySuffix(uri)
   def openInputStream = url.openStream
+}
+
+class LocatorBagResourceHandle(
+  locator: ResourceLocator,
+  bag: ChunkBag
+) extends ResourceHandle {
+  def url = locator.getUrl getOrElse Conclusion.illegalStateDefect(s"no URL in $this").RAISE
+  def name = url.toString
+  def getMimeType = MimeType.getBySuffix(url)
+  def openInputStream() = bag.openInputStream
 }

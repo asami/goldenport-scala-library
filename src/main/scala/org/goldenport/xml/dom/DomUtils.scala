@@ -10,6 +10,8 @@ import org.xml.sax.InputSource
 import javax.xml.transform._
 import javax.xml.transform.stream._
 import javax.xml.transform.dom._
+import org.jsoup.Jsoup
+import org.jsoup.helper.W3CDom
 import com.asamioffice.goldenport.xml.UXML
 import org.goldenport.exception.RAISE
 import org.goldenport.Strings
@@ -35,7 +37,8 @@ import org.goldenport.xml.{XmlSource, XmlUtils}
  *  version Apr.  3, 2021
  *  version Mar. 28, 2022
  *  version May.  6, 2022
- * @version Mar. 28, 2025
+ *  version Mar. 28, 2025
+ * @version Oct. 25, 2025
  * @author  ASAMI, Tomoharu
  */
 object DomUtils {
@@ -75,6 +78,15 @@ object DomUtils {
     parser.getDocument()
   }
 
+  def parseHtmlForXslt(s: String): Document = {
+    // println(s"""html: ${s.indexOf("ld+json")}""")
+    val jsoupdoc: org.jsoup.nodes.Document = Jsoup.parse(s)
+    jsoupdoc.outputSettings().syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
+    // val jsonld = jsoupdoc.select("script[type=application/ld+json]")
+    // println(s"jsonp: $jsonld")
+    new W3CDom().fromJsoup(jsoupdoc)
+  }
+
   def parseXml(s: String): Document = {
     DomParser.parse(s)
   }
@@ -95,17 +107,17 @@ object DomUtils {
   }
 
   def transformHtml(stylesheet: Templates, html: String): Node = {
-    val dom = parseHtml(html)
+    val dom = parseHtmlForXslt(html)
     transform(stylesheet, dom)
   }
 
   def transformHtml(stylesheet: String, html: String): Node = {
-    val dom = parseHtml(html)
+    val dom = parseHtmlForXslt(html)
     transform(stylesheet, dom)
   }
 
   def transformHtml(stylesheet: scala.xml.Node, html: String): Node = {
-    val dom = parseHtml(html)
+    val dom = parseHtmlForXslt(html)
     transform(stylesheet, dom)
   }
 
@@ -477,7 +489,7 @@ object DomUtils {
   }
 
   def tree(node: Node): Tree[Node] =
-    Tree.node(node, DomUtils.childrenSteream(node).map(tree))
+    Tree.Node(node, DomUtils.childrenSteream(node).map(tree))
 
   def showDom(node: Node): String = {
     implicit object TreeShows extends Show[Node] {
@@ -578,7 +590,7 @@ object DomUtils {
     if (ps.isEmpty)
       false
     else
-      ps./:(Z())(_+_).r
+      ps.foldLeft(Z())(_+_).r
   }
 
   def isTextOnlyChildren(p: Node): Boolean = isTextOnly(childrenIndexedSeq(p))

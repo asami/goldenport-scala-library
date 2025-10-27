@@ -40,7 +40,8 @@ import org.goldenport.util.AnyUtils
  *  version Nov.  7, 2023
  *  version Mar. 29, 2025
  *  version May. 11, 2025
- * @version Jul. 18, 2025
+ *  version Jul. 18, 2025
+ * @version Oct. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 case class Conclusion(
@@ -105,7 +106,7 @@ case class Conclusion(
     strategy // CAUTION
   )
 
-  def toException: Throwable = exception getOrElse new ConclusionException(this)
+  def toException: Throwable = exception orElse faults.getException getOrElse new ConclusionException(this)
 
   def toConclusionException: Throwable = new ConclusionException(this)
 
@@ -440,6 +441,13 @@ object Conclusion {
     val detail = DetailCode.IoSystem
     val status = StatusCode.InternalServerError.withDetail(detail)
     val faults = Faults(ResourceNotFoundFault(name))
+    Conclusion(status, faults)
+  }
+
+  def illegalStateDefect(msg: String): Conclusion = {
+    val detail = DetailCode.NoReach
+    val status = StatusCode.InternalServerError.withDetail(detail)
+    val faults = Faults(IllegalStateDefect(msg))
     Conclusion(status, faults)
   }
 

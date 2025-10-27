@@ -29,9 +29,10 @@ import Fault._
  *  version Sep. 28, 2023
  *  version Nov. 11, 2023
  *  version Mar. 16, 2025
-p.toI18NMessage) *  version May. 11, 2025
-p.toI18NMessage) *  version Jun. 21, 2025
-p.toI18NMessage) * @version Jul. 18, 2025
+ *  version May. 11, 2025
+ *  version Jun. 21, 2025
+ *  version Jul. 18, 2025
+ * @version Oct. 24, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Fault extends Incident {
@@ -42,7 +43,9 @@ sealed trait Fault extends Incident {
   def properties(locale: Locale): IRecord
   def implicitStatusCode: StatusCode
 
-  def RAISE: Nothing = throw new FaultException(this)
+  def toException = new FaultException(this)
+
+  def RAISE: Nothing = throw toException
 
   def toPayload: Fault.Payload = Fault.Payload(
     name,
@@ -697,6 +700,29 @@ object ResourceNotFoundFault {
   def parameter(p: Any, ps: Any*): ResourceNotFoundFault = ResourceNotFoundFault(p +: ps.toList)
 }
 
+case class IllegalStateDefect(
+  message: I18NMessage,
+  parameters: Option[Seq[Any]] = None
+//  messageTemplate: I18NTemplate = IllegalStateDefect.template
+) extends Defect with Parameters1 {
+  def prependMessage(msg: String): IllegalStateDefect =
+    copy(message = message.prependAll(msg))
+
+  def implicitStatusCode: StatusCode = StatusCode.InternalServerError
+}
+object IllegalStateDefect {
+  val template = I18NTemplate("Illegal state defect: {0}")
+
+  def apply(p: String): IllegalStateDefect = apply(I18NString(p))
+
+  def apply(p: I18NString): IllegalStateDefect = apply(p.toI18NMessage)
+
+  def parameter(p: Any, ps: Any*): IllegalStateDefect = {
+    val xs = p +: ps
+    IllegalStateDefect(template.toI18NMessage(xs), parameters = Some(xs))
+  }
+}
+
 case class IllegalConfigurationDefect(
   message: I18NMessage,
   parameters: Option[Seq[Any]] = None
@@ -830,6 +856,15 @@ case class Faults(faults: Vector[Fault] = Vector.empty) {
   def RAISE_IF_FAILURE: Unit =
     if (faults.nonEmpty)
       InvalidArgumentFault("Invalid Arguments", faults).RAISE
+
+  def getException: Option[Throwable] = {
+    val xs = faults.map(_.toException)
+    xs match {
+      case Seq() => None
+      case Seq(x) => Some(x)
+      case xs: Seq[_] => Some(xs.head) // TODO
+    }
+  }
 }
 object Faults {
   @SerialVersionUID(1L)
