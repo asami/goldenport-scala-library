@@ -1,6 +1,7 @@
 package org.goldenport.util
 
 import collection.JavaConverters._
+import scala.collection.immutable.SortedSet
 import scala.util.Try
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
@@ -26,7 +27,8 @@ import org.goldenport.i18n.I18NContext
  *  version Apr. 27, 2025
  *  version May. 24, 2025
  *  version Jun. 28, 2025
- * @version Aug. 10, 2025
+ *  version Aug. 10, 2025
+ * @version Nov.  1, 2025
  * @author  ASAMI, Tomoharu
  */
 object CirceUtils {
@@ -139,6 +141,9 @@ object CirceUtils {
     }
 
     implicit val regexEncoder: Encoder[Regex] = Encoder.encodeString.contramap(_.regex)
+
+    implicit def encodeSortedSet[A: Encoder]: Encoder[SortedSet[A]] =
+      Encoder.encodeIterable[A, SortedSet](implicitly[Encoder[A]], _.toIterable)
 
     implicit def datetimeDecoder(implicit dctx: CDateTimeContext): Decoder[DateTime] =
       Decoder.decodeString.emap { s =>

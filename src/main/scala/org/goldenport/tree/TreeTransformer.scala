@@ -16,7 +16,8 @@ import org.goldenport.util.StringUtils
  *  version Apr. 27, 2025
  *  version May. 31, 2025
  *  version Jun. 12, 2025
- * @version Sep. 28, 2025
+ *  version Sep. 28, 2025
+ * @version Oct. 28, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeTransformer[A, B] {
@@ -129,6 +130,7 @@ trait TreeTransformer[A, B] {
         case mm => List(mm)
       }
       case Directive.Nodes(nodes) => nodes
+      case m: Directive.ContainerContentAfter[B] => List(m.after(_create_node(p, m.content)))
     }
     _pop(p)
     r
@@ -192,6 +194,7 @@ trait TreeTransformer[A, B] {
       case Directive.Default() => _make_node_default(p)
       case m: Directive.LeafContent[B] => List(_create_leaf(p, m.content))
       case m: Directive.ContainerContent[B] => List(_create_node(p, m.content))
+      case m: Directive.ContainerContentAfter[B] => List(m.after(_create_node(p, m.content)))
       case m: Directive.LeafNode[B] => List(_create_leaf(m.name, m.content))
       case m: Directive.NameNode[B] => List(_create_node_children(m.name, m.content, m.children))
       case m: Directive.Node[B] => m.node match {
@@ -357,6 +360,9 @@ trait TreeTransformer[A, B] {
   protected final def directive_container_content(p: B): TreeTransformer.Directive[B] =
     TreeTransformer.Directive.ContainerContent(p)
 
+  protected final def directive_container_content_after(p: B, f: TreeNode[B] => TreeNode[B]): TreeTransformer.Directive[B] =
+    TreeTransformer.Directive.ContainerContentAfter(p, f)
+
   protected final def directive_leaf(p: B): TreeTransformer.Directive[B] =
     TreeTransformer.Directive.LeafContent(p)
 
@@ -472,6 +478,7 @@ object TreeTransformer {
     case class Default[T]() extends Directive[T]
     case class LeafContent[T](content: T) extends Directive[T]
     case class ContainerContent[T](content: T) extends Directive[T]
+    case class ContainerContentAfter[T](content: T, after: TreeNode[T] => TreeNode[T]) extends Directive[T]
     case class LeafNode[T](name: String, content: T) extends Directive[T]
     case class NameNode[T](name: String, content: T, children: List[TreeNode[T]]) extends Directive[T]
     case class Node[T](node: TreeNode[T]) extends Directive[T]

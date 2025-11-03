@@ -5,16 +5,17 @@ import java.util.Locale
 
 /*
  * @since   Aug. 31, 2025
- * @version Sep. 10, 2025
+ *  version Sep. 10, 2025
+ * @version Nov.  2, 2025
  * @author  ASAMI, Tomoharu
  */
-case class I18NHangar[T](
+case class I18NHangar[+T](
   map: Map[Locale, Vector[T]] = Map.empty[Locale, Vector[T]],
   commons: Vector[T] = Vector.empty
 ) {
   def get(locale: Locale): Option[Vector[T]] = map.get(locale)
 
-  def valueVector: Vector[T] = commons ++ map.values.toVector.flatten
+  def valueVector: Vector[T] = commons ++ map.values.toVector.flatten // XXX
 
   def valueVectorLocale(locale: Locale): Vector[T] = commons ++ get(locale).getOrElse(Vector.empty)
 
@@ -22,19 +23,41 @@ case class I18NHangar[T](
 
   def valueVectorJa: Vector[T] = valueVectorLocale(LocaleUtils.ja)
 
+  def localeVectorMap: Map[Locale, Vector[T]] = map.mapValues(x => commons ++ x)
+
   def unify: Either[Vector[T], Map[Locale, Vector[T]]] =
     if (map.isEmpty)
       Left(commons)
     else
       Right(map.mapValues(x => commons ++ x))
 
+  def add[U >: T](p: U): I18NHangar[U] =
+    I18NHangar[U](
+      map.asInstanceOf[Map[Locale, Vector[U]]],
+      commons :+ p
+    )
+
+  def add[U >: T](locale: Locale, p: U): I18NHangar[U] = {
+    val updated = map.get(locale) match {
+      case Some(xs) => map + (locale -> (xs :+ p))
+      case None     => map + (locale -> Vector(p))
+    }
+    I18NHangar[U](
+      updated.asInstanceOf[Map[Locale, Vector[U]]],
+      commons
+    )
+  }
+
   def filterNot(f: T => Boolean): I18NHangar[T] = I18NHangar(
     map.mapValues(_.filterNot(f)),
     commons.filterNot(f)
   )
 
-  def mapValueCollection(f: Vector[T] => Vector[T]): I18NHangar[T] =
-    copy(map = map.mapValues(f))
+  def mapValueCollection[U](f: Vector[T] => Vector[U]): I18NHangar[U] =
+    I18NHangar[U](map.mapValues(f), f(commons))
+
+  def mapValue[U](f: T => U): I18NHangar[U] =
+    I18NHangar[U](map.mapValues(_.map(f)), commons.map(f))
 }
 
 object I18NHangar {

@@ -31,7 +31,8 @@ import org.goldenport.util.StringUtils
  *  version Feb.  7, 2025
  *  version Apr.  6, 2025
  *  version Jul. 15, 2025
- * @version Oct. 15, 2025
+ *  version Oct. 15, 2025
+ * @version Nov.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -192,15 +193,24 @@ object LogicalLines {
 
     def isWordSeparating(prev: Char, next: Char): Boolean = i18nContext.stringFormatter.isWordSeparating(prev, next)
     def wordSeparatingSpace: Char = ' '
-    def isInList(c: Char): Boolean = {
-      val candidates = Vector('-')
-      candidates.contains(c) || StringUtils.isAsciiNumberChar(c)
+    def isInList(evt: CharEvent): Boolean = {
+      def _is_number_(p: Char) = StringUtils.isAsciiNumberChar(p)
+
+      evt.c match {
+        case '-' => evt.next == Some(' ')
+        case c if _is_number_(c) =>
+          val (digits, rest) = evt.string4.span(_.isDigit)
+          digits.nonEmpty && rest.startsWith(List('.', ' '))
+        case _ => false
+      }
     }
+    def isInListLineStart(p: String): Boolean = p.startsWith("-") // TODO
+    def isInListMultiline(c: Char): Boolean = c == '-' // TODO
+    def isInListWordSeparating(c: Char): Boolean = c == '-' // TODO
     def isInTable(c: Char): Boolean = {
       val candidates = Vector('|', '│', '┃')
       candidates.contains(c)
     }
-    def isInListLineStart(p: String): Boolean = p.startsWith("-") // TODO
     def isInPropertyLine(p: String): Boolean = p.startsWith("#+") // TODO
     def isInVerbatim(p: String): Boolean = verbatims.exists(_.isMatch(p))
     def getVerbatimMark(p: String): Option[LogicalBlock.VerbatimMark] = verbatims.toStream.flatMap(_.get(p)).headOption
@@ -248,7 +258,8 @@ object LogicalLines {
     protected def is_word_separating(config: Config, prev: Option[Char], next: Char) =
       prev.map(config.isWordSeparating(_, next)).getOrElse(false)
     protected def word_separating_space(config: Config) = config.wordSeparatingSpace
-    protected def is_in_list(config: Config, c: Char) = config.isInList(c)
+    protected def is_in_list_multiline_(config: Config, c: Char) = config.isInListMultiline(c)
+    protected def is_in_list_word_separating_(config: Config, c: Char) = config.isInListWordSeparating(c)
     // protected def is_in_table(config: Config, c: Char) =config.isInTable(c)
     // protected def is_in_list_line_start(config: Config, line: Option[String]) =
     //   line.fold(false)(config.isInListLineStart)
@@ -257,7 +268,7 @@ object LogicalLines {
     protected def is_in_list_line_start(config: Config, line: Option[String]) =
       config.useList && line.fold(false)(config.isInListLineStart)
     protected def is_in_list_line_start(config: Config, cs: Seq[Char], evt: CharEvent) =
-      config.useList && cs.forall(x => x == ' ' || x == '\t') && config.isInList(evt.c)
+      config.useList && cs.forall(x => x == ' ' || x == '\t') && config.isInList(evt)
 
     protected def is_in_property_line(config: Config, line: Option[String]) =
       config.usePropertyLine && line.fold(false)(config.isInPropertyLine)
@@ -478,13 +489,13 @@ object LogicalLines {
         _newline_state_multiline(config, evt)
 
     private def _newline_state_multiline(config: Config, evt: CharEvent): LogicalLinesParseState = {
-      def _not_use_multiline_(c: Char) = (!use_multiline_in_list(config) && is_in_list(config, c)) || is_in_table(config, c)
-      def _is_ward_separating_(c: Char) = is_word_separating(config, getLastChar, c) && !is_in_list(config, c)
+      def _not_use_multiline_(c: Char) = (!use_multiline_in_list(config) && is_in_list_multiline_(config, c)) || is_in_table(config, c)
+      def _is_word_separating_(c: Char) = is_word_separating(config, getLastChar, c) && !is_in_list_word_separating_(config, c)
       // evt.next match {
       //   case Some('\n') => line_End_State(config, LineEndEvent(evt.location))
       //   case Some('\r') => line_End_State(config, LineEndEvent(evt.location))
       //   case Some(c) if _not_use_multiline_(c) => line_End_State(config, LineEndEvent(evt.location))
-      //   case Some(c) if _is_ward_separating_(c) => character_State(word_separating_space(config))
+      //   case Some(c) if _is_word_separating_(c) => character_State(word_separating_space(config))
 
       def _is_heavy_title_(c: Char) =
         if (_is_heavy_title_char_(c)) {
@@ -516,7 +527,7 @@ object LogicalLines {
         case Some(c) if _not_use_multiline_(c) => line_End_State(config, LineEndEvent(evt.location))
 //        case Some(c) if _use_heavy_title_(c) => HeavyTitleCandidateState(this, NonEmptyVector(c), Some(evt.location))
         case Some(c) if _is_heavy_title_(c) => physical_Line_End_State(config, evt)
-        case Some(c) if _is_ward_separating_(c) => physical_Line_End_State(config, evt) // character_State(word_separating_space(config))
+        case Some(c) if _is_word_separating_(c) => physical_Line_End_State(config, evt) // character_State(word_separating_space(config))
         case Some(c) => this
         case None => line_End_State(config, LineEndEvent(evt.location))
       }
@@ -751,7 +762,7 @@ object LogicalLines {
     result: LogicalLines
   ) extends LogicalLinesParseState {
     override protected def use_back_quote(config: Config, evt: CharEvent) =
-      super.use_back_quote(config, evt) && !cs.isGoingVerbatim && !(cs.isLineStart && evt.isMatchTree('`'))
+      super.use_back_quote(config, evt) && !cs.isGoingVerbatim && !(cs.isLineStart && evt.isMatchThree('`'))
 
     def getLastChar = cs.lastOption
     protected def get_Current_Line = Some(cs.mkString)

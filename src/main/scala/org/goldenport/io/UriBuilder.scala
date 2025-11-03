@@ -14,7 +14,8 @@ import org.goldenport.util.StringUtils
  *  version Apr. 26, 2019
  *  version Dec.  9, 2019
  *  version Jun.  6, 2020
- * @version Aug. 10, 2025
+ *  version Aug. 10, 2025
+ * @version Nov.  3, 2025
  * @author  ASAMI, Tomoharu
  */
 case class UriBuilder(
@@ -57,7 +58,18 @@ case class UriBuilder(
 
   def addPath(p: URI): UriBuilder = addPath(p.getPath)
 
-  def addPath(p: String): UriBuilder = copy(path = StringUtils.concatPath(path, p))
+  def addPath(p: String): UriBuilder =
+    copy(path = StringUtils.concatPath(path, p))
+
+  def addPathAuto(p: String): UriBuilder = {
+    val s = if (p.endsWith("/"))
+      p
+    else if (StringUtils.getSuffix(p).isDefined)
+      p
+    else 
+      p + "/"
+    copy(path = StringUtils.concatPath(path, s))
+  }
 
   def addPathBodyPostfix(p: String): UriBuilder = {
     val (body, suffix) = StringUtils.pathnameBodySuffix(path)

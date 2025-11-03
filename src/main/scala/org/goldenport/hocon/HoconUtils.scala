@@ -7,6 +7,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
+import scala.collection.immutable.SortedSet
 import java.util.Locale
 import java.net.{URL, URI}
 import java.io.File
@@ -69,7 +70,8 @@ import org.goldenport.hocon.RichConfig.StringOrConfigOrConfigList
  *  version May. 21, 2025
  *  version Jun. 24, 2025
  *  version Jul.  7, 2025
- * @version Sep. 28, 2025
+ *  version Sep. 28, 2025
+ * @version Nov.  1, 2025
  * @author  ASAMI, Tomoharu
  */
 object HoconUtils {
@@ -614,6 +616,10 @@ object HoconUtils {
     getString(p, key)
   )
 
+  def consequenceStringList(p: Config, key: String): Consequence[List[String]] = Consequence(
+    getStringList(p, key) getOrElse Nil
+  )
+
   def consequenceUrl(p: Config, key: String): Consequence[URL] =
     getString(p, key) match {
       case Some(s) => Consequence(UURL.getURLFromFileOrURLName(s))
@@ -883,6 +889,12 @@ object HoconUtils {
       s <- consequenceStringOption(p, key)
       x <- s.traverse(LocalDateOrDateTime.parse)
     } yield x
+
+  def consequenceLocalDateOrDateTimeSet(p: Config, key: String)(implicit ctx: DateTimeContext): Consequence[SortedSet[LocalDateOrDateTime]] =
+    for {
+      s <- consequenceStringList(p, key)
+      x <- s.traverse(LocalDateOrDateTime.parse)
+    } yield SortedSet(x: _*)
 
   def consequenceToken[T <: ValueInstance](p: Config, key: String, f: ValueClass[T]): Consequence[T] =
     getString(p, key) match {

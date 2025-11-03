@@ -3,6 +3,8 @@ package org.goldenport.i18n
 import scalaz._, Scalaz._
 import java.util.Locale
 import org.goldenport.RAISE
+import org.goldenport.context.Consequence
+import org.goldenport.typeclass.Zero
 
 /*
  * @since   Jun. 24, 2025
@@ -10,10 +12,11 @@ import org.goldenport.RAISE
  *  version Jul. 27, 2025
  *  version Aug.  7, 2025
  *  version Sep.  6, 2025
- * @version Oct.  4, 2025
+ *  version Oct.  4, 2025
+ * @version Nov.  2, 2025
  * @author  ASAMI, Tomoharu
  */
-case class I18NContainer[T](
+case class I18NContainer[+T](
   c: T, // special locale for programming language
   en: T, // default
   ja: T,
@@ -70,7 +73,7 @@ case class I18NContainer[T](
 
   def default = c
 
-  def mapValues[A: Monoid](f: T => A): I18NContainer[A] = {
+  def mapValues[A: Zero](f: T => A): I18NContainer[A] = {
     val a = localeVector.map {
       case (locale, xs) =>
         val x = f(xs)
@@ -83,10 +86,10 @@ case class I18NContainer[T](
 object I18NContainer {
   def make[T](p: T): I18NContainer[T] = I18NContainer(p, p, p, Map.empty)
 
-  def create[T: Monoid](p: Seq[(Locale, T)]): I18NContainer[T] =
+  def create[T: Zero](p: Seq[(Locale, T)]): I18NContainer[T] =
     create(p.toMap)
 
-  def create[T: Monoid](p: Map[Locale, T]): I18NContainer[T] = {
+  def create[T: Zero](p: Map[Locale, T]): I18NContainer[T] = {
     val copt = p.get(LocaleUtils.C)
     val enopt = p.get(LocaleUtils.en)
     val jaopt = p.get(LocaleUtils.ja)
@@ -102,7 +105,7 @@ object I18NContainer {
         p.headOption match {
           case Some((_, s)) => (s, s, s)
           case None => 
-            val empty = Monoid[T].zero
+            val empty = Zero[T].zero
             (empty, empty, empty)
         }
     }
@@ -132,6 +135,46 @@ object I18NContainer {
     }
     val a = p -- Set(LocaleUtils.C, LocaleUtils.en, LocaleUtils.ja)
     I18NContainer(c, e, j, a)
+  }
+
+  def createList[T](p: I18NHangar[T]): I18NContainer[List[T]] = {
+    val c = p.commons.toList
+    val en = p.valueVectorEn.toList
+    val ja = p.valueVectorJa.toList
+    val others = p.map.map { case (locale, xs) => locale -> xs.toList }
+    I18NContainer(c, en, ja, others)
+  }
+
+  def createVector[T](p: I18NHangar[T]): I18NContainer[Vector[T]] = {
+    val c = p.commons
+    val en = p.valueVectorEn
+    val ja = p.valueVectorJa
+    val others = p.map.map { case (locale, xs) => locale -> xs }
+    I18NContainer(c, en, ja, others)
+  }
+
+  def createOneC[T: Zero](p: I18NHangar[T]): Consequence[I18NContainer[T]] = {
+    def _head_opt_(xs: Vector[T]): Option[T] =
+      if (xs.nonEmpty) Some(xs.head) else None
+
+    val copt = _head_opt_(p.commons)
+    val enopt = _head_opt_(p.valueVectorEn)
+    val jaopt = _head_opt_(p.valueVectorJa)
+    val others: Map[Locale, Option[T]] = p.map.mapValues(_head_opt_).toMap
+
+    val multiLocales = p.map.collect {
+      case (locale, xs) if xs.size > 1 => locale
+    }.toVector
+
+    if (multiLocales.nonEmpty)
+      Consequence.noReachDefect(s"""I18NHangar contains multiple elements for locales: ${multiLocales.mkString(", ")}""")
+    else {
+      val c = copt orElse enopt orElse jaopt getOrElse Zero[T].zero
+      val en = enopt.getOrElse(c)
+      val ja = jaopt.getOrElse(c)
+      val otherValues = others.collect { case (k, Some(v)) => k -> v }
+      Consequence.success(I18NContainer(c, en, ja, otherValues))
+    }
   }
 
   def enja[T](en: T, ja: T): I18NContainer[T] = I18NContainer(

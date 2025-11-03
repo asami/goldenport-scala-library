@@ -6,6 +6,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
+import scala.collection.immutable.SortedSet
 import java.net.{URL, URI}
 import java.io.File
 import org.joda.time.DateTime
@@ -53,7 +54,8 @@ import org.goldenport.parser.ParseResult
  *  version Dec. 12, 2022
  *  version Apr.  4, 2023
  *  version Jun. 16, 2025
- * @version Sep. 28, 2025
+ *  version Sep. 28, 2025
+ * @version Nov.  1, 2025
  * @author  ASAMI, Tomoharu
  */
 case class RichConfig(config: Config) extends AnyVal {
@@ -148,6 +150,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def cRationalOption(key: String): Consequence[Option[Rational]] = HoconUtils.consequenceRationalOption(config, key)
   def cDateTimeOption(key: String)(implicit ctx: DateTimeContext) = consequenceDateTimeOption(key)
   def cLocalDateOrDateTimeOption(key: String)(implicit ctx: DateTimeContext) = consequenceLocalDateOrDateTimeOption(key)
+  def cLocalDateOrDateTimeSet(key: String)(implicit ctx: DateTimeContext) = consequenceLocalDateOrDateTimeSet(key)
   def cAsConfig(key: String): Consequence[Config] = HoconUtils.consequenceAsConfig(config, key)
   def cAsConfigList(key: String): Consequence[List[Config]] = HoconUtils.consequenceAsConfigList(config, key)
   def cEagerStringList(key: String): Consequence[List[String]] = Consequence(HoconUtils.getEagerStringList(config, key) getOrElse Nil)
@@ -209,6 +212,7 @@ case class RichConfig(config: Config) extends AnyVal {
   def consequenceLocalTime(key: String): Consequence[LocalTime] = HoconUtils.consequenceLocalTime(config, key)
   def consequenceLocalTimeOption(key: String): Consequence[Option[LocalTime]] = HoconUtils.consequenceLocalTimeOption(config, key)
   def consequenceLocalDateOrDateTimeOption(key: String)(implicit ctx: DateTimeContext): Consequence[Option[LocalDateOrDateTime]] = HoconUtils.consequenceLocalDateOrDateTimeOption(config, key)
+  def consequenceLocalDateOrDateTimeSet(key: String)(implicit ctx: DateTimeContext): Consequence[SortedSet[LocalDateOrDateTime]] = HoconUtils.consequenceLocalDateOrDateTimeSet(config, key)
 
   def consequenceToken[T <: ValueInstance](key: String, f: ValueClass[T]): Consequence[T] =
     HoconUtils.consequenceToken(config, key, f)

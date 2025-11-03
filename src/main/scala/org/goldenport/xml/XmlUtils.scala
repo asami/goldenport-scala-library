@@ -4,6 +4,7 @@ import scalaz.{Node =>_, _} , Scalaz._
 import scala.util.control.NonFatal
 import scala.annotation.tailrec
 import scala.xml._
+import scala.collection.immutable.SortedSet
 import java.net.URI
 import java.util.Locale
 import java.time.Instant
@@ -32,7 +33,8 @@ import org.goldenport.util.{AnyUtils, SeqUtils}
  *  version Dec. 29, 2023
  *  version Mar. 28, 2025
  *  version Jul. 26, 2025
- * @version Aug. 23, 2025
+ *  version Aug. 23, 2025
+ * @version Nov.  1, 2025
  * @author  ASAMI, Tomoharu
  */
 object XmlUtils {
@@ -472,6 +474,9 @@ object XmlUtils {
   def getLocalDateOrDateTime(p: Node, name: String)(implicit dctx: DateTimeContext): Option[LocalDateOrDateTime] =
     getLocalDateOrDateTimeC(p, name).take
 
+  def getLocalDateOrDateTimeSet(p: Node, name: String)(implicit dctx: DateTimeContext): Option[SortedSet[LocalDateOrDateTime]] =
+    getLocalDateOrDateTimeSetC(p, name).take
+
   def getPowertype[T <: NamedValueInstance](p: Node, pt: EnumerationClass[T], name: String): Option[T] =
     getString(p, name).map(pt.apply)
 
@@ -526,6 +531,17 @@ object XmlUtils {
       s <- getStringC(p, name)
       r <- s.traverse(LocalDateOrDateTime.parse)
     } yield r
+
+  def getLocalDateOrDateTimeSetC(p: Node, name: String)(implicit dctx: DateTimeContext): Consequence[Option[SortedSet[LocalDateOrDateTime]]] =
+    for {
+      r <- takeLocalDateOrDateTimeSetC(p, name)
+    } yield if (r.isEmpty) None else Some(r)
+
+  def takeLocalDateOrDateTimeSetC(p: Node, name: String)(implicit dctx: DateTimeContext): Consequence[SortedSet[LocalDateOrDateTime]] =
+    for {
+      s <- getStringListEagerC(p, name)
+      r <- s.traverse(LocalDateOrDateTime.parse)
+    } yield SortedSet(r: _*)
 
   def getPowertypeC[T <: NamedValueInstance](p: Node, pt: EnumerationClass[T], name: String): Consequence[Option[T]] =
     Consequence(getPowertype(p, pt, name))

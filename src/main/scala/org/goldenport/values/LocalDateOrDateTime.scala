@@ -10,7 +10,7 @@ import org.goldenport.util.AnyUtils
 
 /*
  * @since   Jun. 16, 2025
- * @version Jun. 16, 2025
+ * @version Nov.  1, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LocalDateOrDateTime(either: Either[LocalDate, DateTime]) extends Datatype {
@@ -30,5 +30,12 @@ object LocalDateOrDateTime {
       x => Consequence(apply(x))
     ).onError(_ => Consequence.formatErrorFault(s"Invalid LocalDate or DateTime: $s"))
   }
-}
 
+  implicit val ordering: Ordering[LocalDateOrDateTime] = new Ordering[LocalDateOrDateTime] {
+    override def compare(x: LocalDateOrDateTime, y: LocalDateOrDateTime): Int = {
+      val xt = x.either.fold(_.toDateTimeAtStartOfDay(), identity)
+      val yt = y.either.fold(_.toDateTimeAtStartOfDay(), identity)
+      xt.compareTo(yt)
+    }
+  }
+}

@@ -14,7 +14,8 @@ import org.goldenport.util.VectorUtils
  *  version Jan. 31, 2020
  *  version Jan. 22, 2021
  *  version May. 11, 2021
- * @version Oct. 14, 2025
+ *  version Oct. 14, 2025
+ * @version Nov.  2, 2025
  * @author  ASAMI, Tomoharu
  */
 trait ParseEvent {
@@ -135,7 +136,7 @@ case class CharEvent(
     case _ => RAISE.noReachDefect
   }
 
-  def isMatchTree(p: Char): Boolean = 
+  def isMatchThree(p: Char): Boolean = 
     c == p && next.fold(false)(_ == p) && next2.fold(false)(_ == p)
 
   def withNext(n: CharEvent) = copy(
@@ -152,6 +153,9 @@ case class CharEvent(
     next2 = Some(n2.c),
     next3 = Some(n3.c)
   )
+
+  lazy val string4: String = c +: nextString3
+  lazy val nextString3: String = List(next, next2, next3).flatten.mkString
 }
 object CharEvent {
   def apply(c: Char): CharEvent = CharEvent(c, None, None, None, ParseLocation.empty)

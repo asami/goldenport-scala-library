@@ -14,7 +14,8 @@ import org.goldenport.util.StringUtils
  *  version Dec.  9, 2019
  *  version Jan. 26, 2020
  *  version Mar. 21, 2022
- * @version Jul. 18, 2025
+ *  version Jul. 18, 2025
+ * @version Nov.  3, 2025
  * @author  ASAMI, Tomoharu
  */
 object UrlUtils {
@@ -51,8 +52,10 @@ object UrlUtils {
   def build(protocol: String, authority: String, path: String, query: Option[String], fragment: Option[String]): URL =
     new URI(buildString(protocol, authority, path, query, fragment)).toURL
 
-  def buildString(protocol: String, authority: String, path: String, query: Option[String], fragment: Option[String]): String =
-    s"""$protocol://$authority$path${query.map("?" + _).getOrElse("")}${fragment.map("#" + _).getOrElse("")}"""
+  def buildString(protocol: String, authority: String, path: String, query: Option[String], fragment: Option[String]): String = {
+    val authoritypath = StringUtils.concatPath(authority, path)
+    s"""$protocol://$authoritypath${query.map("?" + _).getOrElse("")}${fragment.map("#" + _).getOrElse("")}"""
+  }
 
   def addPathBodyPostfix(p: URL, postfix: String): URL = {
     val builder = UriBuilder(p)
@@ -67,8 +70,14 @@ object UrlUtils {
   def getFile(url: URL): Option[File] = Option(UURL.getActiveFile(url))
 
   def addPath(url: URL, path: String): URL = {
+    // FUTURE UriBuilder
     val baseuri = url.toURI
     val normalizedpath = if (path.startsWith("/")) path else "/" + path
     baseuri.resolve(normalizedpath).toURL
+  }
+
+  def addPathAuto(url: URL, path: String): URL = {
+    val builder = UriBuilder(url)
+    builder.addPathAuto(path).buildURL
   }
 }
