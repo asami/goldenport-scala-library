@@ -16,7 +16,8 @@ import org.goldenport.util.StringUtils
  *  version Nov. 27, 2022
  *  version Oct. 14, 2023
  *  version Feb.  8, 2025
- * @version Oct.  9, 2025
+ *  version Oct.  9, 2025
+ * @version Nov.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait LogicalBlock {
@@ -41,13 +42,19 @@ object LogicalBlock {
   object RawBackquoteMarkClass extends VerbatimMarkClass {
     private val _Kind_Pattern = "^`+\\s*(.*)$".r
 
-    def isMatch(p: String): Boolean = p.startsWith("```") // p == "```" || p.startsWith("``` ")
+//    def isMatch(p: String): Boolean = p.startsWith("```") // p == "```" || p.startsWith("``` ")
+    def isMatch(p: String): Boolean = _is_match_rawbackquote(p) || _is_match_literal_content(p)
     def isMatch(p: LogicalLine): Boolean = isMatch(p.text)
+
+    private def _is_match_rawbackquote(p: String) = p.startsWith("```")
+    private def _is_match_literal_content(p: String) = p == "----"
+
     def get(p: LogicalLine): Option[VerbatimMark] =
       if (isMatch(p.text))
         Some(RawBackquoteMark(p))
       else
         None
+
     def get(p: String): Option[VerbatimMark] = get(LogicalLine(p))
 
     def getKind(p: LogicalLine): Option[String] = p.text match {
@@ -55,10 +62,68 @@ object LogicalBlock {
       case _ => None
     }
   }
+
+  object AdmonitionMarkClass extends VerbatimMarkClass {
+    def isMatch(p: String): Boolean = p.startsWith("====")
+    def isMatch(p: LogicalLine): Boolean = isMatch(p.text)
+
+    def get(p: LogicalLine): Option[VerbatimMark] =
+      if (isMatch(p.text))
+        Some(AdmonitionMark(p))
+      else
+        None
+
+    def get(p: String): Option[VerbatimMark] = get(LogicalLine(p))
+  }
+
+  object ContextualNoteMarkClass extends VerbatimMarkClass {
+    def isMatch(p: String): Boolean = p.startsWith("****")
+    def isMatch(p: LogicalLine): Boolean = isMatch(p.text)
+
+    def get(p: LogicalLine): Option[VerbatimMark] =
+      if (isMatch(p.text))
+        Some(AdmonitionMark(p))
+      else
+        None
+
+    def get(p: String): Option[VerbatimMark] = get(LogicalLine(p))
+  }
+
+  object PassthroughMarkClass extends VerbatimMarkClass {
+    def isMatch(p: String): Boolean = p.startsWith("++++")
+    def isMatch(p: LogicalLine): Boolean = isMatch(p.text)
+
+    def get(p: LogicalLine): Option[VerbatimMark] =
+      if (isMatch(p.text))
+        Some(AdmonitionMark(p))
+      else
+        None
+
+    def get(p: String): Option[VerbatimMark] = get(LogicalLine(p))
+  }
+
   case class RawBackquoteMark(line: LogicalLine) extends VerbatimMark {
     def getKind: Option[String] = RawBackquoteMarkClass.getKind(line)
     def isDone(p: String): Boolean = isDone(LogicalLine(p))
     def isDone(p: LogicalLine): Boolean = RawBackquoteMarkClass.isMatch(p)
+  }
+
+  case class AdmonitionMark(line: LogicalLine) extends VerbatimMark {
+    def getKind: Option[String] = None
+    def isDone(p: String): Boolean = isDone(LogicalLine(p))
+    def isDone(p: LogicalLine): Boolean = AdmonitionMarkClass.isMatch(p)
+  }
+
+  case class ContextualNoteMark(line: LogicalLine) extends VerbatimMark {
+    def getKind: Option[String] = None
+    def isDone(p: String): Boolean = isDone(LogicalLine(p))
+    def isDone(p: LogicalLine): Boolean = ContextualNoteMarkClass.isMatch(p)
+  }
+
+  case class PassthroughMark(line: LogicalLine) extends VerbatimMark {
+    def getKind: Option[String] = None
+    def isDone(p: String): Boolean = isDone(LogicalLine(p))
+    def isDone(p: LogicalLine): Boolean = PassthroughMarkClass.isMatch(p)
   }
 
   def apply(p: LogicalLine, ps: LogicalLine*): LogicalBlock = apply(p +: ps)

@@ -4,7 +4,8 @@ package org.goldenport.util
  * @since   Apr. 27, 2025
  *  version Apr. 27, 2025
  *  version Jun. 17, 2025
- * @version Jul. 24, 2025
+ *  version Jul. 24, 2025
+ * @version Nov.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 trait StringBuildFeature {
@@ -33,6 +34,19 @@ trait StringBuildFeature {
 
   protected final def sb_println(): Unit = {
     _buffer.append(sb_newline)
+  }
+
+  protected final def sb_println_if_required(): Unit = {
+    val b = _buffer.lastOption match {
+      case Some(c) => c match {
+        case '\n' => false
+        case '\r' => false
+        case _ => true
+      }
+      case None => false
+    }
+    if (b)
+      sb_println()
   }
 
   protected final def sb_println(p: String): Unit = {

@@ -17,7 +17,8 @@ import org.goldenport.util.StringUtils
  *  version May. 31, 2025
  *  version Jun. 12, 2025
  *  version Sep. 28, 2025
- * @version Oct. 28, 2025
+ *  version Oct. 28, 2025
+ * @version Nov.  4, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeTransformer[A, B] {
@@ -72,26 +73,43 @@ trait TreeTransformer[A, B] {
   }
 
   private def _make_tree_node(p: TreeNode[A]): List[TreeNode[B]] =
-    rule.getTargetName(p).map { name =>
-      // println(s"make_tree_node: $name")
-      make_node_or_control(p.name, name, p)
-    }.getOrElse {
-      if (rule.isIgnore(p))
-        Nil
-      else
-        p.getContent.fold {
-          if (p.children.isEmpty) {
-            // println(s"make_tree_node Nil: ${p.name}")
-            Nil
-          } else {
-            // println(s"make_tree_node A: ${p.name}")
-            make_node_or_control(p)
+    rule.getTargetName(p) match {
+      case Some(name) => make_node_or_control(p.name, name, p)
+      case None => 
+        if (rule.isIgnore(p))
+          Nil
+        else
+          p.getContent match {
+            case Some(x) => make_node_or_control(p)
+            case None => 
+              if (p.children.isEmpty)
+                Nil
+              else
+                make_node_or_control(p)
           }
-        } { x =>
-          // println(s"make_tree_node B: ${p.name}")
-          make_node_or_control(p)
-        }
     }
+
+  // private def _make_tree_node0(p: TreeNode[A]): List[TreeNode[B]] =
+  //   rule.getTargetName(p).map { name =>
+  //     // println(s"make_tree_node: $name")
+  //     make_node_or_control(p.name, name, p)
+  //   }.getOrElse {
+  //     if (rule.isIgnore(p))
+  //       Nil
+  //     else
+  //       p.getContent.fold {
+  //         if (p.children.isEmpty) {
+  //           // println(s"make_tree_node Nil: ${p.name}")
+  //           Nil
+  //         } else {
+  //           // println(s"make_tree_node A: ${p.name}")
+  //           make_node_or_control(p)
+  //         }
+  //       } { x =>
+  //         // println(s"make_tree_node B: ${p.name}")
+  //         make_node_or_control(p)
+  //       }
+  //   }
 
   protected def make_node_or_control(oldname: String, newname: String, p: TreeNode[A]): List[TreeNode[B]] = {
     _push(p)

@@ -22,7 +22,8 @@ import org.goldenport.log.Loggable
  *  version Nov. 23, 2024
  *  version Jan.  1, 2025
  *  version Feb.  7, 2025
- * @version Apr. 28, 2025
+ *  version Apr. 28, 2025
+ * @version Nov.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -117,7 +118,12 @@ object LogicalBlocks {
     def withoutLocation: Config = copy(isLocation = false)
   }
   object Config {
-    val verbatimDefault = Vector(LogicalBlock.RawBackquoteMarkClass)
+    val verbatimDefault = Vector(
+      LogicalBlock.RawBackquoteMarkClass,
+      LogicalBlock.AdmonitionMarkClass,
+      LogicalBlock.ContextualNoteMarkClass,
+      LogicalBlock.PassthroughMarkClass
+    )
     val verbatimEmpty = Vector.empty
 
     // document

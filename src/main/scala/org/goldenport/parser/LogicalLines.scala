@@ -32,7 +32,7 @@ import org.goldenport.util.StringUtils
  *  version Apr.  6, 2025
  *  version Jul. 15, 2025
  *  version Oct. 15, 2025
- * @version Nov.  2, 2025
+ * @version Nov.  5, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -204,7 +204,7 @@ object LogicalLines {
         case _ => false
       }
     }
-    def isInListLineStart(p: String): Boolean = p.startsWith("-") // TODO
+    def isInListLineStart(p: String): Boolean = p.startsWith("-") && !p.startsWith("--")
     def isInListMultiline(c: Char): Boolean = c == '-' // TODO
     def isInListWordSeparating(c: Char): Boolean = c == '-' // TODO
     def isInTable(c: Char): Boolean = {
