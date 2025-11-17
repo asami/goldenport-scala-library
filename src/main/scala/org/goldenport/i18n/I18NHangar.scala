@@ -6,7 +6,7 @@ import java.util.Locale
 /*
  * @since   Aug. 31, 2025
  *  version Sep. 10, 2025
- * @version Nov.  2, 2025
+ * @version Nov. 14, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NHangar[+T](
@@ -79,6 +79,9 @@ object I18NHangar {
       common = common ++ p.commons
     )
   }
+
+  def create[T](locale: Locale, p: T, ps: T*): I18NHangar[T] =
+    create(Vector(locale -> (p +: ps)))
 
   def create[T](ps: Seq[(Locale, Seq[T])]): I18NHangar[T] = create(ps.toMap)
 

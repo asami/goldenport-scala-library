@@ -1,5 +1,6 @@
 package org.goldenport.context
 
+import scala.annotation.unchecked.uncheckedVariance
 import scalaz._, Scalaz._
 import scala.util.{Try, Success => TrySuccess, Failure => TryFailure}
 import scala.util.control.NonFatal
@@ -40,7 +41,8 @@ import org.goldenport.extension.IRecord
  *  version Apr. 21, 2025
  *  version May. 16, 2025
  *  version Jun. 15, 2025
- * @version Jul. 27, 2025
+ *  version Jul. 27, 2025
+ * @version Nov. 17, 2025
  * @author  ASAMI, Tomoharu
  */
 sealed trait Consequence[+T] {
@@ -80,6 +82,7 @@ sealed trait Consequence[+T] {
   def getOrElse[TT >: T](e: => TT): TT = get getOrElse e
   def fold[U](fa: Conclusion => U, fb: T => U): U
   def foldConclusion[U >: T](f: Conclusion => U): U
+  def orZero(implicit m: Monoid[T @uncheckedVariance]): T = getOrElse(m.zero)
 
   def orElse[TT >: T](p: => Consequence[TT]): Consequence[TT]
 

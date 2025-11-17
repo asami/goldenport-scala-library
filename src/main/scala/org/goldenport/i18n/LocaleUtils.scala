@@ -10,7 +10,8 @@ import org.goldenport.Strings.totoken
  *  version Oct. 14, 2024
  *  version Apr.  9, 2025
  *  version Jun. 24, 2025
- * @version Jul. 26, 2025
+ *  version Jul. 26, 2025
+ * @version Nov. 13, 2025
  * @author  ASAMI, Tomoharu
  */
 object LocaleUtils {
@@ -112,5 +113,53 @@ object LocaleUtils {
     case "ja" => Some(ja)
     case "en" => Some(en)
     case _ => None // TODO
+  }
+
+  /**
+   * Check whether the base locale accepts the target locale.
+   *
+   * base   = the "accept" side (similar to Accept-Language preference)
+   * target = the locale being evaluated
+   *
+   * Rules:
+   * 1. If base language is wildcard ("*") → accept.
+   * 2. If languages differ → reject.
+   * 3. If base specifies a script → target must have the same script.
+   * 4. If base specifies a country → target must have the same country.
+   * 5. If base does not specify a country → any target country is accepted.
+   */
+  def isAccept(base: Locale, target: Locale): Boolean = {
+    val baseLang = base.getLanguage
+    val baseCountry = base.getCountry
+    val baseScript = base.getScript
+    val targetLang = target.getLanguage
+    val targetCountry = target.getCountry
+    val targetScript = target.getScript
+
+    // Utility lambdas
+    def isWildcard(s: String): Boolean = s == null || s.isEmpty || s == "*"
+
+    // 1. Wildcard language
+    if (isWildcard(baseLang)) return true
+
+    // 2. Language must match
+    if (baseLang != targetLang) return false
+
+    // 3. Script check (only if base explicitly specifies it)
+    if (!isWildcard(baseScript)) {
+      if (baseScript != targetScript)
+        return false
+    }
+
+    // 4. Country check (only if base explicitly specifies it)
+    if (!isWildcard(baseCountry)) {
+      if (baseCountry != targetCountry)
+        return false
+      else
+        return true
+    }
+
+    // 5. Base has no country restriction → accept any
+    true
   }
 }

@@ -10,7 +10,7 @@ import org.goldenport.util.AnyUtils
 
 /*
  * @since   Jun. 16, 2025
- * @version Nov.  1, 2025
+ * @version Nov. 17, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LocalDateOrDateTime(either: Either[LocalDate, DateTime]) extends Datatype {
@@ -20,6 +20,10 @@ case class LocalDateOrDateTime(either: Either[LocalDate, DateTime]) extends Data
 }
 
 object LocalDateOrDateTime {
+  import io.circe._
+  import io.circe.generic.extras._
+  import io.circe.generic.extras.semiauto._
+
   def apply(p: LocalDate): LocalDateOrDateTime = LocalDateOrDateTime(Left(p))
 
   def apply(p: DateTime): LocalDateOrDateTime = LocalDateOrDateTime(Right(p))
@@ -31,6 +35,9 @@ object LocalDateOrDateTime {
     ).onError(_ => Consequence.formatErrorFault(s"Invalid LocalDate or DateTime: $s"))
   }
 
+  def parseStatic(s: String): Consequence[LocalDateOrDateTime] =
+    parse(s)(DateTimeContext.now())
+
   implicit val ordering: Ordering[LocalDateOrDateTime] = new Ordering[LocalDateOrDateTime] {
     override def compare(x: LocalDateOrDateTime, y: LocalDateOrDateTime): Int = {
       val xt = x.either.fold(_.toDateTimeAtStartOfDay(), identity)
@@ -38,4 +45,7 @@ object LocalDateOrDateTime {
       xt.compareTo(yt)
     }
   }
+
+  implicit val localDateOrDateTimeEncoder: Encoder[LocalDateOrDateTime] =
+    Encoder.encodeString.contramap(_.toString)
 }
