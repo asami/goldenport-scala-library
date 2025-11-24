@@ -10,6 +10,7 @@ import com.asamioffice.goldenport.io.UURL
 import org.goldenport.values.Urn
 import org.goldenport.cli.Environment
 import org.goldenport.util
+import org.goldenport.util.StringUtils
 
 /*
  * @since   Oct.  6, 2017
@@ -18,7 +19,8 @@ import org.goldenport.util
  *  version Nov. 22, 2023
  *  version May. 29, 2024
  *  version Jul. 18, 2025
- * @version Aug. 10, 2025
+ *  version Aug. 10, 2025
+ * @version Nov. 19, 2025
  * @author  ASAMI, Tomoharu
  */
 object UriUtils {
@@ -94,4 +96,7 @@ object UriUtils {
 
   def printPathQueryFragment(p: URI): String =
     util.UriUtils.printPathQueryFragment(p)
+
+  def changeSuffix(p: URI, suffix: String): URI =
+    new URI(StringUtils.changeSuffix(p.toString, suffix))
 }

@@ -22,10 +22,13 @@ import org.goldenport.values.PathName
  *  version Apr. 23, 2025
  *  version May. 17, 2025
  *  version Aug. 22, 2025
- * @version Sep. 21, 2025
+ *  version Sep. 21, 2025
+ * @version Nov. 19, 2025
  * @author  ASAMI, Tomoharu
  */
 trait Tree[E] extends Showable {
+  import Tree._
+
   type TreeNode_TYPE <: TreeNode[E]
 
   def root: TreeNode_TYPE
@@ -55,6 +58,13 @@ trait Tree[E] extends Showable {
   def traverseContent[T](pf: PartialFunction[E, T]): Unit
   def traverseContent[T](pathname: String, pf: PartialFunction[E, T]): Unit
   def transform[T](t: TreeTransformer[E, T]): Tree[T] = t.apply(this)
+  def transform[T](f: E => TreeTransformer.Directive[T]): Tree[T] =
+    transform(new DirectiveTreeTransformer(f))
+  def transformNode[T](f: TreeNode[E] => TreeTransformer.Directive[T]): Tree[T] =
+    transform(new DirectiveNodeTreeTransformer(f))
+  def map[T](f: E => T): Tree[T] = transform(new MapTreeTransformer(f))
+  def filterMap[T](f: E => Option[T]): Tree[T] = transform(new FilterMapTreeTransformer(f))
+  def filterMap[T](f: PartialFunction[E, T]): Tree[T] = filterMap(f.lift)
   //
   def cursor: TreeCursor[E]
   def toXml: Node
@@ -199,5 +209,35 @@ object Tree {
     //   r.addChildren(xs)
     //   r
     // }
+  }
+
+  import TreeTransformer.Context
+  import TreeTransformer.Directive
+
+  class MapTreeTransformer[A, B](f: A => B) extends TreeTransformer[A, B] {
+    def treeTransformerContext: Context[B] = Context.default
+
+    override def make_Content(p: A) = Some(f(p))
+  }
+
+  class FilterMapTreeTransformer[A, B](f: A => Option[B]) extends TreeTransformer[A, B] {
+    def treeTransformerContext: Context[B] = Context.default
+
+    override def make_Content(p: A) = f(p)
+  }
+
+  class DirectiveTreeTransformer[A, B](f: A => Directive[B]) extends TreeTransformer[A, B] {
+    def treeTransformerContext: Context[B] = Context.default
+
+    override def make_Node(p: TreeNode[A]) = p.getContent match {
+      case Some(s) => f(s)
+      case None => super.make_Node(p)
+    }
+  }
+
+  class DirectiveNodeTreeTransformer[A, B](f: TreeNode[A] => Directive[B]) extends TreeTransformer[A, B] {
+    def treeTransformerContext: Context[B] = Context.default
+
+    override def make_Node(p: TreeNode[A]) = f(p)
   }
 }

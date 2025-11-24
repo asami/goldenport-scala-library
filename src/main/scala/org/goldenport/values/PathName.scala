@@ -28,7 +28,8 @@ import org.goldenport.util.StringUtils
  *  version Jan.  4, 2023
  *  version Sep. 26, 2023
  *  version Mar.  9, 2025
- * @version Aug. 17, 2025
+ *  version Aug. 17, 2025
+ * @version Nov. 21, 2025
  * @author  ASAMI, Tomoharu
  */
 case class PathName(
@@ -36,6 +37,8 @@ case class PathName(
   delimiter: String = PathName.DELIMITER
 ) {
   override def toString() = v
+
+  private def _delimiter_char = delimiter(0) // FUTURE
 
   def isEmpty: Boolean = v.isEmpty
   def head: String = firstComponent
@@ -120,6 +123,11 @@ case class PathName(
     case _ => s"${lhs}${delimiter}${rhs}"
   }
 
+  def apply(p: String): PathName = append(p)
+
+  def append(p: String): PathName =
+    copy(v = StringUtils.concatPath(delimiter, v, p))
+
   def replaceFirst(p: String): PathName = {
     val a = components match {
       case Nil => Nil
@@ -129,6 +137,22 @@ case class PathName(
       PathName(a.mkString(delimiter, delimiter, ""))
     else
       PathName(a.mkString(delimiter))
+  }
+
+  def replaceLast(p: String): PathName = {
+    val a = components match {
+      case Nil => Nil
+      case xs => xs.init :+ p
+    }
+    if (isAbsolute)
+      PathName(a.mkString(delimiter, delimiter, ""))
+    else
+      PathName(a.mkString(delimiter))
+  }
+
+  def changeSuffix(suffix: String): PathName = {
+    val a = StringUtils.changeSuffix(lastComponent, suffix)
+    replaceLast(a)
   }
 
   def length = components.length

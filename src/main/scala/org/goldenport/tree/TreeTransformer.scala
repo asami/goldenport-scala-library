@@ -18,13 +18,14 @@ import org.goldenport.util.StringUtils
  *  version Jun. 12, 2025
  *  version Sep. 28, 2025
  *  version Oct. 28, 2025
- * @version Nov.  4, 2025
+ * @version Nov. 19, 2025
  * @author  ASAMI, Tomoharu
  */
 trait TreeTransformer[A, B] {
   import TreeTransformer._
 
   def isEndomap: Boolean = false
+  def isRtainInEndomap: Boolean = true
   def isCleanVoid: Boolean = true
   def isCleanEmptyChildren: Boolean = false
   def treeTransformerContext: Context[B]
@@ -361,7 +362,7 @@ trait TreeTransformer[A, B] {
   protected def make_Content(p: A): Option[B] = None
 
   protected def make_default_content(p: A): Option[B] =
-    if (isEndomap)
+    if (isEndomap && isRtainInEndomap)
       Some(p.asInstanceOf[B])
     else
       None

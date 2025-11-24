@@ -63,7 +63,8 @@ import org.goldenport.collection.NonEmptyVector
  *  version Jul. 28, 2025
  *  version Aug.  5, 2025
  *  version Sep. 14, 2025
- * @version Oct.  4, 2025
+ *  version Oct.  4, 2025
+ * @version Nov. 20, 2025
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -327,6 +328,21 @@ object StringUtils {
           case (true, false) => lhs + rhs
           case (false, true) => lhs + rhs
           case (false, false) => lhs + "/" + rhs
+        }
+    }
+  }
+
+  def concatPath(delimiter: String, lhs: String, rhs: String): String = {
+    (lhs, rhs) match {
+      case ("", "") => ""
+      case (l, "") => lhs
+      case ("", r) => rhs
+      case (l, r) => 
+        (lhs.endsWith(delimiter), rhs.startsWith(delimiter)) match {
+          case (true, true) => lhs + rhs.tail
+          case (true, false) => lhs + rhs
+          case (false, true) => lhs + rhs
+          case (false, false) => lhs + delimiter + rhs
         }
     }
   }

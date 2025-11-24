@@ -6,7 +6,7 @@ import java.util.Locale
 /*
  * @since   Aug. 31, 2025
  *  version Sep. 10, 2025
- * @version Nov. 14, 2025
+ * @version Nov. 19, 2025
  * @author  ASAMI, Tomoharu
  */
 case class I18NHangar[+T](
@@ -48,16 +48,23 @@ case class I18NHangar[+T](
     )
   }
 
+  def filter(f: T => Boolean): I18NHangar[T] = I18NHangar(
+    map.mapValues(_.filter(f)),
+    commons.filter(f)
+  )
+
   def filterNot(f: T => Boolean): I18NHangar[T] = I18NHangar(
     map.mapValues(_.filterNot(f)),
     commons.filterNot(f)
   )
 
-  def mapValueCollection[U](f: Vector[T] => Vector[U]): I18NHangar[U] =
-    I18NHangar[U](map.mapValues(f), f(commons))
+  def map[U](f: T => U): I18NHangar[U] = mapValue(f)
 
   def mapValue[U](f: T => U): I18NHangar[U] =
     I18NHangar[U](map.mapValues(_.map(f)), commons.map(f))
+
+  def mapValueCollection[U](f: Vector[T] => Vector[U]): I18NHangar[U] =
+    I18NHangar[U](map.mapValues(f), f(commons))
 }
 
 object I18NHangar {
