@@ -6,10 +6,11 @@ import java.util.Locale
 /*
  * @since   Aug. 31, 2025
  *  version Sep. 10, 2025
- * @version Nov. 19, 2025
+ *  version Nov. 19, 2025
+ * @version Dec.  9, 2025
  * @author  ASAMI, Tomoharu
  */
-case class I18NHangar[+T](
+case class I18NHangar[T](
   map: Map[Locale, Vector[T]] = Map.empty[Locale, Vector[T]],
   commons: Vector[T] = Vector.empty
 ) {
@@ -65,6 +66,12 @@ case class I18NHangar[+T](
 
   def mapValueCollection[U](f: Vector[T] => Vector[U]): I18NHangar[U] =
     I18NHangar[U](map.mapValues(f), f(commons))
+
+  def mapValueCollectionOne[U](f: Vector[T] => Option[U]): I18NHangar[U] =
+    I18NHangar[U](map.mapValues(_to_one(f)), _to_one(f)(commons))
+
+  private def _to_one[U](f: Vector[T] => Option[U])(xs: Vector[T]): Vector[U] =
+    f(xs).toVector
 }
 
 object I18NHangar {

@@ -19,7 +19,8 @@ import org.goldenport.util.VectorUtils
  *  version Nov.  2, 2024
  *  version Feb.  5, 2025
  *  version Jun.  5, 2025
- * @version Jul. 17, 2025
+ *  version Jul. 17, 2025
+ * @version Dec.  9, 2025
  * @author  ASAMI, Tomoharu
  */
 case class NonEmptyVector[T](head: T, tailVector: Vector[T]) {
@@ -39,13 +40,13 @@ case class NonEmptyVector[T](head: T, tailVector: Vector[T]) {
 
   def tail: NonEmptyVector[T] =
     if (tailVector.isEmpty)
-      Conclusion.unsupportedOperationFault("tail for empty NonEmptyVector").RAISE
+      Conclusion.unsupportedOperationFault("tail for empty NonEmptyVector").RAISEC
     else
       NonEmptyVector(tailVector.head, tailVector.tail)
 
   def init: NonEmptyVector[T] =
     if (tailVector.isEmpty)
-      Conclusion.unsupportedOperationFault("init for empty NonEmptyVector").RAISE
+      Conclusion.unsupportedOperationFault("init for empty NonEmptyVector").RAISEC
     else
       copy(tailVector = tailVector.init)
   def initVector: Vector[T] =
