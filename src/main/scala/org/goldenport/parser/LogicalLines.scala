@@ -32,7 +32,8 @@ import org.goldenport.util.StringUtils
  *  version Apr.  6, 2025
  *  version Jul. 15, 2025
  *  version Oct. 15, 2025
- * @version Nov.  5, 2025
+ *  version Nov.  5, 2025
+ * @version Dec. 19, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -966,7 +967,7 @@ object LogicalLines {
     lazy val tagString = s"<${tag.mkString}>"
 
     override protected def end_Result(config: Config): ParseResult[LogicalLines] =
-      ParseFailure(s"Xml is not completed: ${tag.mkString}", location)
+      ParseFailure(s"Xml tag [$tagString] is not completed: ${tag.mkString}", location)
 
     private def _not_delimiterp(p: Char) = !_delimiterp(p)
 
@@ -1044,7 +1045,7 @@ object LogicalLines {
     lazy val textString = text.mkString
 
     override protected def end_Result(config: Config): ParseResult[LogicalLines] =
-      ParseFailure(s"Xml is not completed: ${text.mkString}", location)
+      ParseFailure(s"Xml tag [${open.tagString}] is not completed: ${text.mkString}", location)
 
     override def addChild(config: Config, ps: Vector[Char]) = copy(text = text ++ ps)
     override def addChildEndTransition(config: Config, ps: Vector[Char]): Transition =
@@ -1173,11 +1174,13 @@ object LogicalLines {
   ) extends AdvancedAwakeningLogicalLinesParseState {
     override protected def use_back_quote(config: Config, evt: CharEvent) = true
 
+    private def _text_string = text.mkString
+
     def getLastChar = text.lastOption
     protected def get_Current_Line = Some(text.mkString)
 
     override protected def end_Result(config: Config): ParseResult[LogicalLines] =
-      ParseResult.error("Unpredictable end in a back quote string.", "バッククオートの文字列中で最後になりました。", location)
+      ParseResult.error(s"Unpredictable end in a back quote string.: ${_text_string}", s"バッククオートの文字列中で最後になりました。: ${_text_string}", location)
 
     override protected def character_State(c: Char) = copy(text = text :+ c)
 

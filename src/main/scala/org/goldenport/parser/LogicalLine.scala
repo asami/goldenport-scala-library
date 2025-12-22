@@ -9,7 +9,8 @@ import org.goldenport.i18n.I18NElement
  * @since   Sep. 22, 2018
  *  version Feb.  2, 2019
  *  version Feb. 13, 2021
- * @version Oct. 26, 2024
+ *  version Oct. 26, 2024
+ * @version Dec. 19, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLine(
@@ -21,6 +22,8 @@ case class LogicalLine(
   def getSectionTitle: Option[SectionTitle] = SectionTitle.get(text)
   def getSectionUnderline: Option[SectionUnderline] = SectionUnderline.get(physicalLines)
   def isEmptyLine: Boolean = Strings.blankp(text)
+
+  def show = text
 }
 
 object LogicalLine {
@@ -66,6 +69,8 @@ object LogicalLine {
   // ** TITLE
   case class SectionTitle(mark: String, level: Int, title: String) {
     def toI18NElement = I18NElement(title)
+
+    def show = s"${Array.fill(level)(mark).mkString} $title"
   }
   object SectionTitle {
     def get(p: String): Option[SectionTitle] =

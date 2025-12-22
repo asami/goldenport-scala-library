@@ -3,6 +3,7 @@ package org.goldenport.parser
 import scalaz._, Scalaz._
 import org.goldenport.exception.RAISE
 import org.goldenport.log.Loggable
+import org.goldenport.util.AnyUtils
 
 /*
  * @since   Aug. 20, 2018
@@ -23,7 +24,8 @@ import org.goldenport.log.Loggable
  *  version Jan.  1, 2025
  *  version Feb.  7, 2025
  *  version Apr. 28, 2025
- * @version Nov.  5, 2025
+ *  version Nov.  5, 2025
+ * @version Dec. 19, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LogicalBlocks(
@@ -344,6 +346,8 @@ object LogicalBlocks {
   ) extends LogicalBlocksParseState {
     def result = blocks
 
+    private def _text = s"""${title.show}: ${AnyUtils.toShow(cs.map(_.show).mkString("\n"))}"""
+
     private def _close: LogicalSection = {
       val a = if (cs.isEmpty)
         blocks
@@ -424,7 +428,7 @@ object LogicalBlocks {
         }
       }.orElse {
         evt.getSectionUnderline.map { underline =>
-          RAISE.notImplementedYetDefect("section underline")
+          RAISE.notImplementedYetDefect(s"section underline: ${_text}")
         }
       }.orElse {
         config.getVerbatimMark(evt.line).map(mark =>
