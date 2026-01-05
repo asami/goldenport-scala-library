@@ -15,7 +15,8 @@ import org.goldenport.util.VectorUtils
  *  version Jan. 22, 2021
  *  version May. 11, 2021
  *  version Oct. 14, 2025
- * @version Nov.  2, 2025
+ *  version Nov.  2, 2025
+ * @version Dec. 29, 2025
  * @author  ASAMI, Tomoharu
  */
 trait ParseEvent {
@@ -156,6 +157,8 @@ case class CharEvent(
 
   lazy val string4: String = c +: nextString3
   lazy val nextString3: String = List(next, next2, next3).flatten.mkString
+
+  def show: String = s"[${c}][$nextString3]"
 }
 object CharEvent {
   def apply(c: Char): CharEvent = CharEvent(c, None, None, None, ParseLocation.empty)

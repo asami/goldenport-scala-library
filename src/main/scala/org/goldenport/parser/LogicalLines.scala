@@ -33,7 +33,7 @@ import org.goldenport.util.StringUtils
  *  version Jul. 15, 2025
  *  version Oct. 15, 2025
  *  version Nov.  5, 2025
- * @version Dec. 19, 2025
+ * @version Dec. 29, 2025
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -284,6 +284,8 @@ object LogicalLines {
     def isEmpty: Boolean = getLastChar.isEmpty
 
     protected def get_Current_Line: Option[String]
+
+    def show: String = s"${getClass.getSimpleName}[${get_Current_Line getOrElse ""}]"
 
     def apply(config: Config, evt: ParseEvent): Transition = {
       // println(s"in($this): $evt")
@@ -966,6 +968,8 @@ object LogicalLines {
     lazy val tagName = tag.takeWhile(_not_delimiterp).mkString
     lazy val tagString = s"<${tag.mkString}>"
 
+    override def show = super.show + s"[${parent.show}]"
+
     override protected def end_Result(config: Config): ParseResult[LogicalLines] =
       ParseFailure(s"Xml tag [$tagString] is not completed: ${tag.mkString}", location)
 
@@ -988,7 +992,7 @@ object LogicalLines {
           case Some('>') => SkipState(
             parent.addChild(config, ('<' +: tag) ++ Vector('/', '>'))
           )
-          case _ => RAISE.notImplementedYetDefect(this, "character_State") // TODO error
+          case _ => RAISE.notImplementedYetDefect(this, s"${show}[${evt.show}]") // TODO error
         }
         case c => copy(tag = tag :+ c)
       }
@@ -1015,12 +1019,14 @@ object LogicalLines {
     lazy val tagName = tag.mkString
     lazy val tagString = s"</${tagName}>"
 
+    override def show = super.show + s"[${text.show}]"
+
     override protected def close_Angle_Bracket_State(config: Config, evt: CharEvent) = {
       // println(s"XmlTextState#close_Angle_Bracket_State: $evt")
       if (tagName == text.open.tagName)
         text.open.parent.addChild(config, s"""${text.open.tagString}${text.textString}${tagString}""".toVector)
       else
-        RAISE.notImplementedYetDefect(this, "close_Angle_Bracket_State") // TODO error
+        RAISE.notImplementedYetDefect(this, s"${show}[${evt.show}") // TODO error
     }
     override protected def character_State(c: Char): LogicalLinesParseState =
       if (c == '/')
