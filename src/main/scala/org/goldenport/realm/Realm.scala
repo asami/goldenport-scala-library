@@ -41,7 +41,8 @@ import org.goldenport.util.RegexUtils
  *  version May. 23, 2025
  *  version Jun. 23, 2025
  *  version Jul. 22, 2025
- * @version Aug. 17, 2025
+ *  version Aug. 17, 2025
+ * @version Feb. 14, 2026
  * @author  ASAMI, Tomoharu
  */
 case class Realm(
@@ -391,6 +392,11 @@ object Realm {
     var root: Option[File] = None
   ) {
     private val _tree: Tree[Data] = new PlainTree[Data]()
+
+    def set(pathname: PathName, d: Realm.Data): Builder = {
+      _tree.setContent(pathname, d)
+      this
+    }
 
     def set(pathname: PathName, string: String): Builder = {
       _tree.setContent(pathname, StringData(string))

@@ -64,7 +64,8 @@ import org.goldenport.collection.NonEmptyVector
  *  version Aug.  5, 2025
  *  version Sep. 14, 2025
  *  version Oct.  4, 2025
- * @version Nov. 20, 2025
+ *  version Nov. 20, 2025
+ * @version Feb. 13, 2026
  * @author  ASAMI, Tomoharu
  */
 object StringUtils {
@@ -426,6 +427,9 @@ object StringUtils {
 
   def makeTitle(p: String): String =
       p.headOption.fold(p)(x => x.toUpper +: p.tail)
+
+  def makeTitleName(p: String, ps: String*): String =
+    (p +: ps).map(makeTitle).mkString
 
   def dimString(s: String, length: Int = 1000): String = {
     val postfix = "..."
