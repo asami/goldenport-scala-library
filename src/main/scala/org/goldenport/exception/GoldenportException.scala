@@ -13,7 +13,8 @@ import org.goldenport.parser.{ErrorMessage, WarningMessage}
  *  version Feb.  2, 2019
  *  version Apr. 14, 2019
  *  version Jul. 21, 2019
- * @version Jan. 10, 2021
+ *  version Jan. 10, 2021
+ * @version Mar. 20, 2026
  * @author  ASAMI, Tomoharu
  */
 abstract class GoldenportException(
@@ -89,7 +90,10 @@ class SyntaxErrorFaultException(
     parseFailure.map(_.complementLocation(file))
   )
 
-  def errorMessages: Vector[ErrorMessage] = parseFailure.map(_.errors).getOrElse(Vector.empty)
+  def errorMessages: Vector[ErrorMessage] =
+    parseFailure.map(_.errors).getOrElse {
+      Option(message).filterNot(_.isEmpty).map(ErrorMessage(location, _)).toVector
+    }
 
   def warningMessages: Vector[WarningMessage] = parseFailure.map(_.warnings).getOrElse(Vector.empty)
 }
