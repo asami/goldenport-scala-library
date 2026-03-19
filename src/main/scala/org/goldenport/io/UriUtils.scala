@@ -20,7 +20,8 @@ import org.goldenport.util.StringUtils
  *  version May. 29, 2024
  *  version Jul. 18, 2025
  *  version Aug. 10, 2025
- * @version Nov. 19, 2025
+ *  version Nov. 19, 2025
+ * @version Mar. 17, 2026
  * @author  ASAMI, Tomoharu
  */
 object UriUtils {
@@ -42,7 +43,13 @@ object UriUtils {
         case "file" => Some(new File(uri.toURL.getFile))
         case _ => None
       }
-      case None => Some(new File(base, uri.getPath))
+      case None =>
+        val path = Option(uri.getPath).getOrElse(uri.toString)
+        val file = new File(path)
+        if (file.isAbsolute)
+          Some(file)
+        else
+          Some(new File(base, path))
     }
 
   def getPath(uri: URI): Option[Path] = getFile(uri).map(_.toPath)
