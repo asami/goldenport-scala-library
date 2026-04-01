@@ -8,7 +8,8 @@ import org.goldenport.util.StringUtils
  *  version Apr. 27, 2025
  *  version May. 16, 2025
  *  version Jun. 24, 2025
- * @version Nov. 18, 2025
+ *  version Nov. 18, 2025
+ * @version Apr.  1, 2026
  * @author  ASAMI, Tomoharu
  */
 abstract class Name() extends Datatype {
@@ -37,7 +38,7 @@ abstract class Name() extends Datatype {
 
 object Name {
   val NAME_MIN = 1
-  val NAME_MAX = 32
+  val NAME_MAX = 256
 
   def apply(name: String): Name = SimpleName(name)
 
