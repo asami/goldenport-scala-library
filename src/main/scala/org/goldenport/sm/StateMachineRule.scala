@@ -1,6 +1,7 @@
 package org.goldenport.sm
 
 import scalaz._, Scalaz._
+import scala.util.Try
 import com.typesafe.config.{Config => Hocon, ConfigFactory, ConfigObject}
 import org.goldenport.parser.ParseResult
 import org.goldenport.value._
@@ -19,7 +20,7 @@ import org.goldenport.event.EventClazz
  *  version Nov. 28, 2021
  *  version Dec.  5, 2021
  *  version Aug. 22, 2022
- * @version Sep.  5, 2024
+ * @version Apr.  3, 2026
  * @author  ASAMI, Tomoharu
  */
 case class StateMachineRule(
@@ -162,27 +163,28 @@ object StateMachineRule {
 
     private def _states(kind: StateMachineKind, smpath: Option[PathName], p: Hocon): ParseResult[List[StateClass]] = {
       val cs = p.takeConfigList(PROP_STMRULE_STATE)
-      cs.traverse(_state(kind, smpath, _))
+      cs.zipWithIndex.traverse { case (c, i) => _state(kind, smpath, c, i) }
     }
 
-    private def _state(kind: StateMachineKind, smpath: Option[PathName], p: Hocon): ParseResult[StateClass] =
+    private def _state(kind: StateMachineKind, smpath: Option[PathName], p: Hocon, index: Int): ParseResult[StateClass] =
       for {
         name <- p.parseString(PROP_STMRULE_NAME)
-        value <- _value(p, name, PROP_STMRULE_VALUE)
+        value <- _value(p, name, PROP_STMRULE_VALUE, index)
         ts <- _transition(kind, p, PROP_STMRULE_TRANSITION)
         entrya <- _activity(p, PROP_STMRULE_ENTRY)
         exita <- _activity(p, PROP_STMRULE_EXIT)
         doa <- _do_activity(p, PROP_STMRULE_DO)
       } yield StateClass(name, value, smpath, ts, entrya, exita, doa)
 
-    private def _value(p: Hocon, name: String, key: String): ParseResult[Int] = for {
+    private def _value(p: Hocon, name: String, key: String, index: Int): ParseResult[Int] = for {
       a <- p.parseIntOption(key)
-    } yield a getOrElse valueStrategy match {
-      case Builder.ValueStrategy.Auto => _value_auto(name)
+      b <- p.parseStringOption(key)
+    } yield a.orElse(b.flatMap(x => Try(x.trim.toInt).toOption)) getOrElse valueStrategy match {
+      case Builder.ValueStrategy.Auto => _value_auto(name, index)
     }
 
-    private def _value_auto(name: String): Int =
-      _state_values.get(name) getOrElse STATE_VALUE_UNDEFINED
+    private def _value_auto(name: String, index: Int): Int =
+      index + 1
 
     private def _activity(p: Hocon, key: String): ParseResult[Activity] =
       for {
