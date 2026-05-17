@@ -42,7 +42,7 @@ resolvers += "GitHab releases 2020" at "https://raw.github.com/asami/maven-repos
 
 resolvers += "GitHab releases" at "https://raw.github.com/asami/maven-repository/2021-scala2.12/releases"
 
-resolvers += "GitHub Packages" at "https://maven.pkg.github.com/asami/maven-repository"
+resolvers += "SimpleModeling.org" at "https://www.simplemodeling.org/repository/maven"
 
 resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository"
 
@@ -145,9 +145,12 @@ libraryDependencies ++= Seq(
 
 // libraryDependencies += "org.goldenport" %% "goldenport-scalatest-lib" % "2.0.0" % "test"
 
-publishTo := Some(
-  "GitHub Packages" at "https://maven.pkg.github.com/asami/maven-repository"
-)
+publishTo := {
+  val repo = sys.env.get("SIMPLEMODELING_MAVEN_LOCAL")
+    .map(file)
+    .getOrElse(baseDirectory.value / "maven-local")
+  Some(Resolver.file("local-simplemodeling-maven", repo))
+}
 
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 
