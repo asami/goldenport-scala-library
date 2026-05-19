@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.3.27"
+version := "2.3.28-SNAPSHOT"
 
 scalaVersion := "2.12.18"
 
@@ -149,7 +149,13 @@ publishTo := {
   val repo = sys.env.get("SIMPLEMODELING_MAVEN_LOCAL")
     .map(file)
     .getOrElse(baseDirectory.value / "maven-local")
-  Some(Resolver.file("local-simplemodeling-maven", repo))
+
+  Some(
+    Resolver.file(
+      "local-simplemodeling-maven",
+      repo
+    )
+  )
 }
 
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
