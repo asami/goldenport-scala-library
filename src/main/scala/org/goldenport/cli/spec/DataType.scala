@@ -12,7 +12,8 @@ import org.goldenport.util.AnyUtils
 /*
  * @since   Mar.  2, 2025
  *  version Mar. 12, 2025
- * @version Jun.  5, 2025
+ *  version Jun.  5, 2025
+ * @version Jun.  4, 2026
  * @author  ASAMI, Tomoharu
  */
 sealed trait DataType extends NamedValueInstance {
@@ -22,7 +23,7 @@ sealed trait DataType extends NamedValueInstance {
 }
 
 object DataType extends EnumerationClass[DataType] {
-  val elements = Vector(XString, XFile, XConfig, XRealm)
+  val elements = Vector(XString, XInt, XFile, XConfig, XRealm)
 }
 
 case object XString extends DataType {
@@ -30,6 +31,13 @@ case object XString extends DataType {
   val name = "string"
 
   def toInstance(p: Any): String = AnyUtils.toString(p)
+}
+
+case object XInt extends DataType {
+  type InstanceType = Int
+  val name = "int"
+
+  def toInstance(p: Any): Int = AnyUtils.toInt(p)
 }
 
 case class XPowertype[T <: ValueInstance](

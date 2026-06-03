@@ -21,7 +21,8 @@ import org.goldenport.util.AnyUtils
  *  version Jan. 30, 2023
  *  version Mar. 17, 2025
  *  version Apr.  2, 2025
- * @version Jun.  5, 2025
+ *  version Jun.  5, 2025
+ * @version Jun.  4, 2026
  * @author  ASAMI, Tomoharu
  */
 case class Parameter(
@@ -216,7 +217,7 @@ case class Parameter(
         datatype.cInstance(p).fold(
           c => copy(faults = faults :+ ValueDomainDatatypeFault(name, datatype, p)),
           x => copy(
-            request = request.add(CliProperty(name, p, Parameter.this)),
+            request = request.add(CliProperty(name, x, Parameter.this)),
             propertyName = None
           )
         )
@@ -243,14 +244,14 @@ case class Parameter(
       case Multiplicity.One =>
         p.args.headOption match {
           case None => p.addFault(MissingArgumentFault()) // TODO
-          case Some(s) => ParseState(p.req.add(CliArgument(name, s, Parameter.this)), p.args.tail)
+          case Some(s) => ParseState(p.req.add(CliArgument(name, s, Parameter.this)), p.args.tail, p.faults)
         }
       case Multiplicity.ZeroOne =>
         RAISE.notImplementedYetDefect
       case Multiplicity.OneMore =>
         p.args.toList match {
           case Nil => p.addFault(MissingArgumentFault()) // TODO
-          case xs => ParseState(p.req.add(CliArgument(name, xs, Parameter.this)), Vector.empty)
+          case xs => ParseState(p.req.add(CliArgument(name, xs, Parameter.this)), Vector.empty, p.faults)
         }
       case Multiplicity.ZeroMore =>
         RAISE.notImplementedYetDefect
@@ -289,6 +290,9 @@ case class Parameter(
 
   def cInputSourceList(ps: Seq[Any]): Consequence[List[InputSource]] =
     ps.toList.traverse(cInputSource)
+
+  def cInt(p: Any): Consequence[Int] =
+    XInt.cInstance(p)
 
   def cConfig(p: Any): Consequence[Hocon] =
     for {
@@ -360,6 +364,8 @@ object Parameter {
   def argumentFiles(name: String): Parameter = Parameter(name, ArgumentKind, XFile, Multiplicity.OneMore)
 
   def property(name: String): Parameter = Parameter(name, PropertyKind)
+
+  def propertyInt(name: String): Parameter = Parameter(name, PropertyKind, XInt)
 
   def propertyFileOption(name: String): Parameter = Parameter(name, PropertyKind, XFile, Multiplicity.ZeroOne)
 

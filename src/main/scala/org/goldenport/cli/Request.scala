@@ -30,7 +30,8 @@ import org.goldenport.value._
  *  version Jul. 23, 2023
  *  version Mar. 16, 2025
  *  version Apr.  2, 2025
- * @version Jun. 10, 2025
+ *  version Jun. 10, 2025
+ * @version Jun.  4, 2026
  * @author  ASAMI, Tomoharu
  */
 case class Request(
@@ -121,6 +122,16 @@ case class Request(
     x <- cAnyOneMore(p)
     r0 <- x.vector.traverse(p.cFile)
     r <- Consequence.success(NonEmptyVector(r0))
+  } yield r
+
+  def cInt(p: spec.Parameter): Consequence[Int] = for {
+    x <- cAny(p)
+    r <- p.cInt(x)
+  } yield r
+
+  def cIntOption(p: spec.Parameter): Consequence[Option[Int]] = for {
+    x <- cAnyOption(p)
+    r <- x.traverse(p.cInt)
   } yield r
 
   def cConfig(p: spec.Parameter): Consequence[Hocon] = for {

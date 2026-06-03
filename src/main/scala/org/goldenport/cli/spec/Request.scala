@@ -1,12 +1,14 @@
 package org.goldenport.cli.spec
 
 import org.goldenport.cli.{Request => CliRequest, Switch, Argument}
+import org.goldenport.context.TooManyArgumentsFault
 
 /*
  * @since   Oct.  6, 2018
  *  version Oct. 10, 2018
  *  version Feb. 16, 2020
- * @version Mar. 16, 2025
+ *  version Mar. 16, 2025
+ * @version Jun.  4, 2026
  * @author  ASAMI, Tomoharu
  */
 case class Request(
@@ -44,6 +46,13 @@ case class Request(
     b.req
   }
 
+  def buildStrict(req: CliRequest, args: Seq[Any]): CliRequest = {
+    val a = _build_property_switch(ParseState(req, args.toVector))
+    val b = _reject_remainder(_build_argument(a))
+    b.RAISE_IF_FAILURE
+    b.req
+  }
+
   private def _build_property_switch(p: ParseState): ParseState =
     parameters.foldLeft(p)((z, x) => x.parsePropertySwitch(z))
 
@@ -52,6 +61,12 @@ case class Request(
 //    val a = p.req.addArguments(p.args)
 //    p.copy(a, Vector.empty)
   }
+
+  private def _reject_remainder(p: ParseState): ParseState =
+    if (p.args.isEmpty)
+      p
+    else
+      p.addFault(TooManyArgumentsFault(p.args))
 
   // def build(req: CliRequest, args: Seq[Any]): CliRequest = {
   //   case class Z(rq: CliRequest = req, as: List[Any] = args.toList) {
