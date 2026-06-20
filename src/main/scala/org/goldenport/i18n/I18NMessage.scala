@@ -2,7 +2,7 @@ package org.goldenport.i18n
 
 import scalaz._, Scalaz._
 import scala.util.control.NonFatal
-import java.util.{Locale, ResourceBundle}
+import java.util.{Locale, ResourceBundle, MissingResourceException}
 import java.text.MessageFormat
 import play.api.libs.json._
 import org.goldenport.Strings
@@ -18,7 +18,8 @@ import org.goldenport.util.{AnyUtils, AnyRefUtils}
  *  version Feb.  9, 2022
  *  version Jun. 13, 2022
  *  version Dec. 28, 2022
- * @version May. 11, 2025
+ *  version May. 11, 2025
+ * @version Jun. 21, 2026
  * @author  ASAMI, Tomoharu
  */
 case class I18NMessage(
@@ -70,7 +71,7 @@ case class I18NMessage(
   }
 
   def get(locale: Locale, bundle: ResourceBundle): Option[String] =
-    _format(locale, Option(bundle.getString(key))) orElse get(locale)
+    _format(locale, I18NMessage.getString(bundle, key)) orElse get(locale)
 
   def apply(): String = get(LocaleUtils.C) getOrElse en
 
@@ -205,6 +206,13 @@ case class I18NMessage(
 }
 
 object I18NMessage {
+  def getString(bundle: ResourceBundle, key: String): Option[String] =
+    try {
+      Option(bundle.getString(key))
+    } catch {
+      case _: MissingResourceException => None
+    }
+
   implicit def I18NMessageMonoid = new Monoid[I18NMessage] {
     def zero = empty
     def append(lhs: I18NMessage, rhs: => I18NMessage) = lhs concat rhs

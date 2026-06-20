@@ -1,14 +1,15 @@
 package org.goldenport.i18n
 
 import scala.util.control.NonFatal
-import java.util.{Locale, Currency, TimeZone, ResourceBundle}
+import java.io.InputStreamReader
+import java.util.{Locale, Currency, TimeZone, ResourceBundle, MissingResourceException, PropertyResourceBundle}
 import java.nio.charset.Charset
 import java.text.{NumberFormat, MessageFormat, DateFormat, DecimalFormat}
 import org.joda.time._
 import org.goldenport.RAISE
 import org.goldenport.Strings
 import org.goldenport.values.{DateTimePeriod, Money, Percent}
-import org.goldenport.util.AnyUtils
+import org.goldenport.util.{AnyUtils, AnyRefUtils}
 
 /*
  * @since   Aug.  4, 2019
@@ -20,7 +21,8 @@ import org.goldenport.util.AnyUtils
  *  version Dec. 10, 2022
  *  version Oct. 14, 2024
  *  version Jun. 26, 2025
- * @version Jul.  5, 2025
+ *  version Jul.  5, 2025
+ * @version Jun. 21, 2026
  * @author  ASAMI, Tomoharu
  */
 case class I18NContext(
@@ -132,15 +134,29 @@ case class I18NContext(
 
   def formatString(fmt: String, p: String): String = String.format(locale, fmt, p)
 
-  def formatMessage(fmt: String, ps: Seq[Any]): String = MessageFormat.format(fmt, ps)
+  def formatMessage(fmt: String, ps: Seq[Any]): String =
+    MessageFormat.format(fmt, ps.map(AnyRefUtils.toAnyRef):_*)
+
+  def getMessage(key: String): Option[String] =
+    try {
+      Option(resourceBundle.getString(key))
+    } catch {
+      case _: MissingResourceException => None
+    }
+
+  def message(key: String): String = getMessage(key) getOrElse key
+
+  def message(key: String, ps: Any*): String = formatMessage(message(key), ps)
+
+  def messageOrElse(key: String, default: String): String = getMessage(key) getOrElse default
 
   def formatMessageKey(key: String, ps: Seq[Any]): String =
-    Option(resourceBundle.getString(key)).
+    getMessage(key).
       map(formatMessage(_, ps)).
       getOrElse(formatMessage(key, ps))
 
   def formatMessageByKey(key: String, ps: Seq[Any]): String =
-    Option(resourceBundle.getString(key)).
+    getMessage(key).
       map(formatMessage(_, ps)).
       getOrElse(RAISE.noSuchElementFault(key))
 
@@ -209,6 +225,75 @@ object I18NContext {
   val LOCALE_EN_GB = LocaleUtils.en_GB
   val LOCALE_DE_DE = LocaleUtils.de_DE
   val LOCALE_DE_CH = LocaleUtils.de_CH
+
+
+  final case class ResourceBundleConfig(
+    charset: Charset = CHARSET_UTF8,
+    fallbackLocale: Option[Locale] = None,
+    useDefaultLocaleFallback: Boolean = false
+  )
+  object ResourceBundleConfig {
+    val default = ResourceBundleConfig()
+    val englishFallback = ResourceBundleConfig(fallbackLocale = Some(Locale.ENGLISH))
+  }
+
+  def loadResourceBundle(
+    basename: String,
+    locale: Locale,
+    config: ResourceBundleConfig = ResourceBundleConfig.default,
+    loader: ClassLoader = Thread.currentThread.getContextClassLoader
+  ): ResourceBundle = {
+    val effectiveloader = Option(loader) getOrElse getClass.getClassLoader
+    ResourceBundle.getBundle(basename, locale, effectiveloader, resourceBundleControl(config))
+  }
+
+  def resourceBundleControl(config: ResourceBundleConfig): ResourceBundle.Control = new ResourceBundle.Control {
+    override def getFormats(basename: String): java.util.List[String] =
+      ResourceBundle.Control.FORMAT_PROPERTIES
+
+    override def getFallbackLocale(basename: String, locale: Locale): Locale =
+      if (config.useDefaultLocaleFallback)
+        super.getFallbackLocale(basename, locale)
+      else
+        config.fallbackLocale.filterNot(_ == locale).orNull
+
+    override def newBundle(
+      basename: String,
+      locale: Locale,
+      format: String,
+      loader: ClassLoader,
+      reload: Boolean
+    ): ResourceBundle =
+      if (format != "java.properties")
+        null
+      else {
+        val bundlename = toBundleName(basename, locale)
+        val resourcename = toResourceName(bundlename, "properties")
+        val stream =
+          if (reload) {
+            val url = loader.getResource(resourcename)
+            if (url == null)
+              null
+            else {
+              val connection = url.openConnection()
+              if (connection != null)
+                connection.setUseCaches(false)
+              connection.getInputStream()
+            }
+          } else {
+            loader.getResourceAsStream(resourcename)
+          }
+        if (stream == null)
+          null
+        else {
+          try {
+            new PropertyResourceBundle(new InputStreamReader(stream, config.charset))
+          } finally {
+            stream.close()
+          }
+        }
+      }
+  }
 
   val default = {
     val charset = Charset.defaultCharset()
