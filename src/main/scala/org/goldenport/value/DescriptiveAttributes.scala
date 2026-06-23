@@ -10,7 +10,7 @@ import org.goldenport.io.InputSource
 
 /*
  * @since   May. 14, 2026
- * @version May. 14, 2026
+ * @version Jun. 23, 2026
  * @author  ASAMI, Tomoharu
  */
 case class DescriptiveAttributes(
@@ -58,6 +58,21 @@ case class DescriptiveAttributes(
   def abstractString(locale: Locale): Option[String] = `abstract`.get(locale)
   def remarksString(locale: Locale): Option[String] = remarks.get(locale)
   def tooltipString(locale: Locale): Option[String] = tooltip.get(locale)
+
+  def effectiveHeadlineString(locale: Locale): Option[String] =
+    headlineString(locale).orElse(briefString(locale)).orElse(tooltipString(locale))
+
+  def effectiveBriefString(locale: Locale): Option[String] =
+    briefString(locale).orElse(summaryString(locale)).orElse(leadString(locale)).orElse(abstractString(locale)).orElse(headlineString(locale))
+
+  def effectiveSummaryString(locale: Locale): Option[String] =
+    summaryString(locale).orElse(leadString(locale)).orElse(abstractString(locale)).orElse(descriptionString(locale)).orElse(briefString(locale))
+
+  def effectiveDescriptionString(locale: Locale): Option[String] =
+    descriptionString(locale).orElse(abstractString(locale)).orElse(leadString(locale)).orElse(summaryString(locale))
+
+  def effectiveTooltipString(locale: Locale): Option[String] =
+    tooltipString(locale).orElse(briefString(locale)).orElse(headlineString(locale)).orElse(summaryString(locale)).orElse(abstractString(locale))
 }
 
 object DescriptiveAttributes {

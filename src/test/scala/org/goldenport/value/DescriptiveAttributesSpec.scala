@@ -13,7 +13,7 @@ import org.scalatestplus.junit.JUnitRunner
 
 /*
  * @since   May. 14, 2026
- * @version May. 14, 2026
+ * @version Jun. 23, 2026
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -111,6 +111,37 @@ class DescriptiveAttributesSpec extends AnyWordSpec with Matchers with GivenWhen
 
       i18n.as(Locale.JAPANESE) should be("Fallback summary")
       i18n.as(Locale.ENGLISH) should be("English summary")
+    }
+
+    "resolve effective descriptive text with SmartDox-compatible precedence" in {
+      Given("descriptive attributes with overlapping metadata fields")
+      val attrs = DescriptiveAttributes(
+        headline = DescriptiveAttributes.Text(Some("Headline")),
+        brief = DescriptiveAttributes.Text(Some("Brief")),
+        summary = DescriptiveAttributes.Text(Some("Summary")),
+        description = DescriptiveAttributes.Text(Some("Description")),
+        lead = DescriptiveAttributes.Text(Some("Lead")),
+        `abstract` = DescriptiveAttributes.Text(Some("Abstract")),
+        tooltip = DescriptiveAttributes.Text(Some("Tooltip"))
+      )
+
+      Then("effective accessors follow the SmartDox Explanation precedence")
+      attrs.effectiveHeadlineString(Locale.ENGLISH) should be(Some("Headline"))
+      attrs.effectiveBriefString(Locale.ENGLISH) should be(Some("Brief"))
+      attrs.effectiveSummaryString(Locale.ENGLISH) should be(Some("Summary"))
+      attrs.effectiveDescriptionString(Locale.ENGLISH) should be(Some("Description"))
+      attrs.effectiveTooltipString(Locale.ENGLISH) should be(Some("Tooltip"))
+
+      And("fallback order is stable when primary fields are absent")
+      val fallback = DescriptiveAttributes(
+        brief = DescriptiveAttributes.Text(Some("Brief")),
+        lead = DescriptiveAttributes.Text(Some("Lead")),
+        `abstract` = DescriptiveAttributes.Text(Some("Abstract"))
+      )
+      fallback.effectiveHeadlineString(Locale.ENGLISH) should be(Some("Brief"))
+      fallback.effectiveSummaryString(Locale.ENGLISH) should be(Some("Lead"))
+      fallback.effectiveDescriptionString(Locale.ENGLISH) should be(Some("Abstract"))
+      fallback.effectiveTooltipString(Locale.ENGLISH) should be(Some("Brief"))
     }
 
     "read HOCON through ConfigLoader" in {
