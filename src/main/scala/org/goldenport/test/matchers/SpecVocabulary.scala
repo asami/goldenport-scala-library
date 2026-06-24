@@ -6,11 +6,11 @@ import org.scalatest.matchers.should.Matchers
 
 /*
  * @since   Jun. 20, 2026
- * @version Jun. 20, 2026
+ * @version Jun. 25, 2026
  * @author  ASAMI, Tomoharu
  */
 trait SpecVocabulary extends Matchers {
-  def beRegularFile: Matcher[Path] = Matcher { path =>
+  protected final def be_regular_file: Matcher[Path] = Matcher { path =>
     MatchResult(
       Files.isRegularFile(path),
       s"${path} was not a regular file",
@@ -18,7 +18,7 @@ trait SpecVocabulary extends Matchers {
     )
   }
 
-  def existPath: Matcher[Path] = Matcher { path =>
+  protected final def exist_path: Matcher[Path] = Matcher { path =>
     MatchResult(
       Files.exists(path),
       s"${path} did not exist",
@@ -26,7 +26,7 @@ trait SpecVocabulary extends Matchers {
     )
   }
 
-  def containWhere[A](predicate: A => Boolean): Matcher[Iterable[A]] = Matcher { values =>
+  protected final def contain_where[A](predicate: A => Boolean): Matcher[Iterable[A]] = Matcher { values =>
     MatchResult(
       values.exists(predicate),
       s"${values} did not contain an element satisfying the predicate",
@@ -34,7 +34,7 @@ trait SpecVocabulary extends Matchers {
     )
   }
 
-  def notContainWhere[A](predicate: A => Boolean): Matcher[Iterable[A]] = Matcher { values =>
+  protected final def not_contain_where[A](predicate: A => Boolean): Matcher[Iterable[A]] = Matcher { values =>
     MatchResult(
       !values.exists(predicate),
       s"${values} contained an element satisfying the predicate",
