@@ -13,7 +13,7 @@ import org.goldenport.util.AnyUtils
  * @since   Mar.  2, 2025
  *  version Mar. 12, 2025
  *  version Jun.  5, 2025
- * @version Jun.  4, 2026
+ * @version Jun. 29, 2026
  * @author  ASAMI, Tomoharu
  */
 sealed trait DataType extends NamedValueInstance {
@@ -48,6 +48,7 @@ case class XPowertype[T <: ValueInstance](
 
   def toInstance(p: Any): T = p match {
     case m: String => ptc.get(m) getOrElse _raise(m)
+    case m: ValueInstance => ptc.elements.find(_ == m).getOrElse(_raise(m))
     case _ => _raise(p)
   }
 

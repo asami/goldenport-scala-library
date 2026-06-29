@@ -17,7 +17,8 @@ import org.scalatest._
  *  version Jan. 17, 2021
  *  version May. 11, 2021
  *  version Jan.  1, 2025
- * @version Aug. 16, 2025
+ *  version Aug. 16, 2025
+ * @version Jun. 29, 2026
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -156,6 +157,18 @@ c d)"""
         val s = """<a x="10"><b/></a>"""
         val r = parse(s)
         r should be(LogicalLines.start("""<a x="10"><b/></a>"""))
+      }
+      "back quote in text" in {
+        val conf = LogicalLines.Config.easyHtml.copy(useBackQuote = true)
+        val s = """<span lang="ja">`minimal.main.hello` is `<component>.<service>.<operation>`.</span>"""
+        val r = LogicalLines.parse(conf, s)
+        r should be(LogicalLines.start("""<span lang="ja">`minimal.main.hello` is `<component>.<service>.<operation>`.</span>"""))
+      }
+      "inline tag remains tag outside back quote" in {
+        val conf = LogicalLines.Config.easyHtml.copy(useBackQuote = true)
+        val s = """<span lang="ja">This is <i>important</i>.</span>"""
+        val r = LogicalLines.parse(conf, s)
+        r should be(LogicalLines.start("""<span lang="ja">This is <i>important</i>.</span>"""))
       }
     }
   }

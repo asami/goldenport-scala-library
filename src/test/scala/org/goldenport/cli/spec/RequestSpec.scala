@@ -13,7 +13,7 @@ import org.goldenport.cli.{Request => CliRequest, Switch => CliSwitch, Property 
  *  version Mar. 16, 2025
  *  version Apr. 27, 2025
  *  version Aug. 16, 2025
- * @version Jun.  4, 2026
+ * @version Jun. 29, 2026
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -31,6 +31,12 @@ class RequestSpec extends AnyWordSpec with Matchers with GivenWhenThen {
         val r = req.build(CliRequest("req"), List("--port", "8080"))
         r should be(CliRequest(None, "req", Nil, Nil, List(CliProperty("port", 8080, param))))
         r.cInt(param).toOption should be(Some(8080))
+      }
+      "powertype property" in {
+        val param = Parameter.propertyPowertypeOption(DataType, "datatype")
+        val req = Request(param)
+        val r = req.build(CliRequest("req"), List("--datatype", "string"))
+        r.cPowertypeOption[DataType](param).toOption should be(Some(Some(XString)))
       }
       "invalid int property" in {
         val req = Request(Parameter.propertyInt("port"))

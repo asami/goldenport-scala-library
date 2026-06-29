@@ -33,7 +33,8 @@ import org.goldenport.util.StringUtils
  *  version Jul. 15, 2025
  *  version Oct. 15, 2025
  *  version Nov.  5, 2025
- * @version Dec. 29, 2025
+ *  version Dec. 29, 2025
+ * @version Jun. 29, 2026
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -1044,6 +1045,7 @@ object LogicalLines {
     text: Vector[Char],
     location: Option[ParseLocation]
   ) extends AdvancedAwakeningLogicalLinesParseState {
+    override protected def use_back_quote(config: Config, evt: CharEvent) = config.useBackQuote
     override protected def use_angle_bracket(config: Config) = true
 
     def getLastChar = text.lastOption
