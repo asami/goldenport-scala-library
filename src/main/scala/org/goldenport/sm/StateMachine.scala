@@ -3,7 +3,7 @@ package org.goldenport.sm
 import scalaz._, Scalaz._
 import scala.collection.immutable.Stack
 import org.goldenport.extension.Showable
-import org.goldenport.context.Consequence
+import org.goldenport.context.{Consequence, IllegalConfigurationDefect}
 import org.goldenport.values.CompactUuid
 import org.goldenport.event.ObjectId
 import org.goldenport.event.{Event, InitEvent}
@@ -19,7 +19,8 @@ import org.goldenport.sm.StateMachineRule.RuleAndStateClass
  *  version Mar. 19, 2022
  *  version Aug. 30, 2022
  *  version Sep.  2, 2022
- * @version Sep.  5, 2024
+ *  version Sep.  5, 2024
+ * @version Aug. 14, 2026
  * @author  ASAMI, Tomoharu
  */
 class StateMachine(
@@ -73,7 +74,24 @@ class StateMachine(
   def getStateClass(name: String): Option[RuleAndStateClass] = 
     stateMacineRuleList.flatMap(_.findState(name)).headOption
 
-  def historyState(): RuleAndState = _history(_history.length - 2).toRuleAndState
+  def historyState(): RuleAndState =
+    _history.dropRight(1).lastOption.getOrElse(_history.last).toRuleAndState
+
+  def historyState(compositeName: String): RuleAndState =
+    clazz.rule.findStateMachine(compositeName).map { composite =>
+      _history.reverseIterator.find { slot =>
+        slot.statemachine == composite &&
+          composite.states.exists(_.name == slot.state.clazz.name)
+      }.map(_.toRuleAndState).getOrElse {
+        composite.states.headOption.map { stateclass =>
+          RuleAndState(composite, State(stateclass))
+        }.getOrElse {
+          IllegalConfigurationDefect(s"history composite has no direct states: $compositeName").RAISE
+        }
+      }
+    }.getOrElse {
+      IllegalConfigurationDefect(s"history composite is not defined: $compositeName").RAISE
+    }
 
   // TODO atomic
   def accept(p: Parcel): Consequence[Boolean] = clazz.accept(this, _state, p.withClass(clazz))

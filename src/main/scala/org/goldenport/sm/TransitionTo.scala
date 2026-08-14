@@ -7,7 +7,8 @@ import org.goldenport.sm.StateMachine.RuleAndState
  * @since   May.  2, 2021
  *  version May. 29, 2021
  *  version Jun. 12, 2021
- * @version Sep.  5, 2024
+ *  version Sep.  5, 2024
+ * @version Aug. 14, 2026
  * @author  ASAMI, Tomoharu
  */
 trait TransitionTo {
@@ -27,6 +28,10 @@ object FinalTransitionTo extends TransitionTo {
 
 case class HistoryTransitionTo() extends TransitionTo {
   def state(sm: StateMachine, state: State, p: Parcel) = sm.historyState()
+}
+
+case class NamedHistoryTransitionTo(compositeName: String) extends TransitionTo {
+  def state(sm: StateMachine, state: State, p: Parcel) = sm.historyState(compositeName)
 }
 
 case class NameTransitionTo(name: String) extends TransitionTo {

@@ -20,7 +20,8 @@ import org.goldenport.event.EventClazz
  *  version Nov. 28, 2021
  *  version Dec.  5, 2021
  *  version Aug. 22, 2022
- * @version Apr.  3, 2026
+ *  version Apr.  3, 2026
+ * @version Aug. 14, 2026
  * @author  ASAMI, Tomoharu
  */
 case class StateMachineRule(
@@ -30,7 +31,8 @@ case class StateMachineRule(
   events: List[EventClazz] = Nil, // XXX unused
   states: List[StateClass] = Nil,
   statemachines: List[StateMachineRule] = Nil,
-  transitions: Transitions = Transitions.empty
+  transitions: Transitions = Transitions.empty,
+  historyFieldName: Option[String] = None
 ) {
   import StateMachineRule.RuleAndStateClass
 
@@ -65,6 +67,10 @@ case class StateMachineRule(
     states.find(_.value == v).map(x => RuleAndStateClass(this, x)) orElse (
       statemachines.toStream.flatMap(_.findState(v)).headOption
     )
+
+  def findStateMachine(name: String): Option[StateMachineRule] =
+    statemachines.find(_.isMatch(name)) orElse
+      statemachines.toStream.flatMap(_.findStateMachine(name)).headOption
 }
 
 object StateMachineRule {
