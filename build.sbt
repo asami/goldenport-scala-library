@@ -2,7 +2,7 @@ organization := "org.goldenport"
 
 name := "goldenport-scala-lib"
 
-version := "2.3.31-SNAPSHOT"
+version := "2.3.31"
 
 scalaVersion := "2.12.18"
 
@@ -16,7 +16,7 @@ scalacOptions += "-feature"
 
 // incOptions := incOptions.value.withNameHashing(true)
 
-javacOptions ++= Seq("--release", "21")
+javacOptions ++= Seq("--release", "17")
 
 javaOptions ++= Seq(
   "--module-path", sys.props("java.class.path"),
