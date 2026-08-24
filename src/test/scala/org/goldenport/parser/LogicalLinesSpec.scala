@@ -18,7 +18,7 @@ import org.scalatest._
  *  version May. 11, 2021
  *  version Jan.  1, 2025
  *  version Aug. 16, 2025
- * @version Jun. 29, 2026
+ * @version Aug. 24, 2026
  * @author  ASAMI, Tomoharu
  */
 @RunWith(classOf[JUnitRunner])
@@ -169,6 +169,22 @@ c d)"""
         val s = """<span lang="ja">This is <i>important</i>.</span>"""
         val r = LogicalLines.parse(conf, s)
         r should be(LogicalLines.start("""<span lang="ja">This is <i>important</i>.</span>"""))
+      }
+      "group one multiline generic element with quoted URLs, nested tags, and a self-closing child" in {
+        Given("a multiline generic element with a quoted https URL, nested markup, and an image-like child")
+        val config = LogicalLines.Config.easyHtml.copy(useDoubleQuote = true, useBackQuote = true)
+        val source =
+          """<div href="https://example.com/path/item">
+            |<span>Label with `<component>`</span>
+            |<img src="images/model.png"/>
+            |</div>""".stripMargin
+
+        When("LogicalLines groups the XML-shaped source with its easy HTML configuration")
+        val result = LogicalLines.parse(config, source)
+
+        Then("one logical line retains the complete authored source without rewriting it")
+        result.lines should have size 1
+        result.lineVector shouldBe Vector(source)
       }
     }
   }
