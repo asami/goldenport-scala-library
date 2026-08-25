@@ -1181,6 +1181,7 @@ object LogicalLines {
     location: Option[ParseLocation]
   ) extends AdvancedAwakeningLogicalLinesParseState {
     override protected def use_back_quote(config: Config, evt: CharEvent) = true
+    override protected def use_double_quote(config: Config) = false
 
     private def _text_string = text.mkString
 

@@ -84,6 +84,22 @@ b" c"""))
         r should be(LogicalLines.start("\"\"\"a\"x\"\"\"\""))
       }
     }
+    "back quote" which {
+      "keeps nested double quoted content literal" in {
+        Given("a parser configuration that enables back quotes and double quotes")
+        val config = LogicalLines.Config.raw.copy(
+          useBackQuote = true,
+          useDoubleQuote = true
+        )
+        val source = """before `scala-cli "https://repo.example/repository" "org.example:library:1.0.0"` after"""
+
+        When("LogicalLines parses a backquoted fragment containing quoted content")
+        val result = LogicalLines.parse(config, source)
+
+        Then("the complete source remains one logical line without changing the quoted fragment")
+        result shouldBe LogicalLines.start(source)
+      }
+    }
     "lisp" which {
       val conf = LogicalLines.Config.lisp
       def parselisp(p: String) = LogicalLines.parse(conf, p)
