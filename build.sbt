@@ -44,7 +44,7 @@ resolvers += "GitHab releases" at "https://raw.github.com/asami/maven-repository
 
 resolvers += "SimpleModeling.org" at "https://www.simplemodeling.org/repository/maven"
 
-resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository"
+resolvers += Resolver.defaultLocal
 
 // For WPath and GXml. TODO separate to reduce dependencies.
 libraryDependencies ++= {
