@@ -25,12 +25,13 @@ import org.joda.time.format.{ISODateTimeFormat, DateTimeFormat}
  *  version May. 21, 2018
  *  version Jul. 20, 2018
  *  version Aug.  5, 2018
- * @version Dec. 10, 2022
+ *  version Dec. 10, 2022
+ * @version Sep. 28, 2026
  * @author  ASAMI, Tomoharu
  */
 object DateUtils {
   private val _gmt = TimeZone.getTimeZone("GMT")
-  private val _jst = TimeZone.getTimeZone("JST")
+  private val _jst = TimeZone.getTimeZone("Asia/Tokyo")
   private lazy val _jodagmt = DateTimeUtils.jodagmt
   private lazy val _jodajst = DateTimeUtils.jodajst
   private val _df = new SimpleDateFormat("yyyy-MM-dd")

@@ -32,12 +32,13 @@ import org.goldenport.i18n.LocaleUtils
  *  version Jun. 17, 2022
  *  version Nov. 17, 2022
  *  version Dec. 28, 2022
- * @version Oct. 14, 2024
+ *  version Oct. 14, 2024
+ * @version Sep. 28, 2026
  * @author  ASAMI, Tomoharu
  */
 object DateTimeUtils {
   val gmt = TimeZone.getTimeZone("GMT")
-  val jst = TimeZone.getTimeZone("JST")
+  val jst = TimeZone.getTimeZone("Asia/Tokyo")
   val jodagmt = DateTimeZone.forID("GMT")
   val jodajst = DateTimeZone.forID("Asia/Tokyo")
   val jodaplus900 = DateTimeZone.forOffsetHours(9)
@@ -121,7 +122,7 @@ object DateTimeUtils {
   }
 
   def toWebStringJst(dt: DateTime): String = {
-    val jst = TimeZone.getTimeZone("JST")
+    val jst = TimeZone.getTimeZone("Asia/Tokyo")
     val df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
     df.setTimeZone(jst)
     df.format(dt.getMillis)
@@ -132,7 +133,7 @@ object DateTimeUtils {
   }
 
   def toNaturalStringJst(dt: DateTime) = {
-    val jst = TimeZone.getTimeZone("JST")
+    val jst = TimeZone.getTimeZone("Asia/Tokyo")
     val df = new SimpleDateFormat("yyyy年M月d日H時m分")
     df.setTimeZone(jst)
     df.format(dt.getMillis)
@@ -460,4 +461,3 @@ object DateTimeUtils {
 
   def hasMillisPart(p: DateTime): Boolean = p.getMillis % 1000 != 0
 }
-
