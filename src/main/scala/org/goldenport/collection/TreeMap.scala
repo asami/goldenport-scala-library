@@ -5,7 +5,8 @@ import org.goldenport.tree.{Tree, PlainTree, ImmutableTree}
 
 /*
  * @since   May. 15, 2021
- * @version May. 23, 2021
+ *  version May. 23, 2021
+ * @version Sep. 26, 2026
  * @author  ASAMI, Tomoharu
  */
 case class TreeMap[T](
@@ -21,14 +22,9 @@ case class TreeMap[T](
     else
       _add(p).asInstanceOf[TreeMap[S]]
 
-  private def _add[S](p: TreeMap[S]): TreeMap[T] = {
-    val a1 = p.tree.asInstanceOf[ImmutableTree[T]]
-    val a2 = tree.merge(a1)
-    val a = a2.asInstanceOf[ImmutableTree[T]]
-    copy(
-      tree = tree.merge(a),
-      map = map ++ p.map.asInstanceOf[TreeMap[T]]
-    )
+  private def _add[S >: T](p: TreeMap[S]): TreeMap[S] = {
+    val basetree = tree.asInstanceOf[ImmutableTree[S]]
+    TreeMap(basetree.merge(p.tree), map ++ p.map, delimiter)
   }
 
   def +[S >: T](kv: (String, S)): TreeMap[S] = RAISE.notImplementedYetDefect
