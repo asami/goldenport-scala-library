@@ -6,17 +6,18 @@ import org.goldenport.RAISE
 import org.goldenport.context.Showable
 import org.goldenport.parser.ParseResult
 import org.goldenport.hocon.RichConfig.Implicits._
-import org.goldenport.collection.TreeMap
+import org.goldenport.collection.PathMap
 
 /*
  * @since   May.  5, 2021
  *  version May. 23, 2021
  *  version Jun. 13, 2021
- * @version Aug.  6, 2023
+ *  version Aug.  6, 2023
+ * @version Sep. 30, 2026
  * @author  ASAMI, Tomoharu
  */
 case class EventRule(
-  classes: TreeMap[EventClazz] = TreeMap.empty
+  classes: PathMap[EventClazz] = PathMap.empty
 ) extends Showable {
   def print: String = "???"
 
@@ -59,7 +60,7 @@ object EventRule {
 
     def build(hocon: Hocon): ParseResult[EventRule] = for {
       ev <- _events(hocon)
-    } yield EventRule(TreeMap.create(".", ev.map(x => x.name -> x)))
+    } yield EventRule(PathMap.create(".", ev.map(x => x.name -> x)))
 
     private def _events(p: Hocon): ParseResult[List[EventClazz]] = for {
       a <- p.parseConfigOrConfigList(PROP_EVT_EVENT)

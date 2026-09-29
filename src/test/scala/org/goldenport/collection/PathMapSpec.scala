@@ -9,16 +9,16 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 /*
  * @since   Sep. 26, 2026
- * @version Sep. 26, 2026
+ * @version Sep. 30, 2026
  */
 @RunWith(classOf[JUnitRunner])
-class TreeMapSpec extends AnyWordSpec with Matchers with GivenWhenThen with ScalaCheckDrivenPropertyChecks {
-  "TreeMap composition" should {
+class PathMapSpec extends AnyWordSpec with Matchers with GivenWhenThen with ScalaCheckDrivenPropertyChecks {
+  "PathMap composition" should {
     "retain entries from two nonempty maps without a class cast" in {
       forAll { (left: Int, right: Int) =>
         Given("two separately built nonempty maps")
-        val first = TreeMap.create("first" -> left)
-        val second = TreeMap.create("second" -> right)
+        val first = PathMap.create("first" -> left)
+        val second = PathMap.create("second" -> right)
 
         When("the maps are composed")
         val combined = first + second

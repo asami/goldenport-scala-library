@@ -1,7 +1,7 @@
 package org.goldenport.statemachine
 
 import org.goldenport.RAISE
-import org.goldenport.collection.TreeMap
+import org.goldenport.collection.PathMap
 import org.goldenport.context.Consequence
 import org.goldenport.event.ObjectId
 import org.goldenport.event.Event
@@ -12,17 +12,18 @@ import org.goldenport.event.Event
  *  version Jun. 13, 2021
  *  version Sep. 25, 2021
  *  version Oct. 31, 2021
- * @version Nov. 29, 2021
+ *  version Nov. 29, 2021
+ * @version Sep. 30, 2026
  * @author  ASAMI, Tomoharu
  */
 class StateMachineSpace(
 ) {
-  private var _classes: TreeMap[StateMachineClass] = TreeMap.empty
+  private var _classes: PathMap[StateMachineClass] = PathMap.empty
   private var _machines: Vector[StateMachine] = Vector.empty
 
-  def classes: TreeMap[StateMachineClass] = _classes
+  def classes: PathMap[StateMachineClass] = _classes
 
-  def addClasses(p: TreeMap[StateMachineClass]): StateMachineSpace = {
+  def addClasses(p: PathMap[StateMachineClass]): StateMachineSpace = {
     _classes = _classes + p
     this
   }
@@ -85,5 +86,5 @@ class StateMachineSpace(
 object StateMachineSpace {
   def create(): StateMachineSpace = new StateMachineSpace()
 
-  def create(p: TreeMap[StateMachineClass]): StateMachineSpace = create().addClasses(p)
+  def create(p: PathMap[StateMachineClass]): StateMachineSpace = create().addClasses(p)
 }
