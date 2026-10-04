@@ -34,7 +34,8 @@ import org.goldenport.util.StringUtils
  *  version Oct. 15, 2025
  *  version Nov.  5, 2025
  *  version Dec. 29, 2025
- * @version Jun. 29, 2026
+ *  version Jun. 29, 2026
+ * @version Oct.  4, 2026
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -1145,6 +1146,8 @@ object LogicalLines {
           SkipState(SkipState(parent.addChild(config, ('"' +: text) ++ "\"\"\"")))
         else
           copy(text = text :+ '"')
+      } else if (text.reverseIterator.takeWhile(_ == '\\').length % 2 == 1) {
+        copy(text = text :+ '"')
       } else {
         parent.addChild(config, '"' +: text :+ '"')
       }
