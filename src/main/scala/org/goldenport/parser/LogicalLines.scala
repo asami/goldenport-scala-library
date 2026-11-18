@@ -35,7 +35,8 @@ import org.goldenport.util.StringUtils
  *  version Nov.  5, 2025
  *  version Dec. 29, 2025
  *  version Jun. 29, 2026
- * @version Oct.  4, 2026
+ *  version Oct.  4, 2026
+ * @version Nov. 18, 2026
  * @author  ASAMI, Tomoharu
  */
 case class LogicalLines(
@@ -55,6 +56,11 @@ case class LogicalLines(
 
 object LogicalLines {
   type Transition = (ParseMessageSequence, ParseResult[LogicalLines], LogicalLinesParseState)
+
+  private def _next_line_location(evt: LineEndEvent): ParseLocation = evt.location.copy(
+    line = evt.location.line.map(_ + 1),
+    offset = evt.location.offset.map(_ => 1)
+  )
 
   implicit object LogicalLinesMonoid extends Monoid[LogicalLines] {
     def zero = empty
@@ -721,7 +727,7 @@ object LogicalLines {
 
     override protected def end_Result(config: Config) = ParseSuccess(LogicalLines.empty)
     override protected def line_End_State(config: Config, evt: LineEndEvent): LogicalLinesParseState =
-      NormalState("", evt.location)
+      NormalState("", _next_line_location(evt))
     override protected def character_State(config: Config, evt: CharEvent) =
       if (is_in_list_line_start(config, "", evt))
         ListState(NormalState("", evt.location), evt.c, Some(evt.location))
@@ -806,7 +812,7 @@ object LogicalLines {
     }
 
     override protected def line_End_State(config: Config, evt: LineEndEvent): LogicalLinesParseState =
-      NormalState(Slot.empty, Some(evt.location), result :+ cs.toLogicalLine(get_location(config)))
+      NormalState(Slot.empty, Some(_next_line_location(evt)), result :+ cs.toLogicalLine(get_location(config)))
 
     override protected def physical_Line_End_State(config: Config, evt: CharEvent): LogicalLinesParseState =
       copy(cs = cs.addPhysicalLineEnd(word_separating_space(config)), location = Some(evt.location))
